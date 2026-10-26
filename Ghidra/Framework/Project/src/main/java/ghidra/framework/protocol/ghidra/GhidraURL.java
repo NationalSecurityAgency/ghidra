@@ -236,8 +236,7 @@ public class GhidraURL {
 			return "/";
 		}
 		if (!path.startsWith("/")) {
-			throw new URISyntaxException(uri.toString(),
-				"Missing absolute project content path");
+			throw new URISyntaxException(uri.toString(), "Missing absolute project content path");
 		}
 		return path;
 	}
@@ -427,26 +426,34 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Check for valid project path. See {@link NamingUtilities#checkName(String, String)}).
+	 * Check for valid project path. Empty path elements are prohibited, except for a single
+	 * trailing separator identifying a folder. See {@link NamingUtilities#checkName(String, String)}).
 	 * 
 	 * @param path project path to check (using '/' path separator).
 	 * @param startIndex index at which to start checking immediately after root path separator
-	 * @throws IllegalArgumentException if path contains invalid character
+	 * @throws IllegalArgumentException if path contains an invalid or empty element
 	 */
 	private static void checkValidProjectPath(String path, int startIndex) {
 		String str = path.substring(startIndex);
-		if (str.length() != 0) {
-			for (String s : str.split("/")) {
-				NamingUtilities.checkName(s, null);
-			}
+		if (str.isEmpty()) {
+			return; // root path
+		}
+		if (str.endsWith("/")) {
+			str = str.substring(0, str.length() - 1);
+		}
+		// Preserve empty elements so repeated separators cannot be silently discarded.
+		for (String s : str.split("/", -1)) {
+			NamingUtilities.checkName(s, null);
 		}
 	}
 
 	/**
 	 * Create a Ghidra URL from a string form of a Ghidra URL or local project path.
 	 * This method can consume strings produced by the getDisplayString method.
+	 * Parsed URLs are checked for the same decoded name and path restrictions as constructed URLs.
+	 * A local project path must omit the project marker and directory extensions.
 	 * <p>
-	 * NOTE: If a Ghidra URL string is improperly encode (e.g., had been made by simple string
+	 * NOTE: If a Ghidra URL string is improperly encoded (e.g., had been made by simple string
 	 * concatentaion) an exception may be thrown.  In such situations, a URL re-encoding will be 
 	 * attempted but may produce an incorrect URL if partial encoding was used.  The following 
 	 * characters present in an improperly encoded URL may not handled properly: 
@@ -457,7 +464,7 @@ public class GhidraURL {
 	 * @return local Ghidra project URL
 	 * @throws IllegalArgumentException invalid path or URL specified
 	 */
-	public static URL toURL(String projectPathOrURL) {
+	public static URL toURL(String projectPathOrURL) throws IllegalArgumentException {
 		if (!isGhidraURL(projectPathOrURL)) {
 			if (projectPathOrURL.endsWith(ProjectLocator.PROJECT_DIR_SUFFIX) ||
 				projectPathOrURL.endsWith(ProjectLocator.PROJECT_FILE_SUFFIX)) {
@@ -465,7 +472,8 @@ public class GhidraURL {
 				throw new IllegalArgumentException("Project path must omit extension: " + ext);
 			}
 			projectPathOrURL = checkLocalAbsolutePath(projectPathOrURL, false);
-			int minSplitIndex = projectPathOrURL.charAt(2) == ':' ? 3 : 0;
+			int minSplitIndex =
+				(projectPathOrURL.length() > 2 && projectPathOrURL.charAt(2) == ':') ? 3 : 0;
 			int splitIndex = projectPathOrURL.lastIndexOf('/');
 			if (splitIndex < minSplitIndex || projectPathOrURL.length() == (splitIndex + 1)) {
 				throw new IllegalArgumentException("Absolute project path is missing project name");
@@ -489,10 +497,51 @@ public class GhidraURL {
 				throw new IllegalArgumentException("Invalid Ghidra URL: " + projectPathOrURL, e);
 			}
 		}
-		if (!isLocalURL(url) && url.getQuery() != null) {
-			throw new IllegalArgumentException("Invalid Ghidra URL: " + projectPathOrURL);
+		try {
+			validateParsedURL(url);
+		}
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid Ghidra URL: " + projectPathOrURL, e);
 		}
 		return url;
+	}
+
+	/**
+	 * Validate decoded components without rebuilding the URL or changing its encoding.
+	 */
+	private static void validateParsedURL(URL url) throws URISyntaxException {
+		URI uri = url.toURI();
+		if (isLocalURL(url)) {
+			String path = uri.getPath();
+			if (path == null || path.endsWith("/") || path.contains("\\")) {
+				throw new IllegalArgumentException("Invalid local project path: " + path);
+			}
+			// UNC URLs have four leading slashes; the storage path has two.
+			String storagePath = path.startsWith("////") ? path.substring(2) : path;
+			checkLocalAbsolutePath(storagePath, false);
+			NamingUtilities.checkName(path.substring(path.lastIndexOf('/') + 1), "Project name");
+			String contentPath = getLocalProjectContentPath(uri);
+			checkValidProjectPath(contentPath, 1);
+			return;
+		}
+
+		if (uri.isOpaque()) {
+			// The outer URI escapes the embedded URL. Decode that layer once, then validate
+			// the embedded hierarchical URI's decoded repository/content path.
+			uri = new URI(uri.getSchemeSpecificPart());
+		}
+		if (uri.isOpaque() || uri.getScheme() == null || StringUtils.isBlank(uri.getHost()) ||
+			uri.getQuery() != null) {
+			throw new IllegalArgumentException("Invalid server URL: " + url);
+		}
+		String path = uri.getPath();
+		if (path == null || path.isEmpty() || "/".equals(path)) {
+			return; // server-only URL
+		}
+		if (!path.startsWith("/")) {
+			throw new IllegalArgumentException("Absolute repository path required");
+		}
+		checkValidProjectPath(path, 1);
 	}
 
 	private static URL getReformedGhidraURL(String invalidGhidraUrl) {
@@ -503,8 +552,15 @@ public class GhidraURL {
 		}
 
 		try {
-			// Assume old code was used to directly for URL without the use of URI
+			// Assume old code was used to directly create URL without the use of URI
 			URL url = new URL(invalidGhidraUrl);
+
+			if (isLocalURL(url)) {
+				// An empty URL host would add an authority delimiter to a UNC path that
+				// already has four leading slashes. Local URLs have no authority.
+				return new URI(PROTOCOL, null, url.getPath(), url.getQuery(), url.getRef())
+						.toURL();
+			}
 
 			URI repairedUri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(),
 				url.getPort(), url.getPath(), url.getQuery(), url.getRef());
@@ -521,16 +577,16 @@ public class GhidraURL {
 	 *            
 	 * @param ghidraUrl the base Ghidra project or repository URL which will be used as the basis
 	 *            for forming a new Ghidra URL.            
-	 * @param projectFilePath an absolute folder or file path within the project (e.g., /a/b/c, 
+	 * @param projectFilePath a decoded absolute folder or file path within the project (e.g., /a/b/c,
 	 *            may be null for root folder).  Folder paths should end with a '/' character.
-	 * @param ref optional location reference (may be null) which is appended to URL with a '#' 
+	 * @param ref optional decoded location reference (may be null) which is appended to URL with a '#'
 	 *            delimiter.
 	 * @return new resolved URL
 	 * @throws IllegalArgumentException if an invalid Ghidra project or repository URL is specified
 	 *            or an invalid folder/file path is specified.
 	 */
 	public static URL resolve(URL ghidraUrl, String projectFilePath, String ref) {
-		
+
 		if (!StringUtils.isBlank(projectFilePath)) {
 			if (!projectFilePath.startsWith("/") || projectFilePath.contains("\\")) {
 				throw new IllegalArgumentException("Absolute path required using '/' delimiter");
@@ -567,17 +623,14 @@ public class GhidraURL {
 							"Invalid Ghidra URL");
 					}
 					URI extURI = URI.create(subPart);
-					URI revisedExtURI = extURI.resolve(path);
-					return new URI(PROTOCOL, revisedExtURI.toURL().toExternalForm(),
-						ref).toURL();
+					URI revisedExtURI =
+						new URI(extURI.getScheme(), extURI.getAuthority(), path, null, null);
+					return new URI(PROTOCOL, revisedExtURI.toURL().toExternalForm(), ref).toURL();
 				}
 
-				// Resolve normal Ghidra server URL
-				uri = uri.resolve(path);
-				if (ref != null) {
-					uri = uri.resolve("#" + ref);
-				}
-				return uri.toURL();
+				// Encode decoded path and reference components, as makeURL does. Resolving a
+				// string would interpret literal '%' and '#' characters as URI syntax.
+				return new URI(PROTOCOL, uri.getAuthority(), path, null, ref).toURL();
 			}
 		}
 		catch (URISyntaxException | MalformedURLException e) {
@@ -788,6 +841,7 @@ public class GhidraURL {
 	 * @param dirPath absolute path of project location directory 
 	 * @param projectName name of project
 	 * @return local Ghidra project URL
+	 * @throws IllegalArgumentException if an absolute dirPath is not specified
 	 */
 	public static URL makeURL(String dirPath, String projectName) {
 		return makeURL(dirPath, projectName, null, null);
@@ -856,8 +910,7 @@ public class GhidraURL {
 		}
 
 		try {
-			return new URI(GhidraURL.PROTOCOL, null, path, projectFilePath, ref)
-					.toURL();
+			return new URI(GhidraURL.PROTOCOL, null, path, projectFilePath, ref).toURL();
 		}
 		catch (URISyntaxException | MalformedURLException e) {
 			throw new IllegalArgumentException("Unable to form local project URL", e);
@@ -964,13 +1017,7 @@ public class GhidraURL {
 			if (!repositoryPath.startsWith("/") || repositoryPath.indexOf('\\') >= 0) {
 				throw new IllegalArgumentException("Invalid repository path");
 			}
-			if (repositoryPath.length() != 1) {
-				String checkPath = repositoryPath.substring(1);
-				if (checkPath.endsWith("/")) {
-					checkPath = checkPath.substring(0, checkPath.length() - 1);
-				}
-				checkValidProjectPath(checkPath, 0);
-			}
+			checkValidProjectPath(repositoryPath, 1);
 			path += repositoryPath;
 		}
 
