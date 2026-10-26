@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
+import java.io.EOFException;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -42,7 +43,7 @@ public class MIPS_Elf64Relocation extends ElfRelocation {
 
 	@Override
 	protected void initElfRelocation(BinaryReader reader, ElfHeader elfHeader,
-			int relocationTableIndex, boolean withAddend) throws IOException {
+			int relocationTableIndex, boolean withAddend) throws EOFException, IOException {
 		super.initElfRelocation(reader, elfHeader, relocationTableIndex, withAddend);
 		long info = getRelocationInfo();
 		if (elfHeader.isLittleEndian()) {

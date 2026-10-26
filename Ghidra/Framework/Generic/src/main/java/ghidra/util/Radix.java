@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.bento;
+package ghidra.util;
 
-public enum BentoRadix {
+public enum Radix {
 	/** Use decimal (default) */
 	DEC("dec", 10, "%d"),
 	/** Use upper-case hexadecimal */
@@ -24,7 +24,7 @@ public enum BentoRadix {
 	HEX_LOWER("hex", 16, "%x");
 
 	/** The default radix (decimal) */
-	public static final BentoRadix DEFAULT = DEC;
+	public static final Radix DEFAULT = DEC;
 
 	/**
 	 * Get the radix specified by the given string
@@ -32,7 +32,7 @@ public enum BentoRadix {
 	 * @param s the name of the specified radix
 	 * @return the radix
 	 */
-	public static BentoRadix fromStr(String s) {
+	public static Radix fromStr(String s) {
 		return switch (s) {
 			case "dec" -> DEC;
 			case "HEX" -> HEX_UPPER;
@@ -45,7 +45,7 @@ public enum BentoRadix {
 	public final int n;
 	public final String fmt;
 
-	private BentoRadix(String name, int n, String fmt) {
+	private Radix(String name, int n, String fmt) {
 		this.name = name;
 		this.n = n;
 		this.fmt = fmt;

@@ -82,7 +82,9 @@ public class ProgramInsertByteProvider implements ByteProvider {
 			return false;
 		}
 		try {
-			buffer.getByte((int) startIndex);
+			if (count > 0) {
+				buffer.getByte((int) startIndex);
+			}
 			if (count > 1) {
 				buffer.getByte((int) (startIndex + count - 1));
 			}

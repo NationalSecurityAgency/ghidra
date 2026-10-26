@@ -726,7 +726,7 @@ public class DefaultKeyManagerFactory {
 					certificateChain = x509KeyManager.getCertificateChain(alias);
 				}
 			}
-			if (privateKey == null || certificateChain == null) {
+			if (privateKey == null || certificateChain == null || certificateChain.length == 0) {
 				CertificateException e =
 					new CertificateException("suitable PKI certificate not found");
 				throw e;
@@ -737,6 +737,7 @@ public class DefaultKeyManagerFactory {
 			// IdentityScope classes
 			//
 
+			// X509KeyManager returns the identity certificate first; never infer order from a CA.
 			String algorithm = certificateChain[0].getSigAlgName();
 			Signature sig = Signature.getInstance(algorithm);
 			try {

@@ -438,6 +438,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		expandNode(miscNode);
 		selectNode(miscNode);
 
+		setErrorsExpected(true);
 		final DockingActionIf action = getAction(plugin, "Rename");
 		assertTrue(action.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(action, tree);
@@ -460,6 +461,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForSwing();
 
 		assertFalse(jTree.isEditing());
+
+		setErrorsExpected(false);
 	}
 
 	@Test

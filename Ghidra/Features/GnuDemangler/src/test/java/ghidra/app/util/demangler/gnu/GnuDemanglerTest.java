@@ -89,6 +89,31 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFoo() throws Exception {
+
+		//
+		// Mangled: ._ZNK8tinyxml211XMLDocument6AcceptEPNS_10XMLVisitorE
+		//
+		// Demangled: .tinyxml2::XMLDocument::Accept(tinyxml2::XMLVisitor *)
+		//
+		// Fix: remove the leading '.'
+		//
+		String mangled = "._ZNK8tinyxml211XMLDocument6AcceptEPNS_10XMLVisitorE";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		MangledContext mangledContext =
+			demangler.createMangledContext(mangled, options, program, null);
+		DemangledObject dobj = demangler.demangle(mangledContext);
+		assertNotNull(dobj);
+
+		String signature = dobj.getSignature();
+		assertEquals("undefined tinyxml2::XMLDocument::Accept(tinyxml2::XMLVisitor *)", signature);
+	}
+
+	@Test
 	public void testUseStandardReplacements() throws Exception {
 
 		//
@@ -186,7 +211,9 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangledParameter = dobj.getParameters().get(0);
 		type = demangledParameter.getType();
 		dt = type.getDataType(program.getDataTypeManager());
-		assertEquals("typedef basic_string undefined", dt.toString());
+		assertEquals(
+			"typedef basic_string<char,std::char_traits<char>,std::allocator<char>> undefined",
+			dt.toString());
 
 	}
 

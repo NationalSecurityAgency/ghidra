@@ -97,6 +97,9 @@ public class GnuDemangler implements Demangler {
 		else if (mangled.startsWith("__Z")) {
 			mangled = mangled.substring(1);
 		}
+		else if (mangled.startsWith("._Z")) {
+			mangled = mangled.substring(1);
+		}
 
 		boolean isDwarf = false;
 		if (mangled.startsWith(DWARF_REF)) {
@@ -223,6 +226,9 @@ public class GnuDemangler implements Demangler {
 			return false;
 		}
 		if (mangled.startsWith("__Z")) {
+			return false;
+		}
+		if (mangled.startsWith("._Z")) {
 			return false;
 		}
 		if (mangled.startsWith("h__")) {

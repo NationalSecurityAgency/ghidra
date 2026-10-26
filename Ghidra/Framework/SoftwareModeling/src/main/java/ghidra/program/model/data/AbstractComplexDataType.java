@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import java.math.BigDecimal;
-
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
+import ghidra.pcode.floatformat.BigFloat;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.WrappedMemBuffer;
 
@@ -97,36 +96,27 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 			floatType.getName() + " values";
 	}
 
-	private static double toDouble(Object obj) {
-		if (obj instanceof Double) {
-			return (Double) obj;
-		}
-		if (obj instanceof Float) {
-			return (Float) obj;
-		}
-		if (obj instanceof Short) {
-			// Looking at AbstractFloatDataType#getValue, this makes no sense to me
-			return (Short) obj;
-		}
-		if (obj instanceof BigDecimal) {
-			BigDecimal bd = (BigDecimal) obj;
-			return bd.doubleValue();
-		}
-		throw new IllegalArgumentException(obj + "(" + obj.getClass() + ")");
+	private static double toDouble(BigFloat bf) {
+		return bf.doubleValue();
 	}
 
 	@Override
-	public Object getValue(MemBuffer buf, Settings settings, int length) {
-		Object a = floatType.getValue(buf, settings, length / 2);
+	public Complex getValue(MemBuffer buf, Settings settings, int length) {
+		BigFloat a = floatType.getValue(buf, settings, length / 2);
+		if (a == null) {
+			return null;
+		}
 		MemBuffer wrp = new WrappedMemBuffer(buf, length / 2);
-		Object b = floatType.getValue(wrp, settings, length / 2);
-
+		BigFloat b = floatType.getValue(wrp, settings, length / 2);
+		if (b == null) {
+			return null;
+		}
 		return new Complex(toDouble(a), toDouble(b));
 	}
 
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
-		Object val = getValue(buf, settings, length);
+		Complex val = getValue(buf, settings, length);
 		if (val == null) {
 			return "??";
 		}

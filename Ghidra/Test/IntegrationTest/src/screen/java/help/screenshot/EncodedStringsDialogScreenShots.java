@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.strings.EncodedStringsDialog;
 import ghidra.app.plugin.core.strings.EncodedStringsPlugin;
 import ghidra.app.services.ProgramManager;
@@ -84,7 +85,8 @@ public class EncodedStringsDialogScreenShots extends GhidraScreenShotGenerator {
 	public void testEncodedStringsDialog_initial() {
 		positionListingTop(0x50);
 		makeSelection(0x50, 0x500);
-		performAction(plugin.getSearchForEncodedStringsAction());
+		performAction(plugin.getSearchForEncodedStringsAction(),
+			getComponentProvider(CodeViewerProvider.class), false);
 
 		EncodedStringsDialog dialog = waitForDialogComponent(EncodedStringsDialog.class);
 		waitForTableModel(dialog.getStringModel());
@@ -96,7 +98,8 @@ public class EncodedStringsDialogScreenShots extends GhidraScreenShotGenerator {
 	public void testEncodedStringsDialog_advancedoptions() {
 		positionListingTop(0x50);
 		makeSelection(0x50, 0x500);
-		performAction(plugin.getSearchForEncodedStringsAction());
+		performAction(plugin.getSearchForEncodedStringsAction(),
+			getComponentProvider(CodeViewerProvider.class), false);
 
 		EncodedStringsDialog dialog = waitForDialogComponent(EncodedStringsDialog.class);
 		Swing.runNow(() -> {
@@ -104,7 +107,7 @@ public class EncodedStringsDialogScreenShots extends GhidraScreenShotGenerator {
 			dialog.setShowScriptOptions(true);
 			dialog.setAllowAnyScriptOption(true);
 			dialog.setRequireValidStringOption(false);
-			dialog.setSelectedCharset("UTF-8");
+			dialog.setSelectedCharset(StandardCharsets.UTF_8);
 		});
 		waitForTableModel(dialog.getStringModel());
 

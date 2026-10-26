@@ -31,6 +31,7 @@ import ghidra.program.model.dtarchive.DataTypeArchive;
 import ghidra.program.model.lang.LanguageVersionException;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
+import ghidra.util.Lock.Closeable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -164,14 +165,15 @@ public abstract class ArchiveDataTypeManagerDB extends DataTypeManagerDB
 	 */
 	public void programArchitectureChanged(TaskMonitor monitor)
 			throws CancelledException, IOException {
-		lock.writeLock().lock();
-		try {
-			setProgramArchitecture(archive.getProgramArchitecture(),
-				archive.getVariableStorageManager(), true, monitor);
-		}
-		finally {
-			invalidateCache();
-			lock.writeLock().unlock();
+
+		try (Closeable _ = lock.write()) {
+			try {
+				setProgramArchitecture(archive.getProgramArchitecture(),
+					archive.getVariableStorageManager(), true, monitor);
+			}
+			finally {
+				invalidateCache();
+			}
 		}
 	}
 

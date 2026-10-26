@@ -125,7 +125,7 @@ public class FindDialogResultsProvider extends ComponentProvider
 			return;
 		}
 
-		SearchLocation location = model.getRowObject(row);
+		SearchLocation location = filterPanel.getRowObject(row);
 		searchResults.setActiveLocation(location);
 	}
 
@@ -141,14 +141,14 @@ public class FindDialogResultsProvider extends ComponentProvider
 				int[] rows = table.getSelectedRows();
 				List<Object> itemsToRemove = new ArrayList<>();
 				for (int row : rows) {
-					itemsToRemove.add(model.getRowObject(row));
+					itemsToRemove.add(filterPanel.getRowObject(row));
 				}
 
 				removeRowObjects(model, itemsToRemove);
 
 				// put some selection back
 				int restoreRow = rows[0];
-				selectRow(model, restoreRow);
+				selectRow(table.getModel(), restoreRow);
 			}
 
 			@Override

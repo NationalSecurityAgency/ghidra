@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
+import docking.widgets.table.GTableFilterPanel;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.navigation.NavigationHistoryPlugin;
@@ -38,6 +39,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
@@ -107,7 +109,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 
 		assertEquals("0000004f", model.getValueAt(3, MemoryMapModel.END));
 		// select rows 0 through 3
-		table.setRowSelectionInterval(0, 3);
+		select(0, 3);
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
@@ -121,6 +123,41 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0000004f", model.getValueAt(3, MemoryMapModel.END));
 		redo(program);
 		assertEquals("0000004f", model.getValueAt(0, MemoryMapModel.END));
+	}
+
+	@Test
+	public void testMergeBlocksWithFilter() throws Exception {
+		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
+		tx(program, () -> {
+			memory.createInitializedBlock("first", getAddr(0), 0x10, (byte) 0, TaskMonitor.DUMMY,
+				false);
+			memory.createInitializedBlock("mergeMe2", getAddr(0x10), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("mergeMe3", getAddr(0x20), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("last", getAddr(0x40), 0x10, (byte) 0,
+				TaskMonitor.DUMMY, false);
+		});
+
+		// filter so that only the middle two blocks are visible
+		GTableFilterPanel<MemoryBlock> filterPanel = provider.getTableFilterPanel();
+		runSwing(() -> filterPanel.setFilterText("mergeMe"));
+		waitForSwing();
+		assertEquals(2, table.getRowCount());
+		assertEquals("mergeMe2", table.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals("mergeMe3", table.getValueAt(1, MemoryMapModel.NAME));
+
+		// select both visible rows
+		select(0, 1);
+		DockingActionIf action = getAction(plugin, "Merge Blocks");
+		assertTrue(action.isEnabled());
+		performAction(action, false);
+		waitForSwing();
+
+		assertEquals(getAddr(0xf), memory.getBlock("first").getEnd());
+		assertEquals(getAddr(0x10), memory.getBlock("mergeMe2").getStart());
+		assertEquals(getAddr(0x2f), memory.getBlock("mergeMe2").getEnd());
+		assertNull(memory.getBlock("mergeMe3"));
 	}
 
 	@Test
@@ -146,8 +183,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		// select rows 0 and 2
 		// blocks are not contiguous
 		// verify an error message is displayed
-		table.setRowSelectionInterval(0, 0);
-		table.addRowSelectionInterval(2, 2);
+		selectDiscontiguous(0, 2);
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
 		performAction(action, false);
@@ -167,7 +203,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		});
 
 		// select rows 0 and 1
-		table.setRowSelectionInterval(0, 1);
+		select(0, 1);
 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
@@ -212,7 +248,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		});
 
 		// select rows 0 and 1
-		table.setRowSelectionInterval(0, 1);
+		select(0, 1);
 
 		DockingActionIf action = getAction(plugin, "Merge Blocks");
 		assertTrue(action.isEnabled());
@@ -226,6 +262,21 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(b);
 		runSwing(() -> b.getActionListeners()[0].actionPerformed(null));
 		assertEquals("0000004f", model.getValueAt(0, MemoryMapModel.END));
+	}
+
+	private void select(int row1, int row2) {
+		runSwing(() -> table.setRowSelectionInterval(row1, row2));
+	}
+
+	private void selectDiscontiguous(int... rows) {
+		runSwing(() -> {
+	
+			table.clearSelection();
+			for (int i : rows) {
+				table.addRowSelectionInterval(i, i);
+			}
+	
+		});
 	}
 
 	private void showProvider() {

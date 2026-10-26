@@ -21,6 +21,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.Accumulator;
@@ -80,34 +81,17 @@ class CommentTableModel extends AddressBasedTableModel<CommentRowObject> {
 			return; // no active program
 		}
 
-		AddressIterator commentIterator =
-			listing.getCommentAddressIterator(getProgram().getMemory(), true);
-		while (commentIterator.hasNext()) {
-			Address commentAddr = commentIterator.next();
-			CodeUnit cu = listing.getCodeUnitContaining(commentAddr);
-			if (!(cu instanceof Data)) {
-				// avoid too many comments in the table by not showing offcut instruction comments
-				cu = listing.getCodeUnitAt(commentAddr);
-			}
-
-			if (cu == null) {
-				continue;
-			}
-
-			if (cu.getComment(CommentType.PRE) != null) {
-				accumulator.add(new CommentRowObject(commentAddr, CommentType.PRE));
-			}
-			if (cu.getComment(CommentType.POST) != null) {
-				accumulator.add(new CommentRowObject(commentAddr, CommentType.POST));
-			}
-			if (cu.getComment(CommentType.EOL) != null) {
-				accumulator.add(new CommentRowObject(commentAddr, CommentType.EOL));
-			}
-			if (cu.getComment(CommentType.PLATE) != null) {
-				accumulator.add(new CommentRowObject(commentAddr, CommentType.PLATE));
-			}
-			if (cu.getComment(CommentType.REPEATABLE) != null) {
-				accumulator.add(new CommentRowObject(commentAddr, CommentType.REPEATABLE));
+		Memory memory = getProgram().getMemory();
+		AddressIterator it = listing.getCommentAddressIterator(memory, true);
+		while (it.hasNext()) {
+			monitor.checkCancelled();
+			Address addr = it.next();
+			CodeUnitComments comments = listing.getAllComments(addr);
+			for (CommentType type : CommentType.values()) {
+				String comment = comments.getComment(type);
+				if (comment != null) {
+					accumulator.add(new CommentRowObject(addr, type));
+				}
 			}
 		}
 
@@ -115,7 +99,6 @@ class CommentTableModel extends AddressBasedTableModel<CommentRowObject> {
 
 	void commentAdded(Address addr, CommentType commentType) {
 		String comment = listing.getComment(commentType, addr);
-
 		if (comment == null) {
 			Msg.debug(this, "Received a commentAdded() with a null comment");
 			return;

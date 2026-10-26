@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,8 @@ import java.util.NoSuchElementException;
  */
 public interface BufferFile {
 	
+	public static final int MAX_PARAM_NAME_LENGTH = 40;
+
 	/**
 	 * Returns true if this file may not be modified 
 	 * via the buffer put method.  
@@ -55,7 +57,7 @@ public interface BufferFile {
 	
 	/**
 	 * Set the integer value for a named parameter.
-	 * @param name parameter name
+	 * @param name parameter name (encoded length may not exceed {@value #MAX_PARAM_NAME_LENGTH}-bytes)
 	 * @param value parameter value
 	 * @throws IOException
 	 */

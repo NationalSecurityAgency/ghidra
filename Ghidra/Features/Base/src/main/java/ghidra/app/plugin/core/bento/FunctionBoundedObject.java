@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.bento;
 
 import ghidra.program.model.listing.Function;
+import ghidra.util.Radix;
 
 public class FunctionBoundedObject extends BoundedObject {
 
@@ -27,8 +28,8 @@ public class FunctionBoundedObject extends BoundedObject {
 	}
 
 	@Override
-	public BentoRadix getDefaultRadix() {
-		return BentoRadix.HEX_LOWER;
+	public Radix getDefaultRadix() {
+		return Radix.HEX_LOWER;
 	}
 
 	@Override

@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.math.BigInteger;
@@ -35,14 +36,13 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.format.DataFormatModel;
 import ghidra.util.HelpLocation;
-import ghidra.util.charset.CharsetInfo;
-import ghidra.util.charset.picker.CharsetPickerDialog;
+import ghidra.util.charset.picker.CharsetPickerField;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 
 public class ByteViewerOptionsDialog extends DialogComponentProvider {
 
-	private JTextField charsetField;
+	private CharsetPickerField charsetField;
 	private BrowseButton charsetPickerButton;
 	private ByteViewerComponentProvider provider;
 	private ByteViewerConfigOptions configOptions;
@@ -214,18 +214,10 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider {
 		panel.add(hexGroupSizeSpinner.getSpinner());
 
 		panel.add(new GLabel("Charset:"));
-		charsetField = new JTextField();
-		charsetField.setEditable(false);
-		charsetField.setText(configOptions.getCharsetInfo().getName());
-		charsetField.getAccessibleContext().setAccessibleName("Character Set Name");
-
-		charsetPickerButton = new BrowseButton();
-		charsetPickerButton.addActionListener(e -> pickCharset());
-		charsetPickerButton.getAccessibleContext().setAccessibleName("Character Set Picker");
-		JPanel charsetPanel = new JPanel(new BorderLayout());
-		charsetPanel.add(charsetField, BorderLayout.CENTER);
-		charsetPanel.add(charsetPickerButton, BorderLayout.EAST);
-		panel.add(charsetPanel);
+		charsetField = new CharsetPickerField(configOptions.getCharsetInfo());
+		charsetField.setClearButtonVisible(false);
+		charsetField.addItemListener(_ -> updateCharset());
+		panel.add(charsetField);
 
 		panel.add(new GLabel("Compact Char Width:"));
 		GCheckBox compactChars = new GCheckBox();
@@ -279,16 +271,8 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider {
 		updateButtonEnablement();
 	}
 
-	private void pickCharset() {
-		CharsetInfo newCSI = CharsetPickerDialog.pickCharset(configOptions.getCharsetInfo());
-		if (newCSI != null) {
-			setCharsetInfo(newCSI);
-		}
-	}
-
-	private void setCharsetInfo(CharsetInfo newCSI) {
-		configOptions.setCharsetInfo(newCSI);
-		charsetField.setText(newCSI.getName());
+	private void updateCharset() {
+		configOptions.setCharsetInfo(charsetField.getCharsetInfo());
 	}
 
 	private JPanel buildModelPickerPanel() {

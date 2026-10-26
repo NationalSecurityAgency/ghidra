@@ -26,6 +26,9 @@ import ghidra.util.Msg;
 
 // To be run using runISFServer 
 
+// NB: This code is included for demonstration purposes only and is not used by the distribution.
+// Real use cases should implement authentication if the server is to be used in an unrestricted environment.
+
 public class IsfServerLauncher implements GhidraLaunchable {
 
 	private GhidraProject project = null;

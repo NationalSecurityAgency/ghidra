@@ -1595,8 +1595,16 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (!(dataType instanceof StructureInternal)) {
 			throw new IllegalArgumentException();
 		}
+
+		try (Closeable _ = lock.write()) {
+			doReplaceWith(dataType);
+		}
+	}
+
+	private void doReplaceWith(DataType dataType) {
+
 		boolean isResolveCacheOwner = false;
-		try (Closeable c = lock.write()) {
+		try {
 			isResolveCacheOwner = dataMgr.activateResolveCache();
 			checkDeleted();
 			doReplaceWith((StructureInternal) dataType, true);

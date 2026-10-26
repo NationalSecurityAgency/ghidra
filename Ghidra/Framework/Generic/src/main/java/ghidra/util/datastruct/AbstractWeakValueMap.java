@@ -151,7 +151,7 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 	protected void processQueue() {
 		WeakValueRef<K, V> ref;
 		while ((ref = (WeakValueRef<K, V>) refQueue.poll()) != null) {
-			getRefMap().remove(ref.key);
+			getRefMap().remove(ref.key, ref);
 		}
 	}
 

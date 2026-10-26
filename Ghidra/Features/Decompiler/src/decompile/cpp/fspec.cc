@@ -882,9 +882,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
       int4 sz = curentry->isExclusion() ? curentry->getSize() : curentry->getAlign();
       int4 nextslot = 0;
       Address addr = curentry->getAddrBySlot(nextslot,sz,1,glb);
-      int4 trialpos = active->getNumTrials();
-      active->registerTrial(addr,sz);
-      ParamTrial &paramtrial(active->getTrial(trialpos));
+      ParamTrial &paramtrial(active->registerTrial(addr,sz));
       paramtrial.markUnref();
       paramtrial.setEntry(curentry,0);
     }
@@ -913,9 +911,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 	if (slotlist[j] == 0) {
 	  int4 nextslot = j;	// Make copy of j, so that getAddrBySlot can change it
 	  Address addr = curentry->getAddrBySlot(nextslot,curentry->getAlign(),1,glb);
-	  int4 trialpos = active->getNumTrials();
-	  active->registerTrial(addr,curentry->getAlign());
-	  ParamTrial &paramtrial(active->getTrial(trialpos));
+	  ParamTrial &paramtrial(active->registerTrial(addr,curentry->getAlign()));
 	  paramtrial.markUnref();
 	  paramtrial.setEntry(curentry,0);
 	}
@@ -2023,10 +2019,12 @@ void ParamActive::clear(void)
 /// A ParamTrial object is created and a slot is assigned.
 /// \param addr is the starting address of the memory range
 /// \param sz is the number of bytes in the range
-void ParamActive::registerTrial(const Address &addr,int4 sz)
+/// \return the new ParamTrial
+ParamTrial &ParamActive::registerTrial(const Address &addr,int4 sz)
 
 {
-  trial.push_back(ParamTrial(addr,sz,slotbase));
+  trial.emplace_back(addr,sz,slotbase);
+  ParamTrial &res(trial.back());
   // It would require too much work to calculate whether a specific data location is changed
   // by a subfunction, but a fairly strong assumption is that (unless it is explicitly saved) a
   // register may change and is thus unlikely to be used as a location for passing parameters.
@@ -2034,8 +2032,9 @@ void ParamActive::registerTrial(const Address &addr,int4 sz)
   // Since this all a heuristic for recovering parameters, we assume this rule is always true
   // to get an efficient test
   if (addr.getSpace()->getType() != IPTR_SPACEBASE)
-    trial.back().markKilledByCall();
+    res.markKilledByCall();
   slotbase += 1;
+  return res;
 }
 
 /// Copy the memory range of the trial and its boolean properties but assign a new slot.
@@ -2432,8 +2431,8 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
     output = op2.output->clone();
   else
     output = (ParamList *)0;
-  for (int4 i=0;i <sharedActions.size(); ++i)
-    sharedActions[i] = op2.sharedActions[i]->clone(this);
+  for (int4 i=0;i<op2.sharedActions.size();++i)
+    sharedActions.push_back(op2.sharedActions[i]->clone(this));
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
@@ -5150,7 +5149,10 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput,const FuncPr
   Varnode *stackref = (Varnode *)0;
   for(int4 i=0;i<numparams;++i) {
     ProtoParameter *param = source.getParam(i);
-    if (!param->hasStorage()) continue;
+    if (!param->hasStorage()) {
+      newinput.push_back((Varnode *)0);
+      continue;
+    }
     int4 reuse = transferLockedInputParam(param);
     if (reuse == 0) return false;
     if (reuse > 0)
@@ -5229,13 +5231,18 @@ void FuncCallSpecs::commitNewInputs(Funcdata &data,vector<Varnode *> &newinput)
   activeinput.clear();
 
   int4 numparams = numParams();
+  if (numparams+1 > newinput.size())
+    throw LowlevelError("Mismatched Varnode and ProtoParameter");
   for(int4 i=0;i<numparams;++i) {
     ProtoParameter *param = getParam(i);
-    if (!param->hasStorage()) continue;
-    Varnode *vn = buildParam(data,newinput[1+i],param,stackref);
-    newinput[1+i] = vn;
-    activeinput.registerTrial(param->getAddress(),param->getSize());
-    activeinput.getTrial(i).markActive(); // Parameter is not optional
+    if (!param->hasStorage()) {
+      newinput[i+1] = data.newConstant(param->getSize(), 0);	// Put #0 in unassigned slot
+      continue;
+    }
+    Varnode *vn = buildParam(data,newinput[i+1],param,stackref);
+    newinput[i+1] = vn;
+    ParamTrial &paramtrial(activeinput.registerTrial(param->getAddress(),param->getSize()));
+    paramtrial.markActive(); // Parameter is not optional
     if (noplacehold&&(param->getAddress().getSpace()->getType() == IPTR_SPACEBASE)) {
       // We have a locked stack parameter, use it to recover the stack offset
       vn->setSpacebasePlaceholder();

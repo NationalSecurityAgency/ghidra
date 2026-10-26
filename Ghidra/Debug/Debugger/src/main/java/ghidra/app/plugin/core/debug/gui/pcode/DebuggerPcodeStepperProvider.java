@@ -61,7 +61,6 @@ import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
@@ -820,7 +819,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void updateSubTitle() {
-		TimeRadix radix = current.getTrace() == null ? TimeRadix.DEFAULT
+		Radix radix = current.getTrace() == null ? Radix.DEFAULT
 				: current.getTrace().getTimeManager().getTimeRadix();
 		setSubTitle(current.getTime().toString(radix));
 	}

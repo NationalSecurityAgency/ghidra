@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,14 +29,19 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class ElfSymbolTable implements ElfFileSection {
 
-	private final ElfStringTable stringTable;
+	static final int ELF64_SYMENT_SIZE = 24;
+	static final int ELF32_SYMENT_SIZE = 16;
+
+	private final ElfStringTable stringTable; // may be null
 	private final ElfSectionHeader symbolTableSection; // may be null
 	private final int[] symbolSectionIndexTable;
 	private final long fileOffset;
 	private final long addrOffset;
 	private final long length;
-	private final long entrySize;
+	private final int entrySize;
 	private final int symbolCount;
+
+	private boolean symbolTableTruncated;
 
 	private final boolean is32bit;
 	private final boolean isDynamic;
@@ -48,10 +53,12 @@ public class ElfSymbolTable implements ElfFileSection {
 	 * @param reader byte reader (reader is not retained and position is unaffected)
 	 * @param header elf header
 	 * @param symbolTableSection string table section header or null if associated with a dynamic table entry
-	 * @param fileOffset symbol table file offset
+	 *           or unable to locate string table.
+	 * @param fileOffset symbol table file offset (must be pre-validated)
 	 * @param addrOffset memory address of symbol table (should already be adjusted for prelink)
-	 * @param length length of symbol table in bytes of -1 if unknown
 	 * @param entrySize size of each symbol entry in bytes
+	 * @param symbolCount number of symbol entries within symbol table
+	 * @param symbolTableTruncated true if symbol count was reduced during parse due to constraints
 	 * @param stringTable associated string table
 	 * @param symbolSectionIndexTable extended symbol section index table (may be null, used when 
 	 *           symbol <code>st_shndx == SHN_XINDEX</code>).  See 
@@ -60,24 +67,28 @@ public class ElfSymbolTable implements ElfFileSection {
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	public ElfSymbolTable(BinaryReader reader, ElfHeader header,
-			ElfSectionHeader symbolTableSection, long fileOffset, long addrOffset, long length,
-			long entrySize, ElfStringTable stringTable, int[] symbolSectionIndexTable,
+			ElfSectionHeader symbolTableSection, long fileOffset, long addrOffset,
+			int entrySize, int symbolCount, boolean symbolTableTruncated,
+			ElfStringTable stringTable,
+			int[] symbolSectionIndexTable,
 			boolean isDynamic) throws IOException {
+
+		this.is32bit = header.is32Bit();
 
 		this.symbolTableSection = symbolTableSection;
 		this.fileOffset = fileOffset;
 		this.addrOffset = addrOffset;
-		this.length = length;
 		this.entrySize = entrySize;
+		this.symbolCount = symbolCount;
+		this.length = (long) entrySize * (long) symbolCount;
+		this.symbolTableTruncated = symbolTableTruncated;
 		this.stringTable = stringTable;
-		this.is32bit = header.is32Bit();
 		this.symbolSectionIndexTable = symbolSectionIndexTable;
 		this.isDynamic = isDynamic;
 
 		BinaryReader symTableReader = reader.clone(fileOffset);
 
 		List<ElfSymbol> symbolList = new ArrayList<>();
-		symbolCount = (int) (length / entrySize);
 
 		// load the all the symbol entries first, don't initialize the string name
 		// that will be done later to help localize memory access
@@ -97,12 +108,25 @@ public class ElfSymbolTable implements ElfFileSection {
 				.collect(Collectors.toList());
 
 		// initialize the Symbol string names from string table
-		for (ElfSymbol sym : sortedList) {
-			sym.initSymbolName(symTableReader, stringTable);
+		if (stringTable != null) {
+			for (ElfSymbol sym : sortedList) {
+				sym.initSymbolName(symTableReader, stringTable);
+			}
 		}
 
 		symbols = new ElfSymbol[symbolList.size()];
 		symbolList.toArray(symbols);
+	}
+
+	/**
+	 * Check if specified symbol entry size is valid and may be cast to a 32-bit integer
+	 * @param is32bit true if 32-bit ELF, false of 64-bit Elf
+	 * @param entrySize symbol entry size
+	 * @return true if entry size is valid
+	 */
+	static boolean isValidEntrySize(boolean is32bit, long entrySize) {
+		int minEntrySize = is32bit ? ELF32_SYMENT_SIZE : ELF64_SYMENT_SIZE;
+		return entrySize >= minEntrySize && entrySize <= Integer.MAX_VALUE;
 	}
 
 	/**
@@ -114,8 +138,7 @@ public class ElfSymbolTable implements ElfFileSection {
 	}
 
 	/**
-	 * Returns the associated string table section.
-	 * @return the associated string table section
+	 * {@return associated string table section or null if string table not found}
 	 */
 	public ElfStringTable getStringTable() {
 		return stringTable;
@@ -126,6 +149,14 @@ public class ElfSymbolTable implements ElfFileSection {
 	 */
 	public int getSymbolCount() {
 		return symbolCount;
+	}
+
+	/**
+	 * {@return true if {@link #getSymbolCount()} was reduced or table entries were truncated 
+	 * during parse due to constraints}
+	 */
+	public boolean hasTruncatedSymbolTable() {
+		return symbolTableTruncated;
 	}
 
 	/**
@@ -294,6 +325,9 @@ public class ElfSymbolTable implements ElfFileSection {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
+		if (length > Integer.MAX_VALUE) {
+			return null;
+		}
 		String dtName = is32bit ? "Elf32_Sym" : "Elf64_Sym";
 		Structure struct = new StructureDataType(new CategoryPath("/ELF"), dtName, 0);
 		struct.add(DWORD, "st_name", null);
@@ -316,6 +350,6 @@ public class ElfSymbolTable implements ElfFileSection {
 			struct.add(new ArrayDataType(ByteDataType.dataType, sizeRemaining, 1), "st_unknown",
 				null);
 		}
-		return new ArrayDataType(struct, (int) (length / entrySize), (int) entrySize);
+		return new ArrayDataType(struct, symbolCount, -1);
 	}
 }

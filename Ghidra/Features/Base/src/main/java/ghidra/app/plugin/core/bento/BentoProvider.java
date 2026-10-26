@@ -31,8 +31,7 @@ import ghidra.app.plugin.core.bento.actions.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import resources.ResourceManager;
 
 public class BentoProvider extends ComponentProviderAdapter {
@@ -47,12 +46,12 @@ public class BentoProvider extends ComponentProviderAdapter {
 	private boolean applyFilter = true;
 
 	private static final Icon ICON_REFRESH =
-		ResourceManager.getScaledIcon(new GIcon("icon.debugger.refresh"), 12, 12);
+		ResourceManager.getScaledIcon(new GIcon("icon.plugin.bento.refresh"), 12, 12);
 	private static final Icon ICON_FILTER =
 		ResourceManager.getScaledIcon(new GIcon("icon.widget.filterpanel.filter.off"), 12, 12);
 	long halfPage = 512L;
 
-	private Map<Integer, BentoRadix> radixMap = new HashMap<>();
+	private Map<Integer, Radix> radixMap = new HashMap<>();
 
 	public BentoProvider(PluginTool tool, BentoServicePlugin plugin, boolean isTransient) {
 		super(tool, plugin.title, plugin.getName());
@@ -332,13 +331,13 @@ public class BentoProvider extends ComponentProviderAdapter {
 		return bentoPanel;
 	}
 
-	public void setRadix(int index, BentoRadix radix) {
+	public void setRadix(int index, Radix radix) {
 		radixMap.put(index, radix);
 	}
 
-	public BentoRadix getRadix(int index) {
-		BentoRadix radix = radixMap.get(index);
-		return radix == null ? BentoRadix.DEFAULT : radix;
+	public Radix getRadix(int index) {
+		Radix radix = radixMap.get(index);
+		return radix == null ? Radix.DEFAULT : radix;
 	}
 
 }

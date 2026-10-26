@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.bento;
 
+import ghidra.util.Radix;
+
 public class BoundedObject {
 
 	protected Object obj;
@@ -75,8 +77,8 @@ public class BoundedObject {
 		return hiBound;
 	}
 
-	public BentoRadix getDefaultRadix() {
-		return BentoRadix.DEFAULT;
+	public Radix getDefaultRadix() {
+		return Radix.DEFAULT;
 	}
 
 }

@@ -1180,7 +1180,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void markupProgramHeaders(TaskMonitor monitor) {
 
 		int headerCount = elf.getProgramHeaderCount();
-		int size = elf.e_phentsize() * headerCount;
+		long size = (long) elf.e_phentsize() * headerCount;
 		if (size == 0) {
 			return;
 		}
@@ -1190,7 +1190,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Structure phStructDt = (Structure) elf.getProgramHeaders()[0].toDataType();
 		phStructDt = phStructDt.clone(program.getDataTypeManager());
 
-		Array arrayDt = new ArrayDataType(phStructDt, headerCount, size);
+		Array arrayDt = new ArrayDataType(phStructDt, headerCount, -1);
 
 		Address headerAddr = findLoadAddress(elf.e_phoff(), size);
 
@@ -1209,8 +1209,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			addElfHeaderReferenceMarkup(elf.getPhoffComponentOrdinal(), headerAddr);
 
-			Data array =
-				createData(headerAddr, program.getDataTypeManager().resolve(arrayDt, null));
+			if (elf.e_phentsize() != phStructDt.getAlignedLength()) {
+				String msg =
+					"Unable to markup ELF Program Header table due to irregular 'e_phentsize' value: " +
+						elf.e_phentsize();
+				listing.setComment(headerAddr, CommentType.PRE, msg);
+				log(msg);
+				return;
+			}
+
+			Data array = applyMarkupData(headerAddr, arrayDt, "Program Headers",
+				elf.hasTruncatedProgramHeaders());
 			if (array == null) {
 				return;
 			}
@@ -1223,6 +1232,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
+				if (d == null) {
+					break; // assume truncated markup
+				}
 				d.setComment(CommentType.EOL, programHeaders[i].getComment());
 				if (programHeaders[i].getType() == ElfProgramHeaderConstants.PT_NULL) {
 					continue;
@@ -1247,7 +1259,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void markupSectionHeaders(TaskMonitor monitor) {
 
 		int headerCount = elf.getSectionHeaderCount();
-		int size = elf.e_shentsize() * headerCount;
+		long size = (long) elf.e_shentsize() * headerCount;
 		if (size == 0) {
 			return;
 		}
@@ -1257,7 +1269,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Structure shStructDt = (Structure) elf.getSections()[0].toDataType();
 		shStructDt = shStructDt.clone(program.getDataTypeManager());
 
-		Array arrayDt = new ArrayDataType(shStructDt, headerCount, elf.e_shentsize());
+		Array arrayDt = new ArrayDataType(shStructDt, headerCount, -1);
 
 		Address headerAddr = findLoadAddress(elf.e_shoff(), size);
 
@@ -1276,8 +1288,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			addElfHeaderReferenceMarkup(elf.getShoffComponentOrdinal(), headerAddr);
 
-			Data array =
-				createData(headerAddr, program.getDataTypeManager().resolve(arrayDt, null));
+			if (elf.e_shentsize() != shStructDt.getAlignedLength()) {
+				String msg =
+					"Unable to markup ELF Section Header table due to irregular 'e_shentsize' value: " +
+						elf.e_shentsize();
+				listing.setComment(headerAddr, CommentType.PRE, msg);
+				log(msg);
+				return;
+			}
+
+			Data array = applyMarkupData(headerAddr, arrayDt, "Section Headers",
+				elf.hasTruncatedSectionHeaders());
 			if (array == null) {
 				return;
 			}
@@ -1289,6 +1310,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
+				if (d == null) {
+					break; // assume truncated markup
+				}
 				String comment = sections[i].getNameAsString();
 				String type = sections[i].getTypeAsString();
 				if (type != null) {
@@ -1328,14 +1352,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void markupRelocationTable(Address relocTableAddr, ElfRelocationTable relocTable,
 			TaskMonitor monitor) {
 		try {
-			DataType dataType = relocTable.toDataType();
-			if (dataType != null) {
-				listing.createData(relocTableAddr, dataType);
-			}
-			else {
-				listing.setComment(relocTableAddr, CommentType.PRE,
-					"ELF Relocation Table (markup not yet supported)");
-			}
+			applyMarkupData(relocTableAddr, relocTable.toDataType(), "Relocation Table",
+				relocTable.isParsedRelocationCountReduced());
 		}
 		catch (Exception e) {
 			log("Failed to properly markup relocation table: " + getMessage(e));
@@ -1577,8 +1595,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				symbolTableAddr = findLoadAddress(symbolTableSection, 0);
 			}
 			else {
-				symbolTableAddr =
-					findLoadAddress(elfSymbolTable.getFileOffset(), elfSymbolTable.getLength());
+				symbolTableAddr = findLoadAddress(elfSymbolTable.getFileOffset(), 1);
 			}
 
 			ElfSymbol[] symbols = elfSymbolTable.getSymbols();
@@ -2608,16 +2625,75 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
+	/**
+	 * Create listing markup data with possible array truncation.
+	 * @param addr listing address
+	 * @param dt datatype to be applied
+	 * @param description brief markup type description for errors and applied comment(s)
+	 * @param truncated true if parsed data had been truncated (as reflected by dt length)
+	 * @return applied data or null
+	 */
+	private Data applyMarkupData(Address addr, DataType dt, String description, boolean truncated) {
+		AddressRange rangeContainingStart =
+			program.getMemory().getAllInitializedAddressSet().getRangeContaining(addr);
+		if (rangeContainingStart == null) {
+			log("Failed to markup " + description + " at " + addr +
+				" (initialized memory not found)");
+			return null;
+		}
+
+		if (dt == null) {
+			listing.setComment(addr, CommentType.PRE,
+				"ELF " + description + " markup not supported or table is too large)");
+			return null;
+		}
+
+		dt = dt.clone(program.getDataTypeManager()); // ensure we have proper data organization
+
+		// Check array markup case which may require truncation
+		if (dt instanceof Array arrayDt) {
+			Address endAddr;
+			try {
+				endAddr = addr.addNoWrap(dt.getLength() - 1);
+				truncated |= !rangeContainingStart.contains(endAddr);
+			}
+			catch (AddressOverflowException e) {
+				endAddr = addr.getAddressSpace().getMaxAddress();
+				truncated = true;
+			}
+			rangeContainingStart = rangeContainingStart.intersectRange(addr, endAddr);
+
+			long availSpace = rangeContainingStart.getMaxAddress().subtract(addr) + 1;
+			DataType elementDt = arrayDt.getDataType();
+			int reducedElementCount = (int) (availSpace / elementDt.getAlignedLength());
+			if (reducedElementCount == 0) {
+				return null;
+			}
+			dt = new ArrayDataType(elementDt, reducedElementCount, -1,
+				program.getDataTypeManager());
+		}
+
+		Data data = createData(addr, dt);
+		if (data != null && truncated) {
+			listing.setComment(addr, CommentType.PRE,
+				"WARNING: Incomplete markup! " + description + " has been truncated");
+		}
+		return data;
+	}
+
 	private void markupSymbolTable(Address symbolTableAddr, ElfSymbolTable symbolTable,
 			TaskMonitor monitor) {
 
 		Data array = null;
 		try {
-			array = listing.createData(symbolTableAddr, symbolTable.toDataType());
+			array = applyMarkupData(symbolTableAddr, symbolTable.toDataType(), "Symbol Table",
+				symbolTable.hasTruncatedSymbolTable());
 		}
 		catch (Exception e) {
-			log("Failed to properly markup symbol table at " + symbolTableAddr + ": " +
-				getMessage(e));
+			// ignore
+		}
+
+		if (array == null) {
 			return;
 		}
 

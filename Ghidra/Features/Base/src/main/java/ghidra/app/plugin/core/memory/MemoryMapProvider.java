@@ -345,7 +345,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 					.helpLocation(new HelpLocation("MemoryMapPlugin", "Navigation"))
 					.description(HTMLUtilities.toHTML("Toggle <b>on</b> means to select the block" +
 						" that contains the current location"))
-					.onAction(c -> followLocationChanges = toggleNavigateAction.isSelected())
+					.onAction(_ -> followLocationChanges = toggleNavigateAction.isSelected())
 					.buildAndInstallLocal(this);
 	}
 
@@ -434,6 +434,10 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	JTable getTable() {
 		return table;
+	}
+
+	GTableFilterPanel<MemoryBlock> getTableFilterPanel() {
+		return filterPanel;
 	}
 
 	/**
@@ -649,10 +653,12 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setStatusText("Program is busy, try again later");
 			return;
 		}
-		ArrayList<MemoryBlock> delBlocks = new ArrayList<>();
+
+		List<MemoryBlock> delBlocks = new ArrayList<>();
 		int delRows[] = table.getSelectedRows();
-		for (int element : delRows) {
-			MemoryBlock block = tableModel.getBlockAt(element);
+		for (int row : delRows) {
+			int modelRow = filterPanel.getModelRow(row);
+			MemoryBlock block = tableModel.getBlockAt(modelRow);
 			delBlocks.add(block);
 		}
 		table.clearSelection();
@@ -662,7 +668,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	/**
 	 * Callback for deleting a block of memory
 	 */
-	private void deleteBlock(ArrayList<MemoryBlock> blocks) {
+	private void deleteBlock(List<MemoryBlock> blocks) {
 		memManager.deleteBlocks(blocks);
 	}
 
@@ -768,10 +774,11 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 * Merge the selected blocks.
 	 */
 	private void mergeBlocks() {
-		ArrayList<MemoryBlock> blocks = new ArrayList<>();
+		List<MemoryBlock> blocks = new ArrayList<>();
 		int rows[] = table.getSelectedRows();
-		for (int element : rows) {
-			MemoryBlock block = tableModel.getBlockAt(element);
+		for (int row : rows) {
+			int modelRow = filterPanel.getModelRow(row);
+			MemoryBlock block = tableModel.getBlockAt(modelRow);
 			blocks.add(block);
 		}
 		table.clearSelection();

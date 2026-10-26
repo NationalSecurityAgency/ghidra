@@ -34,7 +34,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -234,11 +234,11 @@ public class PatchStep implements Step {
 
 	@Override
 	public String toString() {
-		return toString(TimeRadix.DEFAULT);
+		return toString(Radix.DEFAULT);
 	}
 
 	@Override
-	public String toString(TimeRadix radix) {
+	public String toString(Radix radix) {
 		if (threadKey == -1) {
 			return "{" + sleigh + "}";
 		}

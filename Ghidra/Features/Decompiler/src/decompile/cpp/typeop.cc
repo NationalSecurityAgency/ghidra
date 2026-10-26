@@ -699,9 +699,6 @@ Datatype *TypeOpCall::getInputLocal(const PcodeOp *op,int4 slot) const
     
   // Get types of call input parameters
   fc = FuncCallSpecs::getFspecFromConst(vn->getAddr());
-  // Its false to assume that the parameter symbol corresponds
-  // to the varnode in the same slot, but this is easiest until
-  // we get giant sized parameters working properly
   ProtoParameter *param = fc->getParam(slot - 1);
   if (param != (ProtoParameter*) 0) {
     if (param->isTypeLocked()) {

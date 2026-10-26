@@ -22,7 +22,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -45,7 +45,7 @@ public interface Step extends Comparable<Step> {
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(String stepSpec, TimeRadix radix) {
+	static Step parse(String stepSpec, Radix radix) {
 		if ("".equals(stepSpec)) {
 			return nop();
 		}
@@ -76,7 +76,7 @@ public interface Step extends Comparable<Step> {
 	 * @return the parsed step
 	 * @throws IllegalArgumentException if the specification is of the wrong form
 	 */
-	static Step parse(long threadKey, String stepSpec, TimeRadix radix) {
+	static Step parse(long threadKey, String stepSpec, Radix radix) {
 		if (stepSpec.startsWith("s")) {
 			return SkipStep.parse(threadKey, stepSpec, radix);
 		}
@@ -90,7 +90,7 @@ public interface Step extends Comparable<Step> {
 		return new TickStep(-1, 0);
 	}
 
-	String toString(TimeRadix radix);
+	String toString(Radix radix);
 
 	StepType getType();
 

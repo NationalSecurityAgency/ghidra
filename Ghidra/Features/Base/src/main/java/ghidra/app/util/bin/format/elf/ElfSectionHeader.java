@@ -72,6 +72,9 @@ import ghidra.util.StringUtilities;
 
 public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
+	static final int ELF64_SHDR_SIZE = 64;
+	static final int ELF32_SHDR_SIZE = 40;
+
 	private final BinaryReader reader;
 	private final ElfHeader header;
 
@@ -85,6 +88,8 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	private final int sh_info;
 	private final long sh_addralign;
 	private final long sh_entsize;
+
+	private final boolean hasValidOffset;
 
 	private String name; // delayed initialization
 
@@ -133,7 +138,10 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 		if ((sh_flags & ElfSectionHeaderConstants.SHF_COMPRESSED) != 0) {
 			compressedHeader = readCompressedSectionHeader();
 		}
-		//checkSize();
+
+		hasValidOffset = sh_offset >= 0 && sh_offset < ElfHeader.FILE_OFFSET_HARD_LIMIT &&
+			(header.is64Bit() || sh_offset != ElfConstants.ELF32_INVALID_OFFSET) &&
+			sh_offset < reader.getByteProvider().length();
 	}
 
 	private ElfCompressedSectionHeader readCompressedSectionHeader() {
@@ -377,8 +385,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	 * @return true if this section header's offset is invalid
 	 */
 	public boolean isInvalidOffset() {
-		return sh_offset < 0 ||
-			(header.is32Bit() && sh_offset == ElfConstants.ELF32_INVALID_OFFSET);
+		return !hasValidOffset;
 	}
 
 	/**

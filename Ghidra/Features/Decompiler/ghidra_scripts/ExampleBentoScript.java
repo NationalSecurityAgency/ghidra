@@ -39,6 +39,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.util.Radix;
 import ghidra.util.task.TaskMonitor;
 
 public class ExampleBentoScript extends GhidraScript {
@@ -90,7 +91,7 @@ public class ExampleBentoScript extends GhidraScript {
 			provider.setBoxes(boxes);
 			provider.setProgram(program);
 			provider.setColumns(List.of("Inst", "Addr", "Op"));
-			provider.setRadix(0, BentoRadix.HEX_UPPER);
+			provider.setRadix(0, Radix.HEX_UPPER);
 			return false;
 		}
 	}

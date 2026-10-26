@@ -1562,11 +1562,14 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
     bool setplaceholder = varargs;
     for(int4 i=0;i<numparam;++i) {
       ProtoParameter *param = fc->getParam(i);
-      if (!param->hasStorage()) continue;
-      active->registerTrial(param->getAddress(),param->getSize());
-      active->getTrial(i).markActive(); // Parameter is not optional
+      if (!param->hasStorage()) {
+	data.opInsertInput(op,data.newConstant(param->getSize(),0),op->numInput());	// Put #0 in unassigned slot
+	continue;
+      }
+      ParamTrial &paramtrial(active->registerTrial(param->getAddress(),param->getSize()));
+      paramtrial.markActive(); // Parameter is not optional
       if (varargs){
-    	  active->getTrial(i).setFixedPosition(i);
+    	  paramtrial.setFixedPosition(i);
       }
       AddrSpace *spc = param->getAddress().getSpace();
       uintb off = param->getAddress().getOffset();
@@ -5025,10 +5028,8 @@ void ActionInputPrototype::markActiveInputRefs(ParamActive &active,list<InputRef
       continue;
     if (!data.getFuncProto().possibleInputParam((*iter).addr, (*iter).dataType->getSize()))
       continue;
-    int4 slot = active.getNumTrials();
-    active.registerTrial((*iter).addr,(*iter).dataType->getSize());
+    ParamTrial &trial(active.registerTrial((*iter).addr,(*iter).dataType->getSize()));
     typeList.push_back((*iter).dataType);
-    ParamTrial &trial(active.getTrial(slot));
     trial.markActive();
   }
 }
@@ -5068,7 +5069,6 @@ int4 ActionInputPrototype::apply(Funcdata &data)
       vn = *iter;
       ++iter;
       if (data.getFuncProto().possibleInputParam(vn->getAddr(),vn->getSize())) {
-	int4 slot = active.getNumTrials();
 	if (vn->isPersist()) {
 	  int4 sz;
 	  Address addr = data.findDisjointCover(vn, sz);
@@ -5077,16 +5077,18 @@ int4 ActionInputPrototype::apply(Funcdata &data)
 	    ct = useHigh ? vn->getHigh()->getType() : vn->getType();
 	  else
 	    ct = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
-	  active.registerTrial(addr,sz);
+	  ParamTrial &paramtrial(active.registerTrial(addr,sz));
 	  typeList.push_back(ct);
+	  if (!vn->hasNoDescend())
+	    paramtrial.markActive();	// Mark as active if it has descendants
 	}
 	else {
-	  active.registerTrial(vn->getAddr(),vn->getSize());
+	  ParamTrial &paramtrial(active.registerTrial(vn->getAddr(),vn->getSize()));
 	  Datatype *ct = useHigh ? vn->getHigh()->getType() : vn->getType();
 	  typeList.push_back(ct);
+	  if (!vn->hasNoDescend())
+	    paramtrial.markActive();	// Mark as active if it has descendants
 	}
-	if (!vn->hasNoDescend())
-	  active.getTrial(slot).markActive(); // Mark as active if it has descendants
       }
     }
     markActiveInputRefs(active, inputRefs, typeList, data);

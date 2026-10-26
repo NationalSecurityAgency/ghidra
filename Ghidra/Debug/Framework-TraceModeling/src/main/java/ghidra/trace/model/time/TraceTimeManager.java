@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.model.time.schedule.TraceSchedule.TimeRadix;
+import ghidra.util.Radix;
 
 public interface TraceTimeManager {
 	/** The attribute key for controlling the time radix */
@@ -153,7 +153,7 @@ public interface TraceTimeManager {
 	 * 
 	 * @param radix the radix
 	 */
-	void setTimeRadix(TimeRadix radix);
+	void setTimeRadix(Radix radix);
 
 	/**
 	 * Get the radix for displaying and parsing time (snapshots and step counts)
@@ -161,5 +161,5 @@ public interface TraceTimeManager {
 	 * @see #setTimeRadix(TimeRadix)
 	 * @return radix the radix
 	 */
-	TimeRadix getTimeRadix();
+	Radix getTimeRadix();
 }

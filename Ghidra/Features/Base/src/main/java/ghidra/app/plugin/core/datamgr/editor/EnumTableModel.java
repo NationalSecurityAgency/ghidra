@@ -230,6 +230,9 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 
 	int addEntry(int afterRow) {
 		Long value = findNextValue(afterRow);
+		if (value == null) {
+			return -1;
+		}
 		String name = getUniqueName();
 		String comment = "";
 		EnumEntry newEntry = new EnumEntry(name, value, comment);
@@ -252,36 +255,25 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		}
 	}
 
-	private long findNextValue(int afterRow) {
+	private Long findNextValue(int afterRow) {
 		if (enumEntryList.isEmpty()) {
-			return 0;
+			return 0L;
 		}
 		if (afterRow < 0 || afterRow >= enumEntryList.size()) {
 			afterRow = 0;
 		}
-		long value = enumEntryList.get(afterRow).getValue() + 1;
-		if (!isValidValue(value)) {
-			value = 0;
-		}
-		boolean wrapOK = value != 0;
+		long min = enuum.getMinPossibleValue();
+		long max = enuum.getMaxPossibleValue();
+		long selected = enumEntryList.get(afterRow).getValue();
+		long value = selected == max ? min : selected + 1;
+		long start = value;
 		while (enuum.getName(value) != null) {
-			if (!isValidValue(++value)) {
-				if (wrapOK) {
-					value = 0;
-					wrapOK = false;
-				}
-				else {
-					break;
-				}
+			value = value == max ? min : value + 1;
+			if (value == start) {
+				return null;
 			}
 		}
 		return value;
-	}
-
-	private boolean isValidValue(long value) {
-		long min = enuum.getMinPossibleValue();
-		long max = enuum.getMaxPossibleValue();
-		return value >= min && value <= max;
 	}
 
 	private String getUniqueName() {

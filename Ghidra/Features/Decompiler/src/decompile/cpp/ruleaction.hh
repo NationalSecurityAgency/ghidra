@@ -1097,11 +1097,11 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RulePtrsubUndo : public Rule {
-  static const int4 DEPTH_LIMIT;	///< The maximum depth of the additive expression to check
-  static int8 getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 maxLevel);
+  static constexpr int4 MAX_TERMS = 64;	///< The maximum number of terms to traverse
+  static int8 getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 &termCount);
   static int8 getExtraOffset(PcodeOp *op,int8 &multiplier);
   static int8 removeLocalAdds(Varnode *vn,Funcdata &data);
-  static int8 removeLocalAddRecurse(PcodeOp *op,int4 slot,int4 maxLevel,Funcdata &data);
+  static int8 removeLocalAddRecurse(PcodeOp *op,int4 slot,Funcdata &data);
 public:
   RulePtrsubUndo(const string &g) : Rule(g, 0, "ptrsubundo") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
