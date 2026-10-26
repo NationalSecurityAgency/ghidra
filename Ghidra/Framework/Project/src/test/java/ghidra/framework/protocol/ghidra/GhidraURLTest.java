@@ -18,7 +18,9 @@ package ghidra.framework.protocol.ghidra;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.*;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -635,6 +637,25 @@ public class GhidraURLTest extends AbstractGenericTest {
 		}
 	}
 
+	@Test
+	public void testToURLShortProjectPaths() {
+		assertEquals(GhidraURL.makeURL("/", "a").toExternalForm(),
+			GhidraURL.toURL("/a").toExternalForm());
+		assertEquals(GhidraURL.makeURL("/", "a").toExternalForm(),
+			GhidraURL.toURL("\\a").toExternalForm());
+		assertEquals(GhidraURL.makeURL("C:/", "a").toExternalForm(),
+			GhidraURL.toURL("C:/a").toExternalForm());
+	}
+
+	@Test
+	public void testToURLRejectsMissingProjectName() {
+		for (String path : new String[] { "/", "\\", "C:", "C:/", "/C:/", "/projects/" }) {
+			IllegalArgumentException exception = assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.toURL(path));
+			assertEquals("Absolute project path is missing project name", exception.getMessage());
+		}
+	}
+
 	//	toURL(String)
 	@Test
 	public void testToURL() throws Exception {
@@ -703,6 +724,91 @@ public class GhidraURLTest extends AbstractGenericTest {
 			"ghidra://localhost:123/Gr\u00FCnerTee/\u6771\u4EAC/\u30EC\u30B9\u30C8\u30E9\u30F3#caf\u00E9-menu"));
 		assertEquals(ghidraUrl, GhidraURL.toURL(ghidraUrl.toString()));
 		assertEquals(ghidraUrl, GhidraURL.toURL(GhidraURL.getDisplayString(ghidraUrl)));
+	}
+
+	@Test
+	public void testLocalProjectMarkerCompatibility() throws Exception {
+		for (String location : new String[] { "/projects", "C:/projects", "//server/share" }) {
+			// This branch accepts marker filenames in ProjectLocator, but not in toURL paths.
+			ProjectLocator locator = new ProjectLocator(location, "Test.gpr");
+			assertEquals("Test", locator.getName());
+			URL url = GhidraURL.makeURL(location, "Test");
+			assertEquals(url.toExternalForm(), locator.getURL().toExternalForm());
+			assertEquals(locator, GhidraURL.getProjectStorageLocator(url));
+			assertEquals(url.toExternalForm(),
+				GhidraURL.toURL(location + "/Test").toExternalForm());
+			assertEquals(url.toExternalForm(),
+				GhidraURL.toURL(GhidraURL.getDisplayString(url)).toExternalForm());
+			for (String name : new String[] { "Test.gpr", "Test.rep", "Test.gpr.gpr", ".gpr" }) {
+				assertThrows(IllegalArgumentException.class,
+					() -> GhidraURL.toURL(location + "/" + name));
+			}
+
+			// Explicit URL parsing retains its encoding; locator interpretation strips the marker.
+			URL markerURL = GhidraURL.makeURL(location, "Test.gpr", "/folder/file", "ref");
+			assertEquals(markerURL.toExternalForm(),
+				GhidraURL.toURL(markerURL.toExternalForm()).toExternalForm());
+			assertEquals(locator, GhidraURL.getProjectStorageLocator(markerURL));
+			assertEquals("Test",
+				new DefaultLocalGhidraProtocolConnector(markerURL).getRepositoryName());
+		}
+	}
+
+	@Test
+	public void testToURLRejectsInvalidDecodedComponents() {
+		String[] invalid = { "bad%3Fname", "bad%2Aname", "bad%3Aname", "bad%5Cname",
+			"bad%00name", "%20", "%2E", "%2E%2E", "%2Ehidden", "bad%23name",
+			"bad%2520name", "bad%252Fname", "bad%26name", "bad%C2%A9name", "a//b", "a//" };
+		for (String component : invalid) {
+			for (String text : new String[] {
+				"ghidra:/projects/" + component,
+				"ghidra:/" + component + "/Project",
+				"ghidra:/projects/Project?/" + component,
+				"ghidra://localhost/" + component,
+				"ghidra://localhost/Repo/" + component }) {
+				assertThrows(text, IllegalArgumentException.class, () -> GhidraURL.toURL(text));
+			}
+		}
+		for (String text : new String[] { "ghidra:/", "ghidra:/projects/",
+			"ghidra:/projects/Project?relative", "ghidra:/projects/Project?",
+			"ghidra:/projects/Project?//", "ghidra://localhost//Repo",
+			"ghidra:/projects/Project?/bad name*", "ghidra://localhost/Repo/bad name*" }) {
+			assertThrows(text, IllegalArgumentException.class, () -> GhidraURL.toURL(text));
+		}
+	}
+
+	@Test
+	public void testToURLPreservesEncodedComponents() throws Exception {
+		String name = "name + [a] 東京 \uD801\uDC00";
+		for (String path : new String[] { null, "/", "/" + name, "/" + name + "/" }) {
+			for (URL url : new URL[] {
+				GhidraURL.makeURL("/projects", name, path, "ref #?%20+"),
+				GhidraURL.makeURL("C:/projects", name, path, "ref #?%20+"),
+				GhidraURL.makeURL("//server/share", name, path, "ref #?%20+"),
+				GhidraURL.makeURL("localhost", 123, name, path, "ref #?%20+") }) {
+				String text = url.toURI().toASCIIString();
+				URL parsed = GhidraURL.toURL(text);
+				assertEquals(text, parsed.toExternalForm());
+				assertEquals(path == null ? "/" : path, GhidraURL.getProjectPathname(parsed));
+				assertEquals("ref #?%20+", GhidraURL.getDecodedReference(parsed));
+			}
+		}
+		for (String text : new String[] { "ghidra://localhost", "ghidra://localhost:123/" }) {
+			assertEquals(text, GhidraURL.toURL(text).toExternalForm());
+		}
+	}
+
+	@Test
+	public void testToURLValidatesExtensionComponents() throws Exception {
+		for (String path : new String[] { "/Repo/bad*name", "/Repo/../file", "/Repo/a//" }) {
+			URI inner = new URI("https", null, "localhost", 123, path, null, null);
+			String text = new URI("ghidra", inner.toString(), null).toString();
+			assertThrows(text, IllegalArgumentException.class, () -> GhidraURL.toURL(text));
+		}
+		URI inner = new URI("https", null, "localhost", 123, "/Repo [a]/folder +/",
+			null, null);
+		String text = new URI("ghidra", inner.toString(), "ref #?").toString();
+		assertEquals(text, GhidraURL.toURL(text).toExternalForm());
 	}
 
 	@Test
@@ -857,6 +963,229 @@ public class GhidraURLTest extends AbstractGenericTest {
 		assertEquals(GhidraURL.makeURL("localhost", 123, "Test", "/x/y/", "refX"),
 			GhidraURL.resolve(ghidraUrl, "/x/y/", "refX"));
 
+	}
+
+	@Test
+	public void testBuildersRejectEmptyContentPathElements() throws Exception {
+		ProjectLocator locator = new ProjectLocator("/projects", "Test");
+		URL local = locator.getURL();
+		URL server = GhidraURL.makeURL("localhost", 123, "Test");
+		for (String path : new String[] { "//", "///", "/a//", "/a///", "/a/b//",
+			"//a", "/a//b", "/a//b/" }) {
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.makeURL("/projects", "Test", path, null));
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.makeURL(locator, path, null));
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.makeURL("localhost", 123, "Test", path));
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.makeURL("localhost", 123, "Test", path, "ref"));
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.resolve(local, path, null));
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.resolve(server, path, null));
+
+			// The connectors reject these same structures when supplied as raw URLs.
+			URL rawLocal = toGhidraLocalURL("/projects/Test", path);
+			URL rawServer = toGhidraServerURL("localhost", 123, "Test", path);
+			assertThrows(path, MalformedURLException.class,
+				() -> new DefaultLocalGhidraProtocolConnector(rawLocal));
+			assertThrows(path, MalformedURLException.class,
+				() -> new DefaultGhidraProtocolConnector(rawServer));
+		}
+		assertThrows(IllegalArgumentException.class,
+			() -> GhidraURL.makeURL("localhost", 123, "Test", "/a//", "file", null));
+		assertThrows(IllegalArgumentException.class,
+			() -> GhidraURL.makeURL("localhost", 123, "Test", "/a", "file//", null));
+	}
+
+	@Test
+	public void testBuildersPreserveValidContentPathStructure() throws Exception {
+		ProjectLocator locator = new ProjectLocator("/projects", "Test");
+		URL server = GhidraURL.makeURL("localhost", 123, "Test");
+		for (String path : new String[] { null, "", "/", "/a", "/a/", "/a/b", "/a/b/" }) {
+			String expectedPath = path == null || path.isEmpty() ? "/" : path;
+			URL localURL = GhidraURL.makeURL("/projects", "Test", path, null);
+			URL serverURL = GhidraURL.makeURL("localhost", 123, "Test", path);
+			assertEquals(localURL.toExternalForm(),
+				GhidraURL.makeURL(locator, path, null).toExternalForm());
+			assertEquals(serverURL.toExternalForm(),
+				GhidraURL.resolve(server, path, null).toExternalForm());
+			for (URL url : new URL[] { localURL, serverURL }) {
+				assertEquals(expectedPath, GhidraURL.getProjectPathname(url));
+				GhidraProtocolConnector connector = GhidraURL.isLocalURL(url)
+						? new DefaultLocalGhidraProtocolConnector(url)
+						: new DefaultGhidraProtocolConnector(url);
+				assertEquals(expectedPath, getInstanceField("itemPath", connector));
+				if (expectedPath.endsWith("/")) {
+					assertNull(connector.getFolderItemName());
+				}
+			}
+		}
+	}
+
+	@Test
+	public void testLocalStoragePathsRejectRepeatedSeparators() {
+		for (String path : new String[] { "/projects//", "/projects///", "/a//b",
+			"C:/projects//", "//server/share//" }) {
+			assertThrows(path, IllegalArgumentException.class,
+				() -> GhidraURL.checkLocalAbsolutePath(path, true));
+		}
+		assertEquals("/", GhidraURL.checkLocalAbsolutePath("/", true));
+		assertEquals("/C:/", GhidraURL.checkLocalAbsolutePath("C:/", true));
+		assertEquals("//server/share/",
+			GhidraURL.checkLocalAbsolutePath("//server/share/", true));
+	}
+
+	@Test
+	public void testResolveSpacesInServerPath() throws Exception {
+		// Reproduce getSharedProjectURL: resolve a decoded file path against its folder URL.
+		URL base = GhidraURL.makeURL("localhost", 123, "Repository", "/");
+		URL url = GhidraURL.resolve(base, "/Sample Program.exe", null);
+		String expected = "ghidra://localhost:123/Repository/Sample%20Program.exe";
+		assertEquals(expected, url.toExternalForm());
+		assertEquals("/Repository/Sample%20Program.exe", url.getPath());
+		assertEquals("/Repository/Sample Program.exe", url.toURI().getPath());
+		assertEquals("/Sample Program.exe", GhidraURL.getProjectPathname(url));
+		assertNull(url.getQuery());
+		assertEquals(expected, GhidraURL.toURL(expected).toExternalForm());
+		assertEquals(expected,
+			GhidraURL.toURL(expected.replace("%20", " ")).toExternalForm());
+
+		DefaultGhidraProtocolConnector connector = new DefaultGhidraProtocolConnector(url);
+		assertEquals("Repository", connector.getRepositoryName());
+		assertEquals("/", connector.getFolderPath());
+		assertEquals("Sample Program.exe", connector.getFolderItemName());
+	}
+
+	@Test
+	public void testResolveSpacesInLocalPathAndQuery() throws Exception {
+		String path = "/folder/Sample Program.exe";
+		for (String location : new String[] { "/my projects", "C:/my projects",
+			"//server/my share" }) {
+			ProjectLocator locator = new ProjectLocator(location, "My Project");
+			URL base = locator.getURL();
+			URL url = GhidraURL.resolve(base, path, null);
+			String expected = base.toExternalForm() + "?/folder/Sample%20Program.exe";
+			assertEquals(expected, url.toExternalForm());
+			assertFalse(url.getPath().contains(" "));
+			assertTrue(url.getPath().contains("%20"));
+			assertTrue(url.toURI().getPath().endsWith("/My Project"));
+			assertEquals("/folder/Sample%20Program.exe", url.getQuery());
+			assertEquals(path, url.toURI().getQuery());
+			assertEquals(path, GhidraURL.getProjectPathname(url));
+			assertEquals(expected, GhidraURL.makeURL(locator, path, null).toExternalForm());
+			assertEquals(expected, GhidraURL.toURL(expected).toExternalForm());
+			assertEquals(expected,
+				GhidraURL.toURL(expected.replace("%20", " ")).toExternalForm());
+
+			DefaultLocalGhidraProtocolConnector connector =
+				new DefaultLocalGhidraProtocolConnector(url);
+			assertEquals(locator, connector.getLocalProjectLocator());
+			assertEquals("/folder", connector.getFolderPath());
+			assertEquals("Sample Program.exe", connector.getFolderItemName());
+		}
+	}
+
+	@Test
+	public void testResolveServerEncodedNames() throws Exception {
+		String[] names = { "plain", "with space", "with[brackets]", "plus+name",
+			"symbols.-=@_()~", "東京", "\uD801\uDC00" };
+		for (String repository : names) {
+			URL base = GhidraURL.makeURL("localhost", 123, repository, "/old", "old ref");
+			for (String name : names) {
+				for (String suffix : new String[] { "", "/" }) {
+					String path = "/" + name + "/child" + suffix;
+					URL resolved = GhidraURL.resolve(base, path, "new ref");
+					URL expected = GhidraURL.makeURL("localhost", 123, repository, path,
+						"new ref");
+					assertEquals(expected.toExternalForm(), resolved.toExternalForm());
+					assertEquals(repository, GhidraURL.getRepositoryName(resolved));
+					assertEquals(path, GhidraURL.getProjectPathname(resolved));
+					assertEquals("new ref", GhidraURL.getDecodedReference(resolved));
+					assertNull(resolved.getQuery());
+				}
+			}
+		}
+	}
+
+	@Test
+	public void testResolveServerEncodedReferences() throws Exception {
+		URL base = GhidraURL.makeURL("localhost", 123, "Repo", "/old", "old ref");
+		String[] refs = { null, "", "ref with spaces", "literal%20escape", "a+b",
+			"ref#?[]%&/\\", "東京" };
+		for (String ref : refs) {
+			URL resolved = GhidraURL.resolve(base, "/folder/file", ref);
+			URL expected = GhidraURL.makeURL("localhost", 123, "Repo", "/folder/file", ref);
+			assertEquals(expected.toExternalForm(), resolved.toExternalForm());
+			assertEquals(ref, GhidraURL.getDecodedReference(resolved));
+			assertEquals("/folder/file", GhidraURL.getProjectPathname(resolved));
+		}
+	}
+
+	@Test
+	public void testServerProjectAndFolderURLsWithEncodedNames() throws Exception {
+		String repository = "Repo [a]+";
+		String path = "/folder [b]+/file";
+		String ref = "ref # %20 +";
+		URL fileURL = GhidraURL.makeURL("localhost", 123, repository, path, ref);
+		URL rootURL = GhidraURL.makeURL("localhost", 123, repository);
+		assertEquals(rootURL.toExternalForm(), GhidraURL.getProjectURL(fileURL).toExternalForm());
+		assertEquals(rootURL.toExternalForm(), GhidraURL.resolve(fileURL, null, null).toExternalForm());
+		assertEquals(rootURL.toExternalForm(), GhidraURL.resolve(fileURL, "", null).toExternalForm());
+		assertEquals(GhidraURL.makeURL("localhost", 123, repository, "/").toExternalForm(),
+			GhidraURL.resolve(fileURL, "/", null).toExternalForm());
+
+		URL folderURL = GhidraURL.getFolderURL(fileURL);
+		assertEquals(GhidraURL.makeURL("localhost", 123, repository, path + "/", ref)
+				.toExternalForm(), folderURL.toExternalForm());
+		assertEquals(path + "/", GhidraURL.getProjectPathname(folderURL));
+		assertEquals(ref, GhidraURL.getDecodedReference(folderURL));
+		assertEquals(folderURL.toExternalForm(), GhidraURL.getFolderURL(folderURL).toExternalForm());
+	}
+
+	@Test
+	public void testResolveExtensionEncodedNamesAndReferences() throws Exception {
+		// Install a parsing-only extension handler; no network connection is needed.
+		Field handlers = Handler.class.getDeclaredField("protocolHandlers");
+		handlers.setAccessible(true);
+		Object originalHandlers = handlers.get(null);
+		GhidraProtocolHandler handler = new GhidraProtocolHandler() {
+			@Override
+			public boolean isExtensionSupported(String protocol) {
+				return "https".equals(protocol);
+			}
+
+			@Override
+			public GhidraProtocolConnector getConnector(URL url) {
+				throw new UnsupportedOperationException("Parsing only");
+			}
+		};
+		try {
+			handlers.set(null, List.of(handler));
+			String repository = "Repo [a]+";
+			URI inner = new URI("https", null, "localhost", 123, "/" + repository + "/old",
+				null, null);
+			URL base = new URI(GhidraURL.PROTOCOL, inner.toString(), "old ref").toURL();
+			for (String path : new String[] { null, "/", "/folder [b]+/東京",
+				"/folder [b]+/東京/" }) {
+				for (String ref : new String[] { null, "", "ref #?[]%20+ /\\" }) {
+					String fullPath = "/" + repository + (path == null ? "" : path);
+					URI expectedInner = new URI("https", null, "localhost", 123, fullPath,
+						null, null);
+					URL expected = new URI(GhidraURL.PROTOCOL, expectedInner.toString(), ref)
+							.toURL();
+					URL resolved = GhidraURL.resolve(base, path, ref);
+					assertEquals(expected.toExternalForm(), resolved.toExternalForm());
+					assertEquals(repository, GhidraURL.getRepositoryName(resolved));
+					assertEquals(path == null ? "/" : path, GhidraURL.getProjectPathname(resolved));
+					assertEquals(ref, GhidraURL.getDecodedReference(resolved));
+				}
+			}
+		}
+		finally {
+			handlers.set(null, originalHandlers);
+		}
 	}
 
 	private static class DummyGhidraProtocolConnector extends GhidraProtocolConnector {

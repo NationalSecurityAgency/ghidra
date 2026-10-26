@@ -107,11 +107,12 @@ public abstract class GhidraProtocolConnector {
 	}
 
 	/**
-	 * Parse repository name from URL
+	 * Parse repository name from URL. Invoked by the constructor; overrides must not depend
+	 * on subclass fields initialized after the superclass constructor returns.
 	 * @return repository name or null if not specified
 	 * @throws MalformedURLException if URL is invalid
 	 */
-	private String parseRepositoryName() throws MalformedURLException {
+	protected String parseRepositoryName() throws MalformedURLException {
 
 		String path = uri.getPath();
 
