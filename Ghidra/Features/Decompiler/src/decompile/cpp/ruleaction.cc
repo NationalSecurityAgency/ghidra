@@ -9116,6 +9116,12 @@ Varnode *RulePtrFlow::truncatePointer(AddrSpace *spc,PcodeOp *op,Varnode *vn,int
 
 {
   Varnode *newvn;
+  if (vn->isConstant()) {
+    uintb val = vn->getOffset() & calc_mask(spc->getAddrSize());
+    newvn = data.newConstant(spc->getAddrSize(),val);
+    data.opSetInput(op,newvn,slot);
+    return newvn;
+  }
   PcodeOp *truncop = data.newOp(2,op->getAddr());
   data.opSetOpcode(truncop,CPUI_SUBPIECE);
   data.opSetInput(truncop,data.newConstant(vn->getSize(),0),1);
