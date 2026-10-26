@@ -66,6 +66,18 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	}
 
 	@Test
+	public void testBuiltinNamedTypedefKeepsBaseType()
+			throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry int32DIE = addTypedef("int32_t", intDIE);
+
+		importAllDataTypes();
+
+		assertEquals("int", dwarfDTM.getDataType(intDIE.getOffset(), null).getName());
+		assertEquals("int32_t", dwarfDTM.getDataType(int32DIE.getOffset(), null).getName());
+	}
+
+	@Test
 	public void testNonStandardBaseTypeName()
 			throws CancelledException, IOException, DWARFException {
 

@@ -1254,7 +1254,9 @@ public class DWARFDataTypeImporter {
 		if (refdDIEA != null && refdDIEA.getTag() == DW_TAG_base_type) {
 			// if this is a typedef to a base type, skip to the base data type which
 			// can create a better typedef than we can
-			return makeNamedBaseType(typedefDNI, refdDIEA);
+			// key the result to the typedef's DIE so the base type's DIE is not retyped
+			DWARFDataType baseDDT = makeNamedBaseType(typedefDNI, refdDIEA);
+			return new DWARFDataType(baseDDT.dataType, typedefDNI, diea.getOffset());
 		}
 
 		DWARFDataType refdDT = getDataType(refdDIEA, voidDDT);
