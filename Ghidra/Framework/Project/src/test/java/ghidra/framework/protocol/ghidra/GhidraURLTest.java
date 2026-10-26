@@ -17,6 +17,7 @@ package ghidra.framework.protocol.ghidra;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.*;
@@ -829,7 +830,7 @@ public class GhidraURLTest extends AbstractGenericTest {
 		ghidraUrl = GhidraURL.toURL(improperUrl);
 
 		assertEquals("a b+c", GhidraURL.getDecodedReference(ghidraUrl));
-		assertEquals(path + ".rep",
+		assertEquals(path.replace('/', File.separatorChar) + ".rep",
 			GhidraURL.getProjectStorageLocator(ghidraUrl).getProjectDir().toString());
 		assertEquals(path, GhidraURL.getProjectPathname(ghidraUrl));
 
