@@ -137,8 +137,8 @@ class PointMarkerSet extends MarkerSetImpl {
 
 		g.setColor(markerColor);
 		for (Range range : rangeList) {
-			int startY = range.min;
-			int endY = range.max;
+			int startY = range.getMinAsInt();
+			int endY = range.getMaxAsInt();
 			if ((endY - startY) % 2 != 0) {
 				endY--;
 			}

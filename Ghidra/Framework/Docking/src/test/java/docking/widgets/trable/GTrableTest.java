@@ -250,7 +250,7 @@ public class GTrableTest extends AbstractGuiTest {
 
 	private void assertVisibleRows(String... expectedRows) {
 		Range visibleRows = gTrable.getVisibleRows();
-		List<String> actualRows = getRowsAsText(visibleRows.min, visibleRows.max);
+		List<String> actualRows = getRowsAsText((int) visibleRows.min, (int) visibleRows.max);
 		assertEquals(expectedRows.length, actualRows.size());
 		List<String> expectedList = Arrays.asList(expectedRows);
 		assertListEqualOrdered(expectedList, actualRows);
