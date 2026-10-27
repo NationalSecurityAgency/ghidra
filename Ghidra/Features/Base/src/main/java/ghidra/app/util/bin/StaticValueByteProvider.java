@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 import ghidra.formats.gfilesystem.FSRL;
@@ -68,12 +69,6 @@ public class StaticValueByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public InputStream getInputStream(long index) throws IOException {
-		assertValidIndex(index, true);
-		return new ByteProviderInputStream(this, index);
-	}
-
-	@Override
 	public long length() {
 		return length;
 	}
@@ -98,12 +93,12 @@ public class StaticValueByteProvider implements ByteProvider {
 	}
 
 	@Override
-	public byte[] readBytes(long index, long length) throws IOException {
+	public byte[] readBytes(long index, long readLength) throws IOException {
 		assertValidIndex(index, true);
-		if (index + length > length) {
+		if (index + readLength > length) {
 			throw new IOException("Attempt to read beyond end of byte data");
 		}
-		byte[] destBytes = new byte[(int) length];
+		byte[] destBytes = new byte[(int) readLength];
 		Arrays.fill(destBytes, value);
 		return destBytes;
 	}
