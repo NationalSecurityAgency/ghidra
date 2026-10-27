@@ -384,6 +384,7 @@ protected:
   static int4 getStride(Varnode *vn);	///< Get the step/stride associated with the Varnode
   static uintb backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn);
   static bool duplicateVarnodes(const vector<Varnode *> &arr);	///< Return \b true if all array elements are the same Varnode
+  static PcodeOp *findCbranch(BlockBasic *bl,int4 inslot,int4 &path);
   void getInitialRange(Varnode *vn,CircleRange &rng) const;	///< Get initial range of values the given Varnode can take
   void findDeterminingVarnodes(PcodeOp *op,int4 slot);
   void analyzeGuards(BlockBasic *bl,int4 pathout);
@@ -394,7 +395,7 @@ protected:
   void markFoldableGuards();
   void markModel(bool val);		///< Mark (or unmark) all PcodeOps involved in the model
   bool flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp);	///< Check if the given Varnode flows to anything other than \b this model
-  bool checkCommonCbranch(vector<Varnode *> &varArray,BlockBasic *bl);	///< Check that all incoming blocks end with a CBRANCH
+  PcodeOp *checkCommonCbranch(BlockBasic *bl,vector<Varnode *> &varArray,int4 &path);	///< Check that all incoming blocks end with a CBRANCH
   void checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmask);
 
   /// \brief Eliminate the given guard to \b this switch

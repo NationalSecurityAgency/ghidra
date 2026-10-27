@@ -3624,7 +3624,7 @@ int4 ActionDoNothing::apply(Funcdata &data)
 	}
       }
       else if (bb->unblockedMulti(0)) {
-	if (data.isNormalizationOn() || bb->hasNoImmediateCopy(0)) {
+	if (data.isNormalizationOn() || data.isJumptableRecoveryOn() || bb->hasNoImmediateCopy(0)) {
 	  data.removeDoNothingBlock(bb);
 	  count += 1;
 	  return 0;
