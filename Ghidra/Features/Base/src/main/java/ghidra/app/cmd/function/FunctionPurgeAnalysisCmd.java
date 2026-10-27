@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand<Program> {
 			setupNearFarModels();
 		}
 
-		AddressSetView set = entryPoints;
+		AddressSet set = new AddressSet(entryPoints);
 
 		long maxCount = set.getNumAddresses();
 
@@ -79,8 +79,9 @@ public class FunctionPurgeAnalysisCmd extends BackgroundCommand<Program> {
 				break;
 			}
 
-			set = set.subtract(
-				new AddressSet(program, entryPoints.getMinAddress(), function.getEntryPoint()));
+			// Progress is the number of entry-point addresses consumed so far.
+			// Uses set.deleteFromMin() instead of set.subtract() to avoid a full address set copy
+			set.deleteFromMin(function.getBody().getMaxAddress());
 			monitor.setProgress(maxCount - set.getNumAddresses());
 
 			monitor.setMessage("Purge " + function.getName());
