@@ -101,11 +101,20 @@
 
 :sext.h rd, rs1 is op0006=0x13 & op1214=0x1 & op2024=0x5 & op2531=0x30 & rd & rs1 unimpl
 
-:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh1add rd, rs1, rs2 is op0006=0x33 & op1214=0x2 & op2531=0x10 & rd & rs1 & rs2
+{
+	rd = (rs1 << 1) + rs2;
+}
 
-:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh2add rd, rs1, rs2 is op0006=0x33 & op1214=0x4 & op2531=0x10 & rd & rs1 & rs2
+{
+	rd = (rs1 << 2) + rs2;
+}
 
-:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2 unimpl
+:sh3add rd, rs1, rs2 is op0006=0x33 & op1214=0x6 & op2531=0x10 & rd & rs1 & rs2
+{
+	rd = (rs1 << 3) + rs2;
+}
 
 :shfl    rd, rs1, rs2 is op0006=0x33 & op1214=0x1 & op2531=0x4 & rd & rs1 & rs2 unimpl
 
