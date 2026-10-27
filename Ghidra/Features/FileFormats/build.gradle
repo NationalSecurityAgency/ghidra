@@ -31,7 +31,7 @@ dependencies {
 	api project(':PDB')
 
 	// Used by "Android DEX to JAR" file system
-	// dex2jar depends on asm-9.7.1, which is declared in Framework/Emulation
+	// dex2jar depends on asm, which is declared in Framework/Emulation
 	api 'de.femtopedia.dex2jar:dex-ir:2.4.24'
 	api 'de.femtopedia.dex2jar:dex-reader:2.4.24'
 	api 'de.femtopedia.dex2jar:dex-reader-api:2.4.24'
