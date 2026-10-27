@@ -1,0 +1,12 @@
+# AVR8 with a 12-bit PC, as implemented by devices with up to 8 KiB of flash.
+#
+# These devices have no JMP/CALL instructions, because RJMP/RCALL already reach
+# the entire code space, and their PC wraps at 4 Ki words.  Code addresses above
+# 4 Ki words do not exist, so relative branches must wrap instead of running off
+# the end of the address space.
+
+@define PCBYTESIZE "2"
+@define HASEIND "0"
+@define PCWRAPMASK "0xfff"
+
+@include "avr8.sinc"

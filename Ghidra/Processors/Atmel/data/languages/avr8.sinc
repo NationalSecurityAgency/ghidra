@@ -38,6 +38,12 @@ define alignment=2;
 # Ghidra, it's still preferable to see the name of IO locations used,
 # rather than code addresses, so leave mem space as the default.
 
+# Devices with up to 8 KiB of flash implement a 12-bit PC that wraps at 4 Ki words.
+# Language definitions for those devices override this mask.
+@ifndef PCWRAPMASK
+@define PCWRAPMASK "0xffffffff"
+@endif
+
 define space code type=ram_space size=$(PCBYTESIZE) wordsize=2 default;
 define space register type=register_space size=2;
 define space mem type=ram_space size=$(DATASIZE) wordsize=1;
@@ -456,7 +462,7 @@ f3cmpK8: val   is f3op2bits0to3 & f3op2bits8to11 [ val = (f3op2bits8to11 << 4) |
 
 @endif
 
-rel7addr: rel  is op3to9signed [ rel = (op3to9signed + inst_next);] { 
+rel7addr: rel  is op3to9signed [ rel = (op3to9signed + inst_next) & $(PCWRAPMASK);] { 
   export *[code]:2 rel;
 }
 
@@ -464,7 +470,7 @@ rel7dst: byteOffset  is op3to9signed & rel7addr [ byteOffset = (op3to9signed + i
   export rel7addr;
 }
 
-rel12addr: rel  is oplow12signed [ rel = oplow12signed + inst_start + 1; ] { 
+rel12addr: rel  is oplow12signed [ rel = (oplow12signed + inst_start + 1) & $(PCWRAPMASK); ] { 
   export *[code]:2 rel;
 }
 
