@@ -23,8 +23,6 @@ import ghidra.framework.plugintool.ServiceInfo;
 @ServiceInfo(defaultProvider = BentoServicePlugin.class, description = "Display X vs. Y data")
 public interface BentoService {
 
-	public BentoProvider getDefaultProvider();
-
 	public BentoProvider createProvider();
 
 }

@@ -36,13 +36,13 @@ import ghidra.util.Swing;
 	},
 	servicesProvided = {
 		BentoService.class
-	})
+	}
+)
 public class BentoServicePlugin extends Plugin implements BentoService {
 
 	protected CodeViewerService codeViewerService;
 
 	final String title;
-	protected BentoProvider defaultProvider;
 	protected List<BentoProvider> transientProviders = new ArrayList<>();
 
 	public BentoServicePlugin(PluginTool tool) {
@@ -57,22 +57,15 @@ public class BentoServicePlugin extends Plugin implements BentoService {
 	@Override
 	protected void init() {
 		codeViewerService = tool.getService(CodeViewerService.class);
-		defaultProvider = new BentoProvider(getTool(), this, false);
 		super.init();
 	}
 
 	@Override
 	protected void dispose() {
-		tool.removeComponentProvider(defaultProvider);
 		for (BentoProvider provider : transientProviders) {
 			tool.removeComponentProvider(provider);
 		}
 		super.dispose();
-	}
-
-	@Override
-	public BentoProvider getDefaultProvider() {
-		return defaultProvider;
 	}
 
 	@Override
