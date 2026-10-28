@@ -2484,6 +2484,7 @@ define pcodeop lswxOp;
 :mtfsb1. CRBD	is $(NOTVLE) & OP=63 & CRBD & BITS_11_20=0 & XOP_1_10=38 & Rc=1
 {
 	CRBD = 1;
+	cr1flags();
 }
 
 #mtfsf 10,fr0		0xfc 00 05 8e
@@ -3269,6 +3270,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 {
 	shiftCarry(S,SH);
 	A = S s>> SH;
+	cr0flags(A);
 }
 
 @endif
