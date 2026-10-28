@@ -3963,7 +3963,7 @@ bool LaneDivide::traceForward(TransformVar *rvn,int4 numLanes,int4 skipLanes)
 	int4 outLanes,outSkip;
 	if (!description.restriction(numLanes, skipLanes, bytePos, outvn->getSize(), outLanes, outSkip)) {
 	  if (allowSubpieceTerminator) {
-	    int4 laneIndex = description.getBoundary(bytePos);
+	    int4 laneIndex = description.getBoundary(bytePos + description.getPosition(skipLanes));
 	    if (laneIndex < 0 || laneIndex >= description.getNumLanes())	// Does piece start on lane boundary?
 	      return false;
 	    if (description.getSize(laneIndex) <= outvn->getSize())		// Is the piece smaller than a lane?
