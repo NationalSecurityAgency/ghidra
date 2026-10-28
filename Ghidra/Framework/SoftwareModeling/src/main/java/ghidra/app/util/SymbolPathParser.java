@@ -175,7 +175,9 @@ public class SymbolPathParser {
 			     "operator>>", 
 			     "operator<<=", 
 			     "operator>>=", 
-			     "operator<=>" -> true;
+			     "operator<=>",
+			     "operator->",
+			     "operator->*" -> true;
 			default -> false;
 		};
 		//@formatter:on
