@@ -88,8 +88,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testGoComplexBaseType() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry c64DIE = addGoBaseType("complex64", 8, GoKind.Complex64);
-		DebugInfoEntry c128DIE = addGoBaseType("complex128", 16, GoKind.Complex128);
+		DebugInfoEntry c64DIE =
+			addGoBaseType("complex64", 8, DWARFEncoding.DW_ATE_complex_float, GoKind.Complex64);
+		DebugInfoEntry c128DIE =
+			addGoBaseType("complex128", 16, DWARFEncoding.DW_ATE_complex_float, GoKind.Complex128);
 		DebugInfoEntry cDIE = addBaseType("complex double", 16, DWARFEncoding.DW_ATE_complex_float);
 
 		importAllDataTypes();
@@ -99,11 +101,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertFalse(baseOf(cDIE) instanceof AbstractComplexDataType);
 	}
 
-	private DebugInfoEntry addGoBaseType(String name, int size, GoKind kind) {
+	private DebugInfoEntry addGoBaseType(String name, int size, int encoding, GoKind kind) {
 		ensureCompUnit();
 		return new DIECreator(dwarfProg, DW_TAG_base_type).addString(DW_AT_name, name)
 				.addInt(DW_AT_byte_size, size)
-				.addInt(DW_AT_encoding, DWARFEncoding.DW_ATE_complex_float)
+				.addInt(DW_AT_encoding, encoding)
 				.addInt(DW_AT_go_kind, kind.ordinal())
 				.create();
 	}
