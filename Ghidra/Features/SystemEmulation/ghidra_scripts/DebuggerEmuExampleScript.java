@@ -24,6 +24,7 @@
 //@toolbar
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
@@ -55,7 +56,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 
 public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebuggerAPI {
-	private final static Charset UTF8 = Charset.forName("utf8");
+	private final static Charset UTF8 = StandardCharsets.UTF_8;
 
 	@Override
 	protected void run() throws Exception {

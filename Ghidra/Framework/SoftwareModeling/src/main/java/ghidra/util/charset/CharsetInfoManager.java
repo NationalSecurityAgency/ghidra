@@ -21,6 +21,7 @@ import static java.nio.charset.StandardCharsets.*;
 import java.io.*;
 import java.lang.Character.UnicodeScript;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.google.gson.*;
@@ -60,14 +61,6 @@ public class CharsetInfoManager {
 
 	private static final class Singleton {
 		private static CharsetInfoManager INSTANCE = new CharsetInfoManager();
-	}
-
-	private static final class CharSetsSingleton {
-		// decouple loading these 'non-standard' (but actually standard) charsets to a different
-		// class so their initialization can happen before the manager singleton instance
-		private static final Charset UTF_32 = Charset.forName(UTF32);
-		private static final Charset UTF_32LE = Charset.forName("UTF-32LE");
-		private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
 	}
 
 	/**
@@ -231,9 +224,9 @@ public class CharsetInfoManager {
 			new CharsetInfo(UTF_16BE.name(), null, 2, 4, 2, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
 			new CharsetInfo(UTF_16LE.name(), null, 2, 4, 2, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
 			
-			new CharsetInfo(CharSetsSingleton.UTF_32.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
-			new CharsetInfo(CharSetsSingleton.UTF_32BE.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
-			new CharsetInfo(CharSetsSingleton.UTF_32LE.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
+			new CharsetInfo(StandardCharsets.UTF_32.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
+			new CharsetInfo(UTF_32BE.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
+			new CharsetInfo(UTF_32LE.name(), null, 4, 4, 4, -1, true, true, CharsetInfo.ALL_SCRIPTS, Set.of()),
 			
 			new CharsetInfo(ISO_8859_1.name(), null, 1, 1, 1, -1, true, false, EnumSet.of(COMMON, LATIN), Set.of(USASCII))
 		);

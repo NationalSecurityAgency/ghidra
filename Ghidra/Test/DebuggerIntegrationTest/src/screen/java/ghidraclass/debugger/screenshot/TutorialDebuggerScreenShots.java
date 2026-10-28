@@ -21,7 +21,7 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.*;
@@ -253,7 +253,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		pty.getChild().session(new String[] { TERMMINES_PATH }, Map.of("TERM", "xterm-256color"));
 		PtyParent parent = pty.getParent();
 		try (Terminal terminal =
-			terminalService.createWithStreams(Charset.forName("utf8"), parent.getInputStream(),
+			terminalService.createWithStreams(StandardCharsets.UTF_8, parent.getInputStream(),
 				parent.getOutputStream())) {
 
 			TerminalProvider provider = waitForComponentProvider(TerminalProvider.class);

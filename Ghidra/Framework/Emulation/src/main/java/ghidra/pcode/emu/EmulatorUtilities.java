@@ -18,8 +18,7 @@ package ghidra.pcode.emu;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
+import java.nio.charset.*;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
@@ -381,6 +380,6 @@ public enum EmulatorUtilities {
 	 * @return the decoded string
 	 */
 	public static String decodeNullTerminatedString(PcodeExecutorState<?> state, Address ptr) {
-		return decodeNullTerminatedString(state, ptr, Charset.forName("ASCII"), 128);
+		return decodeNullTerminatedString(state, ptr, StandardCharsets.US_ASCII, 128);
 	}
 }

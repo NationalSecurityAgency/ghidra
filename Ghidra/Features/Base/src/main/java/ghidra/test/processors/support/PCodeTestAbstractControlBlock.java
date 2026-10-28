@@ -15,7 +15,7 @@
  */
 package ghidra.test.processors.support;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import ghidra.app.util.PseudoDisassembler;
@@ -427,7 +427,7 @@ public abstract class PCodeTestAbstractControlBlock {
 			offset += charSize;
 			++index;
 		}
-		return new String(buffer, 0, index, Charset.forName("ASCII"));
+		return new String(buffer, 0, index, StandardCharsets.US_ASCII);
 	}
 
 	protected long emuRead(PcodeThread<byte[]> emu, Address addr, int size) {
