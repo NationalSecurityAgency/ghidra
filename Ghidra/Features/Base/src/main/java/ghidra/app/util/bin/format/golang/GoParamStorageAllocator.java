@@ -262,6 +262,12 @@ public class GoParamStorageAllocator {
 		if (dt instanceof AbstractFloatDataType) {
 			return allocateReg(1, FLOATREG, dt, result);
 		}
+		if (dt instanceof AbstractComplexDataType) {
+			// Go passes a complex number as two floats
+			DataType part = AbstractFloatDataType.getFloatDataType(dt.getLength() / 2, null);
+			return allocateReg(1, FLOATREG, part, result) &&
+				allocateReg(1, FLOATREG, part, result);
+		}
 		if (dt instanceof Array array) {
 			int numElements = array.getNumElements();
 			if (numElements == 0) {
