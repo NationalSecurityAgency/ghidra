@@ -28,6 +28,8 @@ project.ext.PLATFORMS = [
 	[name: "mac_arm_64", os: "osx", arch: "arm64"],
 	[name: "freebsd_x86_64", os: "freebsd", arch: "x86_64"],
 	[name: "freebsd_arm_64", os: "freebsd", arch: "arm64"],
+	[name: "freebsd_ppc_64", os: "freebsd", arch: "ppc64"],
+	[name: "freebsd_ppc_64le", os: "freebsd", arch: "ppc64le"],
 	[name: "openbsd_x86_64", os: "openbsd", arch: "x86_64"],
 	[name: "openbsd_arm_64", os: "openbsd", arch: "arm64"]
 ]
@@ -81,6 +83,12 @@ ext.getCurrentPlatformName = {
 		case "aarch64":
 		case "arm64":
 			arch = "arm_64"
+			break
+		case "ppc64":
+			arch = "ppc_64"
+			break
+		case "ppc64le":
+			arch = "ppc_64le"
 			break
 		default:
 			throw new GradleException("Unrecognized platform architecture: $arch" )

@@ -203,6 +203,8 @@ Ghidra supports running on the following additional platforms with user-built na
 * Linux ARM 64-bit
 * FreeBSD x86 64-bit (no debugger support)
 * FreeBSD ARM 64-bit (no debugger support)
+* FreeBSD PowerPC 64-bit big-endian (no debugger support)
+* FreeBSD PowerPC 64-bit little-endian (no debugger support)
 * OpenBSD x86 64-bit
 * OpenBSD ARM 64-bit
 
