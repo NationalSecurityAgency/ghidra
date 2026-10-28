@@ -169,6 +169,9 @@ public class GoStructType extends GoType {
 		}
 
 		DWARFUtil.packCompositeIfPossible(struct, goTypes.getDTM());
+		if (typ.getAlign() > 1) {
+			struct.setExplicitMinimumAlignment(typ.getAlign());	// omitted zero-len fields may align it
+		}
 		return struct;
 	}
 

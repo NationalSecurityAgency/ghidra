@@ -53,6 +53,9 @@ public class GoBaseType implements StructureVerifier {
 	@EOLComment("flags")
 	private int tflag;
 
+	@FieldMapping(fieldName = {"align", "Align_"})
+	private int align;
+
 	@FieldMapping(fieldName = {"kind", "Kind_"})
 	@EOLComment
 	private int kind;
@@ -77,6 +80,13 @@ public class GoBaseType implements StructureVerifier {
 	 */
 	public long getPtrBytes() {
 		return ptrdata;
+	}
+
+	/**
+	 * {@return the alignment of the type being defined by this structure}
+	 */
+	public int getAlign() {
+		return align;
 	}
 
 	/**
