@@ -1662,7 +1662,7 @@ macro cr1flags() {
 	setCrBit(cr1, 0, fp_fx);
 	setCrBit(cr1, 1, fp_fex);
 	setCrBit(cr1, 2, fp_vx);
-	setCrBit(cr3, 2, fp_ox);
+	setCrBit(cr1, 3, fp_ox);
 }
 macro setFPRF(result) {
 	fp_cc0 = result f< 0;
