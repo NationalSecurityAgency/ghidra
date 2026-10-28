@@ -322,7 +322,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter
 	interface ShowSectionsTableAction {
 		String NAME = "Show Sections Table";
 		Icon ICON = new GIcon("icon.debugger.modules.table.sections");
-		String DESCRIPTION = "Toggle display fo the Sections Table pane";
+		String DESCRIPTION = "Toggle display for the Sections Table pane";
 		String GROUP = DebuggerResources.FilterAction.GROUP;
 		String ORDER = "1";
 		String HELP_ANCHOR = "show_sections_table";
