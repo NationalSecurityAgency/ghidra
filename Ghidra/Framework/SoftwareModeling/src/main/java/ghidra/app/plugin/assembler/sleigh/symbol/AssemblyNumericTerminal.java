@@ -138,6 +138,10 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			}
 			break;
 		}
+		if (b == s) {
+			// No label here. Note the symbol table returns all default-named functions for ""
+			return Collections.emptySet();
+		}
 		String lab = buffer.substring(s, b);
 		return symbols.choose(lab, space)
 				.stream()
