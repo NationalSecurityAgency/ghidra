@@ -61,10 +61,12 @@ import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 
 /**
- * <code>GhidraServer</code> provides the main Ghidra server application and
- * implements GhidraServerHandle which facilitates remote access to services
- * provided by a repository manager. The single instance of GhidraServer is set
- * within the RMI Registry which is accessible on a user specified port.
+ * <code>GhidraServer</code> provides the main Ghidra server application and implements
+ * GhidraServerHandle which facilitates remote access to services provided by a repository manager.
+ * The single instance of GhidraServer is set within the RMI Registry which is accessible on a user
+ * specified port.
+ * <p>
+ * NOTE: The use of stdin, stdout, and stderr is acceptable for this console application.
  */
 public class GhidraServer extends UnicastRemoteObject implements GhidraServerHandle {
 

@@ -37,6 +37,8 @@ import utilities.util.FileUtilities;
 
 /**
  * Class to manage a set of Repositories under a root directory.
+ * <p>
+ * NOTE: The use of stdin, stdout, and stderr is acceptable for this console application.
  */
 public class RepositoryManager {
 	static final Logger log = LogManager.getLogger(RepositoryManager.class);
