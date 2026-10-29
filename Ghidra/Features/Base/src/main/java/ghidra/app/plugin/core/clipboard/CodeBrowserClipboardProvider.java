@@ -197,11 +197,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				}
 			}
 
-			if (super.pasteBytes(pasteData)) {
-				return true;
-			}
-
-			tool.setStatusInfo("Paste failed: unsupported data type", true);
+			return super.pasteBytes(pasteData);
 		}
 		catch (Exception e) {
 			String msg = e.getMessage();

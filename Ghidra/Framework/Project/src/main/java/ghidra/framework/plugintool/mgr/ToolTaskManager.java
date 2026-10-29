@@ -145,7 +145,7 @@ public class ToolTaskManager implements Runnable {
 			if (cmdMessage != null) {
 				statusMessage += ": " + cmdMessage;
 			}
-			tool.setStatusInfo(statusMessage);
+			tool.setStatusInfo(statusMessage, true);
 		}
 
 		return success;
