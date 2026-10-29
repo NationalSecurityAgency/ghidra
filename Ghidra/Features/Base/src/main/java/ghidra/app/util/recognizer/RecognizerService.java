@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.recognizer;
 
-import ghidra.util.classfinder.ClassSearcher;
-
 import java.util.*;
 
+import ghidra.util.classfinder.ClassSearcher;
+
+@Deprecated(forRemoval = true, since = "12.3")
 public class RecognizerService {
 	private static final Comparator<Recognizer> DESCENDING = new Comparator<Recognizer>() {
 		@Override
@@ -27,6 +28,7 @@ public class RecognizerService {
 		}
 	};
 
+	@Deprecated(forRemoval = true, since = "12.3")
 	public static List<Recognizer> getAllRecognizers() {
 		List<Recognizer> results = new ArrayList<Recognizer>();
 		List<Recognizer> allRecognizers = getAllRecognizersHelper();

@@ -23,12 +23,11 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.tukaani.xz.XZ;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.recognizer.Bzip2Recognizer;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.*;
 import ghidra.util.Msg;
@@ -118,27 +117,19 @@ public class TarFileSystemFactory implements GFileSystemFactoryByteProvider<TarF
 
 
 	private static TarCompressors detectCompressor(ByteProvider bp) throws IOException {
-		int magicBytes = readMagicShort(bp);
-		switch (magicBytes) {
-			case GZIPInputStream.GZIP_MAGIC:
-				return TarCompressors.GZIP;
-			case Bzip2Recognizer.MAGIC_BYTES:
-				return TarCompressors.BZIP2;
+		final int BYTES_REQUIRED = XZ.HEADER_MAGIC.length; // this is longer than gzip or bzip's magic const
+		byte[] bytes = bp.readBytes(0, BYTES_REQUIRED);
+		if (GzipCompressorInputStream.matches(bytes, bytes.length)) {
+			return TarCompressors.GZIP;
 		}
-
-		byte[] startBytes = bp.readBytes(0, XZ.HEADER_MAGIC.length);
-		if (XZCompressorInputStream.matches(startBytes, startBytes.length)) {
+		else if (BZip2CompressorInputStream.matches(bytes, bytes.length)) {
+			return TarCompressors.BZIP2;
+		}
+		else if (XZCompressorInputStream.matches(bytes, bytes.length)) {
 			return TarCompressors.XZ;
 		}
 
 		return null;
-	}
-
-	private static int readMagicShort(ByteProvider bp) throws IOException {
-		BinaryReader br = new BinaryReader(bp, true /* LE */);
-		int magicBytes = br.readUnsignedShort(0);
-
-		return magicBytes;
 	}
 
 	private static boolean hasTarExt(String filename) {
