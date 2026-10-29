@@ -176,12 +176,12 @@ public class NumberRangeInputDialogTest extends AbstractDockingTest {
 		assertEquals(range, ranges.getRange(0));
 	}
 
-	private void assertValues(int... values) {
+	private void assertValues(long... values) {
 		SortedRangeList ranges = runSwing(() -> dialog.getValue());
 		assertEquals(values.length, ranges.getNumValues());
 
-		Set<Integer> set = new HashSet<>();
-		for (int value : values) {
+		Set<Long> set = new HashSet<>();
+		for (long value : values) {
 			set.add(value);
 		}
 
