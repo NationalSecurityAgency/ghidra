@@ -407,8 +407,10 @@ public class BatchImportDialog extends DialogComponentProvider {
 				.collect(Collectors.toList());
 
 		BatchGroupLoadSpec selectedLoadSpec = group.getSelectedBatchGroupLoadSpec();
+		LanguageCompilerSpecPair selectedLcsPair =
+			selectedLoadSpec != null ? selectedLoadSpec.lcsPair() : null;
 		ImporterLanguageDialog dialog =
-			new ImporterLanguageDialog(loadSpecs, tool, selectedLoadSpec.lcsPair());
+			new ImporterLanguageDialog(loadSpecs, tool, selectedLcsPair);
 		dialog.show(getComponent());
 		LanguageCompilerSpecPair dialogResult = dialog.getSelectedLanguage();
 		if (dialogResult != null) {
