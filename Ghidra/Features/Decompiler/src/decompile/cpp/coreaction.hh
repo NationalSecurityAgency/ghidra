@@ -113,6 +113,7 @@ public:
 class ActionLaneDivide : public Action {
   static void addPieceLaneSize(int4 size,int4 offset,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
   void collectLaneSizes(Varnode *vn,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
+  static int4 laneSizeFromStorage(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister);
   bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 mode);
 public:
   ActionLaneDivide(const string &g) : Action(0,"lanedivide",g) {}	///< Constructor
