@@ -15,6 +15,8 @@
  */
 package ghidra.app.cmd.data;
 
+import java.util.List;
+
 import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
@@ -24,6 +26,7 @@ import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.UndefinedValueException;
+import ghidra.program.model.listing.GhidraClass;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.Memory;
@@ -67,6 +70,15 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			DataValidationOptions validationOptions) {
 		super(program, 1, address, validationOptions);
 		hasVFPointer = hasVFPointer(program);
+	}
+
+	// this is to handle the duplicate class case so that when re-validating a duplicate class
+	// the correct namespace is passed in instead of creating/using the default
+	public TypeDescriptorModel(Program program, Address address, Namespace namespace,
+			DataValidationOptions validationOptions) {
+		super(program, 1, address, validationOptions);
+		hasVFPointer = hasVFPointer(program);
+		this.namespace = namespace;
 	}
 
 	@Override
@@ -597,27 +609,54 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		if (hasComplexType() && demangledDataType == null) {
 			return null;
 		}
+
 		Program program = getProgram();
 		namespace = DemangledObject.createNamespace(program, demangledDataType,
 			program.getGlobalNamespace(), false);
 
 		// if for some reason the mangled name can't be demangled, use the mangled name
 		if (namespace.isGlobal()) {
-			try {
-				namespace = program.getSymbolTable()
-						.getOrCreateNameSpace(program.getGlobalNamespace(), originalTypeName,
-							SourceType.IMPORTED);
-			}
-			catch (DuplicateNameException e) {
-				// ok if it is duplicate as it was likely created in another rtti handling method
-			}
-			catch (InvalidInputException e) {
-				Msg.error(TypeDescriptorModel.class,
-					"Failed to create namespace: " + e.getMessage());
-				namespace = null;
-			}
+			namespace = getOrCreateClassNamespace(program, program.getGlobalNamespace(),
+				originalTypeName, SourceType.IMPORTED);
 		}
+
+		if (!(namespace instanceof GhidraClass)) {
+			namespace = RttiUtil.promoteToClassNamespace(program, namespace);
+		}
+
+		// figure out if there is already another namespace with this name containing 
+		// an RTTI_Type_Descriptor and if so, create unique namespace
+		List<Symbol> existingTypeDescriptor =
+			program.getSymbolTable().getSymbols("RTTI_Type_Descriptor", namespace);
+		if (existingTypeDescriptor.isEmpty()) {
+			return namespace;
+		}
+
+		// make a new class name for the current type descriptor
+		namespace = getOrCreateClassNamespace(program, namespace.getParentNamespace(),
+			namespace.getName() + "_" + this.getAddress().toString(),
+			SourceType.IMPORTED);
+
 		return namespace;
+	}
+
+	private Namespace getOrCreateClassNamespace(Program program, Namespace parentNamespace,
+			String namespaceName, SourceType sourceType) {
+
+		Namespace newNamespace = null;
+		try {
+			newNamespace = program.getSymbolTable()
+					.getOrCreateNameSpace(parentNamespace, namespaceName, sourceType);
+		}
+		catch (DuplicateNameException e) {
+			// won't ever get here since above is getting existing namespace or creating new one
+			// of the given name
+		}
+		catch (InvalidInputException e) {
+			Msg.error(TypeDescriptorModel.class,
+				"Failed to create mangled namespace: " + e.getMessage());
+		}
+		return newNamespace;
 	}
 
 	private boolean isNamespaceDeleted(Namespace other) {
