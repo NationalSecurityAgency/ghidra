@@ -69,6 +69,7 @@ public class OneShotAnalysisCommand extends BackgroundCommand<Program>
 
 	@Override
 	public void analysisEnded(AutoAnalysisManager manager, boolean isCancelled) {
+		manager.removeListener(this);
 		if (lastProgram != null) {
 			analyzer.analysisEnded(lastProgram);
 		}
