@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.format.dwarf.DWARFUtil;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
@@ -177,23 +178,13 @@ public class GoRegisterInfo {
 					? struct.getExplicitMinimumAlignment()
 					: 1;
 			for (DataTypeComponent dtc : struct.getDefinedComponents()) {
-				align = Math.max(align, isAtomicAlign64(dtc.getDataType())
+				align = Math.max(align, GoRttiMapper.isAtomicAlign64(dtc.getDataType())
 						? 8
 						: getAlignmentForType(dtc.getDataType()));
 			}
 			return align;
 		}
 		return maxAlign;
-	}
-
-	private static boolean isAtomicAlign64(DataType dt) {
-		// as cmd/compile, an atomic.align64 field forces 8-byte alignment on all archs
-		return switch (dt.getName()) {
-			case "sync/atomic.align64", "internal/runtime/atomic.align64",
-					"runtime/internal/atomic.align64" ->
-				true;
-			default -> false;
-		};
 	}
 
 	static boolean isIntType(DataType dt) {

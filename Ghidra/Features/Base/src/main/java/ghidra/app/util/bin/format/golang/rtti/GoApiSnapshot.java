@@ -242,8 +242,8 @@ public class GoApiSnapshot {
 	public static final GoApiSnapshot EMPTY = new GoApiSnapshot(GoVer.INVALID, Map.of());
 
 	public static class GoNameTypePair {
-		String Name;
-		String DataType;
+		public String Name;
+		public String DataType;
 
 		@Override
 		public String toString() {
@@ -368,8 +368,8 @@ public class GoApiSnapshot {
 	}
 
 	public static class GoStructDef extends GoTypeDef {
-		List<GoNameTypePair> Fields;
-		List<String> TypeParams;
+		public List<GoNameTypePair> Fields;
+		public List<String> TypeParams;
 
 		@Override
 		public void fixupAfterDeserialization() {
