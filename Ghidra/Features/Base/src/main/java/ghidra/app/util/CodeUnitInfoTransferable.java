@@ -15,14 +15,13 @@
  */
 package ghidra.app.util;
 
-import ghidra.util.Msg;
-
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import docking.dnd.GenericDataFlavor;
+import ghidra.util.Msg;
 
 /**
  * Defines data that is available for drag/drop and clipboard transfers.
@@ -49,7 +48,7 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 		return null;
 	}
 
-	private static DataFlavor[] flavors = { localDataTypeFlavor /*, textDataTypeFlavor*/};
+	private static DataFlavor[] flavors = { localDataTypeFlavor /*, textDataTypeFlavor*/ };
 
 	private static List<DataFlavor> flavorList = Arrays.asList(flavors);
 	private List<CodeUnitInfo> infoList;
@@ -62,25 +61,16 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 		infoList = list;
 	}
 
-	/**
-	 * Return all data flavors that this class supports.
-	 */
 	@Override
 	public synchronized DataFlavor[] getTransferDataFlavors() {
 		return flavors;
 	}
 
-	/**
-	 * Return whether the specified data flavor is supported.
-	 */
 	@Override
 	public boolean isDataFlavorSupported(DataFlavor f) {
 		return flavorList.contains(f);
 	}
 
-	/**
-	 * Return the transfer data with the given data flavor.
-	 */
 	@Override
 	public synchronized Object getTransferData(DataFlavor f) throws UnsupportedFlavorException,
 			IOException {
@@ -91,20 +81,14 @@ public class CodeUnitInfoTransferable implements Transferable, ClipboardOwner {
 		throw new UnsupportedFlavorException(f);
 	}
 
-	/**
-	 * Get the string representation for this transferable.
-	 */
 	@Override
 	public String toString() {
 		return "CodeUnitInfoTransferable";
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
-	 */
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// stub
 	}
 
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -42,7 +43,6 @@ import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.*;
-import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.OptionsChangeListener;
@@ -179,20 +179,20 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	public boolean paste(Transferable pasteData) {
 		try {
 			DataFlavor[] flavors = pasteData.getTransferDataFlavors();
-			for (DataFlavor element : flavors) {
-				if (element.equals(LABELS_COMMENTS_TYPE.getFlavor())) {
+			for (DataFlavor flavor : flavors) {
+				if (flavor.equals(LABELS_COMMENTS_TYPE.getFlavor())) {
 					return pasteLabelsComments(pasteData, true, true);
 				}
-				else if (element.equals(LABELS_TYPE.getFlavor())) {
+				else if (flavor.equals(LABELS_TYPE.getFlavor())) {
 					return pasteLabelsComments(pasteData, true, false);
 				}
-				else if (element.equals(COMMENTS_TYPE.getFlavor())) {
+				else if (flavor.equals(COMMENTS_TYPE.getFlavor())) {
 					return pasteLabelsComments(pasteData, false, true);
 				}
-				else if (element.equals(LabelStringTransferable.labelStringFlavor)) {
+				else if (flavor.equals(LabelStringTransferable.labelStringFlavor)) {
 					return pasteLabelString(pasteData);
 				}
-				else if (element.equals(NonLabelStringTransferable.nonLabelStringFlavor)) {
+				else if (flavor.equals(NonLabelStringTransferable.nonLabelStringFlavor)) {
 					return pasteNonLabelString(pasteData);
 				}
 			}
@@ -357,7 +357,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		else if (currentLocation instanceof CommentFieldLocation) {
 			CommentFieldLocation commentFieldLocation = (CommentFieldLocation) currentLocation;
 			String[] comment = commentFieldLocation.getComment();
-			return new NonLabelStringTransferable(comment);
+			String text = Arrays.stream(comment).collect(Collectors.joining("\n"));
+			return new NonLabelStringTransferable(text);
 		}
 		else if (currentLocation instanceof BytesFieldLocation) {
 			// bytes are special--let them get copied and pasted as normal
@@ -1026,21 +1027,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		private final DataFlavor[] flavors = { nonLabelStringFlavor, DataFlavor.stringFlavor };
 		private final List<DataFlavor> flavorList = Arrays.asList(flavors);
-
-		NonLabelStringTransferable(String[] text) {
-			super(combine(text));
-		}
-
-		private static String combine(String[] text) {
-			StringBuilder buildy = new StringBuilder();
-			for (String string : text) {
-				if (buildy.length() > 0) {
-					buildy.append('\n');
-				}
-				buildy.append(string);
-			}
-			return buildy.toString();
-		}
 
 		NonLabelStringTransferable(String text) {
 			super(text);
