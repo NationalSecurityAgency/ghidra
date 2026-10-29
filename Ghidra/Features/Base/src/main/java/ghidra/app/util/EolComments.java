@@ -81,6 +81,7 @@ public class EolComments {
 	private boolean operandsShowReferences = false;
 
 	private int maxDisplayComments;
+	private boolean isTruncated;
 	private EolExtraCommentsOption extraCommentsOption;
 
 	public EolComments(CodeUnit cu, boolean operandsShowReferences, int maxDisplayComments,
@@ -182,10 +183,11 @@ public class EolComments {
 	private void addStrings(Collection<String> from, Collection<String> to) {
 		int space = getAvailableSpace();
 		for (String item : from) {
-			to.add(item);
-			if (to.size() == space) {
+			if (to.size() >= space) {
+				isTruncated = from.size() > to.size();
 				return;
 			}
+			to.add(item);
 		}
 	}
 
@@ -678,11 +680,15 @@ public class EolComments {
 		return Collections.unmodifiableList(offcuts);
 	}
 
+	public boolean isTruncated() {
+		return isTruncated;
+	}
+
 	@Override
 	public String toString() {
 
 		StringBuilder buffy = new StringBuilder();
-		if (eols.isEmpty()) {
+		if (!eols.isEmpty()) {
 			buffy.append("EOLs: ").append(eols);
 		}
 

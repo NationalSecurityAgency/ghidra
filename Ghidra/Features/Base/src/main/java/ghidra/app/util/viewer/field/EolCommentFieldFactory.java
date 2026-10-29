@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
@@ -43,6 +44,7 @@ import utility.function.Dummy;
  * Generates End of line comment Fields.
  */
 public class EolCommentFieldFactory extends FieldFactory {
+
 	public static final String FIELD_NAME = "EOL Comment";
 	private static final String GROUP_TITLE = "EOL Comments Field";
 	private static final String SEMICOLON_PREFIX = "; ";
@@ -58,6 +60,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	public static final String EXTRA_COMMENT_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Auto Comments";
 
+	private static final String ELLIPSIS = "...";
 	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	private boolean isWordWrap;
@@ -256,11 +259,11 @@ public class EolCommentFieldFactory extends FieldFactory {
 			maxDisplayLines, extraCommentsOption);
 
 		// This Code Unit's End of Line Comment
-		List<FieldElement> elementList = new ArrayList<>();
+		List<FieldElement> allElements = new ArrayList<>();
 		AttributedString prefix = createPrefix(CommentStyle.EOL);
 		List<String> eols = comments.getEOLComments();
 		List<FieldElement> eolElements = convertToFieldElements(program, eols, prefix, 0, true);
-		elementList.addAll(eolElements);
+		allElements.addAll(eolElements);
 
 		/*
 		 	 This section describes the various EOL comment types that may appear.  The user can 
@@ -288,11 +291,11 @@ public class EolCommentFieldFactory extends FieldFactory {
 
 		if (comments.isShowingRepeatables()) {
 			prefix = createPrefix(CommentStyle.REPEATABLE);
-			int row = getNextRow(elementList);
+			int row = getNextRow(allElements);
 			List<String> repeatables = comments.getRepeatableComments();
 			List<FieldElement> elements =
 				convertToFieldElements(program, repeatables, prefix, row, true);
-			elementList.addAll(elements);
+			allElements.addAll(elements);
 		}
 
 		if (comments.isShowingRefRepeatables()) {
@@ -301,7 +304,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 			List<RefRepeatComment> refRepeatables = comments.getReferencedRepeatableComments();
 			for (RefRepeatComment comment : refRepeatables) {
 
-				int row = getNextRow(elementList);
+				int row = getNextRow(allElements);
 				String[] lines = comment.getCommentLines();
 				Address refAddress = comment.getAddress();
 				List<String> linesList = Arrays.asList(lines);
@@ -312,36 +315,52 @@ public class EolCommentFieldFactory extends FieldFactory {
 
 				List<FieldElement> elements =
 					convertToFieldElements(program, linesList, decorator, prefix, row, true);
-				elementList.addAll(elements);
+				allElements.addAll(elements);
 			}
 		}
 
 		if (comments.isShowingAutoComments()) {
 			prefix = createPrefix(CommentStyle.AUTO);
-			int row = getNextRow(elementList);
+			int row = getNextRow(allElements);
 			List<String> autos = comments.getAutomaticComment();
 
 			// Note: we pass 'false' for allowing annotations so that the user will see the raw data
 			// and not an interpreted annotation.
 			List<FieldElement> elements =
 				convertToFieldElements(program, autos, prefix, row, false);
-			elementList.addAll(elements);
+			allElements.addAll(elements);
 		}
 
 		if (comments.isShowingOffcutComments()) {
 			prefix = createPrefix(CommentStyle.OFFCUT);
-			int row = getNextRow(elementList);
+			int row = getNextRow(allElements);
 			List<String> offcuts = comments.getOffcutEolComments();
 			List<FieldElement> elements =
 				convertToFieldElements(program, offcuts, prefix, row, true);
-			elementList.addAll(elements);
+			allElements.addAll(elements);
 		}
 
-		if (elementList.isEmpty()) {
+		if (allElements.isEmpty()) {
 			return null;
 		}
-		return ListingTextField.createMultilineTextField(this, proxy, elementList, x, width,
-			maxDisplayLines, hlProvider);
+
+		int maxLines = maxDisplayLines;
+		boolean isTruncated = comments.isTruncated();
+		if (isTruncated) {
+			// add a visual signal that not all comment lines are shown
+			AttributedString prototype = prefix;
+			int row = maxDisplayLines;
+			FieldElement element = createCommentField(ELLIPSIS, prototype, program, row, false);
+			allElements.add(element);
+			maxLines++;
+		}
+
+		// This code is taken from ListingTextField.createMultilineTextField()
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(hlProvider);
+		TextField field =
+			new VerticalLayoutTextField(allElements, x, width, maxLines, hlFactory);
+		return new EolCommentListingTextField(proxy, field, hlFactory, cu, isTruncated);
 	}
 
 	private boolean isOpenData(CodeUnit cu, ProxyObj<?> proxy) {
@@ -493,11 +512,28 @@ public class EolCommentFieldFactory extends FieldFactory {
 		if (!(obj instanceof CodeUnit)) {
 			return null;
 		}
+
 		CodeUnit cu = (CodeUnit) obj;
-		EolComments displayableEol = new EolComments(cu,
+		EolComments comments = new EolComments(cu,
 			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
-		// Hold position in connected tool if navigating within semicolon.
+		if (comments.isTruncated()) {
+			if (screenRow == maxDisplayLines) { // on the '...' line
+				Program program = cu.getProgram();
+				Address addr = cu.getMinAddress();
+				int[] cpath = null;
+				if (cu instanceof Data data) {
+					cpath = data.getComponentPath();
+				}
+				List<String> allComments = comments.getComments();
+				String[] asArray = allComments.toArray(String[]::new);
+				return new EolCommentFieldLocation(program, addr, cpath, asArray, screenRow,
+					screenColumn, screenRow);
+			}
+		}
+
+		// Hold position in connected tool if navigating within semicolon.  This allows other tools
+		// not showing the prefix to track correctly.
 		int numLeadColumns = 0;
 		if (showSemicolon) {
 			numLeadColumns += SEMICOLON_PREFIX.length();
@@ -511,7 +547,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		int eolRow = rowCol.row();
 		int eolColumn = rowCol.col();
 
-		return displayableEol.getLocation(eolRow, eolColumn);
+		return comments.getLocation(eolRow, eolColumn);
 	}
 
 	@Override
@@ -530,18 +566,39 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		EolComments displayableEol = new EolComments((CodeUnit) obj,
-			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
-
 		ListingTextField btf = (ListingTextField) bf;
 		if (!hasSamePath(bf, loc)) {
 			return null;
 		}
 
-		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);
+		EolComments comments = new EolComments((CodeUnit) obj,
+			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
+
+		if (comments.isTruncated()) {
+			int row = loc.getRow();
+			if (row >= maxDisplayLines) { // on the '...' line
+				int col = loc.getCharOffset();
+				col = Math.min(3, col); // cap at the length of '...' to keep the cursor on our row
+				return new FieldLocation(index, fieldNum, maxDisplayLines, col);
+			}
+		}
+
+		RowColLocation eolRowCol = comments.getRowCol((CommentFieldLocation) loc);
 		int row = eolRowCol.row();
 		int col = eolRowCol.col();
 		RowColLocation screenRowCol = btf.dataToScreenLocation(row, col);
+
+		if (screenRowCol instanceof DefaultRowColLocation) {
+			// This means that we do not have a valid character location for the given row and col.
+			// With connected tools, if the source of the event has less rows than we do, and the 
+			// user is on the '...' row, then this can happen. Just create a location that is 
+			// reasonable for our row configuration.  Assume that we do not have wrapping rows.
+			int locRow = loc.getRow();
+			if (locRow < maxDisplayLines) {
+				int screenCol = 0;
+				return new FieldLocation(index, fieldNum, locRow, screenCol);
+			}
+		}
 
 		int screenRow = screenRowCol.row();
 		int screenCol = screenRowCol.col();
@@ -569,23 +626,45 @@ public class EolCommentFieldFactory extends FieldFactory {
 			newFieldOptions);
 	}
 
-	/**
-	 * Convert the array of comments to a single string and use the given
-	 * separatorChar as the delimiter.
-	 *
-	 * @param comments array of comments to convert
-	 * @param separatorChar character to insert after each element in the comment array
-	 * @return the converted string
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	/*
+	 	We create our own text field to control isClipped() so that hovers in the listing will work
+	 	for truncated text as well as clipped text.
 	 */
-	public static String getSingleString(String[] comments, char separatorChar) {
-		if (comments.length == 0) {
-			return null;
+	private class EolCommentListingTextField extends ListingTextField {
+
+		// vertically clipped
+		private boolean isTruncated;
+		private CodeUnit cu;
+
+		public EolCommentListingTextField(ProxyObj<?> proxy, TextField field,
+				ListingFieldHighlightFactoryAdapter hlFactory, CodeUnit cu, boolean isTruncated) {
+			super(EolCommentFieldFactory.this, proxy, field, hlFactory);
+			this.cu = cu;
+			this.isTruncated = isTruncated;
 		}
 
-		StringBuilder buf = new StringBuilder(comments[0]);
-		for (int i = 1; i < comments.length; i++) {
-			buf.append(separatorChar + comments[i]);
+		@Override
+		public boolean isClipped() {
+			return isTruncated || super.isClipped();
 		}
-		return buf.toString();
+
+		@Override
+		public String getFullTextWithLineSeparators() {
+
+			if (isTruncated) {
+				int allLines = 100; // limit to something reasonable for a tooltip
+				EolComments comments =
+					new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
+						allLines, extraCommentsOption);
+				List<String> allComments = comments.getComments();
+				return allComments.stream().collect(Collectors.joining("\n"));
+			}
+			return super.getFullTextWithLineSeparators();
+		}
 	}
+
 }

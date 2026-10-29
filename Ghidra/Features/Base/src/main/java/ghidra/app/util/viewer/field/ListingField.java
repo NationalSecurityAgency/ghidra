@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,4 +44,15 @@ public interface ListingField extends Field {
 	 * @return the object that was clicked
 	 */
 	public Object getClickedObject(FieldLocation fieldLocation);
+
+	/**
+	 * Returns the full text for this field.  For most fields this will be the same value as 
+	 * {@link #getTextWithLineSeparators()}.  Some classes may override this method to return more 
+	 * text than is provided to the Listing.  For example, a comment fields may only give the 
+	 * listing a small number of lines to display, even when the database has more.
+	 * @return the full text
+	 */
+	public default String getFullTextWithLineSeparators() {
+		return getTextWithLineSeparators();
+	}
 }
