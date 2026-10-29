@@ -8574,3 +8574,285 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
 }
+
+# FEAT_THE
+
+:rcwcas^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x19 & b_21=1 & Rs_GPR64 & b_1015=0x02 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 1; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	if(tmp != Rs_GPR64) goto <skip>;
+      NG = 0;
+	  *[ram]:8 Rn_GPR64xsp = Rt_GPR64;
+	<skip>
+	Rs_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwcasp^ls_lor Rs_GPR64, aa_Xss, Rt_GPR64, aa_Xtt, [Rn_GPR64xsp]
+is b_2431=0x19 & b_21=1 & Rs_GPR64 & aa_Xss & b_16=0 & b_1015=0x03 & Rn_GPR64xsp & Rt_GPR64 & aa_Xtt & b_00=0 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 1; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(aa_Xss) | (zext(Rs_GPR64) << 64);
+	local tmp3:16 = zext(aa_Xtt) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rs_GPR64) | (zext(aa_Xss) << 64);
+	local tmp3:16 = zext(Rt_GPR64) | (zext(aa_Xtt) << 64);
+@endif
+	if(tmp != tmp2) goto <skip>;
+      NG = 0;
+	  *[ram]:16 Rn_GPR64xsp = tmp3;
+	<skip>
+@if DATA_ENDIAN == "big"
+	aa_Xss = tmp:8;
+	Rs_GPR64 = tmp(8);
+@else
+	Rs_GPR64 = tmp:8;
+	aa_Xss = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwclr^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x38 & b_21=1 & Rs_GPR64 & b_1015=0x24 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+    build ls_loa;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = tmp & (~Rs_GPR64);
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwclrp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x19 & b_21=1 & Rs_GPR64 & b_1015=0x24 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+    build ls_loa;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp & (~tmp2);
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwscas^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x59 & b_21=1 & Rs_GPR64 & b_1015=0x02 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 1; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	if(tmp != Rs_GPR64) goto <skip>;
+      NG = 0;
+	  *[ram]:8 Rn_GPR64xsp = Rt_GPR64;
+	<skip>
+	Rs_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwscasp^ls_lor Rs_GPR64, aa_Xss, Rt_GPR64, aa_Xtt, [Rn_GPR64xsp]
+is b_2431=0x59 & b_21=1 & Rs_GPR64 & aa_Xss & b_16=0 & b_1015=0x03 & b_00=0 & Rn_GPR64xsp & Rt_GPR64 & aa_Xtt & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 1; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(aa_Xss) | (zext(Rs_GPR64) << 64);
+	local tmp3:16 = zext(aa_Xtt) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rs_GPR64) | (zext(aa_Xss) << 64);
+	local tmp3:16 = zext(Rt_GPR64) | (zext(aa_Xtt) << 64);
+@endif
+	if(tmp != tmp2) goto <skip>;
+      NG = 0;
+	  *[ram]:16 Rn_GPR64xsp = tmp3;
+	<skip>
+@if DATA_ENDIAN == "big"
+	aa_Xss = tmp:8;
+	Rs_GPR64 = tmp(8);
+@else
+	Rs_GPR64 = tmp:8;
+	aa_Xss = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwsclr^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x78 & b_21=1 & Rs_GPR64 & b_1015=0x24 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = tmp & (~Rs_GPR64);
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwsclrp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x59 & b_21=1 & Rs_GPR64 & b_1015=0x24 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp & (~tmp2);
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwset^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x38 & b_21=1 & Rs_GPR64 & b_1015=0x2c & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = tmp | Rs_GPR64;
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwsetp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x19 & b_21=1 & Rs_GPR64 & b_1015=0x2c & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp2 | tmp;
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwsset^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x78 & b_21=1 & Rs_GPR64 & b_1015=0x2c & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = tmp | Rs_GPR64;
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwssetp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x59 & b_21=1 & Rs_GPR64 & b_1015=0x2c & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp2 | tmp;
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwsswp^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x78 & b_21=1 & Rs_GPR64 & b_1015=0x28 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = Rs_GPR64;
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwsswpp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x59 & b_21=1 & Rs_GPR64 & b_1015=0x28 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    build ls_loa;
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp2;
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
+
+:rcwswp^ls_lor Rs_GPR64, Rt_GPR64, [Rn_GPR64xsp]
+is b_2431=0x38 & b_21=1 & Rs_GPR64 & b_1015=0x28 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+    build ls_loa;
+	local tmp = *[ram]:8 Rn_GPR64xsp;
+	*[ram]:8 Rn_GPR64xsp = Rs_GPR64;
+	Rt_GPR64 = tmp;
+    build ls_lor;
+}
+
+:rcwswpp^ls_lor Rt_GPR64, Rs_GPR64, [Rn_GPR64xsp]
+is b_2431=0x19 & b_21=1 & Rs_GPR64 & b_1015=0x28 & Rn_GPR64xsp & Rt_GPR64 & ls_lor & ls_loa
+{
+    NG = 0; ZR = 0; CY = 1; OV = 0;
+    build ls_loa;
+	local tmp = *[ram]:16 Rn_GPR64xsp;
+@if DATA_ENDIAN == "big"
+	local tmp2:16 = zext(Rs_GPR64) | (zext(Rt_GPR64) << 64);
+@else
+	local tmp2:16 = zext(Rt_GPR64) | (zext(Rs_GPR64) << 64);
+@endif
+	*[ram]:16 Rn_GPR64xsp = tmp2;
+@if DATA_ENDIAN == "big"
+	Rs_GPR64 = tmp:8;
+	Rt_GPR64 = tmp(8);
+@else
+	Rt_GPR64 = tmp:8;
+	Rs_GPR64 = tmp(8);
+@endif
+    build ls_lor;
+}
