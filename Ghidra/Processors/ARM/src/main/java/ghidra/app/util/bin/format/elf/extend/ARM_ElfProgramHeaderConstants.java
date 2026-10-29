@@ -95,5 +95,9 @@ public class ARM_ElfProgramHeaderConstants {
 	public static final int EF_ARM_EABIMASK = 0xFF000000;
 	/** The ELF file contains BE-8 code, suitable for execution on an ARM Architecture v6 processor. This flag must only be set on an executable file. */
 	public static final int EF_ARM_BE8 = 0x00800000;
+	/** The executable file conforms to the base (soft-float) procedure-call standard. */
+	public static final int EF_ARM_ABI_FLOAT_SOFT = 0x00000200;
+	/** The executable file conforms to the VFP (hard-float) procedure-call standard. */
+	public static final int EF_ARM_ABI_FLOAT_HARD = 0x00000400;
 
 }

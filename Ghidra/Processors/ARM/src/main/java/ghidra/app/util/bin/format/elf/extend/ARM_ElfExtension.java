@@ -79,6 +79,16 @@ public class ARM_ElfExtension extends ElfExtension {
 	}
 
 	@Override
+	public String getCompilerName(ElfHeader elf) {
+		if (!ARM_ElfFloatAbi.isSoftFloat(elf)) {
+			return null;
+		}
+		// see ARM.opinion; BE-8 images use the v8LEInstruction variant
+		return (elf.e_flags() & ARM_ElfProgramHeaderConstants.EF_ARM_BE8) != 0 ? "softfp-be8"
+				: "softfp";
+	}
+
+	@Override
 	public void addLoadOptions(ElfHeader elf, List<Option> options) {
 
 		// If PC Bias option disabled addend assumed to includes PC Bias,
