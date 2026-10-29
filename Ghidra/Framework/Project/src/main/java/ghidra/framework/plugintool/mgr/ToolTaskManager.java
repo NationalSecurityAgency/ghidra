@@ -49,7 +49,6 @@ public class ToolTaskManager implements Runnable {
 	private LinkedList<BackgroundCommandTask<?>> tasks = new LinkedList<>();
 	private Map<DomainObject, PriorityQueue<BackgroundCommand<?>>> queuedCommandsMap =
 		new HashMap<>();
-	private long startQueueTime = 0;
 	private long startTaskTime = 0;
 	private Thread taskThread;
 	private ThreadGroup taskThreadGroup;
@@ -327,43 +326,37 @@ public class ToolTaskManager implements Runnable {
 
 	@Override
 	public void run() {
-		try {
 
-			Msg.debug(this, time() + "Background processing started...");
-			startQueueTime = System.currentTimeMillis();
-			for (BackgroundCommandTask<?> task = getNextTask(); task != null; task =
-				getNextTask()) {
+		Msg.debug(this, time() + "Background processing started...");
+		long startQueueTime = System.currentTimeMillis();
+		for (BackgroundCommandTask<?> task = getNextTask(); task != null; task =
+			getNextTask()) {
 
-				Msg.debug(this, time() + "Task Start: " + task.getTaskTitle());
-				startTaskTime = System.currentTimeMillis();
+			Msg.debug(this, time() + "Task Start: " + task.getTaskTitle());
+			startTaskTime = System.currentTimeMillis();
 
-				synchronized (this) {
-					currentTask = task;
-				}
-
-				if (task.isModal()) {
-					modalTaskDialog = new TaskDialog(task);
-					modalTaskDialog.show(0);
-					task.run(modalTaskDialog);
-				}
-				else {
-					toolTaskMonitor.initialize(task);
-					task.run(toolTaskMonitor);
-				}
-			}
-
-			double totalTime = (System.currentTimeMillis() - startQueueTime) / 1000.00;
-			Msg.debug(this, time() + "Background processing complete (" + totalTime + " secs)");
-		}
-		finally {
 			synchronized (this) {
-				currentTask = null;
+				currentTask = task;
+			}
+
+			if (task.isModal()) {
+				modalTaskDialog = new TaskDialog(task);
+				modalTaskDialog.show(0);
+				task.run(modalTaskDialog);
+			}
+			else {
+				toolTaskMonitor.initialize(task);
+				task.run(toolTaskMonitor);
 			}
 		}
+
+		double totalTime = (System.currentTimeMillis() - startQueueTime) / 1000.00;
+		Msg.debug(this, time() + "Background processing complete (" + totalTime + " secs)");
 	}
 
 	private synchronized BackgroundCommandTask<?> getNextTask() {
 		if (tasks.isEmpty()) {
+			currentTask = null;
 			taskThread = null;
 			return null;
 		}
@@ -421,7 +414,10 @@ public class ToolTaskManager implements Runnable {
 		finally {
 			try {
 				if (monitor.isCancelled()) {
-					clearQueuedCommands(obj);
+					synchronized (this) {
+						task.setDoneQueueProcessing();
+						clearQueuedCommands(obj);
+					}
 					if (tool != null) {
 						tool.setStatusInfo(task.getCommand().getName() + " cancelled");
 					}
