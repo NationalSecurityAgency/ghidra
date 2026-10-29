@@ -1876,7 +1876,7 @@ bool SplitFlow::traceForward(TransformVar *rvn)
       if (val < laneDescription.getSize(1) * 8)
 	return false;			// Must obliterate all high bits
       TransformOp *rop = newPreexistingOp(2,CPUI_INT_LEFT,op);		// Keep original shift
-      TransformOp *zextrop = newOp(1, CPUI_INT_ZEXT, rop);
+      TransformOp *zextrop = newOp(1, CPUI_INT_ZEXT, rop, TransformOp::insert_before);
       opSetInput(zextrop, rvn, 0);		// Input is just the low piece
       opSetOutput(zextrop, newUnique(laneDescription.getWholeSize()));
       opSetInput(rop, zextrop->getOut(), 0);
@@ -1900,7 +1900,7 @@ bool SplitFlow::traceForward(TransformVar *rvn)
       else {
 	uintb remainShift = val - laneDescription.getSize(0) * 8;
 	TransformOp *rop = newPreexistingOp(2,op->code(),op);
-	TransformOp *extrop = newOp(1, extOpCode, rop);
+	TransformOp *extrop = newOp(1, extOpCode, rop, TransformOp::insert_before);
 	opSetInput(extrop, rvn+1, 0);	// Input is the high piece
 	opSetOutput(extrop, newUnique(laneDescription.getWholeSize()));
 	opSetInput(rop, extrop->getOut(), 0);
@@ -3743,9 +3743,14 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
   int4 ptrSize = origPtr->getSize();
   // Order lanes by pointer offset.  Least significant to most for little endian, or most significant to least for big endian.
   int8 bytePos = 0;	// Smallest pointer offset
+  TransformOp *lastOp = (TransformOp *)0;
   for(int4 count=0;count<numLanes;++count) {
     int4 i = spc->isBigEndian() ? numLanes -1 - count: count;	// little = least to most, big = most to least
-    TransformOp *ropStore = newOpReplace(3, CPUI_STORE, op);
+    TransformOp *ropStore;
+    if (lastOp == (TransformOp *)0)
+      ropStore = newPreexistingOp(3, CPUI_STORE, op);
+    else
+      ropStore = newOp(3, CPUI_STORE,lastOp, TransformOp::insert_after);
 
     // Construct the pointer
     TransformVar *ptrVn;
@@ -3753,7 +3758,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
       ptrVn = basePtr;
     else {
       ptrVn = newUnique(ptrSize);
-      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropStore);
+      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropStore, TransformOp::insert_before);
       opSetOutput(addOp,ptrVn);
       opSetInput(addOp,basePtr,0);
       opSetInput(addOp,newConstant(ptrSize, 0, bytePos), 1);
@@ -3763,6 +3768,7 @@ bool LaneDivide::buildStore(PcodeOp *op,int4 numLanes,int4 skipLanes)
     opSetInput(ropStore,ptrVn,1);
     opSetInput(ropStore,inVars+i,2);
     bytePos += description.getSize(skipLanes + i);
+    lastOp = ropStore;
   }
   return true;
 }
@@ -3800,7 +3806,7 @@ bool LaneDivide::buildLoad(PcodeOp *op,TransformVar *outVars,int4 numLanes,int4 
       ptrVn = basePtr;
     else {
       ptrVn = newUnique(ptrSize);
-      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropLoad);
+      TransformOp *addOp = newOp(2, CPUI_INT_ADD, ropLoad, TransformOp::insert_before);
       opSetOutput(addOp,ptrVn);
       opSetInput(addOp,basePtr,0);
       opSetInput(addOp,newConstant(ptrSize, 0, bytePos), 1);

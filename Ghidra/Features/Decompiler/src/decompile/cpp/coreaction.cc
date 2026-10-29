@@ -3876,17 +3876,19 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     pushConsumed(outc,op->getIn(0),worklist);
     if (op->getIn(1)->getSpace()->getType()==IPTR_IOP) {
       PcodeOp *indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-      if (!indop->isDead()) {
-	if (indop->code() == CPUI_COPY) {
-	  if (indop->getOut()->characterizeOverlap(*op->getOut())>0) {
-	    pushConsumed(~((uintb)0),indop->getOut(),worklist);	// Mark the copy as consumed
-	    indop->setIndirectSource();
-	  }
-	  // If we reach here, there isn't a true block of INDIRECT (RuleIndirectCollapse will convert it to COPY)
-	}
-	else
-	  indop->setIndirectSource();
+      if (indop->isDead()) {
+	ostringstream s;
+	s << "Hanging INDIRECT at " << op->getAddr();
+	throw LowlevelError(s.str());
       }
+      if (indop->code() == CPUI_COPY) {
+	if (indop->getOut()->characterizeOverlap(*op->getOut())>0) {
+	  pushConsumed(~((uintb)0),indop->getOut(),worklist);	// Mark the copy as consumed
+	  indop->setIndirectSource();
+	}
+      }
+      else
+	indop->setIndirectSource();
     }
     break;
   case CPUI_COPY:
