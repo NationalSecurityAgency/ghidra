@@ -66,6 +66,7 @@ import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
+import ghidra.util.datastruct.Counter;
 
 public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvider {
 	private static final AutoConfigState.ClassHandler<
@@ -184,7 +185,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			}
 
 			@Override
-			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount,
+					Counter bytesAvailable) {
 				return doHasEnoughSpace(program, address, byteCount);
 			}
 
