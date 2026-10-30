@@ -903,8 +903,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 		}
 		else if ("MOVFP".equals(mnemonic) || "MOVPF".equals(mnemonic)) {
 			Object[] objs = instr.getOpObjects(0);
-			if (objs.length == 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) &&
-				wContext.hasValue()) {
+			if (objs.length > 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) && wContext.hasValue()) {
 				fs32Context.setValueAt(instr, wContext.longValue() >> 6, false);
 				fs10Context.setValueAt(instr, wContext.longValue() >> 4, false);
 			}
@@ -986,8 +985,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 		}
 		else if ("MOVFP".equals(mnemonic) || "MOVPF".equals(mnemonic)) {
 			Object[] objs = instr.getOpObjects(0);
-			if (objs.length == 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) &&
-				wContext.hasValue()) {
+			if (objs.length > 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) && wContext.hasValue()) {
 				bsrContext.setValueAt(instr, wContext.longValue(), false);
 			}
 			else {
@@ -1064,8 +1062,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 		}
 		else if ("MOVFP".equals(mnemonic) || "MOVPF".equals(mnemonic)) {
 			Object[] objs = instr.getOpObjects(0);
-			if (objs.length == 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) &&
-				wContext.hasValue()) {
+			if (objs.length > 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) && wContext.hasValue()) {
 				pclathContext.setValueAt(instr, wContext.longValue(), false);
 			}
 			else {
@@ -1107,8 +1104,7 @@ public class Pic17c7xxAnalyzer extends AbstractAnalyzer {
 		}
 		else if ("MOVFP".equals(mnemonic) || "MOVPF".equals(mnemonic)) {
 			Object[] objs = instr.getOpObjects(0);
-			if (objs.length == 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) &&
-				wContext.hasValue()) {
+			if (objs.length > 0 && (wReg.equals(objs[0]) || wReg.getAddress().equals(objs[0])) && wContext.hasValue()) {
 				handleComputedFlow(instr, wContext.longValue(), Reference.MNEMONIC);
 			}
 			else {
