@@ -3716,9 +3716,9 @@ define pcodeop ibhf;
 :INVLPGA        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xf; byte=0x1; byte=0xDF                   { invlpga(RAX,ECX); }
 @endif
 
-:INVPCID r32, m128     is vexMode=0 & addrsize=1 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x82; r32 ... & m128    { invpcid(r32, m128); }
+:INVPCID Reg32, m128     is vexMode=0 & addrsize=1 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x82; Reg32 ... & m128    { invpcid(Reg32, m128); }
 @ifdef IA64
-:INVPCID r64, m128     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x82; r64 ... & m128    { invpcid(r64, m128); }
+:INVPCID Reg64, m128     is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x82; Reg64 ... & m128    { invpcid(Reg64, m128); }
 @endif
 
 :IRET           is vexMode=0 & addrsize=0 & opsize=0 & byte=0xcf            { pop22(IP); EIP=zext(IP); pop22(CS); pop22(flags); return [EIP]; }    
