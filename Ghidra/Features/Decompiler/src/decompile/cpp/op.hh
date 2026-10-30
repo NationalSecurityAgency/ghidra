@@ -63,7 +63,7 @@ public:
 class PcodeOp {
   friend class BlockBasic; // Just insert_before, insert_after, setOrder
   friend class Funcdata;
-  friend class CloneBlockOps;
+  friend class CloneOp;
   friend class PcodeOpBank;
   friend class VarnodeBank;    // Only uses setInput
 public:
