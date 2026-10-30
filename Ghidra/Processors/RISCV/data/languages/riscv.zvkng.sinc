@@ -1,0 +1,55 @@
+# Vector Crypto NIST Algorithms including GHASH
+
+# Vector AES final-round decryption
+define pcodeop vaesdf_vv;
+define pcodeop vaesdf_vs;
+:vaesdf.vv vd, vs2  is op2631=0x28 & op2525=1 & vs2 & op1519=0x01 & op1214=0x2 & vd & op0006=0x77 {vd=vaesdf_vv(vd,vs2);}
+:vaesdf.vs vd, vs2  is op2631=0x29 & op2525=1 & vs2 & op1519=0x01 & op1214=0x2 & vd & op0006=0x77 {vd=vaesdf_vs(vd,vs2);}
+
+# Vector AES middle-round decryption (single round)
+define pcodeop vaesdm_vv;
+define pcodeop vaesdm_vs;
+:vaesdm.vv vd, vs2  is op2631=0x28 & op2525=1 & vs2 & op1519=0x00 & op1214=0x2 & vd & op0006=0x77 {vd=vaesdm_vv(vd,vs2);}
+:vaesdm.vs vd, vs2  is op2631=0x29 & op2525=1 & vs2 & op1519=0x00 & op1214=0x2 & vd & op0006=0x77 {vd=vaesdm_vs(vd,vs2);}
+
+# Vector AES middle-round encryption
+define pcodeop vaesem_vv;
+define pcodeop vaesem_vs;
+:vaesem.vv vd, vs2 is op2631=0x28 & op2525=1 & vs2 & op1519=0x02 & op1214=0x2 & vd & op0006=0x77 {vd=vaesem_vv(vd,vs2);}
+:vaesem.vs vd, vs2 is op2631=0x29 & op2525=1 & vs2 & op1519=0x02 & op1214=0x2 & vd & op0006=0x77 {vd=vaesem_vs(vd,vs2);}
+
+# Vector AES final-round encryption
+define pcodeop vaesef_vv;
+define pcodeop vaesef_vs;
+:vaesef.vv vd, vs2  is op2631=0x28 & op2525=1 & vs2 & op1519=0x03 & op1214=0x2 & vd & op0006=0x77 {vd=vaesef_vv(vd,vs2);}
+:vaesef.vs vd, vs2  is op2631=0x29 & op2525=1 & vs2 & op1519=0x03 & op1214=0x2 & vd & op0006=0x77 {vd=vaesef_vs(vd,vs2);}
+
+# Vector AES-128 Forward KeySchedule generation (single round)
+define pcodeop vaeskf1_vi;
+:vaeskf1.vi vd, vs2, uimm5 is op2631=0x22 & op2525=1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 {vd=vaeskf1_vi(vs2,uimm5);}
+
+# Vector AES-256 Forward KeySchedule generation (single round)
+define pcodeop vaeskf2_vi;
+:vaeskf2.vi vd, vs2, uimm5 is op2631=0x2a & op2525=1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 {vd=vaeskf2_vi(vd,vs2,uimm5);}
+
+# Vector AES round zero encryption/decryption
+define pcodeop vaesz_vs;
+:vaesz.vs vd, vs2 is op2631=0x29 & op2525=1 & vs2 & op1519=0x07 & op1214=0x2 & vd & op0006=0x77 {vd=vaesz_vs(vd,vs2);}
+
+# Vector SHA-2 two rounds of compression, high and low parts
+define pcodeop vsha2ch_vv;
+:vsha2ch.vv vd, vs2, vs1 is op2631=0x2e & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 {vd=vsha2ch_vv(vd,vs2,vs1);}
+define pcodeop vsha2cl_vv;
+:vsha2cl.vv vd, vs2, vs1 is op2631=0x2f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 {vd=vsha2cl_vv(vd,vs2,vs1);}
+
+# Vector SHA-2 message schedule (four rounds)
+define pcodeop vsha2ms_vv;
+:vsha2ms.vv vd, vs2, vs1 is op2631=0x2d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 {vd=vsha2ms_vv(vd,vs2,vs1);}
+
+# Vector Add-Multiply over GHASH Galois-Field (A single "iteration" of the GHASHH algorithm)
+define pcodeop vghsh_vv;
+:vghsh.vv vd, vs2, vs1 is op2631=0x2c & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 {vd=vghsh_vv(vd,vs2,vs1);}
+
+# Vector Multiply over GHASH Galois-Field (A GHASHH multiply is performed.)
+define pcodeop vgmul_vv;
+:vgmul.vv vd, vs2 is op2631=0x28 & op2525=1 & vs2 & op1519=0x11 & op1214=0x2 & vd & op0006=0x77 {vd=vgmul_vv(vd,vs2);}

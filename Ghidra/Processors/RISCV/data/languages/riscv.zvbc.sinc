@@ -1,0 +1,19 @@
+# Vector Carry-less Multiply by vector  - returning low half of product.
+define pcodeop vclmul_vv;
+:vclmul.vv vd, vs2, vs1         is op2631=0x0c & op2525=1 & vs2 & vs1 & op1214=0x02 & vd & op0006=0x57 {vd=vclmul_vv(vs2,vs1);}
+:vclmul.vv vd, vs2, vs1, "v0.t" is op2631=0x0c & op2525=0 & vs2 & vs1 & op1214=0x02 & vd & op0006=0x57 {vd=vclmul_vv(vs2,vs1,v0);}
+
+# Vector Carry-less Multiply by scalar - returning low half of product.
+define pcodeop vclmul_vx;
+:vclmul.vx vd, vs2, rs1         is op2631=0x0c & op2525=1 & vs2 & rs1 & op1214=0x06 & vd & op0006=0x57 {vd=vclmul_vx(vs2,rs1);}
+:vclmul.vx vd, vs2, rs1, "v0.t" is op2631=0x0c & op2525=0 & vs2 & rs1 & op1214=0x06 & vd & op0006=0x57 {vd=vclmul_vx(vs2,rs1);}
+
+# Vector Carry-less Multiply by vector  - returning high half of product.
+define pcodeop vclmulh_vv;
+:vclmulh.vv vd, vs2, vs1         is op2631=0x0d & op2525=1 & vs2 & vs1 & op1214=0x02 & vd & op0006=0x57 {vd=vclmulh_vv(vs2,vs1);}
+:vclmulh.vv vd, vs2, vs1, "v0.t" is op2631=0x0d & op2525=0 & vs2 & vs1 & op1214=0x02 & vd & op0006=0x57 {vd=vclmulh_vv(vs2,vs1,v0);}
+
+# Vector Carry-less Multiply by scalar - returning high half of product.
+define pcodeop vclmulh_vx;
+:vclmulh.vx vd, vs2, rs1         is op2631=0x0d & op2525=1 & vs2 & rs1 & op1214=0x06 & vd & op0006=0x57 {vd=vclmulh_vx(vs2,rs1);}
+:vclmulh.vx vd, vs2, rs1, "v0.t" is op2631=0x0d & op2525=0 & vs2 & rs1 & op1214=0x06 & vd & op0006=0x57 {vd=vclmulh_vx(vs2,rs1);}
