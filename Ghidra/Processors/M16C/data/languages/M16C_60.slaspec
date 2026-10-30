@@ -3321,7 +3321,7 @@ macro SHLsetShiftLeftFlags(val,shift,result,sze) {
 
 ### STCTX ###
 
-:STCTX abs16offset, abs20offset     is b1_0007=0xb6; b2_0007=0xd3; abs16offset; imm20_dat & abs20offset {
+:STCTX abs16offset, abs20offset     is b1_0007=0x7d; b2_0007=0xf0; abs16offset; imm20_dat & abs20offset {
 
     taskNum:1 = abs16offset; # load task number stored at abs16
     ptr:3 = imm20_dat + (zext(taskNum) * 2); # compute table entry address relative to abs20
