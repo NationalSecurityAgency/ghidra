@@ -58,6 +58,8 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -719,6 +721,9 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 				destinationFunctionsModel.associationChanged(association);
 				contextChanged = true;
 			}
+			else if (eventType == ProgramEvent.SYMBOL_RENAMED) {
+				contextChanged |= functionRenamed((ProgramChangeRecord) doRecord);
+			}
 			else if (eventType == ProgramEvent.FUNCTION_ADDED) {
 				functionAdded((ProgramChangeRecord) doRecord);
 				contextChanged = true;
@@ -737,6 +742,25 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
+	}
+
+	private boolean functionRenamed(ProgramChangeRecord record) {
+		if (!(record.getObject() instanceof Symbol symbol) ||
+			symbol.getSymbolType() != SymbolType.FUNCTION ||
+			!(symbol.getObject() instanceof Function function)) {
+			return false;
+		}
+		Program program = function.getProgram();
+		if (program == controller.getSourceProgram()) {
+			sourceFunctionsModel.functionChanged(function);
+		}
+		else if (program == controller.getDestinationProgram()) {
+			destinationFunctionsModel.functionChanged(function);
+		}
+		else {
+			return false;
+		}
+		return true;
 	}
 
 	private void functionAdded(ProgramChangeRecord record) {
