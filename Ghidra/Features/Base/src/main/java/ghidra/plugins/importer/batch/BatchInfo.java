@@ -493,7 +493,7 @@ public class BatchInfo {
 		// start a new CryptoSession to group all password prompting by multiple container
 		// files into a single session, enabling "Cancel All" to really cancel all password
 		// prompts
-		try (CryptoSession cryptoSession = fsService.newCryptoSession()) {
+		try (CryptoSession _ = fsService.newCryptoSession()) {
 			List<FSRL> badFiles = new ArrayList<>();
 			for (FSRL fsrl : filesToAdd) {
 				batchMonitor.setPrefix("Processing " + fsrl.getName() + ": ");
@@ -573,6 +573,13 @@ public class BatchInfo {
 		@Override
 		public void setProgress(long value) {
 			// we control the progress
+		}
+
+		@Override
+		public synchronized void setIndeterminate(boolean indeterminate) {
+			// Some low-level APIs toggle this as they work.  The batch import monitor will show 
+			// status text messages as it works.  Keep those messages visible and ignore requests
+			// to show the indeterminate screen.
 		}
 	}
 
