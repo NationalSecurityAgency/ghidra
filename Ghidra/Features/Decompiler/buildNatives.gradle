@@ -230,6 +230,7 @@ model {
 				b.cppCompiler.args "-O2"			// for DEBUG, comment this line out
 				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
 				b.cppCompiler.args "-Wno-sign-compare"
+				b.cCompiler.args "-O2"				// zlib sources (decompresses every .sla on load); for DEBUG, comment this line out
 				if (b.targetPlatform.operatingSystem.linux) {
 //					b.linker.args "-static"
 					b.cppCompiler.define "LINUX"
@@ -253,10 +254,16 @@ model {
 					b.cppCompiler.define "_WINDOWS"
 					b.cppCompiler.define "WIN32"
 					b.cppCompiler.define "_WIN32"
-					if (b.targetPlatform.name == "win_x86_64") {
+					b.cCompiler.define "WINDOWS"
+					b.cCompiler.define "_WINDOWS"
+					b.cCompiler.define "WIN32"
+					b.cCompiler.define "_WIN32"
+					if (b.targetPlatform.name == "win_x86_64" || b.targetPlatform.name == "win_arm_64") {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
-					}	
+						b.cCompiler.define "WIN64"
+						b.cCompiler.define "_WIN64"
+					}
 				}
 				b.cCompiler.args "/W3"
 				b.cCompiler.args "/O2"
@@ -273,6 +280,8 @@ model {
 				// b.cppCompiler.args "-g"			// for DEBUG, uncomment	this line
 				b.cppCompiler.args "-Wno-sign-compare"
 				b.cppCompiler.args "-w"
+				b.cCompiler.args "-O2"			// for DEBUG, comment this line out
+				b.cCompiler.args "-w"
 				if (b.targetPlatform.operatingSystem.linux) {
 //					b.linker.args "-static"
 				}
