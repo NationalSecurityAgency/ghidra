@@ -985,11 +985,9 @@
 :divw. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=491 & Rc=1
 {
 @ifdef BIT_64
-	divOverflow(A:4,B:4);
 	D = sext(A:4 s/ B:4);
 	cr0flags(D:4);
 @else
-	divOverflow(A,B);
 	D = A s/ B;
 	cr0flags(D);
 @endif
