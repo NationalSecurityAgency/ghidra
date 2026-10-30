@@ -790,6 +790,8 @@ public class GoTypeManager {
 			case Bool -> BooleanDataType.dataType;
 			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
 			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
+			case Complex64 -> Complex8DataType.dataType;
+			case Complex128 -> Complex16DataType.dataType;
 			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm); // depends on arch
 			case Int8 -> Int8TDataType.dataType;
 			case Int16 -> Int16TDataType.dataType;

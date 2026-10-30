@@ -165,13 +165,35 @@ public class GoRegisterInfo {
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {
 			return Math.min(maxAlign, dt.getLength());
 		}
-		if (dt instanceof Complex8DataType /* Go complex64 */ ) {
-			return 4;
+		if (dt instanceof AbstractComplexDataType) {	// aligned as its real part
+			return Math.min(maxAlign, dt.getLength() / 2);
 		}
 		if (dt instanceof AbstractFloatDataType) {
 			return Math.min(maxAlign, dt.getLength());
 		}
+		if (dt instanceof Structure struct) {
+			// a Go struct is aligned to its most aligned field, or to its RTTI alignment
+			int align = struct.hasExplicitMinimumAlignment()
+					? struct.getExplicitMinimumAlignment()
+					: 1;
+			for (DataTypeComponent dtc : struct.getDefinedComponents()) {
+				align = Math.max(align, isAtomicAlign64(dtc.getDataType())
+						? 8
+						: getAlignmentForType(dtc.getDataType()));
+			}
+			return align;
+		}
 		return maxAlign;
+	}
+
+	private static boolean isAtomicAlign64(DataType dt) {
+		// as cmd/compile, an atomic.align64 field forces 8-byte alignment on all archs
+		return switch (dt.getName()) {
+			case "sync/atomic.align64", "internal/runtime/atomic.align64",
+					"runtime/internal/atomic.align64" ->
+				true;
+			default -> false;
+		};
 	}
 
 	static boolean isIntType(DataType dt) {
