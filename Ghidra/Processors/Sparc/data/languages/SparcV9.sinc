@@ -471,6 +471,18 @@ macro zeroflags(op1) {
 	i_nf = (tmp1 s< 0);
 }
 
+# A 32-bit divide whose quotient does not fit in 32 bits returns the largest value of the result type
+macro udivSaturate(res) {
+	local overflow:1 = res > 0xffffffff;
+	res = zext(overflow) * 0xffffffff + zext(!overflow) * res;
+}
+
+macro sdivSaturate(res) {
+	local positive:1 = res s> 0x7fffffff;
+	local negative:1 = res s< 0xffffffff80000000;
+	res = zext(positive) * 0x7fffffff + zext(negative) * 0xffffffff80000000 + zext(!(positive || negative)) * res;
+}
+
 macro packflags(ccr) {
 	ccr = zext((x_nf << 7) | (x_zf << 6) | (x_vf << 5) | (x_cf << 4) | (i_nf << 3) | (i_zf << 2) | (i_vf << 1) | (i_cf << 0));
 }
@@ -915,6 +927,7 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	numerator:8 = (zext(Y) << 32) + zext(RS1:4);
 	denom:8 = zext(regorimm:4);
 	local res:8 = numerator / denom;
+	udivSaturate(res);
 	RD = zext(res:4);
 }
 :sdiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0f & RS1 & regorimm
@@ -922,6 +935,7 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	numerator:8 = (sext(Y) << 32) + zext(RS1:4);
 	denom:8 = sext(regorimm:4);
 	local res:8 = numerator s/ denom;
+	sdivSaturate(res);
 	RD = sext(res:4);
 }
 
@@ -930,9 +944,10 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	numerator:8 = (zext(Y) << 32) + zext(RS1:4);
 	denom:8 = zext(regorimm:4);
 	local res:8 = numerator / denom;
-	zeroflags(res:4);
-	RD = zext(res:4);
 	i_vf = res > 0xffffffff;
+	udivSaturate(res);
+	RD = zext(res:4);
+	zeroflags(RD);
 	i_cf = 0;
 	x_vf = 0;
 	x_cf = 0;
@@ -942,9 +957,10 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 	numerator:8 = (sext(Y) << 32) + (zext(RS1) & 0xffffffff);
 	denom:8 = sext(regorimm:4);
 	local res:8 = numerator s/ denom;
-	zeroflags(res:4);
+	i_vf = (res s> 0x7fffffff) || (res s< 0xffffffff80000000);
+	sdivSaturate(res);
 	RD = sext(res:4);
-	i_vf = (res s>= 0x80000000) || (res s<= -0x7ffffffff);
+	zeroflags(RD);
 	i_cf = 0;
 	x_vf = 0;
 	x_cf = 0;
