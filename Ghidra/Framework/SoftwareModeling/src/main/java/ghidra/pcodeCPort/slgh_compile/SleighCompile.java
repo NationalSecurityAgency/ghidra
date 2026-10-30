@@ -986,12 +986,13 @@ public class SleighCompile extends SleighBase {
 		}
 
 		if (qual.size <= 0 || qual.size > 8) {
-			throw new SleighError("Space '" + qual.name + "' has unsupported size: " + qual.size,
-				location);
+			throw new SleighError("Space '" + qual.name + "' has unsupported size: " + qual.size +
+				" -- size (bytes needed to address the space) must be between 1 and 8", location);
 		}
 		if (qual.wordsize < 1 || qual.wordsize > 8) {
 			throw new SleighError(
-				"Space '" + qual.name + "' has unsupported wordsize: " + qual.wordsize, location);
+				"Space '" + qual.name + "' has unsupported wordsize: " + qual.wordsize +
+					" -- wordsize (bytes per addressable unit) must be between 1 and 8", location);
 		}
 		int addressBits = bitsConsumedByUnitSize(qual.wordsize) + (8 * qual.size);
 		if (addressBits > 64) {
