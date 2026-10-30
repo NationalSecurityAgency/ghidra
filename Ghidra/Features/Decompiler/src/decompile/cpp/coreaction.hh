@@ -174,6 +174,22 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+/// \brief Simplify iterative increments in loop blocks
+class ActionSimplifyLoopIncrements : public Action {
+  static Varnode *mapIndex(Funcdata &data,int4 size,Varnode *initvn,uintb inc,Varnode *vn);	///< Maps a loop index to its resulting value
+  static void replaceIncrement(Funcdata &data,PcodeOp *multiop,Varnode *initvn,uintb inc,PcodeOp *inconeop,int4 incindex);	///< Replaces an increment with a simple one
+  static PcodeOp *addIncOne(Funcdata &data,BlockBasic *bl,int4 size,PcodeOp *initbeforeop,PcodeOp *incbeforeop,int4 incindex);	///< Adds an increment with a value of one
+  static Varnode *traceOriginal(Varnode *vn);	///< Trace back to the original varnode
+  void processLoopBlock(Funcdata &data,BlockBasic *bl,int4 incindex);	///< Simplify a loop block's increments
+public:
+  ActionSimplifyLoopIncrements(const string &g) : Action(0,"simplifyloopincrements",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionSimplifyLoopIncrements(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
 /// \brief Check for one CPUI_MULTIEQUAL input set defining more than one Varnode
 class ActionShadowVar : public Action {
 public:
