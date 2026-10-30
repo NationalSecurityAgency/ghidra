@@ -1,0 +1,103 @@
+# ---------------------------------------------------------------------------
+# AMD XOP (eXtended Operations) support — 0x8F prefix, maps 8 and 9.
+#
+# XOP is AMD's third SIMD prefix encoding (alongside VEX 0xC4/0xC5); it
+# appears in the wild in OpenSSL's crypto kernels (e.g. VPROTD in the
+# AVX2/XOP SHA-256 and ChaCha20 paths on AMD CPUs). Without this file,
+# x86-64 analysis aborts with "Unable to resolve constructor" on any
+# XOP instruction.
+#
+# Encoding: 8F [rxb mmmmm] [w vvvv l pp] opcode modrm [imm8]
+# The 0x8F opcode space does not collide with POP (0x8F /0): POP's modrm
+# reg field is 0, and POP never has the XOP prefix's second byte layout;
+# XOP requires mmmmm in {8,9} (maps XOP8/XOP9) while a legacy POP's
+# "mmmmm" bits would be 0..7.
+#
+# Scope: 64-bit mode, prefix decode + the imm8-form VPROT{B,W,D,Q}
+# (XOP map 8, opcodes 0xC0..0xC3) with full lane-rotate semantics.
+# Models the VEX 3-byte prefix constructors in ia.sinc.
+# ---------------------------------------------------------------------------
+
+@ifdef IA64
+@define XOP_M8 "vexMMMMM=8"
+@define XOP_M9 "vexMMMMM=9"
+
+# XOP 3-byte prefix (0x8F) in 64-bit mode, maps 8 and 9, pp=0
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0x8F; vex_r & vex_x & vex_b & vex_mmmmm=8; vex_w & vex_vvvv & vex_l & vex_pp=0; instruction
+  [ instrPhase=1; vexMode=1; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; vexMMMMM=8; rexWprefix=vex_w; vexVVVV=~vex_vvvv; vexL=vex_l; ] {}
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0x8F; vex_r & vex_x & vex_b & vex_mmmmm=9; vex_w & vex_vvvv & vex_l & vex_pp=0; instruction
+  [ instrPhase=1; vexMode=1; rexRprefix=~vex_r; rexXprefix=~vex_x; rexBprefix=~vex_b; vexMMMMM=9; rexWprefix=vex_w; vexVVVV=~vex_vvvv; vexL=vex_l; ] {}
+
+# VPROT{B,W,D,Q} by imm8 (XOP map 8, opcodes 0xC0..0xC3): rotate each lane of
+# src left by (imm8 mod lane-width), into dest (upper bits of the ZMM alias
+# zeroed, AVX-style). The immediate-count form requires XOP.W=0 and an encoded
+# vvvv of 1111b (both reserved); W=1 or vvvv!=1111 encodings are #UD. (The
+# prefix stores vvvv inverted, so encoded-1111 constrains vexVVVV=0.)
+# Note: p-code shifts by >= the operand bit-width yield 0, so the kk=0 case
+# degenerates to (a << 0) | 0 = a with no masking needed.
+:VPROTB XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC0; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+{
+	local tmp:16;
+	local srcA:16 = XmmReg2_m128;
+	local srcB:1 = imm8:1;
+	local kk:4 = zext(srcB & 7);
+	tmp[0,8]   = (srcA[0,8]   << kk) | (srcA[0,8]   >> (8 - kk));
+	tmp[8,8]   = (srcA[8,8]   << kk) | (srcA[8,8]   >> (8 - kk));
+	tmp[16,8]  = (srcA[16,8]  << kk) | (srcA[16,8]  >> (8 - kk));
+	tmp[24,8]  = (srcA[24,8]  << kk) | (srcA[24,8]  >> (8 - kk));
+	tmp[32,8]  = (srcA[32,8]  << kk) | (srcA[32,8]  >> (8 - kk));
+	tmp[40,8]  = (srcA[40,8]  << kk) | (srcA[40,8]  >> (8 - kk));
+	tmp[48,8]  = (srcA[48,8]  << kk) | (srcA[48,8]  >> (8 - kk));
+	tmp[56,8]  = (srcA[56,8]  << kk) | (srcA[56,8]  >> (8 - kk));
+	tmp[64,8]  = (srcA[64,8]  << kk) | (srcA[64,8]  >> (8 - kk));
+	tmp[72,8]  = (srcA[72,8]  << kk) | (srcA[72,8]  >> (8 - kk));
+	tmp[80,8]  = (srcA[80,8]  << kk) | (srcA[80,8]  >> (8 - kk));
+	tmp[88,8]  = (srcA[88,8]  << kk) | (srcA[88,8]  >> (8 - kk));
+	tmp[96,8]  = (srcA[96,8]  << kk) | (srcA[96,8]  >> (8 - kk));
+	tmp[104,8] = (srcA[104,8] << kk) | (srcA[104,8] >> (8 - kk));
+	tmp[112,8] = (srcA[112,8] << kk) | (srcA[112,8] >> (8 - kk));
+	tmp[120,8] = (srcA[120,8] << kk) | (srcA[120,8] >> (8 - kk));
+	ZmmReg1 = zext(tmp);
+}
+
+:VPROTW XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC1; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+{
+	local tmp:16;
+	local srcA:16 = XmmReg2_m128;
+	local srcB:1 = imm8:1;
+	local kk:4 = zext(srcB & 15);
+	tmp[0,16]   = (srcA[0,16]   << kk) | (srcA[0,16]   >> (16 - kk));
+	tmp[16,16]  = (srcA[16,16]  << kk) | (srcA[16,16]  >> (16 - kk));
+	tmp[32,16]  = (srcA[32,16]  << kk) | (srcA[32,16]  >> (16 - kk));
+	tmp[48,16]  = (srcA[48,16]  << kk) | (srcA[48,16]  >> (16 - kk));
+	tmp[64,16]  = (srcA[64,16]  << kk) | (srcA[64,16]  >> (16 - kk));
+	tmp[80,16]  = (srcA[80,16]  << kk) | (srcA[80,16]  >> (16 - kk));
+	tmp[96,16]  = (srcA[96,16]  << kk) | (srcA[96,16]  >> (16 - kk));
+	tmp[112,16] = (srcA[112,16] << kk) | (srcA[112,16] >> (16 - kk));
+	ZmmReg1 = zext(tmp);
+}
+
+:VPROTD XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC2; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+{
+	local tmp:16;
+	local srcA:16 = XmmReg2_m128;
+	local srcB:1 = imm8:1;
+	local kk:4 = zext(srcB & 31);
+	tmp[0,32]  = (srcA[0,32]  << kk) | (srcA[0,32]  >> (32 - kk));
+	tmp[32,32] = (srcA[32,32] << kk) | (srcA[32,32] >> (32 - kk));
+	tmp[64,32] = (srcA[64,32] << kk) | (srcA[64,32] >> (32 - kk));
+	tmp[96,32] = (srcA[96,32] << kk) | (srcA[96,32] >> (32 - kk));
+	ZmmReg1 = zext(tmp);
+}
+
+:VPROTQ XmmReg1, XmmReg2_m128, imm8 is $(XOP_M8) & vexMode=1 & vexL=0 & rexWprefix=0 & vexVVVV=0; byte=0xC3; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+{
+	local tmp:16;
+	local srcA:16 = XmmReg2_m128;
+	local srcB:1 = imm8:1;
+	local kk:4 = zext(srcB & 63);
+	tmp[0,64]  = (srcA[0,64]  << kk) | (srcA[0,64]  >> (64 - kk));
+	tmp[64,64] = (srcA[64,64] << kk) | (srcA[64,64] >> (64 - kk));
+	ZmmReg1 = zext(tmp);
+}
+@endif
