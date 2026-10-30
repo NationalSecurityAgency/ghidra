@@ -16,7 +16,6 @@
 package ghidra.app.decompiler;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
@@ -136,7 +135,7 @@ public class ClangVariableToken extends ClangToken {
 			return null;
 		}
 		// Token may be from a variable reference, in which case we have to dig to find the actual symbol
-		Address storageAddress = getStorageAddress(highFunction.getAddressFactory());
+		Address storageAddress = getStorageAddress(highFunction);
 		if (storageAddress == null) {
 			return null;
 		}
@@ -166,17 +165,18 @@ public class ClangVariableToken extends ClangToken {
 	/**
 	 * Get the storage address of the variable, if any.
 	 * The variable may be directly referenced by this token, or indirectly referenced as a point.
-	 * @param addrFactory is the factory used to construct the Address
+	 * @param highFunction is the decompiler results containing the token
 	 * @return the storage Address or null if there is no variable attached
 	 */
-	private Address getStorageAddress(AddressFactory addrFactory) {
+	private Address getStorageAddress(HighFunction highFunction) {
 		Address storageAddress = null;
 		if (varnode != null) {
 			storageAddress = varnode.getAddress();
 		}
 		// op could be a PTRSUB, need to dig it out...
 		else {
-			storageAddress = HighFunctionDBUtil.getSpacebaseReferenceAddress(addrFactory, op);
+			storageAddress = HighFunctionDBUtil.getSpacebaseReferenceAddress(
+				highFunction.getAddressFactory(), highFunction.getLanguage(), op);
 		}
 		return storageAddress;
 	}
