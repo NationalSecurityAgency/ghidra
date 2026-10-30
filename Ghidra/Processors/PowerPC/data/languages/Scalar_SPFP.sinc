@@ -434,6 +434,15 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
    setSummaryFPSCR();
 }
 
+# efssqrt rT,rA        010 1100 0111
+:efssqrt D,A is OP=4 & D & A & XOP_0_10=0x2C7 & BITS_11_15=0
+{
+   # assign to lower word of D
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( sqrt( A:4 ) );
+   setFPRF( D:4 );
+   setSummaryFPSCR();
+}
+
 # efssub rT,rA,rB      010 1100 0001
 #define pcodeop FloatingPointSubtract;
 :efssub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C1
@@ -466,4 +475,39 @@ define pcodeop ConvertFloatingPointFromUnsignedFraction;
 :efststlt CRFD,A,B is OP=4 & CRFD & A & B & XOP_0_10=0x2DD & BITS_21_22=0
 {
   CRFD[2,1] = A:4 f< B:4;
+}
+
+# efsmin rT,rA,rB      010 1100 1010
+:efsmin D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B1
+{
+   local tmp:4 = B:4;
+   if (A:4 f<= B:4) goto <use_a>;
+   goto <done>;
+
+<use_a>
+   tmp = A:4;
+
+<done>
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmp );
+   setSummaryFPSCR();
+}
+
+# efsmax rT,rA,rB      010 1100 1011
+:efsmax D,A,B is OP=4 & D & A & B & XOP_0_10=0x2B0
+{
+   local tmp:4 = B:4;
+   if (A:4 f>= B:4) goto <use_a>;
+   goto <done>;
+
+<use_a>
+   tmp = A:4;
+
+<done>
+   D = ( D & 0xFFFFFFFF00000000 ) | zext( tmp );
+   setSummaryFPSCR();
+}
+
+# mpusync 0x7c0008d8
+:mpusync is OP=31 & XOP_0_10=1132 & Rc=0 {
+	# e200 MPU synchronization barrier
 }
