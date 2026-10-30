@@ -24,7 +24,9 @@ java {
 }
 
 dependencies {
-	api "com.google.code.gson:gson:2.13.2"
+	api ("com.google.code.gson:gson:2.13.2") {
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
 }
 
 def jsonTask = rootProject.tasks.findByName("createJsondocs") ?: rootProject.tasks.findByName("createJsonDocs")
