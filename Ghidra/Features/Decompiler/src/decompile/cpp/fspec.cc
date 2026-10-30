@@ -1217,6 +1217,7 @@ void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effec
     lastClass = entry.back().isGrouped() ? TYPECLASS_GENERAL : entry.back().getType();
   }
   entry.emplace_back(groupid);
+  entry.back().setPosition(entry.size() - 1);
   entry.back().decode(decoder,normalstack,grouped,entry);
   if (splitFloat) {
     type_class currentClass = grouped ? TYPECLASS_GENERAL : entry.back().getType();
@@ -1818,6 +1819,10 @@ void ParamListMerged::foldIn(const ParamListStandard &op2)
     if (typeint == 0)
       entry.push_back(opentry);
   }
+  int4 pos = 0;		// Entries were copied from other lists, so renumber them
+  list<ParamEntry>::iterator iter;
+  for(iter=entry.begin();iter!=entry.end();++iter)
+    (*iter).setPosition(pos++);
 }
 
 ParamList *ParamListMerged::clone(void) const
@@ -1887,8 +1892,8 @@ bool ParamTrial::operator<(const ParamTrial &b) const
   int4 grpb = b.entry->getGroup();
   if (grpa != grpb)
     return (grpa < grpb);
-  if (entry != b.entry)		// Compare entry pointers directly
-    return (entry < b.entry);
+  if (entry != b.entry)		// Compare positions within the list (pointer order is not deterministic)
+    return (entry->getPosition() < b.entry->getPosition());
   if (entry->isExclusion()) {
     return (offset < b.offset);
   }
