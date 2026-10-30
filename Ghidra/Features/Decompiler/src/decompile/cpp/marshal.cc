@@ -431,7 +431,7 @@ OpCode XmlDecode::readOpcode(void)
 {
   const Element *el = elStack.back();
   string nm = el->getAttributeValue(attributeIndex);
-  OpCode opc = get_opcode(nm);
+  OpCode opc = (OpCode)std::stoi(nm);
   if (opc == (OpCode)0)
     throw DecoderError("Bad encoded OpCode");
   return opc;
@@ -449,7 +449,7 @@ OpCode XmlDecode::readOpcode(AttributeId &attribId)
     int4 index = findMatchingAttribute(el, attribId.getName());
     nm = el->getAttributeValue(index);
   }
-  OpCode opc = get_opcode(nm);
+  OpCode opc = (OpCode)std::stoi(nm);
   if (opc == (OpCode)0)
     throw DecoderError("Bad encoded OpCode");
   return opc;
