@@ -581,6 +581,33 @@ TEST(circlerange_pullbacksub6) {
   ASSERT(CircleRangeTest::testPullbackBinary(0, 0x30, 4, 1, CPUI_INT_SUB, 0, 0xfffffffd));
 }
 
+TEST(circlerange_pullbacksub_slot1) {
+  ASSERT(CircleRangeTest::testPullbackBinary(2, 5, 1, 1, CPUI_INT_SUB, 1, 10));
+  ASSERT(CircleRangeTest::testPullbackBinary(0x10, 0x30, 4, 1, CPUI_INT_SUB, 1, 0x50));
+}
+
+TEST(circlerange_pullbacksext_oddphase) {
+  ASSERT(CircleRangeTest::testPullbackUnary(0x0101, 0x0105, 2, 2, CPUI_INT_SEXT, 1));
+}
+
+TEST(circlerange_pushright_wrapping) {
+  CircleRange range1(0xf0, 0x10, 1, 1);
+  CircleRange range2(1, 2, 1, 1);
+  CircleRange res;
+  bool valid = res.pushForwardBinary(CPUI_INT_RIGHT, range1, range2, 1, 1, 32);
+  ASSERT(valid);
+  ASSERT_EQUALS(res.getMin(), 0);
+  ASSERT_EQUALS(res.getEnd(), 0x80);
+  CircleRange zeroShift(0, 1, 1, 1);
+  CircleRange res0;
+  ASSERT(res0.pushForwardBinary(CPUI_INT_RIGHT, range1, zeroShift, 1, 1, 32));
+  ASSERT(res0.contains(0xf5));
+}
+
+TEST(circlerange_pushsubpiece_wrapping) {
+  ASSERT(CircleRangeTest::testPushBinary(0x0180, 0x0120, 1, 1, 2, 1, 2, CPUI_SUBPIECE, 1));
+}
+
 TEST(circlerange_pullbackright1) {
   CircleRange range(0x01, 0x0f, 2, 1);
   bool valid = range.pullBackBinary(CPUI_INT_RIGHT, 8, 0, 2, 2);
