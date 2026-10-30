@@ -509,83 +509,75 @@ define pcodeop SoftwareInterrupt;
 
 with : operation_size=1 {
 
-:RLC reg0_2, 2 is opcode3_9=0x000A & reg0_2 & regval0_2 & checkbranch {
-	local tmpC = (regval0_2 & 0x8000) != 0;
-	local tmpO = (regval0_2 & 0x4000) != 0;
-	local tmpS = (regval0_2 & 0x2000) != 0;
-	reg0_2 = (regval0_2 << 2) + (zext(C) << 1) + zext(O);
+:RLC reg0_1, 2 is opcode3_9=0x000A & reg0_1 {
+	local tmpC = (reg0_1 & 0x8000) != 0;
+	local tmpO = (reg0_1 & 0x4000) != 0;
+	local tmpS = (reg0_1 & 0x2000) != 0;
+	reg0_1 = (reg0_1 << 2) + (zext(C) << 1) + zext(O);
 	C = tmpC;
 	O = tmpO;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:RRC reg0_2, 2 is opcode3_9=0x000E & reg0_2 & regval0_2 & checkbranch {
-	local tmpC = (regval0_2 & 0x0001) != 0;
-	local tmpO = (regval0_2 & 0x0002) != 0;
-	local tmpS = (regval0_2 & 0x0200) != 0;
-	reg0_2 = (regval0_2 >> 2) | (zext(C) << 14) | (zext(O) << 15);
+:RRC reg0_1, 2 is opcode3_9=0x000E & reg0_1 {
+	local tmpC = (reg0_1 & 0x0001) != 0;
+	local tmpO = (reg0_1 & 0x0002) != 0;
+	local tmpS = (reg0_1 & 0x0200) != 0;
+	reg0_1 = (reg0_1 >> 2) | (zext(C) << 14) | (zext(O) << 15);
 	C = tmpC;
 	O = tmpO;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SAR reg0_2, 2 is opcode3_9=0x000D & reg0_2 & regval0_2 & checkbranch {
-	local tmpS = (regval0_2 & 0x0200) != 0;
-	reg0_2 = regval0_2 s>> 2;
+:SAR reg0_1, 2 is opcode3_9=0x000D & reg0_1 {
+	local tmpS = (reg0_1 & 0x0200) != 0;
+	reg0_1 = reg0_1 s>> 2;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SARC reg0_2, 2 is opcode3_9=0x000F & reg0_2 & regval0_2 & checkbranch {
-	local tmpC = (regval0_2 & 0x0001) != 0;
-	local tmpO = (regval0_2 & 0x0002) != 0;
-	local tmpS = (regval0_2 & 0x0200) != 0;
-	reg0_2 = regval0_2 s>> 2;
+:SARC reg0_1, 2 is opcode3_9=0x000F & reg0_1 {
+	local tmpC = (reg0_1 & 0x0001) != 0;
+	local tmpO = (reg0_1 & 0x0002) != 0;
+	local tmpS = (reg0_1 & 0x0200) != 0;
+	reg0_1 = reg0_1 s>> 2;
 	C = tmpC;
 	O = tmpO;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SLL reg0_2, 2 is opcode3_9=0x0009 & reg0_2 & regval0_2 & checkbranch {
-	local tmpS = (regval0_2 & 0x2000) != 0;
-	reg0_2 = regval0_2 << 2;
+:SLL reg0_1, 2 is opcode3_9=0x0009 & reg0_1 {
+	local tmpS = (reg0_1 & 0x2000) != 0;
+	reg0_1 = reg0_1 << 2;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SLLC reg0_2, 2 is opcode3_9=0x000B & reg0_2 & regval0_2 & checkbranch {
-	local tmpC = (regval0_2 & 0x8000) != 0;
-	local tmpO = (regval0_2 & 0x4000) != 0;
-	local tmpS = (regval0_2 & 0x2000) != 0;
-	reg0_2 = regval0_2 << 2;
+:SLLC reg0_1, 2 is opcode3_9=0x000B & reg0_1 {
+	local tmpC = (reg0_1 & 0x8000) != 0;
+	local tmpO = (reg0_1 & 0x4000) != 0;
+	local tmpS = (reg0_1 & 0x2000) != 0;
+	reg0_1 = reg0_1 << 2;
 	C = tmpC;
 	O = tmpO;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SLR reg0_2, 2 is opcode3_9=0x000C & reg0_2 & regval0_2 & checkbranch {
-	local tmpS = (regval0_2 & 0x0200) != 0;
-	reg0_2 = regval0_2 >> 2;
+:SLR reg0_1, 2 is opcode3_9=0x000C & reg0_1 {
+	local tmpS = (reg0_1 & 0x0200) != 0;
+	reg0_1 = reg0_1 >> 2;
 	S = tmpS;
-	Z = reg0_2 == 0;
-	build checkbranch;
+	Z = reg0_1 == 0;
 }
 
-:SWAP reg0_2, 2 is opcode3_9=0x0008 & reg0_2 & regval0_2 & checkbranch {
-	local tmpS = (regval0_2 & 0x0080) != 0;
-	reg0_2 = (regval0_2 << 8) | (regval0_2 & 0x00FF);
+:SWAP reg0_1, 2 is opcode3_9=0x0008 & reg0_1 {
+	local tmpS = (reg0_1 & 0x0080) != 0;
+	reg0_1 = (reg0_1 << 8) | (reg0_1 & 0x00FF);
 	S = tmpS;
-	build checkbranch;
 }
 
 }
