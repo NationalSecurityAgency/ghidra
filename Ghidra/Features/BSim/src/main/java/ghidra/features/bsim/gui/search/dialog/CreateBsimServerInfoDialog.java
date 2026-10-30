@@ -285,7 +285,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 						if (Character.isLetter(c)) {
 							continue;
 						}
-						if (i == 0 || (!Character.isDigit(c) && c != '_')) {
+						if (i == 0 || (!Character.isDigit(c) && c != '_' && c != '-')) {
 							setStatus("Unsupported database name");
 							return false;
 						}
