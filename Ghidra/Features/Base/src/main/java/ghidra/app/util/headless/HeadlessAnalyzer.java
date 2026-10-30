@@ -701,7 +701,7 @@ public class HeadlessAnalyzer {
 		}
 		List<ResourceFile> parsedScriptPaths = new ArrayList<>();
 		for (String path : scriptPaths) {
-			ResourceFile pathFile = Path.fromPathString(path);
+			ResourceFile pathFile = Path.fromPathString(path).getCanonicalFile();
 			if (pathFile.exists()) {
 				parsedScriptPaths.add(pathFile);
 			}
