@@ -424,6 +424,9 @@ public class DWARFDataTypeManager {
 			// May need to add name lookup capability to AbstractFloatDataType
 			case DWARFEncoding.DW_ATE_float -> AbstractFloatDataType.getFloatDataType(dwarfSize,
 				getCorrectDTMForFixedLengthTypes(name, dwarfSize, isExplictSize));
+			case DWARFEncoding.DW_ATE_complex_float -> isExplictSize	// Go complex64, complex128
+					? AbstractComplexDataType.getComplexDataType(dwarfSize, null)
+					: null;
 			case DWARFEncoding.DW_ATE_signed -> AbstractIntegerDataType.getSignedDataType(dwarfSize,
 				getCorrectDTMForFixedLengthTypes(name, dwarfSize, isExplictSize));
 			case DWARFEncoding.DW_ATE_unsigned -> AbstractIntegerDataType.getUnsignedDataType(

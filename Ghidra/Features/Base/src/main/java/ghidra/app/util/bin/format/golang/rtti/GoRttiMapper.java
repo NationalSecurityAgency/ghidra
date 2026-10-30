@@ -283,6 +283,32 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		return zerobaseSym != null ? zerobaseSym.getAddress() : null;
 	}
 
+	/**
+	 * {@return true if the DataType is the atomic.align64 empty struct}
+	 * @param dt DataType
+	 */
+	public static boolean isAtomicAlign64(DataType dt) {
+		return isAtomicAlign64Typename(dt.getName());
+	}
+
+	/**
+	 * {@return true if the type name is the atomic.align64 empty struct}
+	 * @param typename name of Go type
+	 */
+	public static boolean isAtomicAlign64Typename(String typename) {
+		// same as cmd/compile, an atomic.align64 field forces 8-byte alignment on all archs
+		switch (typename) {
+			case "sync/atomic.align64":
+			case "runtime/internal/atomic.align64": // 1.19-1.22
+			case "internal/runtime/atomic.align64": // 1.23+
+				return true;
+
+			case null:
+			default:
+				return false;
+		}
+	}
+
 	private static final CategoryPath GOLANG_CP = GoConstants.GOLANG_CATEGORYPATH;
 	private static final CategoryPath VARLEN_STRUCTS_CP = GoConstants.GOLANG_CATEGORYPATH;
 

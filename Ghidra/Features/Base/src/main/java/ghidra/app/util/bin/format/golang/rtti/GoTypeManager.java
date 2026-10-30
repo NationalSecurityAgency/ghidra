@@ -94,7 +94,6 @@ public class GoTypeManager {
 		this.voidPtrDT = dtm.getPointer(VoidDataType.dataType);
 	}
 
-
 	/**
 	 * Discovers available Go types
 	 * 
@@ -330,7 +329,6 @@ public class GoTypeManager {
 		return result != null ? result.type : null;
 	}
 
-
 	/**
 	 * Finds a Ghidra data type by its go-type name.
 	 * 
@@ -372,6 +370,22 @@ public class GoTypeManager {
 	}
 
 	/**
+	 * Converts the supplied snapshot type definition into a Ghidra data type.
+	 * <p>
+	 * Mainly for testing.
+	 * 
+	 * @param typeName name of the type
+	 * @param typeDef {@link GoTypeDef} api snapshot typedef
+	 * @return new Ghidra DataType
+	 * @throws IOException if error
+	 */
+	public DataType getSnapshotDataType(GoSymbolName typeName, GoTypeDef typeDef)
+			throws IOException {
+		TypeRec rec = convertApiTypeDef(typeName, typeDef);
+		return getDataType(rec);
+	}
+
+	/**
 	 * Finds a Ghidra data type by its go-type name.
 	 * 
 	 * @param <T> Ghidra DataType generic type specifier
@@ -381,8 +395,7 @@ public class GoTypeManager {
 	 * specific {@link DataType} subclass, or {@code NULL} if not found
 	 * @throws IOException if error
 	 */
-	public <T extends DataType> T findDataType(String typeName, Class<T> clazz)
-			throws IOException {
+	public <T extends DataType> T findDataType(String typeName, Class<T> clazz) throws IOException {
 		DataType result = findDataType(typeName);
 		return clazz.isInstance(result) ? clazz.cast(result) : null;
 	}
@@ -460,7 +473,7 @@ public class GoTypeManager {
 			else {
 				GoKind primitiveTypeKind = GoKind.parseTypename(typeName);
 				GoTypeDef typeDef;
-				if ( primitiveTypeKind.isPrimitive() ) {
+				if (primitiveTypeKind.isPrimitive()) {
 					result = makeBasicType(typeSymbolName, primitiveTypeKind);
 				}
 				else if ((typeDef = apiSnapshot.getTypeDef(typeName)) != null) {
@@ -598,7 +611,17 @@ public class GoTypeManager {
 			throws IOException {
 		String baseTypeName = typeName.asString();
 
-		LengthAlignment lenInfo = getDataTypeLength(structDef);
+		if (GoRttiMapper.isAtomicAlign64Typename(baseTypeName)) {
+			StructureDataType a64 = new StructureDataType(getCP(typeName), baseTypeName, 0, dtm);
+			a64.align(8);
+
+			TypeRec rec = new TypeRec();
+			rec.name = typeName.asString();
+			rec.recoveredDT = a64;
+			return rec;
+		}
+
+		LengthAlignment lenInfo = getDataTypeLength(structDef, baseTypeName);
 		StructureDataType struct =
 			new StructureDataType(getCP(typeName), baseTypeName, lenInfo.len, dtm);
 		struct.align(lenInfo.align);
@@ -620,8 +643,8 @@ public class GoTypeManager {
 			DataType dtcDT = findDataType(field.DataType);
 			if (dtcDT == null) {
 				dtcDT = findDataType(field.DataType);
-				throw new IOException("Failed to get type for field [%d %s: %s] in %s"
-						.formatted(i, field.Name, field.DataType, typeName));
+				throw new IOException("Failed to get type for field [%d %s: %s] in %s".formatted(i,
+					field.Name, field.DataType, typeName));
 			}
 			packedStruct.add(dtcDT, field.Name, null);
 		}
@@ -790,6 +813,8 @@ public class GoTypeManager {
 			case Bool -> BooleanDataType.dataType;
 			case Float32 -> AbstractFloatDataType.getFloatDataType(32 / 8, null);
 			case Float64 -> AbstractFloatDataType.getFloatDataType(64 / 8, null);
+			case Complex64 -> Complex8DataType.dataType;
+			case Complex128 -> Complex16DataType.dataType;
 			case Int -> AbstractIntegerDataType.getSignedDataType(ptrSize, dtm); // depends on arch
 			case Int8 -> Int8TDataType.dataType;
 			case Int16 -> Int16TDataType.dataType;
@@ -851,8 +876,8 @@ public class GoTypeManager {
 			return clazz.cast(dt);
 		}
 		else if (dt != null) {
-			Msg.warn(this, "Failed to get Ghidra data type from Go type: %s[%x]".formatted(
-				rec.name, rec.type.getStructureContext().getStructureStart()));
+			Msg.warn(this, "Failed to get Ghidra data type from Go type: %s[%x]".formatted(rec.name,
+				rec.type.getStructureContext().getStructureStart()));
 		}
 		return null;
 	}
@@ -866,7 +891,6 @@ public class GoTypeManager {
 		}
 		return rec.recoveredDT;
 	}
-
 
 	public CategoryPath getCP() {
 		return GOLANG_RECOVERED_TYPES_CATEGORYPATH;
@@ -971,8 +995,7 @@ public class GoTypeManager {
 		int arrayPtrComponentIndex = 0; /* HACK, field ordinal of void* data field in slice type */
 		DataTypeComponent arrayDTC = genericSliceDT.getComponent(arrayPtrComponentIndex);
 		sliceDT.replace(arrayPtrComponentIndex, dtm.getPointer(element), -1,
-			arrayDTC.getFieldName(),
-			arrayDTC.getComment());
+			arrayDTC.getFieldName(), arrayDTC.getComment());
 
 		return sliceDT;
 	}
@@ -1013,8 +1036,9 @@ public class GoTypeManager {
 
 			FunctionDefinitionDataType funcDef =
 				new FunctionDefinitionDataType(getCP(), ".closureF", dtm);
-			ParameterDefinition[] params = new ParameterDefinition[] { new ParameterDefinitionImpl(
-				GOLANG_CLOSURE_CONTEXT_NAME, dtm.getPointer(closureDT), null) };
+			ParameterDefinition[] params =
+				new ParameterDefinition[] { new ParameterDefinitionImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+					dtm.getPointer(closureDT), null) };
 			funcDef.setArguments(params);
 
 			closureDT.add(dtm.getPointer(funcDef), "F", null);
@@ -1029,13 +1053,13 @@ public class GoTypeManager {
 
 	public Structure getDefaultMethodWrapperClosureType() {
 		if (defaultMethodWrapperType == null) {
-			StructureDataType closureDT = new StructureDataType(getCP(),
-				".methodwrapper", 0, dtm);
+			StructureDataType closureDT = new StructureDataType(getCP(), ".methodwrapper", 0, dtm);
 
 			FunctionDefinitionDataType funcDef =
 				new FunctionDefinitionDataType(getCP(), ".methodwrapperF", dtm);
-			ParameterDefinition[] params = new ParameterDefinition[] { new ParameterDefinitionImpl(
-				GOLANG_CLOSURE_CONTEXT_NAME, dtm.getPointer(closureDT), null) };
+			ParameterDefinition[] params =
+				new ParameterDefinition[] { new ParameterDefinitionImpl(GOLANG_CLOSURE_CONTEXT_NAME,
+					dtm.getPointer(closureDT), null) };
 			funcDef.setArguments(params);
 
 			closureDT.add(dtm.getPointer(funcDef), "F", null);
@@ -1141,7 +1165,7 @@ public class GoTypeManager {
 			GoTypeDef typeDef = apiSnapshot.getTypeDef(name);
 			if (typeDef != null) {
 				return switch (typeDef) {
-					case GoStructDef x -> getDataTypeLength(x);
+					case GoStructDef x -> getDataTypeLength(x, name);
 					case GoBasicDef x -> getDataTypeLength(x);
 					case GoAliasDef x -> getDataTypeLength(x);
 					case GoFuncTypeDef x -> getDataTypeLength(x);
@@ -1166,7 +1190,8 @@ public class GoTypeManager {
 		return new LengthAlignment(ptrSize * 2, align(ptrSize));
 	}
 
-	private LengthAlignment getDataTypeLength(GoStructDef structDef) throws IOException {
+	private LengthAlignment getDataTypeLength(GoStructDef structDef, String structName)
+			throws IOException {
 		int len = 0;
 		int align = 1;
 		for (GoNameTypePair field : structDef.Fields) {
@@ -1174,6 +1199,9 @@ public class GoTypeManager {
 			len = (int) NumericUtilities.getUnsignedAlignedValue(len, fieldInfo.align);
 			len += fieldInfo.len;
 			align = Math.max(align, fieldInfo.align);
+		}
+		if (structDef.Fields.isEmpty() && GoRttiMapper.isAtomicAlign64Typename(structName)) {
+			align = 8; // hard-coded logic found in go's cmd/compile
 		}
 
 		len = (int) NumericUtilities.getUnsignedAlignedValue(len, align);
