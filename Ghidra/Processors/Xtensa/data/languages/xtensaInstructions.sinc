@@ -1079,7 +1079,7 @@ rfi_eps: ptr is op_s	[ ptr = $(EPS_BASE) + (4 * op_s); ] { export *[register]:4 
 	local result = fs f* int2float(scale);
 	isNan:1 = nan(result);
 	if (isNan) goto <bad>;
-	ar = round(fs f* scale);
+	ar = trunc(round(result));
 	goto <end>;
 	<bad>
 	ar = 0x80000000;
@@ -1318,7 +1318,7 @@ rfi_eps: ptr is op_s	[ ptr = $(EPS_BASE) + (4 * op_s); ] { export *[register]:4 
 	local result = fs f* int2float(scale);
 	isNan:1 = nan(result);
 	if (isNan) goto <bad>;
-	ar = trunc(fs f* scale);
+	ar = trunc(result);
 	goto <end>;
 	<bad>
 	ar = 0x80000000;
