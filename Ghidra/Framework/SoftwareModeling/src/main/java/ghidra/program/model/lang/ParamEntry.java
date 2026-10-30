@@ -42,6 +42,7 @@ public class ParamEntry {
 	//private static final int EXTRACHECK_LOW = 256;
 	private static final int IS_GROUPED = 512;			// The entry is grouped with other entries
 	private static final int OVERLAPPING = 0x400;		// This overlaps an earlier entry
+	private static final int UNBOUNDED_ALLOCATION = 0x2000;
 	private static final int IS_STACKSPILL = 0x1000;	// This is the final stack entry holding parameter spill
 
 	private int flags;
@@ -508,8 +509,51 @@ public class ParamEntry {
 		flags |= OVERLAPPING;
 	}
 
+	public boolean isUnboundedAllocation() {
+		return (flags & UNBOUNDED_ALLOCATION) != 0;
+	}
+
+	/**
+	 * Allocate explicit signature storage without expanding the bounded recognition range.
+	 * For opted-in entries, a failure returns -1 and leaves the result untouched.
+	 * Entries without the option retain the existing allocation behavior.
+	 */
+	public int getAllocationAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res) {
+		return getAllocationAddrBySlot(slotnum, sz, typeAlign, res, !isLeftJustified());
+	}
+
+	public int getAllocationAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res,
+			boolean justifyRight) {
+		if (!isUnboundedAllocation()) {
+			return getAddrBySlot(slotnum, sz, typeAlign, res, justifyRight);
+		}
+		if (slotnum < 0 || sz < minsize || typeAlign <= 0 || alignment <= 0 ||
+			(typeAlign > alignment ? typeAlign % alignment : alignment % typeAlign) != 0) {
+			return -1;
+		}
+		long start = (long) slotnum * alignment;
+		long remainder = start % typeAlign;
+		if (remainder != 0) {
+			start += typeAlign - remainder;
+		}
+		long slots = ((long) sz + alignment - 1) / alignment;
+		long next = start / alignment + slots;
+		long span = slots * alignment;
+		long limit = spaceid.getMaxAddress().getOffset();
+		if (next > Integer.MAX_VALUE || addressbase < 0 || addressbase > limit || start > limit - addressbase ||
+			span - 1 > limit - addressbase - start) {
+			return -1;
+		}
+		long offset = addressbase + start + (justifyRight ? span - sz : 0);
+		res.address = spaceid.getAddress(offset);
+		return (int) next;
+	}
+
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_PENTRY);
+		if (isUnboundedAllocation()) {
+			encoder.writeString(ATTRIB_ALLOCATION, "unbounded");
+		}
 		encoder.writeSignedInteger(ATTRIB_MINSIZE, minsize);
 		encoder.writeSignedInteger(ATTRIB_MAXSIZE, size);
 		if (alignment != 0) {
@@ -573,6 +617,14 @@ public class ParamEntry {
 			}
 			else if (name.equals(ATTRIB_STORAGE.name()) || name.equals(ATTRIB_METATYPE.name())) {
 				type = StorageClass.getClass(entry.getValue());
+			}
+			else if (name.equals(ATTRIB_ALLOCATION.name())) {
+				if (entry.getValue().equals("unbounded")) {
+					flags |= UNBOUNDED_ALLOCATION;
+				}
+				else if (!entry.getValue().equals("bounded")) {
+					throw new XmlParseException("Bad allocation attribute: " + entry.getValue());
+				}
 			}
 			else if (name.equals(ATTRIB_EXTENSION.name())) {
 				flags &= ~(SMALLSIZE_ZEXT | SMALLSIZE_SEXT | SMALLSIZE_INTTYPE | SMALLSIZE_FLOAT);
@@ -643,6 +695,10 @@ public class ParamEntry {
 		}
 		resolveJoin(curList);
 		resolveOverlap(curList);
+		if (isUnboundedAllocation() && (!isStackSpill() || isReverseStack() || isGrouped() ||
+			isOverlap() || joinrec != null || type != StorageClass.GENERAL || alignment <= 0 || minsize < 1 || size < minsize || addressbase < 0)) {
+			throw new XmlParseException("Unbounded allocation requires an independent forward stack entry");
+		}
 		parser.end(el);
 	}
 

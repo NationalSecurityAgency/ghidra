@@ -288,8 +288,8 @@ public class MultiSlotDualAssign extends AssignAction {
 			}
 			int grp = stackEntry.getGroup();
 			tmpStatus[grp] =
-				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);
-			if (param.address == null) {
+				stackEntry.getAllocationAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);
+			if ((stackEntry.isUnboundedAllocation() && tmpStatus[grp] < 0) || param.address == null) {
 				return FAIL;
 			}
 			Varnode vn = new Varnode(param.address, sizeLeft);
