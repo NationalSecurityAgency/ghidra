@@ -2106,6 +2106,9 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 				curMaxID = Math.max(curMaxID, space.getUnique());
 			}
 		}
+		if (curMaxID >= OffsetAddressSpace.MAX_UNIQUE_ID) {
+			return -1;
+		}
 		curMaxID += 1;
 		return curMaxID;
 	}
@@ -2147,13 +2150,33 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 
 class OffsetAddressSpace extends GenericAddressSpace {
 
-	public OffsetAddressSpace(String name, int size, int type, int unique) {
-		super(name, size, type, unique);
+	static final int MAX_UNIQUE_ID = Integer.MAX_VALUE >>> AddressSpace.ID_UNIQUE_SHIFT;
+	// The superclass ID is a placeholder; both identity getters must use this extended ID.
+	private final int offsetSpaceID;
+
+	OffsetAddressSpace(String name, int size, int type, int unique) {
+		super(name, size, type, 0);
+		if (type != AddressSpace.TYPE_SYMBOL || unique < 0 || unique > MAX_UNIQUE_ID) {
+			throw new IllegalArgumentException("Invalid symbolic address space ID");
+		}
+		// These analysis-only spaces are excluded from decompiler encoding.
+		// Preserve the normal type/size bits while using the remaining positive int bits for IDs.
+		offsetSpaceID = (unique << AddressSpace.ID_UNIQUE_SHIFT) |
+			(super.getSpaceID() & ((1 << AddressSpace.ID_UNIQUE_SHIFT) - 1));
+	}
+
+	@Override
+	public int getSpaceID() {
+		return offsetSpaceID;
+	}
+
+	@Override
+	public int getUnique() {
+		return offsetSpaceID >>> AddressSpace.ID_UNIQUE_SHIFT;
 	}
 
 	@Override
 	public int compareTo(AddressSpace space) {
-		int c = getSpaceID() - space.getSpaceID();
-		return c;
+		return Integer.compare(getSpaceID(), space.getSpaceID());
 	}
 }
