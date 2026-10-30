@@ -1,0 +1,435 @@
+# sleigh specification file for Intel 8008
+
+define endian=little;
+define alignment=1;
+
+define space mem		type=ram_space			size=2 default;
+define space io			type=ram_space			size=1;
+define space register 	type=register_space		size=1;
+
+define register offset=0x00 size=1 [ A C B E D L H ];
+define register offset=0x05 size=2 [ M ];
+define register offset=0x20 size=2 [ PC SP ];
+
+# Flag bits
+# CY: Carry
+# P: Parity
+# Z: Zero
+# S: Sign
+define register offset=0x30 size=1 [ S_flag Z_flag P_flag CY_flag ];
+
+define token opbyte (8)
+   op0_8     = (0,7)
+   op6_2     = (6,7)
+   op4_2     = (4,5)
+
+   dRegPair4_2 = (4,5)
+   pRegPair4_2 = (4,5)
+   sRegPair4_2 = (4,5)
+   qRegPair4_2 = (4,5)
+   rRegPair4_2 = (4,5)
+
+   reg3_3 = (3,5)
+   bits3_3   = (3,5)
+
+   bits0_4   = (0,3)
+
+   reg0_3 = (0,2)
+   bits0_3   = (0,2)
+
+   bit0   = (0,0)
+   bits1_3 = (1,3)
+;
+
+define token data8 (8)
+   imm8		= (0,7)
+   sign8	= (7,7)
+   simm8	= (0,7) signed
+;
+
+define token data16 (16)
+   imm16        = (0,15)
+   sign16		= (15,15)
+   simm16		= (0,15) signed
+;
+
+attach variables [ reg0_3 reg3_3 ] [ A B C D E H L _ ];
+
+# attach variables [ sRegPair4_2 dRegPair4_2 ] [M];
+# attach variables [ qRegPair4_2 ] [M];
+
+################################################################
+# Pseudo Instructions
+################################################################
+
+define pcodeop BCDadjust;
+define pcodeop hasEvenParity;
+define pcodeop disableMaskableInterrupts;
+define pcodeop enableMaskableInterrupts;
+define pcodeop readInterruptMask;
+define pcodeop setInterruptMask;
+
+################################################################
+# Macros
+################################################################
+
+macro setMemoryLocation() {
+	M = (zext(H) << 8) | zext(L);
+}
+
+macro setResultFlags(result) {
+	Z_flag = (result == 0);
+	S_flag = (result s< 0);
+}
+
+macro setAddCarryFlags(op1,op2) {
+	CY_flag = (carry(op1,zext(CY_flag)) || carry(op2,op1 + zext(CY_flag)));
+#	P_flag = (scarry(op1,CY_flag) || scarry(op2,op1 + CY_flag));
+#   AC_flag = ??
+}
+
+macro setAddFlags(op1,op2) {
+	CY_flag = carry(op1,op2);
+#	P_flag = scarry(op1,op2);
+#   AC_flag = ??
+}
+
+macro setSubtractCarryFlags(op1,op2) {
+	local notC = ~CY_flag;
+	CY_flag = ((op1 < sext(notC)) || (op2 < (op1 - sext(notC))));
+}
+
+macro setSubtractFlags(op1,op2) {
+	CY_flag = (op1 < op2);
+}
+
+macro push16(val16) {
+	SP = SP - 2;
+	*:2 SP = val16;
+}
+
+macro pop16(ret16) {
+	ret16 = *:2 SP;
+	SP = SP + 2;
+}
+
+################################################################
+Addr16: imm16		is imm16									{ export *:1 imm16; }
+
+RstAddr: loc		is bits3_3 [ loc = bits3_3 << 3; ]			{ export *:1 loc; }
+
+# IOAddr8: (imm8)	is imm8											{ export *[io]:1 imm8; }
+
+InPort: port		is bits1_3 [ port = bits1_3 << 0; ]			{ export *[io]:1 port; }
+
+OutPort0: port		is bits1_3 [ port = (bits1_3 << 0) + 0x8; ]		{ export *[io]:1 port; }
+OutPort1: port		is bits1_3 [ port = (bits1_3 << 0) + 0x10; ]	{ export *[io]:1 port; }
+OutPort2: port		is bits1_3 [ port = (bits1_3 << 0) + 0x18; ]	{ export *[io]:1 port; }
+
+cc: "NZ"            is bits3_3=0x1                              { c:1 = (Z_flag == 0); export c; }
+cc: "Z"             is bits3_3=0x5                              { export Z_flag; }
+cc: "NC"            is bits3_3=0x0                              { c:1 = (CY_flag == 0); export c; }
+cc: "C"             is bits3_3=0x4                              { export CY_flag; }
+cc: "PO"            is bits3_3=0x3                              { c:1 = (P_flag == 0); export c; }
+cc: "PE"            is bits3_3=0x7                              { export P_flag; }
+cc: "P"             is bits3_3=0x2                              { c:1 = (S_flag == 0); export c; }
+cc: "M"             is bits3_3=0x6                              { export S_flag; }
+
+################################################################
+
+:MOV reg3_3,reg0_3  is op6_2=0x3 & reg3_3 & reg0_3 {
+	reg3_3 = reg0_3;
+}
+
+:MOV reg3_3,M  is op6_2=0x3 & reg3_3 & bits0_3=0x7 & M {
+#	ptr:2 = M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	reg3_3 = *:1 ptr;
+}
+
+:MOV M,reg0_3  is op6_2=0x3 & bits3_3=0x7 & reg0_3 & M {
+#	ptr:2 = M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	*:1 ptr = reg0_3;
+}
+
+:MVI reg3_3,imm8  is op6_2=0x0 & reg3_3 & bits0_3=0x6; imm8 {
+	reg3_3 = imm8;
+}
+
+:MVI M,imm8  is op0_8=0x3e & M; imm8 {
+#	ptr:2 = M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	*:1 ptr = imm8;
+}
+
+:INR reg3_3  is op6_2=0x0 & reg3_3 & bits0_3=0x0 {
+	P_flag = (reg3_3 == 0x7f);
+	reg3_3 = reg3_3 + 1;
+	setResultFlags(reg3_3);
+}
+
+:DCR reg3_3  is op6_2=0x0 & reg3_3 & bits0_3=0x1 {
+	P_flag = (reg3_3 == 0x80);
+	reg3_3 = reg3_3 - 1;
+	setResultFlags(reg3_3);
+}
+
+:ADD reg0_3  is op6_2=0x2 & bits3_3=0x0 & reg0_3 {
+	setAddFlags(A,reg0_3);
+	A = A + reg0_3;
+	setResultFlags(A);
+}
+
+:ADD M  is op0_8=0x87 & M {
+#	val:1 = *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	val:1 = *:1 ptr;
+	setAddFlags(A,val);
+	A = A + val;
+	setResultFlags(A);
+}
+
+:ADI imm8  is op0_8=0x4; imm8 {
+	setAddFlags(A,imm8);
+	A = A + imm8;
+	setResultFlags(A);
+}
+
+:ADC reg0_3  is op6_2=0x2 & bits3_3=0x1 & reg0_3 {
+	setAddCarryFlags(A,reg0_3);
+	A = A + reg0_3 + CY_flag;
+	setResultFlags(A);
+}
+
+:ADC M  is op0_8=0x8f & M {
+#	val:1 = *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	val:1 = *:1 ptr;
+	setAddCarryFlags(A,val);
+	A = A + val + CY_flag;
+	setResultFlags(A);
+}
+
+:ACI imm8  is op0_8=0xc; imm8 {
+	setAddCarryFlags(A,imm8);
+	A = A + imm8 + CY_flag;
+	setResultFlags(A);
+}
+
+:SUB reg0_3  is op6_2=0x2 & bits3_3=0x2 & reg0_3 {
+	setSubtractFlags(A,reg0_3);
+	A = A - reg0_3;
+	setResultFlags(A);
+}
+
+:SUB M  is op0_8=0x97 & M {
+#	val:1 = *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	val:1 = *:1 ptr;
+	setSubtractFlags(A,val);
+	A = A - val;
+	setResultFlags(A);
+}
+
+:SUI imm8  is op0_8=0x14; imm8 {
+	setSubtractFlags(A,imm8);
+	A = A - imm8;
+	setResultFlags(A);
+}
+
+:SBB reg0_3  is op6_2=0x2 & bits3_3=0x3 & reg0_3 {
+	setSubtractCarryFlags(A,reg0_3);
+	A = A - reg0_3 - CY_flag;
+	setResultFlags(A);
+}
+
+:SBB M  is op0_8=0x9f & M {
+#	val:1 = *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	val:1 = *:1 ptr;
+	setSubtractCarryFlags(A,val);
+	A = A - val - CY_flag;
+	setResultFlags(A);
+}
+
+:SBI imm8  is op0_8=0x1c; imm8 {
+	setSubtractCarryFlags(A,imm8);
+	A = A - imm8 - CY_flag;
+	setResultFlags(A);
+}
+
+:ANA reg0_3  is op6_2=0x2 & bits3_3=0x4 & reg0_3 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A & reg0_3;
+	setResultFlags(A);
+}
+
+:ANA M  is op0_8=0xa7 & M {
+	CY_flag = 0;
+	P_flag = 0;
+#	A = A & *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	A = A & *:1 ptr;
+	setResultFlags(A);
+}
+
+:ANI imm8  is op0_8=0x24; imm8 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A & imm8;
+	setResultFlags(A);
+}
+
+:XRA reg0_3  is op6_2=0x2 & bits3_3=0x5 & reg0_3 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A ^ reg0_3;
+	setResultFlags(A);
+}
+
+:XRA M  is op0_8=0xaf & M {
+	CY_flag = 0;
+	P_flag = 0;
+#	A = A ^ *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	A = A ^ *:1 ptr;
+	setResultFlags(A);
+}
+
+:XRI imm8  is op0_8=0x2c; imm8 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A ^ imm8;
+	setResultFlags(A);
+}
+
+:ORA reg0_3  is op6_2=0x2 & bits3_3=0x6 & reg0_3 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A | reg0_3;
+	setResultFlags(A);
+}
+
+:ORA M  is op0_8=0xb7 & M {
+	CY_flag = 0;
+	P_flag = 0;
+#	A = A | *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	A = A | *:1 ptr;
+	setResultFlags(A);
+}
+
+:ORI imm8  is op0_8=0x34; imm8 {
+	CY_flag = 0;
+	P_flag = 0;
+	A = A | imm8;
+	setResultFlags(A);
+}
+
+:CMP reg0_3  is op6_2=0x2 & bits3_3=0x7 & reg0_3 {
+	setSubtractFlags(A,reg0_3);
+	cmp:1 = A - reg0_3;
+	setResultFlags(cmp);
+}
+
+:CMP M  is op0_8=0xbf & M {
+#	val:1 = *:1 M;
+	ptr:2 = (zext(H) << 8) | zext(L);
+	val:1 = *:1 ptr;
+	setSubtractFlags(A,val);
+	cmp:1 = A - val;
+	setResultFlags(cmp);
+}
+
+:CPI imm8  is op0_8=0x3c; imm8 {
+	setSubtractFlags(A,imm8);
+	cmp:1 = A - imm8;
+	setResultFlags(cmp);
+}
+
+:RLC  is op0_8=0x02 {
+	CY_flag = (A >> 7);
+	A = (A << 1) | CY_flag;
+}
+
+:RRC  is op0_8=0x0a {
+	CY_flag = (A & 1);
+	A = (A >> 1) | (CY_flag << 7);
+}
+
+:RAL  is op0_8=0x12 {
+	nextC:1 = (A >> 7);
+	A = (A << 1) | CY_flag;
+	CY_flag = nextC;
+}
+
+:RAR  is op0_8=0x1a {
+	nextC:1 = (A & 1);
+	A = (A >> 1) | (CY_flag << 7);
+	CY_flag = nextC;
+}
+
+:JMP Addr16  is op6_2=0x1 & bits0_3=0x4; Addr16 {
+	goto Addr16;
+}
+
+:J^cc Addr16  is op6_2=0x1 & cc & bits0_3=0x0; Addr16 {
+	if (cc) goto Addr16;
+}
+
+:CALL Addr16  is op6_2=0x1 & bits0_3=0x6; Addr16 {
+	tmp:2 = inst_next;
+	push16(tmp);
+	call Addr16;
+}
+
+:C^cc Addr16  is op6_2=0x1 & cc & bits0_3=0x2; Addr16 {
+	if (!cc) goto inst_next;
+	tmp:2 = inst_next;
+	push16(tmp);
+	call Addr16;
+}
+
+:RET  is op6_2=0x0 & bits0_3=0x7 {
+	tmp:2 = 0;
+	pop16(tmp);
+	return [tmp];
+}
+
+:R^cc  is op6_2=0x0 & cc & bits0_3=0x3 {
+	if (!cc) goto inst_next;
+	tmp:2 = 0;
+	pop16(tmp);
+	return [tmp];
+}
+
+:RST RstAddr  is op6_2=0x0 & RstAddr & bits0_3=0x5 {
+	tmp:2 = inst_next;
+	push16(tmp);
+	call RstAddr;
+}
+
+:IN InPort  is op6_2=0x1 & op4_2=0x0 & InPort & bit0=0x1 {
+	A = InPort;
+}
+
+:OUT OutPort0  is op6_2=0x1 & op4_2=0x1 & OutPort0 & bit0=0x1 {
+	OutPort0 = A;
+}
+
+:OUT OutPort1  is op6_2=0x1 & op4_2=0x2 & OutPort1 & bit0=0x1 {
+	OutPort1 = A;
+}
+
+:OUT OutPort2  is op6_2=0x1 & op4_2=0x3 & OutPort2 & bit0=0x1 {
+	OutPort2 = A;
+}
+
+# :NOP  is op0_8=0xc0 {
+# }
+
+:HALT  is op0_8=0x0 | op0_8=0x1 | op0_8=0xff  {
+	goto inst_start;
+}
