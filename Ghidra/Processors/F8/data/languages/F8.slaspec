@@ -1,0 +1,978 @@
+# Fairchild F8 / Mostek MK3870 SLEIGH Processor Specification
+# VERSION 3: All scratchpad access via scratchpad ram_space
+#
+# Architecture overview:
+#   - 8-bit accumulator (A), 5-bit status register (W), 6-bit ISAR
+#   - 64-byte scratchpad RAM (R0-R63) at scratchpad addresses 0x00-0x3F
+#   - 16-bit program counter (PC0), stack register (PC1), data counters (DC0, DC1)
+#   - Scratchpad bytes 9-15 have special aliases:
+#       J (R9)           — status register backup
+#       HU:HL (R10:R11)  — data counter DC0 backup
+#       KU:KL (R12:R13)  — stack register PC1 backup
+#       QU:QL (R14:R15)  — program counter PC0 / DC0 backup
+#
+# Scratchpad design:
+#   All scratchpad access uses a dedicated ram_space ("scratchpad") instead
+#   of register_space. This produces better decompiler output: Ghidra shows
+#   named memory variables (DAT_scratchpad_XX) instead of opaque pointer
+#   arithmetic into register_space.
+#
+#   Direct register references (LR A,r for r=0-11) use explicit constructors
+#   for each register number because SLEIGH's attach variables mechanism
+#   only works with register_space. This is more verbose but ensures all
+#   scratchpad access goes through the same address space, preserving
+#   aliasing between direct (LR A,R5) and indirect (LR A,S when IS=5) access.
+#
+#   16-bit linkage pairs (H, K, Q) use *[scratchpad]:2 which reads/writes
+#   two consecutive bytes in big-endian order — high byte at the lower address.
+#
+# Covers all F8-family CPUs: F3850, F3870, MK3870, MK3872, MK3873, MK3875, MK3876
+# Based on F8 Guide to Programming, F3850 CPU Datasheet, F8 User's Guide
+
+define endian=big;
+define alignment=1;
+
+define space ram        type=ram_space      size=2 default;
+define space scratchpad type=ram_space      size=1;
+define space io         type=ram_space      size=1;
+define space register   type=register_space size=1;
+
+# ============================================================================
+# Register Definitions
+# Only CPU control registers in register_space.
+# Scratchpad R0-R63 lives in scratchpad ram_space at addresses 0x00-0x3F.
+# Linkage pairs (H=R10:R11, K=R12:R13, Q=R14:R15) are accessed via
+# *[scratchpad]:2 at the appropriate address.
+# ============================================================================
+
+define register offset=0x00 size=1 [ A W IS ];
+define register offset=0x10 size=2 [ PC0 PC1 DC0 DC1 ];
+
+# ============================================================================
+# Token Definitions
+# ============================================================================
+
+define token opcode (8)
+    op8     = (0,7)
+    op4hi   = (4,7)
+    op4lo   = (0,3)
+    op3lo   = (0,2)
+    port4   = (0,3)
+    imm4    = (0,3)
+;
+
+define token byte1 (8)
+    imm8    = (0,7)
+    simm8   = (0,7) signed
+    port8   = (0,7)
+;
+
+define token word1 (16)
+    addr16  = (0,15)
+;
+
+# ============================================================================
+# Display Subtables
+# These produce the correct operand names in disassembly output
+# without requiring register_space definitions.
+# ============================================================================
+
+# Accumulator
+acc: "A" is epsilon { }
+
+# ISAR addressing modes
+iS: "S" is epsilon { }
+iI: "I" is epsilon { }
+iD: "D" is epsilon { }
+
+# Special register names
+sKU: "KU" is epsilon { }
+sKL: "KL" is epsilon { }
+sQU: "QU" is epsilon { }
+sQL: "QL" is epsilon { }
+sK:  "K"  is epsilon { }
+sP:  "P"  is epsilon { }
+sIS: "IS" is epsilon { }
+sP0: "P0" is epsilon { }
+sQ:  "Q"  is epsilon { }
+sDC: "DC" is epsilon { }
+sH:  "H"  is epsilon { }
+sW:  "W"  is epsilon { }
+sJ:  "J"  is epsilon { }
+
+# Shift amounts
+sh1: "1" is epsilon { }
+sh4: "4" is epsilon { }
+
+# Undefined register slot
+r15: "15" is epsilon { }
+
+# Direct scratchpad register names (r=0-11)
+sr0:  "R0"  is epsilon { }
+sr1:  "R1"  is epsilon { }
+sr2:  "R2"  is epsilon { }
+sr3:  "R3"  is epsilon { }
+sr4:  "R4"  is epsilon { }
+sr5:  "R5"  is epsilon { }
+sr6:  "R6"  is epsilon { }
+sr7:  "R7"  is epsilon { }
+sr8:  "R8"  is epsilon { }
+sr9:  "R9"  is epsilon { }
+sr10: "R10" is epsilon { }
+sr11: "R11" is epsilon { }
+
+# ============================================================================
+# Macros for Status Flags
+# W register bits: bit 0=S(sign), bit 1=C(carry), bit 2=Z(zero),
+#                  bit 3=O(overflow), bit 4=ICB(interrupt control)
+# ============================================================================
+
+macro setZS(result) {
+    W = (W & 0xFA) | (((result == 0) * 4) | ((result s>= 0) * 1));
+}
+
+macro clearOC() {
+    W = W & 0xF5;
+}
+
+macro setAddFlags(op1, op2, result) {
+    local zf:1 = (result == 0);
+    local sf:1 = (result s>= 0);
+    local cf:1 = carry(op1, op2);
+    local of:1 = scarry(op1, op2);
+    W = (W & 0x10) | (of << 3) | (zf << 2) | (cf << 1) | sf;
+}
+
+macro setSubFlags(op1, op2, result) {
+    local zf:1 = (result == 0);
+    local sf:1 = (result s>= 0);
+    local cf:1 = (op1 >= op2);
+    local of:1 = sborrow(op1, op2);
+    W = (W & 0x10) | (of << 3) | (zf << 2) | (cf << 1) | sf;
+}
+
+# ============================================================================
+# Branch target calculation
+# Target = opcode_addr + 1 + signed_displacement
+# F3850 Datasheet Table 3: "PC0 = (PC0) + H'ii' + 1"
+# ============================================================================
+
+reladdr: dest is simm8 [ dest = inst_next - 1 + simm8; ] { export *:2 dest; }
+
+# ============================================================================
+# Helper macro for BCD (decimal) correction
+# Used by AMD and ASD instructions.
+#
+# F8 Guide Section 6.4 describes a 3-step algorithm:
+#   Step 1: Programmer adds H'66' to augend before calling AMD/ASD (AI H'66')
+#   Step 2: Binary add augend + addend. Record carry (C) and intermediate carry (IC).
+#   Step 3: Add correction factor based on C and IC:
+#           C=0,IC=0 -> H'AA'   C=0,IC=1 -> H'A0'
+#           C=1,IC=0 -> H'0A'   C=1,IC=1 -> H'00' (no correction)
+#           Inter-digit carry is suppressed (nybbles corrected independently).
+#
+# Status flags are set from the binary addition (Step 2), not the BCD result.
+# CARRY and ZERO are meaningful; OVF and SIGN are "not significant" per Guide.
+# ============================================================================
+
+macro bcdCorrect(augend, addend, tmp) {
+    local c_bcd:1 = carry(augend, addend);
+    local ic_bcd:1 = (((augend & 0x0F) + (addend & 0x0F)) > 0x0F);
+    setAddFlags(augend, addend, tmp);
+    local corr:1 = 0;
+    if ((c_bcd == 0) & (ic_bcd == 0)) goto <bcd_c0ic0>;
+    if ((c_bcd == 0) & (ic_bcd != 0)) goto <bcd_c0ic1>;
+    if ((c_bcd != 0) & (ic_bcd == 0)) goto <bcd_c1ic0>;
+    goto <bcd_done>;
+    <bcd_c0ic0> corr = 0xAA; goto <bcd_apply>;
+    <bcd_c0ic1> corr = 0xA0; goto <bcd_apply>;
+    <bcd_c1ic0> corr = 0x0A; goto <bcd_apply>;
+    <bcd_apply>
+    tmp = ((tmp + (corr & 0xF0)) & 0xF0) | ((tmp + (corr & 0x0F)) & 0x0F);
+    <bcd_done>
+}
+
+# ============================================================================
+#
+#  I N S T R U C T I O N   D E F I N I T I O N S
+#
+# ============================================================================
+
+# ============================================================================
+# Load Immediate (0x20, 0x70-0x7F)
+# ============================================================================
+
+# CLR - Clear Accumulator (0x70) — same as LIS 0
+:CLR is op8=0x70 {
+    A = 0;
+}
+
+# LIS - Load Immediate Short (0x71-0x7F)
+:LIS imm4 is op4hi=0x7 & imm4 & op4lo!=0 {
+    A = imm4;
+}
+
+# LI - Load Immediate (0x20)
+:LI imm8 is op8=0x20; imm8 {
+    A = imm8;
+}
+
+# NOP (0x2B)
+:NOP is op8=0x2B {
+}
+
+# ============================================================================
+# LR A,r — Load Accumulator from Scratchpad (0x40-0x4F)
+# F8 Guide Section 6.26, Table 6-7. No flags modified.
+#
+# Each direct register (r=0-11) has an explicit constructor reading from
+# scratchpad ram_space. This replaces the attach variables mechanism used
+# in register_space versions. ISAR modes (S/I/D) use computed address.
+#
+# Scratchpad address = register number (R0=0, R1=1, ..., R11=11).
+# ISAR modes address the full 64-byte range (0-63) via IS register.
+# ISAR increment/decrement modifies only the lower 3 bits of IS.
+# F8 Guide Section 2.4.2: "only the low order octal digit (LO) is
+# incremented or decremented"
+# ============================================================================
+
+:LR acc, sr0  is op8=0x40 & acc & sr0  { A = *[scratchpad]:1 0:1; }
+:LR acc, sr1  is op8=0x41 & acc & sr1  { A = *[scratchpad]:1 1:1; }
+:LR acc, sr2  is op8=0x42 & acc & sr2  { A = *[scratchpad]:1 2:1; }
+:LR acc, sr3  is op8=0x43 & acc & sr3  { A = *[scratchpad]:1 3:1; }
+:LR acc, sr4  is op8=0x44 & acc & sr4  { A = *[scratchpad]:1 4:1; }
+:LR acc, sr5  is op8=0x45 & acc & sr5  { A = *[scratchpad]:1 5:1; }
+:LR acc, sr6  is op8=0x46 & acc & sr6  { A = *[scratchpad]:1 6:1; }
+:LR acc, sr7  is op8=0x47 & acc & sr7  { A = *[scratchpad]:1 7:1; }
+:LR acc, sr8  is op8=0x48 & acc & sr8  { A = *[scratchpad]:1 8:1; }
+:LR acc, sr9  is op8=0x49 & acc & sr9  { A = *[scratchpad]:1 9:1; }
+:LR acc, sr10 is op8=0x4A & acc & sr10 { A = *[scratchpad]:1 10:1; }
+:LR acc, sr11 is op8=0x4B & acc & sr11 { A = *[scratchpad]:1 11:1; }
+
+# LR A,S (0x4C) — via ISAR, static
+:LR acc, iS is op8=0x4C & acc & iS {
+    local idx:1 = IS & 0x3F;
+    A = *[scratchpad]:1 idx;
+}
+
+# LR A,I (0x4D) — via ISAR, then increment lower 3 bits
+:LR acc, iI is op8=0x4D & acc & iI {
+    local idx:1 = IS & 0x3F;
+    A = *[scratchpad]:1 idx;
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+
+# LR A,D (0x4E) — via ISAR, then decrement lower 3 bits
+:LR acc, iD is op8=0x4E & acc & iD {
+    local idx:1 = IS & 0x3F;
+    A = *[scratchpad]:1 idx;
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+
+# LR A,15 (0x4F) — r=F: undocumented. Treated as NOP.
+:LR acc, r15 is op8=0x4F & acc & r15 {
+}
+
+# ============================================================================
+# LR r,A — Store Accumulator to Scratchpad (0x50-0x5F)
+# ============================================================================
+
+:LR sr0,  acc is op8=0x50 & sr0  & acc { *[scratchpad]:1 0:1  = A; }
+:LR sr1,  acc is op8=0x51 & sr1  & acc { *[scratchpad]:1 1:1  = A; }
+:LR sr2,  acc is op8=0x52 & sr2  & acc { *[scratchpad]:1 2:1  = A; }
+:LR sr3,  acc is op8=0x53 & sr3  & acc { *[scratchpad]:1 3:1  = A; }
+:LR sr4,  acc is op8=0x54 & sr4  & acc { *[scratchpad]:1 4:1  = A; }
+:LR sr5,  acc is op8=0x55 & sr5  & acc { *[scratchpad]:1 5:1  = A; }
+:LR sr6,  acc is op8=0x56 & sr6  & acc { *[scratchpad]:1 6:1  = A; }
+:LR sr7,  acc is op8=0x57 & sr7  & acc { *[scratchpad]:1 7:1  = A; }
+:LR sr8,  acc is op8=0x58 & sr8  & acc { *[scratchpad]:1 8:1  = A; }
+:LR sr9,  acc is op8=0x59 & sr9  & acc { *[scratchpad]:1 9:1  = A; }
+:LR sr10, acc is op8=0x5A & sr10 & acc { *[scratchpad]:1 10:1 = A; }
+:LR sr11, acc is op8=0x5B & sr11 & acc { *[scratchpad]:1 11:1 = A; }
+
+# LR S,A / LR I,A / LR D,A (0x5C-0x5E)
+:LR iS, acc is op8=0x5C & iS & acc {
+    local idx:1 = IS & 0x3F;
+    *[scratchpad]:1 idx = A;
+}
+
+:LR iI, acc is op8=0x5D & iI & acc {
+    local idx:1 = IS & 0x3F;
+    *[scratchpad]:1 idx = A;
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+
+:LR iD, acc is op8=0x5E & iD & acc {
+    local idx:1 = IS & 0x3F;
+    *[scratchpad]:1 idx = A;
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+
+# LR 15,A (0x5F) — r=F: undocumented
+:LR r15, acc is op8=0x5F & r15 & acc {
+}
+
+# ============================================================================
+# Special Register Transfers (0x00-0x11)
+# F8 Guide Table 6-7, F3850 Datasheet Table 4.
+#
+# These access named scratchpad locations:
+#   KU = scratchpad[12], KL = scratchpad[13]  (PC1 backup pair)
+#   QU = scratchpad[14], QL = scratchpad[15]  (PC0/DC0 backup pair)
+#   J  = scratchpad[9]                         (status W backup)
+#
+# 16-bit pair transfers use *[scratchpad]:2 which in big-endian writes
+# high byte at lower address: *[scratchpad]:2 12 writes [12]=high, [13]=low.
+#   K = scratchpad[12:13], H = scratchpad[10:11], Q = scratchpad[14:15]
+# ============================================================================
+
+# 8-bit transfers: A <-> scratchpad[12-15] (KU/KL/QU/QL)
+:LR acc, sKU is op8=0x00 & acc & sKU { A = *[scratchpad]:1 12:1; }
+:LR acc, sKL is op8=0x01 & acc & sKL { A = *[scratchpad]:1 13:1; }
+:LR acc, sQU is op8=0x02 & acc & sQU { A = *[scratchpad]:1 14:1; }
+:LR acc, sQL is op8=0x03 & acc & sQL { A = *[scratchpad]:1 15:1; }
+:LR sKU, acc is op8=0x04 & sKU & acc  { *[scratchpad]:1 12:1 = A; }
+:LR sKL, acc is op8=0x05 & sKL & acc  { *[scratchpad]:1 13:1 = A; }
+:LR sQU, acc is op8=0x06 & sQU & acc  { *[scratchpad]:1 14:1 = A; }
+:LR sQL, acc is op8=0x07 & sQL & acc  { *[scratchpad]:1 15:1 = A; }
+
+# 16-bit transfers: K(scratchpad[12:13]) <-> PC1
+:LR sK, sP is op8=0x08 & sK & sP {
+    *[scratchpad]:2 12:1 = PC1;
+}
+
+:LR sP, sK is op8=0x09 & sP & sK {
+    PC1 = *[scratchpad]:2 12:1;
+}
+
+# ISAR transfers
+:LR acc, sIS is op8=0x0A & acc & sIS { A = IS; }
+:LR sIS, acc is op8=0x0B & sIS & acc { IS = A & 0x3F; }
+
+# PK — Call via K register (scratchpad[12:13])
+:PK is op8=0x0C {
+    PC1 = inst_next;
+    local target:2 = *[scratchpad]:2 12:1;
+    call [target];
+}
+
+# LR P0,Q — Jump via Q register (scratchpad[14:15])
+:LR sP0, sQ is op8=0x0D & sP0 & sQ {
+    local target:2 = *[scratchpad]:2 14:1;
+    goto [target];
+}
+
+# 16-bit transfers: Q(scratchpad[14:15]) <-> DC0
+:LR sQ, sDC is op8=0x0E & sQ & sDC { *[scratchpad]:2 14:1 = DC0; }
+:LR sDC, sQ is op8=0x0F & sDC & sQ { DC0 = *[scratchpad]:2 14:1; }
+
+# 16-bit transfers: H(scratchpad[10:11]) <-> DC0
+:LR sDC, sH is op8=0x10 & sDC & sH { DC0 = *[scratchpad]:2 10:1; }
+:LR sH, sDC is op8=0x11 & sH & sDC { *[scratchpad]:2 10:1 = DC0; }
+
+# ============================================================================
+# Shift Instructions (0x12-0x15)
+# All shifts: O=0, C=0 (unconditionally reset)
+# ============================================================================
+
+:SR sh1 is op8=0x12 & sh1 {
+    A = A >> 1;
+    clearOC();
+    setZS(A);
+}
+
+:SL sh1 is op8=0x13 & sh1 {
+    A = A << 1;
+    clearOC();
+    setZS(A);
+}
+
+:SR sh4 is op8=0x14 & sh4 {
+    A = A >> 4;
+    clearOC();
+    setZS(A);
+}
+
+:SL sh4 is op8=0x15 & sh4 {
+    A = A << 4;
+    clearOC();
+    setZS(A);
+}
+
+# ============================================================================
+# Memory Instructions (0x16-0x17)
+# DC0 is incremented after every memory reference operation.
+# F8 User's Guide Table 1-3: "In all Memory Reference Instructions,
+# the Data Counter is incremented: DC0 <- DC0 + 1"
+# ============================================================================
+
+:LM is op8=0x16 {
+    A = *:1 DC0;
+    DC0 = DC0 + 1;
+}
+
+:ST is op8=0x17 {
+    *:1 DC0 = A;
+    DC0 = DC0 + 1;
+}
+
+# ============================================================================
+# Accumulator Operations (0x18-0x1F)
+# ============================================================================
+
+# COM — Complement (0x18)
+:COM is op8=0x18 {
+    A = ~A;
+    clearOC();
+    setZS(A);
+}
+
+# LNK — Add Carry to Accumulator (0x19)
+:LNK is op8=0x19 {
+    local oldC:1 = (W >> 1) & 1;
+    local result:1 = A + oldC;
+    setAddFlags(A, oldC, result);
+    A = result;
+}
+
+# DI — Disable Interrupts (0x1A)
+:DI is op8=0x1A {
+    W = W & 0xEF;
+}
+
+# EI — Enable Interrupts (0x1B)
+:EI is op8=0x1B {
+    W = W | 0x10;
+}
+
+# POP — Return from Subroutine (0x1C)
+# PC0 loaded from PC1. PC1 is NOT modified (one-way, not swap).
+# F8 Guide Section 6.37: "PC1 will not be changed"
+# F3850 Datasheet Table 3: "PC0 <- (PC1)"
+:POP is op8=0x1C {
+    PC0 = PC1;
+    return [PC0];
+}
+
+# LR W,J — Load Status from scratchpad[9] (0x1D)
+# W is 5 bits wide (S,C,Z,O,ICB). Upper 3 bits masked off.
+:LR sW, sJ is op8=0x1D & sW & sJ {
+    W = *[scratchpad]:1 9:1 & 0x1F;
+}
+
+# LR J,W — Save Status to scratchpad[9] (0x1E)
+:LR sJ, sW is op8=0x1E & sJ & sW {
+    *[scratchpad]:1 9:1 = W;
+}
+
+# INC — Increment Accumulator (0x1F)
+:INC is op8=0x1F {
+    local one:1 = 1;
+    local result:1 = A + one;
+    setAddFlags(A, one, result);
+    A = result;
+}
+
+# ============================================================================
+# Immediate ALU Instructions (0x21-0x25)
+# ============================================================================
+
+:NI imm8 is op8=0x21; imm8 {
+    A = A & imm8;
+    clearOC();
+    setZS(A);
+}
+
+:OI imm8 is op8=0x22; imm8 {
+    A = A | imm8;
+    clearOC();
+    setZS(A);
+}
+
+:XI imm8 is op8=0x23; imm8 {
+    A = A ^ imm8;
+    clearOC();
+    setZS(A);
+}
+
+:AI imm8 is op8=0x24; imm8 {
+    local result:1 = A + imm8;
+    setAddFlags(A, imm8, result);
+    A = result;
+}
+
+:CI imm8 is op8=0x25; imm8 {
+    local result:1 = imm8 - A;
+    setSubFlags(imm8, A, result);
+}
+
+# ============================================================================
+# I/O Instructions (0x26-0x27, 0xA0-0xBF)
+# IN and INS set flags. OUT and OUTS do not.
+# ============================================================================
+
+:IN port8 is op8=0x26; port8 {
+    local paddr:1 = port8;
+    A = *[io]:1 paddr;
+    clearOC();
+    setZS(A);
+}
+
+:OUT port8 is op8=0x27; port8 {
+    local paddr:1 = port8;
+    *[io]:1 paddr = A;
+}
+
+# NOTE: PI and JMP destroy A on real hardware (not modeled for decompiler)
+:PI addr16 is op8=0x28; addr16 {
+    PC1 = inst_next;
+    local target:2 = addr16;
+    call [target];
+}
+
+:JMP addr16 is op8=0x29; addr16 {
+    local target:2 = addr16;
+    goto [target];
+}
+
+:DCI addr16 is op8=0x2A; addr16 {
+    DC0 = addr16;
+}
+
+:XDC is op8=0x2C {
+    local tmp:2 = DC0;
+    DC0 = DC1;
+    DC1 = tmp;
+}
+
+# ============================================================================
+# DS — Decrement Scratchpad (0x30-0x3F)
+# F8 Guide Section 6.14, F3850 Datasheet Table 3.
+# Decrement is performed by adding H'FF' (two's complement -1).
+# All four status flags modified (O, Z, C, S). ICB unaffected.
+# C=1 means no borrow (original value != 0).
+# ============================================================================
+
+:DS sr0  is op8=0x30 & sr0  {
+    local v:1 = *[scratchpad]:1 0:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 0:1 = r;
+}
+:DS sr1  is op8=0x31 & sr1  {
+    local v:1 = *[scratchpad]:1 1:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 1:1 = r;
+}
+:DS sr2  is op8=0x32 & sr2  {
+    local v:1 = *[scratchpad]:1 2:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 2:1 = r;
+}
+:DS sr3  is op8=0x33 & sr3  {
+    local v:1 = *[scratchpad]:1 3:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 3:1 = r;
+}
+:DS sr4  is op8=0x34 & sr4  {
+    local v:1 = *[scratchpad]:1 4:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 4:1 = r;
+}
+:DS sr5  is op8=0x35 & sr5  {
+    local v:1 = *[scratchpad]:1 5:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 5:1 = r;
+}
+:DS sr6  is op8=0x36 & sr6  {
+    local v:1 = *[scratchpad]:1 6:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 6:1 = r;
+}
+:DS sr7  is op8=0x37 & sr7  {
+    local v:1 = *[scratchpad]:1 7:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 7:1 = r;
+}
+:DS sr8  is op8=0x38 & sr8  {
+    local v:1 = *[scratchpad]:1 8:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 8:1 = r;
+}
+:DS sr9  is op8=0x39 & sr9  {
+    local v:1 = *[scratchpad]:1 9:1;  local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 9:1 = r;
+}
+:DS sr10 is op8=0x3A & sr10 {
+    local v:1 = *[scratchpad]:1 10:1; local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 10:1 = r;
+}
+:DS sr11 is op8=0x3B & sr11 {
+    local v:1 = *[scratchpad]:1 11:1; local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 11:1 = r;
+}
+
+# DS S/I/D — via ISAR
+:DS iS is op8=0x3C & iS {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx; local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 idx = r;
+}
+
+:DS iI is op8=0x3D & iI {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx; local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 idx = r;
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+
+:DS iD is op8=0x3E & iD {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx; local ff:1 = 0xFF;
+    local r:1 = v + ff; setAddFlags(v, ff, r); *[scratchpad]:1 idx = r;
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+
+# DS 15 (0x3F) — r=F: undocumented
+:DS r15 is op8=0x3F & r15 {
+}
+
+# ============================================================================
+# LISU / LISL — Load ISAR halves (0x60-0x6F)
+# F3850 Datasheet Table 3: LISU=6e (0x60-0x67), LISL=68+e (0x68-0x6F)
+# F8 Guide Appendix D: LISU=01100aaa (sets upper 3 bits), LISL=01101aaa (sets lower)
+# Note: Mostek Data Book and Reference Card swap LISU/LISL. Verified as
+# documentation error by checking against F3850 Datasheet, F8 Guide Appendix D,
+# F8 User's Guide Table 2-7, and disassembly of real MK3870 firmware.
+# ============================================================================
+
+:LISU op3lo is op4hi=0x6 & op4lo<0x8 & op3lo {
+    IS = (IS & 0x07) | (op3lo << 3);
+}
+
+:LISL op3lo is op4hi=0x6 & op4lo>=0x8 & op3lo {
+    IS = (IS & 0x38) | op3lo;
+}
+
+# ============================================================================
+# Branch Instructions (0x80-0x9F)
+# ============================================================================
+
+:BT "0", reladdr is op8=0x80; reladdr { }
+:BP reladdr       is op8=0x81; reladdr { local sf:1 = W & 1; if (sf == 1) goto reladdr; }
+:BC reladdr       is op8=0x82; reladdr { local cf:1 = (W >> 1) & 1; if (cf == 1) goto reladdr; }
+:BT "3", reladdr  is op8=0x83; reladdr { local c:1 = W & 0x03; if (c != 0) goto reladdr; }
+:BZ reladdr       is op8=0x84; reladdr { local zf:1 = (W >> 2) & 1; if (zf == 1) goto reladdr; }
+:BT "5", reladdr  is op8=0x85; reladdr { local c:1 = W & 0x05; if (c != 0) goto reladdr; }
+:BT "6", reladdr  is op8=0x86; reladdr { local c:1 = W & 0x06; if (c != 0) goto reladdr; }
+:BT "7", reladdr  is op8=0x87; reladdr { local c:1 = W & 0x07; if (c != 0) goto reladdr; }
+
+:BR reladdr        is op8=0x90; reladdr { goto reladdr; }
+:BM reladdr        is op8=0x91; reladdr { local sf:1 = W & 1; if (sf == 0) goto reladdr; }
+:BNC reladdr       is op8=0x92; reladdr { local cf:1 = (W >> 1) & 1; if (cf == 0) goto reladdr; }
+:BF "3", reladdr   is op8=0x93; reladdr { local c:1 = W & 0x03; if (c == 0) goto reladdr; }
+:BNZ reladdr       is op8=0x94; reladdr { local zf:1 = (W >> 2) & 1; if (zf == 0) goto reladdr; }
+:BF "5", reladdr   is op8=0x95; reladdr { local c:1 = W & 0x05; if (c == 0) goto reladdr; }
+:BF "6", reladdr   is op8=0x96; reladdr { local c:1 = W & 0x06; if (c == 0) goto reladdr; }
+:BF "7", reladdr   is op8=0x97; reladdr { local c:1 = W & 0x07; if (c == 0) goto reladdr; }
+:BNO reladdr       is op8=0x98; reladdr { local of:1 = (W >> 3) & 1; if (of == 0) goto reladdr; }
+:BF "9", reladdr   is op8=0x99; reladdr { local c:1 = W & 0x09; if (c == 0) goto reladdr; }
+:BF "10", reladdr  is op8=0x9A; reladdr { local c:1 = W & 0x0A; if (c == 0) goto reladdr; }
+:BF "11", reladdr  is op8=0x9B; reladdr { local c:1 = W & 0x0B; if (c == 0) goto reladdr; }
+:BF "12", reladdr  is op8=0x9C; reladdr { local c:1 = W & 0x0C; if (c == 0) goto reladdr; }
+:BF "13", reladdr  is op8=0x9D; reladdr { local c:1 = W & 0x0D; if (c == 0) goto reladdr; }
+:BF "14", reladdr  is op8=0x9E; reladdr { local c:1 = W & 0x0E; if (c == 0) goto reladdr; }
+:BF "15", reladdr  is op8=0x9F; reladdr { local c:1 = W & 0x0F; if (c == 0) goto reladdr; }
+
+# ============================================================================
+# Memory Reference ALU + DC0++ (0x88-0x8E)
+# ============================================================================
+
+:AM is op8=0x88 {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    local result:1 = A + mem;
+    setAddFlags(A, mem, result);
+    A = result;
+}
+
+:AMD is op8=0x89 {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    local augend:1 = A;
+    local addend:1 = mem;
+    local tmp:1 = augend + addend;
+    bcdCorrect(augend, addend, tmp);
+    A = tmp;
+}
+
+:NM is op8=0x8A {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    A = A & mem;
+    clearOC();
+    setZS(A);
+}
+
+:OM is op8=0x8B {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    A = A | mem;
+    clearOC();
+    setZS(A);
+}
+
+:XM is op8=0x8C {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    A = A ^ mem;
+    clearOC();
+    setZS(A);
+}
+
+:CM is op8=0x8D {
+    local mem:1 = *:1 DC0;
+    DC0 = DC0 + 1;
+    local result:1 = mem - A;
+    setSubFlags(mem, A, result);
+}
+
+# ADC — Add Accumulator to Data Counter (signed) (0x8E)
+# F8 Guide Section 6.1: "treated as a signed binary number"
+# Example: A=0xA2 (-94), DC0=0x213E -> DC0=0x213E+0xFFA2=0x20E0
+:ADC is op8=0x8E {
+    DC0 = DC0 + sext(A);
+}
+
+# BR7 — Branch if ISAR lower 3 bits != 7
+:BR7 reladdr is op8=0x8F; reladdr {
+    local islow:1 = IS & 0x07;
+    if (islow != 7) goto reladdr;
+}
+
+# ============================================================================
+# INS / OUTS (0xA0-0xBF)
+# ============================================================================
+
+:INS port4 is op4hi=0xA & port4 {
+    local paddr:1 = port4;
+    A = *[io]:1 paddr;
+    clearOC();
+    setZS(A);
+}
+
+:OUTS port4 is op4hi=0xB & port4 {
+    local paddr:1 = port4;
+    *[io]:1 paddr = A;
+}
+
+# ============================================================================
+# AS — Add Scratchpad to Accumulator (0xC0-0xCF)
+# ============================================================================
+
+:AS sr0  is op8=0xC0 & sr0  {
+    local v:1 = *[scratchpad]:1 0:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr1  is op8=0xC1 & sr1  {
+    local v:1 = *[scratchpad]:1 1:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr2  is op8=0xC2 & sr2  {
+    local v:1 = *[scratchpad]:1 2:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr3  is op8=0xC3 & sr3  {
+    local v:1 = *[scratchpad]:1 3:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr4  is op8=0xC4 & sr4  {
+    local v:1 = *[scratchpad]:1 4:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr5  is op8=0xC5 & sr5  {
+    local v:1 = *[scratchpad]:1 5:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr6  is op8=0xC6 & sr6  {
+    local v:1 = *[scratchpad]:1 6:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr7  is op8=0xC7 & sr7  {
+    local v:1 = *[scratchpad]:1 7:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr8  is op8=0xC8 & sr8  {
+    local v:1 = *[scratchpad]:1 8:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr9  is op8=0xC9 & sr9  {
+    local v:1 = *[scratchpad]:1 9:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr10 is op8=0xCA & sr10 {
+    local v:1 = *[scratchpad]:1 10:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+:AS sr11 is op8=0xCB & sr11 {
+    local v:1 = *[scratchpad]:1 11:1;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+
+# AS S/I/D — via ISAR
+:AS iS is op8=0xCC & iS {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+}
+
+:AS iI is op8=0xCD & iI {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+
+:AS iD is op8=0xCE & iD {
+    local idx:1 = IS & 0x3F;
+    local v:1 = *[scratchpad]:1 idx;
+    local r:1 = A + v; setAddFlags(A, v, r); A = r;
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+
+:AS r15 is op8=0xCF & r15 { }
+
+# ============================================================================
+# ASD — Add Scratchpad Decimal (0xD0-0xDF)
+# BCD addition using 3-step correction algorithm
+# ============================================================================
+
+:ASD sr0  is op8=0xD0 & sr0  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 0:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr1  is op8=0xD1 & sr1  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 1:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr2  is op8=0xD2 & sr2  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 2:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr3  is op8=0xD3 & sr3  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 3:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr4  is op8=0xD4 & sr4  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 4:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr5  is op8=0xD5 & sr5  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 5:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr6  is op8=0xD6 & sr6  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 6:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr7  is op8=0xD7 & sr7  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 7:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr8  is op8=0xD8 & sr8  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 8:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr9  is op8=0xD9 & sr9  {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 9:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr10 is op8=0xDA & sr10 {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 10:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+:ASD sr11 is op8=0xDB & sr11 {
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 11:1;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+
+# ASD S/I/D — via ISAR
+:ASD iS is op8=0xDC & iS {
+    local idx:1 = IS & 0x3F;
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 idx;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+}
+
+:ASD iI is op8=0xDD & iI {
+    local idx:1 = IS & 0x3F;
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 idx;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+
+:ASD iD is op8=0xDE & iD {
+    local idx:1 = IS & 0x3F;
+    local augend:1 = A; local addend:1 = *[scratchpad]:1 idx;
+    local tmp:1 = augend + addend; bcdCorrect(augend, addend, tmp); A = tmp;
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+
+:ASD r15 is op8=0xDF & r15 { }
+
+# ============================================================================
+# XS — XOR Scratchpad (0xE0-0xEF)
+# ============================================================================
+
+:XS sr0  is op8=0xE0 & sr0  { A = A ^ (*[scratchpad]:1 0:1);  clearOC(); setZS(A); }
+:XS sr1  is op8=0xE1 & sr1  { A = A ^ (*[scratchpad]:1 1:1);  clearOC(); setZS(A); }
+:XS sr2  is op8=0xE2 & sr2  { A = A ^ (*[scratchpad]:1 2:1);  clearOC(); setZS(A); }
+:XS sr3  is op8=0xE3 & sr3  { A = A ^ (*[scratchpad]:1 3:1);  clearOC(); setZS(A); }
+:XS sr4  is op8=0xE4 & sr4  { A = A ^ (*[scratchpad]:1 4:1);  clearOC(); setZS(A); }
+:XS sr5  is op8=0xE5 & sr5  { A = A ^ (*[scratchpad]:1 5:1);  clearOC(); setZS(A); }
+:XS sr6  is op8=0xE6 & sr6  { A = A ^ (*[scratchpad]:1 6:1);  clearOC(); setZS(A); }
+:XS sr7  is op8=0xE7 & sr7  { A = A ^ (*[scratchpad]:1 7:1);  clearOC(); setZS(A); }
+:XS sr8  is op8=0xE8 & sr8  { A = A ^ (*[scratchpad]:1 8:1);  clearOC(); setZS(A); }
+:XS sr9  is op8=0xE9 & sr9  { A = A ^ (*[scratchpad]:1 9:1);  clearOC(); setZS(A); }
+:XS sr10 is op8=0xEA & sr10 { A = A ^ (*[scratchpad]:1 10:1); clearOC(); setZS(A); }
+:XS sr11 is op8=0xEB & sr11 { A = A ^ (*[scratchpad]:1 11:1); clearOC(); setZS(A); }
+
+# XS S/I/D
+:XS iS is op8=0xEC & iS {
+    local idx:1 = IS & 0x3F;
+    A = A ^ (*[scratchpad]:1 idx); clearOC(); setZS(A);
+}
+:XS iI is op8=0xED & iI {
+    local idx:1 = IS & 0x3F;
+    A = A ^ (*[scratchpad]:1 idx); clearOC(); setZS(A);
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+:XS iD is op8=0xEE & iD {
+    local idx:1 = IS & 0x3F;
+    A = A ^ (*[scratchpad]:1 idx); clearOC(); setZS(A);
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+:XS r15 is op8=0xEF & r15 { }
+
+# ============================================================================
+# NS — AND Scratchpad (0xF0-0xFF)
+# ============================================================================
+
+:NS sr0  is op8=0xF0 & sr0  { A = A & (*[scratchpad]:1 0:1);  clearOC(); setZS(A); }
+:NS sr1  is op8=0xF1 & sr1  { A = A & (*[scratchpad]:1 1:1);  clearOC(); setZS(A); }
+:NS sr2  is op8=0xF2 & sr2  { A = A & (*[scratchpad]:1 2:1);  clearOC(); setZS(A); }
+:NS sr3  is op8=0xF3 & sr3  { A = A & (*[scratchpad]:1 3:1);  clearOC(); setZS(A); }
+:NS sr4  is op8=0xF4 & sr4  { A = A & (*[scratchpad]:1 4:1);  clearOC(); setZS(A); }
+:NS sr5  is op8=0xF5 & sr5  { A = A & (*[scratchpad]:1 5:1);  clearOC(); setZS(A); }
+:NS sr6  is op8=0xF6 & sr6  { A = A & (*[scratchpad]:1 6:1);  clearOC(); setZS(A); }
+:NS sr7  is op8=0xF7 & sr7  { A = A & (*[scratchpad]:1 7:1);  clearOC(); setZS(A); }
+:NS sr8  is op8=0xF8 & sr8  { A = A & (*[scratchpad]:1 8:1);  clearOC(); setZS(A); }
+:NS sr9  is op8=0xF9 & sr9  { A = A & (*[scratchpad]:1 9:1);  clearOC(); setZS(A); }
+:NS sr10 is op8=0xFA & sr10 { A = A & (*[scratchpad]:1 10:1); clearOC(); setZS(A); }
+:NS sr11 is op8=0xFB & sr11 { A = A & (*[scratchpad]:1 11:1); clearOC(); setZS(A); }
+
+# NS S/I/D
+:NS iS is op8=0xFC & iS {
+    local idx:1 = IS & 0x3F;
+    A = A & (*[scratchpad]:1 idx); clearOC(); setZS(A);
+}
+:NS iI is op8=0xFD & iI {
+    local idx:1 = IS & 0x3F;
+    A = A & (*[scratchpad]:1 idx); clearOC(); setZS(A);
+    IS = (IS & 0x38) | ((IS + 1) & 0x07);
+}
+:NS iD is op8=0xFE & iD {
+    local idx:1 = IS & 0x3F;
+    A = A & (*[scratchpad]:1 idx); clearOC(); setZS(A);
+    IS = (IS & 0x38) | ((IS - 1) & 0x07);
+}
+:NS r15 is op8=0xFF & r15 { }
