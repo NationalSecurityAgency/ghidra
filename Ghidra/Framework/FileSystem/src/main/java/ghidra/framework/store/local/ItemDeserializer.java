@@ -47,7 +47,7 @@ public class ItemDeserializer implements Closeable {
 
 	// Maximum compression ratio allowed
 	// NOTE: Ghidra packed DB files can be very sparse
-	private final static int MAX_EXPECTED_COMPRESSION_RATIO = 200;
+	private final static int MAX_EXPECTED_COMPRESSION_RATIO = 225;
 
 	private InputStream in;
 	private String itemName;
