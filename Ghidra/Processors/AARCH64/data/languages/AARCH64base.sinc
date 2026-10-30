@@ -1859,8 +1859,8 @@ is size.ldstr & b_2429=0x1d & opt != 3 & cpyPhase & b_2121=0 & Rs_GPR64 & cpyTyp
 # C6.2.59 CRC32B, CRC32H, CRC32W, CRC32X page C6-611 line 35802 KEEPWITH
 # sf == 0 && sz = 00 CRC32CB variant
 
-crcpoly: "" is b_12=0 {tmp:4 = 0x04C11DB7; export *[const]:4 tmp; }
-crcpoly: "c" is b_12=1 { tmp:4 = 0x1EDC6F41; export *[const]:4 tmp; }
+crcpoly: "" is b_12=0 { export 0x04C11DB7:4; }
+crcpoly: "c" is b_12=1 { export 0x1EDC6F41:4; }
 
 # C6.2.100 CRC32B, CRC32H, CRC32W, CRC32X page C6-1438 line 85850 MATCH x1ac04000/mask=x7fe0f000
 # C6.2.101 CRC32CB, CRC32CH, CRC32CW, CRC32CX page C6-1440 line 85958 MATCH x1ac05000/mask=x7fe0f000
