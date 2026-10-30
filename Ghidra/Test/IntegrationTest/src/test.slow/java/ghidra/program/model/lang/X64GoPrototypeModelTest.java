@@ -49,6 +49,8 @@ public class X64GoPrototypeModelTest extends AbstractProtoModelTest {
 		test(model, "double[5] func(int a,int[10] b)", "stack58:40,RAX,stack8:80");
 		test(model, "char[5] func(char[3] a,char[7] b,int c)", "stack18:5,stack8:3,stackb:7,RAX");
 		test(model, "void func(float a,int[1] b,int[2] c)", "void,XMM0:4,RAX,stack8:16");
+		parseStructure("Buffer", "char[250],char");
+		test(model, "void func(Buffer a,Buffer b)", "void,stack8:251,void");	// b overflows the 500-byte stack entry
 	}
 
 }
