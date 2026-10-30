@@ -1,0 +1,37 @@
+<decompilertest>
+<binaryimage arch="PowerPC:BE:64:default:default">
+  <!--
+      seed_hi_only (0x1000):  mflr r0 ; std r0,16(r1) ; stdu r1,-32(r1)
+                              bl make_value ; srdi r3,r3,32
+                              lis r4,0x10 ; stw r3,0(r4)
+                              addi r1,r1,32 ; ld r0,16(r1) ; mtlr r0 ; blr
+      make_value   (0x1100):  li r3,1 ; blr
+
+      Big-endian mirror of retvalhighhalf.xml: the caller consumes ONLY the
+      high 32 bits (most significant, LOWEST addressed bytes of r3) of
+      make_value's 64-bit return value.  No prototype is supplied for
+      make_value.  The piece is NOT justified in r3 (its least significant
+      byte does not reach r3's least significant byte), so truncating the
+      indirect creation must be refused, the full 8-byte return must bind,
+      and the call must not become void.
+  -->
+<bytechunk space="ram" offset="0x1000" readonly="true">
+7c0802a6f8010010f821ffe1480000f5786300223c80001090640000
+38210020e80100107c0803a64e800020
+</bytechunk>
+<bytechunk space="ram" offset="0x1100" readonly="true">
+386000014e800020
+</bytechunk>
+</binaryimage>
+<script>
+  <com>map fun r0x1000 seed_hi_only</com>
+  <com>map fun r0x1100 make_value</com>
+  <com>lo fu seed_hi_only</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Return high half BE #1" min="1" max="1">= make_value\(\)</stringmatch>
+<stringmatch name="Return high half BE #2" min="0" max="0">extraout</stringmatch>
+<stringmatch name="Return high half BE #3" min="1" max="1">&gt;&gt; 0x20</stringmatch>
+</decompilertest>
