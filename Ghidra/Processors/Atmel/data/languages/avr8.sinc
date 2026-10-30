@@ -615,12 +615,12 @@ define pcodeop break;
 	RdFull = (RdFull & mask) | b;
 }
 # brbc s,k
-:brbc rel7dst,oplow3_flag        is phase=1 & ophi6=0x3d & rel7dst & oplow3_flag {
+:brbc oplow3_flag,rel7dst        is phase=1 & ophi6=0x3d & rel7dst & oplow3_flag {
 	if (!oplow3_flag)
     goto rel7dst;
 }
 # brbs s,k  (see prev instruction)
-:brbs rel7dst,oplow3_flag        is phase=1 & ophi6=0x3c & rel7dst & oplow3_flag {
+:brbs oplow3_flag,rel7dst        is phase=1 & ophi6=0x3c & rel7dst & oplow3_flag {
 	if (oplow3_flag)
     goto rel7dst;
 }
