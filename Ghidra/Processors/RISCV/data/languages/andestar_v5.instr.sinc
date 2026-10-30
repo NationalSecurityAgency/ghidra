@@ -20,12 +20,11 @@ simm18_lh: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<
 	export *[const]:$(XLEN) val;
 }
 
-#simm18_lw: val is sop3131 & op1516 & op1719 & op2020 & op2130 [ val = (sop3131<<18) | (op1516<<16) | (op1719<<13) | (op2020<<12) | (op2130<<2); ] {
 simm18_lw: val is sop3131 & op2121 & op1516 & op1719 & op2020 & op2230 [ val = (sop3131<<18) | (op2121 << 17) | (op1516<<15) | (op1719<<12) | (op2020<<11) | (op2230<<2); ] {
 	export *[const]:$(XLEN) val;
 }
 
-simm18_ld: val is sop3131 & op1516 & op1719 & op2020 & op2122 & op2330 [ val = (sop3131<<19) | (op2122<<17) | (op1516<<15) | (op1719<<12) | (op2330<<3); ] {
+simm18_ld: val is sop3131 & op1516 & op1719 & op2020 & op2122 & op2330 [ val = (sop3131<<19) | (op2122<<17) | (op1516<<15) | (op1719<<12) | (op2020<<11) | (op2330<<3); ] {
 	export *[const]:$(XLEN) val;
 }
 
@@ -72,7 +71,7 @@ ra_imm10: dest is sop3131 & op2529 & op0811 [ dest = inst_start + (sop3131 << 10
 
 :bbs rs1,cimm,ra_imm10 is rs1 & cimm & ra_imm10 & op3030=1 & op1214=0b111 & op0707=0 & $(CUSTOM2)
 {
-	tst:1 = (rs1 & (1 << cimm)) == 1;
+	tst:1 = (rs1 & (1 << cimm)) != 0;
 	if (tst) goto ra_imm10;
 }
 
@@ -95,7 +94,7 @@ lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
 {
 	# msb==0  Rd[LSB] = sext(Rs1[0])
 	shift:$(XLEN) = ($(XLEN)*8-1);
-	val:$(XLEN) = (rs1 & 1 << shift) s>> (shift);
+	val:$(XLEN) = ((rs1 & 1) << shift) s>> shift;
 	val = val << lsb;
 	rd = val;
 }
@@ -137,7 +136,7 @@ lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
 	rd = val;
 }
 
-:bfoz rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 <= op2631) & op1214=0b010 & $(CUSTOM2)
+:bfoz rd,rs1,msb,lsb is rd & rs1 & msb & lsb & (op2025 <= op2631) & (op2631 != 0) & op1214=0b010 & $(CUSTOM2)
 {
 	# msb >= lsb  Rd[len-1:0] = zext(Rs1[MSB:LSB])
 	len:$(XLEN) = msb-lsb+1;
@@ -308,10 +307,10 @@ lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
 
 :ffzmism rd,rs1,rs2 is rd & rs1 & rs2 & op2531=0b0010001 & op1214=0 & $(CUSTOM2) {
 @if XLEN == "4"
-	m1:1 = (rs1[0,8]==0)  | (rs1[0,8] == rs2[0,8]);
-	m2:1 = (rs1[8,8]==0)  | (rs1[8,8] == rs2[8,8]);
-	m3:1 = (rs1[16,8]==0) | (rs1[16,8] == rs2[16,8]);
-	m4:1 = (rs1[24,8]==0) | (rs1[24,8] == rs2[24,8]);
+	m1:1 = (rs1[0,8]==0)  | (rs1[0,8] != rs2[0,8]);
+	m2:1 = (rs1[8,8]==0)  | (rs1[8,8] != rs2[8,8]);
+	m3:1 = (rs1[16,8]==0) | (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8]==0) | (rs1[24,8] != rs2[24,8]);
 	rd = -4;
 	if (m1) goto inst_next;
 	rd = -3;
@@ -324,14 +323,14 @@ lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
 	# choosery method
 	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
 @else
-   	m1:1 = (rs1[0,8]==0)  | (rs1[0,8]  == rs2[0,8]);
-	m2:1 = (rs1[8,8]==0)  | (rs1[8,8]  == rs2[8,8]);
-	m3:1 = (rs1[16,8]==0) | (rs1[16,8] == rs2[16,8]);
-	m4:1 = (rs1[24,8]==0) | (rs1[24,8] == rs2[24,8]);
-	m5:1 = (rs1[32,8]==0) | (rs1[32,8] == rs2[32,8]);
-	m6:1 = (rs1[40,8]==0) | (rs1[40,8] == rs2[40,8]);
-	m7:1 = (rs1[48,8]==0) | (rs1[48,8] == rs2[48,8]);
-	m8:1 = (rs1[56,8]==0) | (rs1[56,8] == rs2[56,8]);
+	m1:1 = (rs1[0,8]==0)  | (rs1[0,8]  != rs2[0,8]);
+	m2:1 = (rs1[8,8]==0)  | (rs1[8,8]  != rs2[8,8]);
+	m3:1 = (rs1[16,8]==0) | (rs1[16,8] != rs2[16,8]);
+	m4:1 = (rs1[24,8]==0) | (rs1[24,8] != rs2[24,8]);
+	m5:1 = (rs1[32,8]==0) | (rs1[32,8] != rs2[32,8]);
+	m6:1 = (rs1[40,8]==0) | (rs1[40,8] != rs2[40,8]);
+	m7:1 = (rs1[48,8]==0) | (rs1[48,8] != rs2[48,8]);
+	m8:1 = (rs1[56,8]==0) | (rs1[56,8] != rs2[56,8]);
 	rd = -8;
 	if (m1) goto inst_next;
 	rd = -7;
@@ -450,22 +449,75 @@ lsb: "#"^op2025 is op2025 { export *[const]:$(XLEN) op2025; }
 @endif
 }
 
+# mmsc_cfg.ECD=1 && mmsc_cfg2.PP16=1 (Andes "PP16" 16-bit push/pop variant).
+# cop0709 = pop_reglist encoding:
+#    0: displ=0x10, x1
+#    1: displ=0x10, x1,x8
+#    2: displ=0x10, x1,x8-x9
+#    3: displ=0x10, x1,x8-x9,x18
+#    4: displ=0x20, x1,x8-x9,x18-x19
+#    5: displ=0x20, x1,x8-x9,x18-x21
+#    6: displ=0x30, x1,x8-x9,x18-x24
+#    7: displ=0x40, x1,x8-x9,x18-x27
+# cop0204 = stack adjust in units of 16 bytes.
+stack_adj: val is cop0204 [ val = cop0204 << 4; ] { export *[const]:$(XLEN) val; }
+macro pop_reg(ri) {
+  ri = *:4 sp;
+  sp = sp + 4;
+}
+pop_reglist: "{ra}"        is cr0709s & cr0709s=0 { sp = sp + 0xc; pop_reg(ra); }
+pop_reglist: "{ra,s0}"     is cr0709s & cr0709s=1 { sp = sp + 0x8; pop_reg(s0);  pop_reg(ra); }
+pop_reglist: "{ra,s0-s1}"  is cr0709s & cr0709s=2 { sp = sp + 0x4; pop_reg(s1);  pop_reg(s0);  pop_reg(ra); }
+pop_reglist: "{ra,s0-s2}"  is cr0709s & cr0709s=3 {                pop_reg(s2);  pop_reg(s1);  pop_reg(s0); pop_reg(ra); }
+pop_reglist: "{ra,s0-s3}"  is cr0709s & cr0709s=4 { sp = sp + 0xc; pop_reg(s3);  pop_reg(s2);  pop_reg(s1); pop_reg(s0); pop_reg(ra); }
+pop_reglist: "{ra,s0-s5}"  is cr0709s & cr0709s=5 { sp = sp + 0x4; pop_reg(s5);  pop_reg(s4);  pop_reg(s3); pop_reg(s2); pop_reg(s1); pop_reg(s0); pop_reg(ra); }
+pop_reglist: "{ra,s0-s8}"  is cr0709s & cr0709s=6 { sp = sp + 0x8; pop_reg(s8);  pop_reg(s7);  pop_reg(s6); pop_reg(s5); pop_reg(s4); pop_reg(s3); pop_reg(s2); pop_reg(s1); pop_reg(s0); pop_reg(ra); }
+pop_reglist: "{ra,s0-s11}" is cr0709s & cr0709s=7 { sp = sp + 0xc; pop_reg(s11); pop_reg(s10); pop_reg(s9); pop_reg(s8); pop_reg(s7); pop_reg(s6); pop_reg(s5); pop_reg(s4); pop_reg(s3); pop_reg(s2); pop_reg(s1); pop_reg(s0); pop_reg(ra); }
+:popret pop_reglist,stack_adj is pp16=1 & cop1215=0b1001 & cop1011=0 & pop_reglist & cop0506=0b01 & stack_adj & cop0001=0 {
+  sp = sp + stack_adj;
+  build pop_reglist;
+  return [ra];
+}
+
+macro push_reg(ri) {
+  sp = sp - 4;
+  *:4 sp = ri;
+}
+push_reglist: "{ra}"        is cr0709s=0 { push_reg(ra); }
+push_reglist: "{ra,s0}"     is cr0709s=1 { push_reg(ra); push_reg(s0); }
+push_reglist: "{ra,s0-s1}"  is cr0709s=2 { push_reg(ra); push_reg(s0); push_reg(s1); }
+push_reglist: "{ra,s0-s2}"  is cr0709s=3 { push_reg(ra); push_reg(s0); push_reg(s1); push_reg(s2); }
+push_reglist: "{ra,s0-s3}"  is cr0709s=4 { push_reg(ra); push_reg(s0); push_reg(s1); push_reg(s2); push_reg(s3); }
+push_reglist: "{ra,s0-s5}"  is cr0709s=5 { push_reg(ra); push_reg(s0); push_reg(s1); push_reg(s2); push_reg(s3); push_reg(s4); push_reg(s5); }
+push_reglist: "{ra,s0-s8}"  is cr0709s=6 { push_reg(ra); push_reg(s0); push_reg(s1); push_reg(s2); push_reg(s3); push_reg(s4); push_reg(s5); push_reg(s6); push_reg(s7); push_reg(s8); }
+push_reglist: "{ra,s0-s11}" is cr0709s=7 { push_reg(ra); push_reg(s0); push_reg(s1); push_reg(s2); push_reg(s3); push_reg(s4); push_reg(s5); push_reg(s6); push_reg(s7); push_reg(s8); push_reg(s9); push_reg(s10); push_reg(s11); }
+:push   push_reglist,stack_adj is pp16=1 & cop1215=0b1001 & cop1011=0 & push_reglist & cop0506=0b10 & stack_adj & cop0001=0 {
+  build push_reglist;
+  sp = sp & ~0xf;
+  sp = sp - stack_adj;
+}
+# Hardware behavior unclear: if total stack adjust (including reglist) is > 0x20,
+# it raises an exception; otherwise it acts like popret but doesn't write pc.
+# Not observed in real code; flagged unimpl.
+:pop    cop0709,stack_adj is pp16=1 & cop1215=0b1001 & cop1011=0 & cop0709 & cop0506=0b00 & stack_adj & cop0001=0 unimpl
+
 imm11_exec: val is cop1212 & cop1011 & cop0909 & cop0808 & cop0506 & cop0404 & cop0303 & cop0202
   [ val = (cop0808<<11)|(cop1212<<10)|(cop0303<<9)|(cop0909<<8)|(cop0506<<6)|(cop0202<<5)|(cop1011<<3)|(cop0404<<2); ] {
   	export *[ExecTable]:2 val;
+}
+
+# mmsc_cfg.ECD=1 && mmsc_cfg2.PP16=1: exec.it format.
+:exec.it imm11_exec is pp16=1 & cop1215=0b1010 & imm11_exec & cop0001=0b10 {
+  ExecRetAddr = inst_next;
+  goto imm11_exec;
 }
 
 #
 # Code Dense (CoDense) extension
 
 
-#100 imm[10|4:3|8] imm[11] 0 imm[7:6|2|9|5] 00
-:exec.it imm11_exec is ecdv=0 & cop1315=4 & imm11_exec & cop0707=0 & cop0001=0 {
-	ExecRetAddr = inst_next;
-	goto imm11_exec;
-}
-
-:ex9.it imm11_exec is ecdv=0 & cop1315=4 & imm11_exec & cop0708=0 & cop0001=0 {
+# 100 imm[10|4:3|8] imm[11] 0 imm[7:6|2|9|5] 00
+:exec.it imm11_exec is ecdv=0 & pp16=0 & cop1315=4 & imm11_exec & cop0707=0 & cop0001=0 {
 	ExecRetAddr = inst_next;
 	goto imm11_exec;
 }
@@ -479,7 +531,7 @@ imm11_nexec: val is cop1011 & cop0909 & cop0808 & cop0707 & cop0506 & cop0404 & 
 }
 
 # 100 1 imm[4:3|8] imm[11] imm[10] imm[7:6|2|9|5] 00
-:nexec.it imm11_nexec is ecdv=1 & cop1315=4 & cop1212=1 & imm11_nexec & cop0001=0 {
+:nexec.it imm11_nexec is ecdv=1 & pp16=0 & cop1315=4 & cop1212=1 & imm11_nexec & cop0001=0 {
 	ExecRetAddr = inst_next;
 	goto imm11_nexec;
 }
