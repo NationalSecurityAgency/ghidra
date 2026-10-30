@@ -245,7 +245,7 @@ public class LinkedByteBuffer {
 				return;		// Reached terminator or end of stream, ingest is finished
 			}
 			if (byteCount == maxCount) {
-				throw new IOException("Response buffer size exceeded for: " + description);
+				throw sizeExceeded();
 			}
 			// Set up next buffer
 			currentBuffer.next = new ArrayIter();
@@ -328,7 +328,7 @@ public class LinkedByteBuffer {
 			currentBuffer.array[currentPos++] = tok;
 			byteCount += 1;
 			if (byteCount > maxCount) {
-				throw new IOException("Response buffer size exceeded for: " + description);
+				throw sizeExceeded();
 			}
 		}
 	}
@@ -347,6 +347,12 @@ public class LinkedByteBuffer {
 
 		currentBuffer.array[currentPos++] = 0;	// Add pad value
 		currentBuffer.length = currentPos;	// Any bytes after are not in the buffer
+	}
+
+	private IOException sizeExceeded() {
+		return new IOException("Decompiler results exceeded payload limit of " + (maxCount >> 20) +
+			" MBytes for: " + description +
+			". The limit can be raised with the Decompiler Max-Payload (MBytes) tool option.");
 	}
 
 	public Position allocatePosition() {
