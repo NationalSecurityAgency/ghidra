@@ -510,6 +510,7 @@
         <choice>
           <value>standard</value>
           <value>register</value>
+          <value>pascal</value>
         </choice>
       </attribute>  
     </optional>
