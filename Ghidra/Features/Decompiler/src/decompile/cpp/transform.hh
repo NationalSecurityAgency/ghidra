@@ -72,7 +72,9 @@ public:
     op_preexisting = 2,		///< Op already exists (but will be transformed)
     op_indirect = 4,		///< Op is a new INDIRECT
     indirect_creation = 8,	///< Mark op as indirect creation
-    indirect_creation_possible_out = 0x10	///< Mark op as indirect creation and possible call output
+    indirect_creation_possible_out = 0x10,	///< Mark op as indirect creation and possible call output
+    insert_before = 0x20,	///< New op getting inserted before another op
+    insert_after = 0x40		///< New op getting inserted after another op
   };
 private:
   PcodeOp *op;			///< Original op which \b this is splitting (or null)
@@ -81,7 +83,7 @@ private:
   uint4 special;		///< Special handling code when creating
   TransformVar *output;	///< Varnode output
   vector<TransformVar *> input; ///< Varnode inputs
-  TransformOp *follow;		///< The following op after \b this (if not null)
+  TransformOp *anchor;		///< The op to insert \b this near (if not null)
   void createReplacement(Funcdata *fd);	///< Create the new/modified op this placeholder represents
   bool attemptInsertion(Funcdata *fd);	///< Try to put the new PcodeOp into its basic block
 public:
@@ -178,7 +180,7 @@ public:
   TransformVar *newSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane);
   TransformOp *newOpReplace(int4 numParams,OpCode opc,PcodeOp *replace);
   TransformOp *newIndirectReplace(PcodeOp *replace);
-  TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *follow);
+  TransformOp *newOp(int4 numParams,OpCode opc,TransformOp *anchor,uint4 position);
   TransformOp *newPreexistingOp(int4 numParams,OpCode opc,PcodeOp *originalOp);
 
   TransformVar *getPreexistingVarnode(Varnode *vn);	///< Get (or create) placeholder for preexisting Varnode
