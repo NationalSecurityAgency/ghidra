@@ -5723,7 +5723,7 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=0 & b_21=1 & Rs_GPR32 & b_15=1 & Rt2_G
 	check:1 = ExclusiveMonitorPass(addrReg, rsize);
 	if (!check) goto <fail>;
 	*addrReg = Rt_GPR64;
-	*(addrReg + 4) = Rt2_GPR64;
+	*(addrReg + 8) = Rt2_GPR64;
 	status = ExclusiveMonitorsStatus();
 <fail>
 	Rs_GPR64 = zext(status);
