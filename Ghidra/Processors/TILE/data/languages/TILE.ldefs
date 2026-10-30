@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="TILE"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="TILE_le.sla"
+            processorspec="TILE.pspec"
+            id="TILE:LE:64:default">
+    <description>TILE-Gx 64-bit little-endian</description>
+    <compiler name="gcc" spec="TILE.cspec" id="gcc"/>
+    <external_name tool="gnu" name="tilegx:tilegx"/>
+    <external_name tool="IDA-PRO" name="tilegxl"/>
+  </language>
+</language_definitions>
