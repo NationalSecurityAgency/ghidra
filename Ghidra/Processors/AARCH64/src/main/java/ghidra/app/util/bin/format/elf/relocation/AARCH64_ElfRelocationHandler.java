@@ -78,6 +78,7 @@ public class AARCH64_ElfRelocationHandler extends
 			case R_AARCH64_P32_RELATIVE:
 				is64bit = false;
 			case R_AARCH64_RELATIVE:
+			case R_AARCH64_AUTH_RELATIVE:
 				if (elfRelocationContext.extractAddend()) {
 					addend = getValue(memory, relocationAddress, is64bit);
 				}
@@ -100,7 +101,8 @@ public class AARCH64_ElfRelocationHandler extends
 
 		switch (type) {
 			// .xword: (S+A)
-			case R_AARCH64_ABS64: {
+			case R_AARCH64_ABS64:
+			case R_AARCH64_AUTH_ABS64: {
 				newValue = (symbolValue + addend);
 				memory.setLong(relocationAddress, newValue);
 				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
@@ -386,7 +388,8 @@ public class AARCH64_ElfRelocationHandler extends
 
 			case R_AARCH64_P32_GLOB_DAT:
 				is64bit = false;
-			case R_AARCH64_GLOB_DAT: {
+			case R_AARCH64_GLOB_DAT:
+			case R_AARCH64_AUTH_GLOB_DAT: {
 				// Corresponds to resolved local/EXTERNAL symbols within GOT
 				if (elfRelocationContext.extractAddend()) {
 					addend = getValue(memory, relocationAddress, is64bit);
