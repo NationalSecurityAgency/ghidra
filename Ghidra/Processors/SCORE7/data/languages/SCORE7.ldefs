@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="SCORE7"
+            endian="big"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="SCORE7_be.sla"
+            processorspec="SCORE7.pspec"
+            id="SCORE7:BE:32:default">
+    <description>Sunplus S+CORE 7 32-bit RISC (16/32-bit variable instructions), big-endian</description>
+    <compiler name="default" spec="SCORE7.cspec" id="default"/>
+    <external_name tool="gnu" name="score7"/>
+    <external_name tool="DWARF.register.mapping.file" name="SCORE7.dwarf"/>
+  </language>
+  <language processor="SCORE7"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="SCORE7_le.sla"
+            processorspec="SCORE7.pspec"
+            id="SCORE7:LE:32:default">
+    <description>Sunplus S+CORE 7 32-bit RISC (16/32-bit variable instructions), little-endian</description>
+    <compiler name="default" spec="SCORE7.cspec" id="default"/>
+    <external_name tool="gnu" name="score7"/>
+    <external_name tool="DWARF.register.mapping.file" name="SCORE7.dwarf"/>
+  </language>
+</language_definitions>
