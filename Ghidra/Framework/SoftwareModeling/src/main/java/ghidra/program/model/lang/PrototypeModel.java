@@ -283,6 +283,22 @@ public class PrototypeModel {
 	}
 
 	/**
+	 * Used to return the size of a pointer for this model prototype.
+	 * @param space is the default AddressSpace
+	 * @return size of pointer
+	 */
+	public int getPointerSize(AddressSpace space) {
+		int pointerSize = (space == null) ? -1 : space.getPointerSize();
+		if (name.endsWith("16near")) {
+			pointerSize = 2;
+		}
+		else if (name.endsWith("16far")) {
+			pointerSize = 4;
+		}
+		return pointerSize;
+	}
+
+	/**
 	 * Get the preferred parameter location for a new parameter which will appended
 	 * to the end of an existing set of params.  If existing parameters use custom
 	 * storage, this method should not be used.
@@ -457,7 +473,8 @@ public class PrototypeModel {
 		if (addAutoParams && hasThis) {
 			// explicit support for auto 'this' parameter
 			// must inject pointer arg to obtain storage assignment
-			injectedThis = new PointerDataType(program.getDataTypeManager());
+			int pointerSize = getPointerSize(program.getAddressFactory().getDefaultAddressSpace());
+			injectedThis = new PointerDataType(null, pointerSize, program.getDataTypeManager());
 		}
 		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
 		if (isVarArgs) {
@@ -504,6 +521,11 @@ public class PrototypeModel {
 			outputParams = new ParamListRegisterOut();
 			inputListType = InputListType.REGISTER;
 		}
+		else if (strategy.equals("pascal")) {
+			inputParams = new ParamListPascal();
+			outputParams = new ParamListPascalOut();
+			inputListType = InputListType.PASCAL;
+		}
 		else {
 			throw new XmlParseException("Unknown assign strategy: " + strategy);
 		}
@@ -538,7 +560,10 @@ public class PrototypeModel {
 		if (isConstruct) {
 			encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 		}
-		if (inputListType != InputListType.STANDARD) {
+		if (inputListType == InputListType.PASCAL) {
+			encoder.writeString(ATTRIB_STRATEGY, "pascal");
+		}
+		else if (inputListType != InputListType.STANDARD) {
 			encoder.writeString(ATTRIB_STRATEGY, "register");
 		}
 		inputParams.encode(encoder, true);
@@ -715,7 +740,7 @@ public class PrototypeModel {
 
 		ArrayList<SharedAction> actions = new ArrayList<>();
 		buildParamList(protoElement.getAttribute(ATTRIB_STRATEGY.name()));
-		if (inputParams instanceof ParamListStandard) {
+		if (inputParams instanceof ParamListStandard && inputListType != InputListType.PASCAL) {
 			actions.add(new HiddenReturnAction(this));
 		}
 		while (parser.peek().isStart()) {
