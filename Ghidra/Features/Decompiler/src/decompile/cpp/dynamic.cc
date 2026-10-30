@@ -506,7 +506,6 @@ void DynamicHash::uniqueHash(const PcodeOp *op,int4 slot,Funcdata *fd)
     if (hash == 0) return;	// Can't get a good hash
     tmphash = hash;
     tmpaddr = addrresult;
-    oplist.clear();
     oplist2.clear();
     for(uint4 i=0;i<oplist.size();++i) {
       PcodeOp *tmpop = oplist[i];

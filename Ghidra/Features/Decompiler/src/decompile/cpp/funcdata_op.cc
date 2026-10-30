@@ -1261,8 +1261,7 @@ void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
   Varnode *vn;
   for(int4 i=0;i<fliplist.size();++i) {
     PcodeOp *op = fliplist[i];
-    bool flipyes;
-    OpCode opc = get_booleanflip(op->code(),flipyes);
+    OpCode opc = op->getOpcode()->getBooleanFlip();
     if (opc == CPUI_COPY) {	// We remove this (CPUI_BOOL_NEGATE) entirely
       vn = op->getIn(0);
       PcodeOp *otherop = op->getOut()->loneDescend(); // Must be a lone descendant
@@ -1279,6 +1278,7 @@ void Funcdata::opFlipInPlaceExecute(vector<PcodeOp *> &fliplist)
 	throw LowlevelError("Bad flipInPlace op");
     }
     else {
+      bool flipyes = op->getOpcode()->isBooleanFlipReorder();
       opSetOpcode(op,opc);
       if (flipyes) {
 	opSwapInput(op,0,1);
@@ -1303,9 +1303,9 @@ bool Funcdata::opNormalizeFlip(PcodeOp *cbranch)
   if (!boolVn->isWritten()) return false;
   if (boolVn->loneDescend() != cbranch) return false;
   PcodeOp *condOp = boolVn->getDef();
-  bool flipyes;
-  OpCode opc = get_booleanflip(condOp->code(), flipyes);
+  OpCode opc = condOp->getOpcode()->getBooleanFlip();
   if (opc == CPUI_MAX) return false;
+  bool flipyes = condOp->getOpcode()->isBooleanFlipReorder();
   opSetOpcode(condOp,opc); // Set the negated opcode
   if (flipyes)			// Do we need to reverse the two operands
     opSwapInput(condOp,0,1);
