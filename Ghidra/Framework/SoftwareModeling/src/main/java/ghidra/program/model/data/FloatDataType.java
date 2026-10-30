@@ -47,6 +47,11 @@ public class FloatDataType extends AbstractFloatDataType {
 	}
 
 	@Override
+	public String getCTypeDeclaration(DataOrganization dataOrganization) {
+		return null; // Standard C primitive
+	}
+
+	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
 	}
