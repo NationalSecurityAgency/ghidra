@@ -60,6 +60,18 @@ public class DWARFAddressListHeader extends DWARFIndirectTableHeader {
 			segmentSelectorSize, count);
 	}
 
+	/** Reads the headerless GNU split DWARF 4 address table. */
+	public static DWARFAddressListHeader readV4Raw(BinaryReader reader, int addressSize)
+			throws IOException {
+		long length = reader.length();
+		if (length % addressSize != 0 || length / addressSize > Integer.MAX_VALUE) {
+			throw new IOException("Invalid GNU split DWARF address table size");
+		}
+		reader.setPointerIndex(length);
+		return new DWARFAddressListHeader(0, length, 0, addressSize, 0,
+			(int) (length / addressSize));
+	}
+
 	private final int addressSize;
 	private final int segmentSelectorSize;
 	private final int addrCount;

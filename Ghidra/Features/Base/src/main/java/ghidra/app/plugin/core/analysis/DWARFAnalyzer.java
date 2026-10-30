@@ -15,10 +15,13 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
@@ -100,6 +103,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				extDFSI.importSymbols(log);
 			}
 
+			boolean splitComplete = true;
 			try (DWARFProgram prog = new DWARFProgram(program, importOptions, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
 					log.appendMsg("No DWARF to Ghidra register mappings found for this program's " +
@@ -111,11 +115,44 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				DWARFImporter importer = new DWARFImporter(prog, monitor);
 				DWARFImportSummary importResults = importer.performImport();
 				importResults.logSummaryResults();
+
+				Map<Long, DWARFCompilationUnit> skeletons =
+					prog.getDIEContainer().getSkeletonsByDwoId();
+				for (DWARFCompilationUnit skeleton : skeletons.values()) {
+					monitor.checkCancelled();
+					File dwoFile = findDWOFile(program, skeleton);
+					if (dwoFile == null) {
+						log.appendMsg("Unable to find split DWARF file for unit at 0x%x"
+								.formatted(skeleton.getStartOffset()));
+						splitComplete = false;
+						continue;
+					}
+					try (DWARFProgram dwoProgram = new DWARFProgram(program, importOptions,
+						new CompressedSectionProvider(new ElfDWOSectionProvider(dwoFile, dsp)))) {
+						dwoProgram.getDIEContainer().setSkeletonsByDwoId(Map.of(skeleton.getDwoId(), skeleton));
+						dwoProgram.init(monitor);
+						boolean matched = dwoProgram.getCompilationUnits()
+								.stream()
+								.anyMatch(cu -> !cu.isTypeUnit() &&
+									cu.getDwoId() == skeleton.getDwoId());
+						if (!matched) {
+							log.appendMsg("Split DWARF ID mismatch in " + dwoFile);
+							splitComplete = false;
+							continue;
+						}
+						new DWARFImporter(dwoProgram, monitor).performImport().logSummaryResults();
+					}
+					catch (IOException e) {
+						log.appendMsg("Failed to import split DWARF file " + dwoFile + ": " + e);
+						Msg.error(this, "Failed to import split DWARF file " + dwoFile, e);
+						splitComplete = false;
+					}
+				}
 			}
 			Options propList = program.getOptions(Program.PROGRAM_INFO);
-			propList.setBoolean(DWARF_LOADED_OPTION_NAME, true);
+			propList.setBoolean(DWARF_LOADED_OPTION_NAME, splitComplete);
 			dsp.updateProgramInfo(program);
-			return true;
+			return splitComplete;
 		}
 		catch (CancelledException ce) {
 			throw ce;
@@ -129,6 +166,35 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			Msg.error(this, "Error during DWARFAnalyzer import: ", e);
 		}
 		return false;
+	}
+
+	private File findDWOFile(Program program, DWARFCompilationUnit skeleton) {
+		DIEAggregate root = skeleton.getCompUnitDIEA();
+		String name = root.getString(DWARFAttributeId.DW_AT_dwo_name,
+			root.getString(DWARFAttributeId.DW_AT_GNU_dwo_name, null));
+		if (name == null) {
+			return null;
+		}
+		File namedFile = new File(name);
+		if (namedFile.isAbsolute() && namedFile.isFile()) {
+			return namedFile;
+		}
+		String compDir = skeleton.getCompileDirectory();
+		if (compDir != null) {
+			File candidate = new File(compDir, name);
+			if (candidate.isFile()) {
+				return candidate;
+			}
+		}
+		String executablePath = program.getExecutablePath();
+		if (executablePath != null) {
+			File executable = new File(executablePath);
+			File candidate = new File(executable.getParentFile(), name);
+			if (candidate.isFile()) {
+				return candidate;
+			}
+		}
+		return namedFile.isFile() ? namedFile : null;
 	}
 
 	@Override
