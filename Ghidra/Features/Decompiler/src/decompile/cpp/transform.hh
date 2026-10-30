@@ -117,8 +117,8 @@ public:
   void parseSizes(int4 registerSize,string laneSizes);			///< Parse a \e vector_lane_sizes attribute
   int4 getWholeSize(void) const { return wholeSize; }	///< Get the size in bytes of the whole laned register
   uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
-  void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
-  bool allowedLane(int4 size) const { return (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
+  void addLaneSize(int4 size) { if (size >= 0 && size < 8*(int4)sizeof(uint4)) sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list
+  bool allowedLane(int4 size) const { return (size >= 0 && size < 8*(int4)sizeof(uint4)) && (((sizeBitMask >> size) & 1) != 0); }	///< Is \e size among the allowed lane sizes
   const_iterator begin(void) const { return LanedIterator(this); }	///< Starting iterator over possible lane sizes
   const_iterator end(void) const { return LanedIterator(); }	///< Ending iterator over possible lane sizes
 };

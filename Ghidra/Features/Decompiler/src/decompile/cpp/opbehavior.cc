@@ -422,9 +422,10 @@ uintb OpBehaviorIntLeft::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
 uintb OpBehaviorIntLeft::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if ((slot!=0) || (in >= sizeout*8))
+  if ((slot!=0) || (sizeout <= 0) || (sizeout > (int4)sizeof(uintb)) || (in >= (uintb)(sizeout*8)))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
-  int4 sa = in;
+  int4 sa = (int4)in;
+  if (sa == 0) return out;
   if (((out<<(8*sizeout-sa))&calc_mask(sizeout))!=0)
     throw EvaluationError("Output is not in range of left shift operation");
   return out >> sa;
@@ -443,10 +444,15 @@ uintb OpBehaviorIntRight::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uint
 uintb OpBehaviorIntRight::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if ((slot!=0) || (in >= sizeout*8))
+  if ((slot!=0) || (sizeout <= 0) || (sizein <= 0) || (sizein > (int4)sizeof(uintb)) || (in >= (uintb)(sizeout*8)) || (in >= (uintb)(sizein*8)))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
   
-  int4 sa = in;
+  int4 sa = (int4)in;
+  if (sa == 0) {
+    if ((out & ~calc_mask(sizein)) != 0)
+      throw EvaluationError("Output is not in range of right shift operation");
+    return out;
+  }
   if ((out>>(8*sizein-sa))!=0)
     throw EvaluationError("Output is not in range of right shift operation");
   return out << sa;
@@ -475,10 +481,10 @@ uintb OpBehaviorIntSright::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uin
 uintb OpBehaviorIntSright::recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const
 
 {
-  if ((slot!=0) || (in >= sizeout*8))
+  if ((slot!=0) || (sizeout <= 0) || (sizein <= 0) || (sizein > (int4)sizeof(uintb)) || (in >= (uintb)(sizeout*8)) || (in >= (uintb)(sizein*8)))
     return OpBehavior::recoverInputBinary(slot,sizeout,out,sizein,in);
   
-  int4 sa = in;
+  int4 sa = (int4)in;
   uintb testval = out>>(sizein*8-sa-1);
   int4 count=0;
   for(int4 i=0;i<=sa;++i) {
@@ -753,7 +759,9 @@ uintb OpBehaviorFloatRound::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) co
 uintb OpBehaviorPiece::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
-  uintb res = ( in1<<((sizeout-sizein)*8)) | in2;
+  int4 bitShift = (sizeout - sizein) * 8;
+  uintb hi = (bitShift < 0 || bitShift >= 8 * (int4)sizeof(uintb)) ? 0 : (in1 << bitShift);
+  uintb res = hi | in2;
   return res;
 }
 
