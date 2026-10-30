@@ -418,8 +418,10 @@ define register offset=0x3000 size=4 contextreg;
 # or computed to store in memory
 define register offset=0x3100 size=4 tmp_ldWn;
 define register offset=0x3104 size=8 tmp_ldXn;
-define register offset=0x310c size=4 tmp_stWn;
-define register offset=0x3110 size=8 tmp_stXn;
+define register offset=0x310c size=16 tmp_ldQn;
+define register offset=0x311c size=4 tmp_stWn;
+define register offset=0x3120 size=8 tmp_stXn;
+define register offset=0x3128 size=16 tmp_stQn;
 
 # General purpose and SIMD registers
 #

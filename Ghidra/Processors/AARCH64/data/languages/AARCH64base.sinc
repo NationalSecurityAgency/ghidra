@@ -2531,11 +2531,13 @@ ls_data1: is b_3031=0b00 & Rn_GPR64xsp { tmp_ldWn = zext(*:1 Rn_GPR64xsp); }
 ls_data2: is b_3031=0b01 & Rn_GPR64xsp { tmp_ldWn = zext(*:2 Rn_GPR64xsp); }
 ls_data4: is b_3031=0b10 & Rn_GPR64xsp { tmp_ldWn = *:4 Rn_GPR64xsp; }
 ls_data8: is b_3031=0b11 & Rn_GPR64xsp { tmp_ldXn = *:8 Rn_GPR64xsp; }
+ls_data16: is b_3031=0b00 & Rn_GPR64xsp { tmp_ldQn = *:16 Rn_GPR64xsp; }
 
 ls_mem1: is Rn_GPR64xsp { *:1 Rn_GPR64xsp = tmp_stWn:1; }
 ls_mem2: is Rn_GPR64xsp { *:2 Rn_GPR64xsp = tmp_stWn:2; }
 ls_mem4: is Rn_GPR64xsp { *:4 Rn_GPR64xsp = tmp_stWn; }
 ls_mem8: is Rn_GPR64xsp { *:8 Rn_GPR64xsp = tmp_stXn; }
+ls_mem16: is Rn_GPR64xsp { *:16 Rn_GPR64xsp = tmp_stQn; }
 
 macro ls_opc_add (data, value, dest) { dest = data + value; }
 macro ls_opc_clr (data, value, dest) { dest = data & (~ value); }
@@ -2547,6 +2549,15 @@ macro ls_opc_umax(data, value, dest) { dest = zext(data > value) * data + zext(d
 macro ls_opc_umin(data, value, dest) { dest = zext(data > value) * value + zext(data <= value) * data; }
 macro ls_opc_swp (data, value, dest) { dest = value; }
 
+ls_Qs: is aa_Xs & aa_Xt { 
+@if DATA_ENDIAN == "big"
+	local aa_Qs:16 = (zext(aa_Xs) << 64) | zext(aa_Xt);
+@else
+	local aa_Qs:16 = (zext(aa_Xt) << 64) | zext(aa_Xs);
+@endif
+	export *:16 aa_Qs;
+}
+
 ls_opc1: "add" is b_3031=0b00 & b_1215=0b0000 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
 ls_opc2: "add" is b_3031=0b01 & b_1215=0b0000 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
 ls_opc4: "add" is b_3031=0b10 & b_1215=0b0000 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_add(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
@@ -2556,6 +2567,7 @@ ls_opc1: "clr" is b_3031=0b00 & b_1215=0b0001 & aa_Ws & ls_data1 & ls_mem1 { bui
 ls_opc2: "clr" is b_3031=0b01 & b_1215=0b0001 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_clr(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
 ls_opc4: "clr" is b_3031=0b10 & b_1215=0b0001 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_clr(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
 ls_opc8: "clr" is b_3031=0b11 & b_1215=0b0001 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_clr(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc16:"clr" is b_3031=0b00 & b_1215=0b0001 & ls_Qs & ls_data16 & ls_mem16 { build ls_data16; ls_opc_clr(tmp_ldQn, ls_Qs, tmp_stQn); build ls_mem16; }
 
 ls_opc1: "eor" is b_3031=0b00 & b_1215=0b0010 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_eor(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
 ls_opc2: "eor" is b_3031=0b01 & b_1215=0b0010 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_eor(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
@@ -2566,6 +2578,7 @@ ls_opc1: "set" is b_3031=0b00 & b_1215=0b0011 & aa_Ws & ls_data1 & ls_mem1 { bui
 ls_opc2: "set" is b_3031=0b01 & b_1215=0b0011 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_set(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
 ls_opc4: "set" is b_3031=0b10 & b_1215=0b0011 & aa_Ws & ls_data4 & ls_mem4 { build ls_data4; ls_opc_set(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem4; }
 ls_opc8: "set" is b_3031=0b11 & b_1215=0b0011 & aa_Xs & ls_data8 & ls_mem8 { build ls_data8; ls_opc_set(tmp_ldXn, aa_Xs, tmp_stXn); build ls_mem8; }
+ls_opc16:"set" is b_3031=0b00 & b_1215=0b0011 & ls_Qs & ls_data16 & ls_mem16 { build ls_data16; ls_opc_set(tmp_ldQn, ls_Qs, tmp_stQn); build ls_mem16; }
 
 ls_opc1: "smax" is b_3031=0b00 & b_1215=0b0100 & aa_Ws & ls_data1 & ls_mem1 { build ls_data1; ls_opc_smax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem1; }
 ls_opc2: "smax" is b_3031=0b01 & b_1215=0b0100 & aa_Ws & ls_data2 & ls_mem2 { build ls_data2; ls_opc_smax(tmp_ldWn, aa_Ws, tmp_stWn); build ls_mem2; }
@@ -8573,4 +8586,30 @@ is sf=1 & b_30=0 & S=0 & b_2428=0x1a & b_2123=0x6 & b_1015=0x1b & Rd_GPR64 & Rn_
 	local tmp2 = Rm_GPR64;
 	local test = tmp <= tmp2;
 	Rd_GPR64 = (zext(test)*tmp) + (zext(!test)*(tmp2));
+}
+
+# FEAT_LSE128
+
+:ld^ls_opc16^"p"^ls_lor aa_Xt, aa_Xs, [Rn_GPR64xsp]
+is b_3031=0b00 & b_2429=0b011001 & b_21=1 & b_1515=0 & b_1011=0b00 & ls_opc16 & ls_loa & ls_lor & aa_Xt & aa_Xs & Rn_GPR64xsp
+{ 
+	build ls_loa; build ls_opc16; 
+@if DATA_ENDIAN == "big"
+	aa_Xt = tmp_ldQn:8; aa_Xs = tmp_ldQn(8); 
+@else
+	aa_Xs = tmp_ldQn:8; aa_Xt = tmp_ldQn(8); 
+@endif
+	build ls_lor;
+}
+
+:swp^"p"^ls_lor aa_Xt, aa_Xs, [Rn_GPR64xsp]
+is b_3031=0b00 & b_2429=0b011001 & b_21=1 & b_1215=0b1000 & b_1011=0b00 & ls_loa & ls_lor & aa_Xt & ls_data16 & ls_mem16 & aa_Xs & Rn_GPR64xsp & ls_Qs
+{
+	build ls_loa; build ls_data16; ls_opc_swp(tmp_ldQn, ls_Qs, tmp_stQn); build ls_mem16;
+@if DATA_ENDIAN == "big"
+	aa_Xt = tmp_ldQn:8; aa_Xs = tmp_ldQn(8);
+@else
+	aa_Xs = tmp_ldQn:8; aa_Xt = tmp_ldQn(8);
+@endif
+	build ls_lor;
 }
