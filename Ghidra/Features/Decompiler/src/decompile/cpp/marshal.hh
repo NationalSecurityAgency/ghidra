@@ -773,6 +773,7 @@ extern ElementId ELEM_SYMBOL;		///< Marshaling element \<symbol>
 extern ElementId ELEM_TARGET;		///< Marshaling element \<target>
 extern ElementId ELEM_VAL;		///< Marshaling element \<val>
 extern ElementId ELEM_VALUE;		///< Marshaling element \<value>
+extern ElementId ELEM_VALUEDOMAIN;	///< Marshaling element \<valuedomain>
 extern ElementId ELEM_VOID;		///< Marshaling element \<void>
 
 } // End namespace ghidra

@@ -112,6 +112,7 @@ model {
 		                include "coreaction.cc"
 		                include "condexe.cc"
 		                include "override.cc"
+		                include "valuedomain.cc"
 		                include "dynamic.cc"
 		                include "crc32.cc"
 		                include "prettyprint.cc"
