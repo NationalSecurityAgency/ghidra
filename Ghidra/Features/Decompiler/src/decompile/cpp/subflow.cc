@@ -2193,12 +2193,17 @@ void SplitDatatype::RootPointer::duplicateToTemp(Funcdata &data,PcodeOp *followO
 /// If the pointer Varnode is no longer used, recursively check and remove the op producing it,
 /// which will be either an INT_ADD or PTRSUB, until the root \b pointer is reached or
 /// a Varnode still being used is encountered.
+/// If a second chain is given and it shares a Varnode with this chain, the shared remainder is freed here,
+/// and the other chain is marked as already freed, so that it does not access the destroyed Varnodes.
 /// \param data is the containing function
-void SplitDatatype::RootPointer::freePointerChain(Funcdata &data)
+/// \param other is another pointer chain that may share Varnodes with \b this (or null)
+void SplitDatatype::RootPointer::freePointerChain(Funcdata &data,RootPointer *other)
 
 {
   while (firstPointer != pointer && !firstPointer->isAddrTied() && firstPointer->hasNoDescend()) {
     PcodeOp *tmpOp = firstPointer->getDef();
+    if (other != (RootPointer *)0 && other->firstPointer == firstPointer)
+      other->firstPointer = other->pointer;	// Shared remainder of the chain is freed here
     firstPointer = tmpOp->getIn(0);
     data.opDestroy(tmpOp);
   }
@@ -2904,7 +2909,7 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
 
   if (loadOp != (PcodeOp *)0) {
     data.opDestroy(loadOp);
-    loadRoot.freePointerChain(data);
+    loadRoot.freePointerChain(data,&storeRoot);
   }
   storeRoot.freePointerChain(data);
   return true;
