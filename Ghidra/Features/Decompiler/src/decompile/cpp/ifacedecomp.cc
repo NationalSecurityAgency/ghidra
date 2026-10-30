@@ -39,6 +39,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcComment(),"%"); //Note: A space must follow this when used.
   status->registerCom(new IfcQuit(),"quit");
   status->registerCom(new IfcHistory(),"history");
+  status->registerCom(new IfcHelp(), "help");
   status->registerCom(new IfcOpenfile(),"openfile", "write");
   status->registerCom(new IfcOpenfileAppend(),"openfile","append");
   status->registerCom(new IfcClosefile(),"closefile");
