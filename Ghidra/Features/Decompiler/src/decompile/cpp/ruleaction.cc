@@ -10702,7 +10702,7 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
 ///
 /// If most bits in 'c' are set, 'c' and the output term are negated:
 ///
-/// '(c >> V) & 1' -> '!(V == x0 || V == x1 || ...)'
+/// '(c >> V) & 1' -> 'V < size(c) && (V != x0) && (V != x1) && ...'
 ///
 void RuleSimplifyConstantLUT::getOpList(vector<uint4> &oplist) const
 {
@@ -10745,11 +10745,15 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
   uint4 constSize = cons->getSize();
   uint4 numBitsSet = popcount(constValue);
 
+  // negate the condition if more than half of the bits are set
   bool negateCondition = 2 * numBitsSet > 8 * constSize;
   if (negateCondition) {
     constValue = ~constValue;
     numBitsSet = constSize * 8 - numBitsSet;
   }
+
+  OpCode eq_op = negateCondition ? CPUI_INT_NOTEQUAL : CPUI_INT_EQUAL;
+  OpCode comb_op = negateCondition ? CPUI_BOOL_AND : CPUI_BOOL_OR;
 
   uint4 bitIdx = 0;
   Varnode* prevEqOut = NULL;
@@ -10766,22 +10770,18 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
 	continue;
       }
 
-      // Add INT_EQUAL(var, bitIdx)
+      // Add INT_EQUAL/INT_NOTEQUAL(var, bitIdx)
       tempOp = data.newOp(2, shiftOp->getAddr());
-      data.opSetOpcode(tempOp, CPUI_INT_EQUAL);
+      data.opSetOpcode(tempOp, eq_op);
       data.opSetInput(tempOp, var, 0);
       data.opSetInput(tempOp, data.newConstant(var->getSize(), bitIdx), 1);
       tempVar = data.newUniqueOut(1, tempOp);
       data.opInsertAfter(tempOp, shiftOp);
 
-      // Link it to the previous INT_EQUAL with a BOOL_OR
+      // Link it to the previous INT_EQUAL / INT_NOT_EQUAL with a BOOL_OR / BOOL_AND
       if (i != 0) {
-	tempOp = data.newOp(2, shiftOp->getAddr());
-	data.opSetOpcode(tempOp, CPUI_BOOL_OR);
-	data.opSetInput(tempOp, prevEqOut, 0);
-	data.opSetInput(tempOp, tempVar, 1);
-	tempVar = data.newUniqueOut(1, tempOp);
-	data.opInsertAfter(tempOp, shiftOp);
+	tempOp = data.newOpBefore(op, comb_op, prevEqOut, tempVar);
+	tempVar = tempOp->getOut();
       }
 
       prevEqOutOp = tempOp;
@@ -10792,13 +10792,18 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
     }
   }
 
-  // negate the condition if more than half of the bits are set
+  // if the shift amount is greater than the size of the input, the shift
+  // result would be 0, and the negation would make it 1. So add another
+  // clause where the shift amount is checked to not be larger than the size
+  // of the input.
   if (negateCondition) {
-    tempOp = data.newOp(1, shiftOp->getAddr());
-    data.opSetOpcode(tempOp, CPUI_BOOL_NEGATE);
-    data.opSetInput(tempOp, prevEqOut, 0);
-    prevEqOut = data.newUniqueOut(1, tempOp);
-    data.opInsertAfter(tempOp, prevEqOutOp);
+    tempOp = data.newOpBefore(op, CPUI_INT_LESS, var, data.newConstant(var->getSize(), constSize * 8));
+    // tempOp output size has to be 1, so create a new output
+    data.opUnsetOutput(tempOp);
+    Varnode *widthGuard = data.newUniqueOut(1, tempOp);
+
+    tempOp = data.newOpBefore(op, CPUI_BOOL_AND, widthGuard, prevEqOut);
+    prevEqOut = tempOp->getOut();
   }
 
   // replace the INT_AND by a INT_ZEXT, making sure the output is the right size
