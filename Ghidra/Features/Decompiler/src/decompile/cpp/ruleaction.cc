@@ -10860,8 +10860,7 @@ int4 RuleUnsignedComparisonFromSignBit::applyOp(PcodeOp *op, Funcdata &data)
   if (sub_op->code() == CPUI_SUBPIECE) {
     // This is throwing away some number of least significant bytes. As long as
     // it keeps the top byte, we're okay.
-    if (! sub_op->getIn(1)->isConstant()) return 0;
-    if (sub_op->getIn(1)->constantMatch(sub_op->getIn(0)->getSize())) return 0;
+    if (! sub_op->getIn(1)->constantMatch(sub_op->getIn(0)->getSize() - sub_op->getOut()->getSize())) return 0;
     if (! sub_op->getIn(0)->isWritten()) return 0;
 
     sub_op = sub_op->getIn(0)->getDef();
@@ -10873,9 +10872,9 @@ int4 RuleUnsignedComparisonFromSignBit::applyOp(PcodeOp *op, Funcdata &data)
   if (! check_sub_op_or_add(sub_op, &sub_left, &sub_right)) return 0;
 
   // Check the right side of the subtraction first, so we know which varnodes
-  // are A and X (if we did left side first, we would have to check both options,
+  // are A and B (if we did left side first, we would have to check both options,
   // since | is commutative).
-  // sub_right should be: ((a - x) u>> 1)
+  // sub_right should be: ((a - b) u>> 1)
   if (! sub_right->isWritten()) return 0;
   PcodeOp *sub_right_op = sub_right->getDef();
   if (sub_right_op->code() != CPUI_INT_RIGHT) return 0;
@@ -10889,8 +10888,8 @@ int4 RuleUnsignedComparisonFromSignBit::applyOp(PcodeOp *op, Funcdata &data)
   PcodeOp *diff_op = diff->getDef();
   if (! check_sub_op_or_add(diff_op, &var_A, &var_B)) return 0;
 
-  // Now we know A and X, we can try to match this to the left hand side of the
-  // original subtraction: sub_left should represent `(a | (~x))`
+  // Now we know A and B, we can try to match this to the left hand side of the
+  // original subtraction: sub_left should represent `(a | (~b))`
   if (! sub_left->isWritten()) return 0;
   PcodeOp *or_op = sub_left->getDef();
   if (or_op->code() != CPUI_INT_OR) return 0;
@@ -10920,10 +10919,19 @@ int4 RuleUnsignedComparisonFromSignBit::applyOp(PcodeOp *op, Funcdata &data)
   }
   if (! ok) return 0;
 
-  // We've got a match - time to contruct the output: X u<= A
-  data.opSetOpcode(op, CPUI_INT_LESSEQUAL);
-  data.opSetInput(op, var_B, 0);
-  data.opSetInput(op, var_A, 1);
+  // We've got a match - time to contruct the output: B u<= A
+  // Maybe we need to shrink the output size of the INT_LESSEQUAL to the output
+  // of the shift
+  if (op->getOut()->getSize() == var_A->getSize()) {
+    data.opSetOpcode(op, CPUI_INT_LESSEQUAL);
+    data.opSetInput(op, var_B, 0);
+    data.opSetInput(op, var_A, 1);
+  } else {
+    PcodeOp *cmpOp = data.newOpBefore(op, CPUI_INT_LESSEQUAL, var_B, var_A);
+    data.opSetOpcode(op, CPUI_SUBPIECE);
+    data.opSetInput(op, cmpOp->getOut(), 0);
+    data.opSetInput(op, data.newConstant(4, 0), 1);
+  }
 
   return 1;
 }
