@@ -6007,6 +6007,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePopcountBoolXor("analysis") );
 	actprop->addRule( new RuleXorSwap("analysis") );
 	actprop->addRule( new RuleLzcountShiftBool("analysis") );
+	actprop->addRule( new RuleSimplifyConstantLUT("analysis") );
 	actprop->addRule( new RuleFloatSign("analysis") );
 	actprop->addRule( new RuleOrCompare("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
