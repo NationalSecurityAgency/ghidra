@@ -7995,8 +7995,10 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
 /// \brief Check for INT_(S)RIGHT and/or SUBPIECE followed by INT_MULT
 ///
 /// Look for the forms:
-///  - `sub(ext(X) * y,c)`       or
-///  - `sub(ext(X) * y,c) >> n`  or
+///  - `sub(ext(X) * y, c)`            or
+///  - `sub(ext(X) * y, c) >> n`       or
+///  - `sub(ext(X) * y >> sa, c)`      or
+///  - `sub(ext(X) * y >> sa, c) >> n` or
 ///  - `(ext(X) * y) >> n`
 ///
 /// Looks for truncation/multiplication consistent with an optimized division. The
@@ -8035,8 +8037,24 @@ Varnode *RuleDivOpt::findForm(PcodeOp *op,uint4 &n,uint8 *y,uint4 &xsize,OpCode 
     int4 c = curOp->getIn(1)->getOffset();
     Varnode *inVn = curOp->getIn(0);
     if (!inVn->isWritten()) return (Varnode *)0;
-    if (curOp->getOut()->getSize() + c != inVn->getSize())
-      return (Varnode *)0;			// Must keep high bits
+    PcodeOp *shiftOp = inVn->getDef();
+    if (((shiftOp->code() == CPUI_INT_RIGHT) || (shiftOp->code() == CPUI_INT_SRIGHT)) && shiftOp->getIn(1)->isConstant()) {
+      // A (signed?) right-shift with a constant shift amount: SUBPIECE might be
+      // normalized to 'SUBPIECE(v >> sa, c)', where the high bits of v are
+      // preserved across the shift and subpiece.
+      uintb sa = shiftOp->getIn(1)->getOffset();
+      if ((curOp->getOut()->getSize() + c) * 8 + sa != 8 * inVn->getSize())
+	return (Varnode *)0;
+      n += sa;
+      inVn = shiftOp->getIn(0);
+      shiftopc = CPUI_MAX;			// Shift is consumed as part of subpiece
+    }
+    else if (curOp->getOut()->getSize() + c != inVn->getSize()) {
+      // Allow a subpiece that starts exactly at the boundary of the high half
+      // of the multiplication, truncating the quotient to fewer bytes
+      if (2 * c != inVn->getSize() || curOp->getOut()->getSize() > inVn->getSize() / 2)
+	return (Varnode *)0;			// Must keep high bits
+    }
     n += 8*c;
     curOp = inVn->getDef();
   }
@@ -8214,8 +8232,6 @@ bool RuleDivOpt::checkFormOverlap(PcodeOp *op)
     PcodeOp *superOp = *iter;
     OpCode opc = superOp->code();
     if (opc != CPUI_INT_RIGHT && opc != CPUI_INT_SRIGHT) continue;
-    Varnode *cvn = superOp->getIn(1);
-    if (!cvn->isConstant()) return true;	// Might be a form where constant has propagated yet
     uint4 n,xsize;
     uint8 y[2];
     OpCode extopc;
