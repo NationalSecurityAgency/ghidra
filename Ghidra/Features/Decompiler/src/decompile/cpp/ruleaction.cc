@@ -8579,6 +8579,7 @@ int4 RuleModOpt::applyOp(PcodeOp *op,Funcdata &data)
   for(iter1=outvn->beginDescend();iter1!=outvn->endDescend();++iter1) {
     multop = *iter1;
     subOp = (PcodeOp *)0;
+    qvn = (Varnode *)0;
     if (multop->code() == CPUI_SUBPIECE && multop->getIn(0) == outvn && div->isConstant()) {
       // The quotient may be truncated before the multiply:  subpiece(x/c, i) * -c
       subOp = multop;
