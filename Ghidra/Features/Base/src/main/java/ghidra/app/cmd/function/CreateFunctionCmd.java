@@ -390,7 +390,7 @@ public class CreateFunctionCmd extends BackgroundCommand<Program> {
 	 * Subtract this functions entire body from existing functions.
 	 * NewFuncBody keeps any overlapping code that occurs between its entry point and the next entry point.
 	 * This rule helps functions keep a contiguous function body if functions share code such as a return, or
-	 * even an internal branch.
+	 * even an internal branch. Code in that range that newFuncBody doesn't reach stays with its function.
 	 * 
 	 * NOTE: This will change the other functions bodies
 	 *
@@ -428,7 +428,8 @@ public class CreateFunctionCmd extends BackgroundCommand<Program> {
 			}
 
 			// get new body for overlapping function, by carving out addresses that
-			// should belong in the new function
+			// should belong in the new function: those of its body in the range, not code
+			// in the range that only the overlapping function reaches
 			Address overlapEndAddr;
 			if (overlapEntryPoint.compareTo(entry) < 0) {
 				// overlap function is before, subtract from entry to end of new function
@@ -438,7 +439,8 @@ public class CreateFunctionCmd extends BackgroundCommand<Program> {
 				// overlap function is after, subtract from entry to entry of overlapping function
 				overlapEndAddr = overlapEntryPoint.previous();
 			}
-			AddressSet overlapAddrsShouldBeInNewFunction = new AddressSet(entry, overlapEndAddr);
+			AddressSetView overlapAddrsShouldBeInNewFunction =
+				newFuncBody.intersectRange(entry, overlapEndAddr);
 			AddressSetView newOverlapFuncBody =
 				overlapFuncBody.subtract(overlapAddrsShouldBeInNewFunction);
 			try {
