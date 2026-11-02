@@ -426,7 +426,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			// then check to see if the special typeinfo namespace is in external space
 			// if so then relocations are present and have not been fixed up because when fixed up
 			// the namespace gets moved to inside program space
-			if (isExternalNamespace("__cxxabiv1::__class_type_info")) {
+			if (isExternalSpecialVtable("__cxxabiv1::__class_type_info::vtable")) {
 				return ("This program's relocations were not correctly fixed so the script cannot " +
 					"continue. If this program is mingw this is a known issue and " +
 					"will be fixed in a later release. For all other gcc programs please " +
@@ -1627,19 +1627,15 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	}
 
-	private boolean isExternalNamespace(String path) throws CancelledException {
+	private boolean isExternalSpecialVtable(String path)
+			throws CancelledException {
 
 		// try exact namespace path if there is one
-		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, false);
-
-		// if not, try to find path in another namespace
-		if (symbols.isEmpty()) {
-			symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
-		}
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram);
 
 		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();
-			if (symbol.isExternal() && symbol.getSymbolType().isNamespace()) {
+			if (symbol.isExternal()) {
 				return true;
 			}
 		}

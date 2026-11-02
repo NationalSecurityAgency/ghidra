@@ -264,7 +264,8 @@ public class MachoProgramBuilder {
 						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
 				}
 				else {
-					segmentOverlayMap.put(segment.getSegmentName(), overlayBlock.getStart().getAddressSpace());
+					segmentOverlayMap.put(segment.getSegmentName(),
+						overlayBlock.getStart().getAddressSpace());
 					overlaySections.addAll(segment.getSections());
 				}
 			}
@@ -1840,7 +1841,7 @@ public class MachoProgramBuilder {
 			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol);
 		if (loc != null) {
 			try {
-				loc.setName(library, symbol, SourceType.IMPORTED);
+				loc.setName(null, symbol, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
 				throw new Exception(e.getMessage());

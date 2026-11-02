@@ -651,7 +651,7 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		Symbol librarySymbol = symbolTable.getLibrarySymbol(path[0]);
 		Library externalLibrary = (Library) librarySymbol.getObject();
 
-		Namespace currentNamespace = externalLibrary;
+		Namespace currentNamespace = null;
 		for (int i = 1; i < nameIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			currentNamespace = (Namespace) nextNamespaceSymbol.getObject();
@@ -691,16 +691,16 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 		ExternalManager externalManager = program.getExternalManager();
 		int nameIndex = path.length - 1;
 
-		Library externalLibrary;
+		Library library;
 		Symbol librarySymbol = symbolTable.getLibrarySymbol(path[0]);
 		if (librarySymbol != null) {
-			externalLibrary = (Library) librarySymbol.getObject();
+			library = (Library) librarySymbol.getObject();
 		}
 		else {
-			externalLibrary = symbolTable.createExternalLibrary(path[0], sourceType);
+			library = symbolTable.createExternalLibrary(path[0], sourceType);
 		}
 
-		Namespace currentNamespace = externalLibrary;
+		Namespace currentNamespace = null;
 		for (int i = 1; i < nameIndex; i++) {
 			Symbol nextNamespaceSymbol = getUniqueSymbol(program, path[i], currentNamespace);
 			if (nextNamespaceSymbol != null) {
@@ -714,15 +714,16 @@ public class FunctionNameMarkupItemTest extends AbstractVTMarkupItemTest {
 
 		ExternalLocation externalLocation = null;
 		if (originalName != null) {
-			externalLocation = externalManager.addExtFunction(externalLibrary, originalName,
+			externalLocation = externalManager.addExtFunction(library, originalName,
 				memoryAddress, SourceType.IMPORTED);
 		}
 		if (externalLocation != null) {
 			externalLocation.setName(currentNamespace, path[nameIndex], sourceType);
 		}
 		else {
-			externalLocation = externalManager.addExtFunction(currentNamespace, path[nameIndex],
-				memoryAddress, sourceType);
+			externalLocation =
+				externalManager.addExtFunction(library, currentNamespace, path[nameIndex],
+					memoryAddress, sourceType);
 		}
 		Function function = externalLocation.getFunction();
 		assertNotNull(function);

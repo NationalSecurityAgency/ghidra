@@ -159,6 +159,12 @@ public class VariableSymbolDB extends SymbolDB {
 		return parentSymbol != null ? parentSymbol.isExternal() : false;
 	}
 
+	@Override
+	public Library getLibrary() {
+		Symbol parentSymbol = getParentSymbol();
+		return parentSymbol != null ? parentSymbol.getLibrary() : null;
+	}
+
 	public FunctionDB getFunction() {
 		return (FunctionDB) symbolMgr.getFunctionManager()
 				.getFunction(getParentNamespace().getID());

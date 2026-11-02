@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,16 +25,11 @@ import generic.theme.GIcon;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class FunctionSymbolNode extends SymbolNode {
 
 	//@formatter:off
-	static final DataFlavor LOCAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Functions");
-	static final DataFlavor GLOBAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Functions");
-	static final DataFlavor EXTERNAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Functions");
 
 	public static final Icon FUNCTION_ICON = new GIcon("icon.plugin.symboltree.node.function");
 	public static final Icon THUNK_ICON = new GIcon("icon.plugin.symboltree.node.function.thunk");
@@ -47,8 +42,6 @@ public class FunctionSymbolNode extends SymbolNode {
 	private static Comparator<GTreeNode> CHILD_COMPARATOR = new FunctionVariableComparator();
 
 	private String tooltip;
-
-	private boolean isExternal;
 
 	FunctionSymbolNode(Program program, Symbol symbol) {
 		super(program, symbol);
@@ -95,10 +88,7 @@ public class FunctionSymbolNode extends SymbolNode {
 
 	@Override
 	public DataFlavor getNodeDataFlavor() {
-		if (isExternal) {
-			return EXTERNAL_DATA_FLAVOR;
-		}
-		return symbol.isGlobal() ? GLOBAL_DATA_FLAVOR : LOCAL_DATA_FLAVOR;
+		return FUNCTION_DATA_FLAVOR;
 	}
 
 	@Override
@@ -111,31 +101,6 @@ public class FunctionSymbolNode extends SymbolNode {
 		return CHILD_COMPARATOR;
 	}
 
-	@Override
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor taskMonitor) {
-
-		Symbol searchSymbol = key.getSymbol();
-		if (symbol == searchSymbol) {
-			return this;
-		}
-
-		if (!isChildType(searchSymbol.getSymbolType())) {
-			// the symbol is not a child type of a function (like another function or a library)
-			return null;
-		}
-
-		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
-	}
-
-	private boolean isChildType(SymbolType type) {
-		//@formatter:off
-		return type == SymbolType.PARAMETER || 
-			   type == SymbolType.LOCAL_VAR ||
-			   type == SymbolType.LABEL ||    // label function namespace 
-			   type == SymbolType.NAMESPACE; // namespace in function namespace
-		//@formatter:on
-	}
 //==================================================================================================
 // Inner Classes
 //==================================================================================================

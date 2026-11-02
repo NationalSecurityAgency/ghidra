@@ -200,7 +200,7 @@ public class DataTypeUtilities {
 	 */
 	private static DataType getValidReplacement(TypeDef typedef, boolean enforceSizeMatch,
 			DataTypeManager dtm) {
-		
+
 		DataType replacementDt = cTypedefBuiltInNameRemap.get(typedef.getName());
 		if (replacementDt == null) {
 			return null;
@@ -662,9 +662,6 @@ public class DataTypeUtilities {
 			Namespace namespace) {
 		List<String> categoryPathParts = new ArrayList<>();
 		for (Namespace ns : NamespaceUtils.getNamespaceParts(namespace)) {
-			if (ns instanceof Library) {
-				break; // assume the Library is a root and no other categories are above it
-			}
 			categoryPathParts.add(ns.getName());
 		}
 		return categoryPathParts.isEmpty() ? baseCategory
@@ -794,12 +791,12 @@ public class DataTypeUtilities {
 	 * A null is returned if namespace is null or the root/global namespace.
 	 */
 	private static String[] getRelativeCategoryPaths(Namespace namespace) {
-		if (namespace == null || namespace.isGlobal() || namespace.isLibrary()) {
+		if (namespace == null || namespace.isGlobal()) {
 			return null;
 		}
 		String[] paths = new String[2];
 		StringBuilder buf = new StringBuilder();
-		for (String n : namespace.getParentNamespace().getPathList(true)) {
+		for (String n : namespace.getParentNamespace().getPathList()) {
 			buf.append(CategoryPath.DELIMITER_STRING);
 			buf.append(CategoryPath.escapeString(n));
 		}
@@ -970,19 +967,19 @@ public class DataTypeUtilities {
 			return null;
 		}
 
-		if (namespace == null || namespace.isGlobal() || namespace.isLibrary()) {
+		if (namespace == null || namespace.isGlobal()) {
 			return getAssignableDataType(dataTypeManager, rootPath, null, dtName, classConstraint);
 		}
 
 		if (parentNamespacePreferred) {
 			T dt = getAssignableDataType(dataTypeManager, rootPath,
-				namespace.getParentNamespace().getPathList(true), dtName, classConstraint);
+				namespace.getParentNamespace().getPathList(), dtName, classConstraint);
 			if (dt != null) {
 				return dt;
 			}
 		}
 
-		return getAssignableDataType(dataTypeManager, rootPath, namespace.getPathList(true), dtName,
+		return getAssignableDataType(dataTypeManager, rootPath, namespace.getPathList(), dtName,
 			classConstraint);
 	}
 
@@ -1259,7 +1256,6 @@ public class DataTypeUtilities {
 	public static boolean equalsIgnoreConflict(String name1, String name2) {
 		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
 	}
-	
 
 	/**
 	 * Returns true if there is a {@link DataTypeMerger} that can handle the given datatype. Currently, only structures
@@ -1270,6 +1266,7 @@ public class DataTypeUtilities {
 	public static boolean supportsMerge(DataType dataType) {
 		return dataType instanceof Composite || dataType instanceof Enum;
 	}
+
 	/**
 	 * Convenience method for getting the appropriate datatype merger or throwing an exception
 	 * if the two datatypes are not eligible to be merged.

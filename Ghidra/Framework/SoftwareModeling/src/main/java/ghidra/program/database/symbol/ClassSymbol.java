@@ -18,7 +18,8 @@ package ghidra.program.database.symbol;
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Lock.Closeable;
 
 /**
@@ -62,13 +63,12 @@ public class ClassSymbol extends SymbolDB {
 
 	@Override
 	public boolean isExternal() {
-		Symbol parentSymbol = getParentSymbol();
-		return parentSymbol != null ? parentSymbol.isExternal() : false;
+		return false;
 	}
 
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
-			SymbolType.CLASS.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+			SymbolType.CLASS.isValidParent(symbolMgr.getProgram(), parent, address);
 	}
 }

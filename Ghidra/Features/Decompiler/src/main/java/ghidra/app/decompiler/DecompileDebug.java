@@ -523,12 +523,7 @@ public class DecompileDebug {
 				if (parent == null) {
 					break;
 				}
-				if (HighFunction.collapseToGlobal(parent)) {
-					key = Long.valueOf(Namespace.GLOBAL_NAMESPACE_ID);
-				}
-				else {
-					key = Long.valueOf(parent.getID());
-				}
+				key = Long.valueOf(parent.getID());
 				parent = namespaceMap.get(key);
 				if (parent == null) {
 					break;
@@ -565,9 +560,7 @@ public class DecompileDebug {
 			}
 			datahead.append(">\n");
 			if (parentNamespace != null) {
-				long parentId =
-					HighFunction.collapseToGlobal(parentNamespace) ? Namespace.GLOBAL_NAMESPACE_ID
-							: parentNamespace.getID();
+				long parentId = parentNamespace.getID();
 				datahead.append("<parent");
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(datahead, "id", parentId);
 				datahead.append("/>\n");
@@ -700,9 +693,6 @@ public class DecompileDebug {
 
 	public void getNamespacePath(Namespace namespace) {
 		while (namespace != null) {
-			if (HighFunction.collapseToGlobal(namespace)) {
-				break;		// Treat library namespace as root
-			}
 			dbscope.add(namespace);		// Add namespace to guarantee <scope> tag
 			database.add(null);			// Even if there isn't necessarily any symbols
 			namespace = namespace.getParentNamespace();
@@ -710,7 +700,7 @@ public class DecompileDebug {
 	}
 
 	public void getMapped(Namespace namespc, String res) {
-		if (namespc == null || HighFunction.collapseToGlobal(namespc)) {
+		if (namespc == null) {
 			dbscope.add(globalnamespace);
 		}
 		else {

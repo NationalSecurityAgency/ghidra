@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.symboltree.nodes;
 
 import java.util.Objects;
 
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 
 /**
@@ -25,14 +25,21 @@ import ghidra.program.model.symbol.Symbol;
  * symbol nodes.  This class allows us to search for another symbol node using whatever 
  * name is desired.
  */
-public class SearchKeySymbolNode extends SymbolNode {
+public class SearchNode extends SymbolNode {
 
 	private String searchName;
 
-	SearchKeySymbolNode(Program program, Symbol symbol, String searchName) {
-		super(program, symbol);
-		Objects.requireNonNull(searchName);
-		this.searchName = getNameFromBaseName(searchName);
+	public static SearchNode create(Namespace ns) {
+		return new SearchNode(ns.getSymbol(), ns.getName());
+	}
+
+	public static SearchNode create(Symbol s, String name) {
+		return new SearchNode(s, name);
+	}
+
+	SearchNode(Symbol symbol, String searchName) {
+		super(symbol.getProgram(), symbol);
+		this.searchName = Objects.requireNonNull(searchName);
 	}
 
 	@Override

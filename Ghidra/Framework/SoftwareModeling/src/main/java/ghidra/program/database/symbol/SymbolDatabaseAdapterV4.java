@@ -16,17 +16,10 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.Set;
 
 import db.*;
-import ghidra.program.database.map.*;
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.model.address.*;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.exception.CancelledException;
+import ghidra.program.database.map.AddressMap;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * SymbolDatabaseAdapter for version 4
@@ -34,13 +27,9 @@ import ghidra.util.task.TaskMonitor;
  * This version added additional sparse columns to store optional data specific to certain
  * symbol types.  The adhoc string data column was eliminated.
  */
-class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
+class SymbolDatabaseAdapterV4 extends PreV6SymbolDatabaseAdapter implements RecordTranslator {
 
-	static final int SYMBOL_VERSION = 4;
-
-	// Used to create a range when searching symbols by name/namespace but don't care about address
-	private static final long MIN_ADDRESS_OFFSET = 0;
-	private static final long MAX_ADDRESS_OFFSET = -1;
+	static final int VERSION = 4;
 
 	// NOTE: the primary field duplicates the symbol's address when the symbol is primary. This
 	// allows us to index this field and quickly find the primary symbols. The field is sparse
@@ -77,18 +66,16 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 	static final int V4_SYMBOL_LIBPATH_COL = 12;
 
 	private Table symbolTable;
-	private AddressMap addrMap;
 
 	SymbolDatabaseAdapterV4(DBHandle handle, AddressMap addrMap) throws VersionException {
 
-		this.addrMap = addrMap;
 		symbolTable = handle.getTable(SYMBOL_TABLE_NAME);
 		if (symbolTable == null) {
 			throw new VersionException("Missing Table: " + SYMBOL_TABLE_NAME);
 		}
-		if (symbolTable.getSchema().getVersion() != SYMBOL_VERSION) {
+		if (symbolTable.getSchema().getVersion() != VERSION) {
 			int version = symbolTable.getSchema().getVersion();
-			if (version < SYMBOL_VERSION) {
+			if (version < VERSION) {
 				throw new VersionException(true);
 			}
 			throw new VersionException(VersionException.NEWER_VERSION, false);
@@ -96,226 +83,17 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	DBRecord createSymbolRecord(String name, long namespaceID, Address address,
-			SymbolType symbolType, boolean isPrimary, SourceType source) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	void removeSymbol(long symbolID) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	boolean hasSymbol(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY && !addr.equals(Address.NO_ADDRESS)) {
-			return false;
-		}
-		return symbolTable.hasRecord(new LongField(key), V4_SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	Field[] getSymbolIDs(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY && !addr.equals(Address.NO_ADDRESS)) {
-			return Field.EMPTY_ARRAY;
-		}
-		return symbolTable.findRecords(new LongField(key), V4_SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(long symbolID) throws IOException {
-		return convertV4Record(symbolTable.getRecord(symbolID));
-	}
-
-	@Override
-	int getSymbolCount() {
-		return symbolTable.getRecordCount();
-	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(boolean forward) throws IOException {
-		KeyToRecordIterator it = new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, V4_SYMBOL_ADDR_COL, addrMap, forward));
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(Address startAddr, boolean forward) throws IOException {
-		KeyToRecordIterator it =
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			V4_SYMBOL_ADDR_COL, addrMap, startAddr, forward));
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	void updateSymbolRecord(DBRecord record) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	RecordIterator getSymbols() throws IOException {
-		return new V4ConvertedRecordIterator(symbolTable.iterator());
+		return new TranslatedRecordIterator(symbolTable.iterator(), this);
 	}
 
 	@Override
-	RecordIterator getSymbols(Address start, Address end, boolean forward) throws IOException {
-		KeyToRecordIterator it =
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			V4_SYMBOL_ADDR_COL, addrMap, start, end, forward));
-		return new V4ConvertedRecordIterator(it);
+	protected int getVersion() {
+		return VERSION;
 	}
 
 	@Override
-	RecordIterator getSymbols(AddressSetView set, boolean forward) throws IOException {
-		KeyToRecordIterator it =
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			V4_SYMBOL_ADDR_COL, addrMap, set, forward));
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	protected RecordIterator getPrimarySymbols(AddressSetView set, boolean forward)
-			throws IOException {
-		KeyToRecordIterator it =
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-			V4_SYMBOL_PRIMARY_COL, addrMap, set, forward));
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	protected DBRecord getPrimarySymbol(Address address) throws IOException {
-		AddressIndexPrimaryKeyIterator it = new AddressIndexPrimaryKeyIterator(symbolTable,
-			V4_SYMBOL_PRIMARY_COL, addrMap, address, address, true);
-		if (it.hasNext()) {
-			return convertV4Record(symbolTable.getRecord(it.next()));
-		}
-		return null;
-	}
-
-	void deleteExternalEntries(Address start, Address end) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	Set<Address> deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	RecordIterator getSymbolsByNamespace(long id) throws IOException {
-		LongField field = new LongField(id);
-		RecordIterator it =
-			symbolTable.indexIterator(V4_SYMBOL_PARENT_ID_COL, field, field, true);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator getSymbolsByName(String name) throws IOException {
-		StringField field = new StringField(name);
-		RecordIterator it = symbolTable.indexIterator(V4_SYMBOL_NAME_COL, field, field, true);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator scanSymbolsByName(String startName) throws IOException {
-		StringField field = new StringField(startName);
-		RecordIterator it = symbolTable.indexIterator(V4_SYMBOL_NAME_COL, field, null, true);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByOriginalImportName(String extLabel) throws IOException {
-		StringField extLabelField = new StringField(extLabel);
-		RecordIterator it =
-			symbolTable.indexIterator(V4_SYMBOL_ORIGINAL_IMPORTED_NAME_COL, extLabelField,
-			extLabelField, true);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr) throws IOException {
-		StringField addrField = new StringField(extProgAddr.toString());
-		RecordIterator it =
-			symbolTable.indexIterator(V4_SYMBOL_EXTERNAL_PROG_ADDR_COL, addrField, addrField,
-			true);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
-		// create a range of hash fields for all symbols with this name and namespace id over all
-		// possible addresses
-		Field start = computeLocatorHash(name, id, MIN_ADDRESS_OFFSET);
-		if (start == null) {
-			return EmptyRecordIterator.INSTANCE;
-		}
-
-		Field end = computeLocatorHash(name, id, MAX_ADDRESS_OFFSET);
-
-		RecordIterator it = symbolTable.indexIterator(V4_SYMBOL_HASH_COL, start, end, true);
-		it = getNameAndNamespaceFilterIterator(name, id, it);
-		return new V4ConvertedRecordIterator(it);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(Address address, String name, long namespaceId) throws IOException {
-		long addressKey = addrMap.getKey(address, false);
-		Field search = computeLocatorHash(name, namespaceId, addressKey);
-		if (search == null) {
-			return null;
-		}
-		RecordIterator it = symbolTable.indexIterator(V4_SYMBOL_HASH_COL, search, search, true);
-		RecordIterator filtered =
-			getNameNamespaceAddressFilterIterator(name, namespaceId, addressKey, it);
-		if (filtered.hasNext()) {
-			return convertV4Record(filtered.next());
-		}
-		return null;
-	}
-
-	@Override
-	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
-		if (space.isMemorySpace()) {
-			AddressIndexKeyIterator addressKeyIterator = new AddressIndexKeyIterator(symbolTable,
-				V4_SYMBOL_ADDR_COL, addrMap, space.getMinAddress(), space.getMaxAddress(), false);
-			if (addressKeyIterator.hasNext()) {
-				return addrMap.decodeAddress(addressKeyIterator.next());
-			}
-		}
-		else {
-			LongField max = new LongField(addrMap.getKey(space.getMaxAddress(), false));
-			DBFieldIterator iterator =
-				symbolTable.indexFieldIterator(null, max, false, V4_SYMBOL_ADDR_COL);
-			if (iterator.hasPrevious()) {
-				LongField val = (LongField) iterator.previous();
-				Address addr = addrMap.decodeAddress(val.getLongValue());
-				if (space.equals(addr.getAddressSpace())) {
-					return addr;
-				}
-			}
-		}
-		return null;
-	}
-
-	@Override
-	Table getTable() {
-		return symbolTable;
-	}
-
-	/**
-	 * Returns a record matching the current database schema from the version 4 record.
-	 * @param record the record matching the version 4 schema.
-	 * @return a current symbol record.
-	 */
-	private DBRecord convertV4Record(DBRecord record) {
+	public DBRecord translateRecord(DBRecord record) throws IOException {
 		if (record == null) {
 			return null;
 		}
@@ -377,16 +155,8 @@ class SymbolDatabaseAdapterV4 extends SymbolDatabaseAdapter {
 		return rec;
 	}
 
-	private class V4ConvertedRecordIterator extends ConvertedRecordIterator {
-
-		V4ConvertedRecordIterator(RecordIterator originalIterator) {
-			super(originalIterator, false);
-		}
-
-		@Override
-		protected DBRecord convertRecord(DBRecord record) {
-			return convertV4Record(record);
-		}
+	@Override
+	int getSymbolCount() {
+		return symbolTable.getRecordCount();
 	}
-
 }

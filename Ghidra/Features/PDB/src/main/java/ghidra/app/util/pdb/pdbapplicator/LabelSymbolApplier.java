@@ -104,7 +104,7 @@ public class LabelSymbolApplier extends MsSymbolApplier
 		if (applyToApplier instanceof FunctionSymbolApplier functionSymbolApplier) {
 			Function f = functionSymbolApplier.getFunction();
 			if (f != null && !f.getName().equals(label)) {
-				label = NamespaceUtils.getNamespaceQualifiedName(f, label, true);
+				label = NamespaceUtils.getNamespaceQualifiedName(f, label);
 			}
 		}
 

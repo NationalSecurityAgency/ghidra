@@ -36,11 +36,6 @@ public class StubNamespace implements Namespace {
 	}
 
 	@Override
-	public boolean isExternal() {
-		return false;
-	}
-
-	@Override
 	public String getName() {
 		return name;
 	}

@@ -77,7 +77,7 @@ public class AlphaNumericComparatorTest extends AbstractGenericTest {
 
 		Collections.shuffle(unsorted);
 		List<String> copy = new ArrayList<>(unsorted);
-		Collections.sort(copy, new AlphaNumericComparator());
+		Collections.sort(copy, AlphaNumericComparator.CS);
 
 		assertEquals(sorted, copy);
 	}
@@ -121,8 +121,8 @@ public class AlphaNumericComparatorTest extends AbstractGenericTest {
 			"  alphabet",
 			"app",
 			"  apple",
-			"Apple  ",
 			"ap  ple",
+			"Apple  ",
 			"ba  nana",
 			"file1",
 			"file 01",
@@ -134,7 +134,7 @@ public class AlphaNumericComparatorTest extends AbstractGenericTest {
 
 		Collections.shuffle(unsorted);
 		List<String> copy = new ArrayList<>(unsorted);
-		Collections.sort(copy, new AlphaNumericComparator(false));
+		Collections.sort(copy, AlphaNumericComparator.CI);
 
 		assertEquals(sorted, copy);
 	}

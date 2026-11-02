@@ -735,6 +735,7 @@ src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/SymbolTree.png||GHIDRA||||END|
+src/main/help/help/topics/SymbolTreePlugin/images/SymbolTreeSettings.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/Configure_Tool.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/Ghidra_Tool_Administration.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/ShowLog.htm||GHIDRA|||References wcbiema in screen snapshot|END|

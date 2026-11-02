@@ -205,11 +205,15 @@ public class ExternalManagerDBTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("ext2 library not found", s != null && s.getSymbolType() == SymbolType.LIBRARY);
 		Library ext2 = (Library) s.getObject();
 
-		assertEquals(loc2, extMgr.getUniqueExternalLocation(ext1, "label1"));
-		assertEquals(loc3, extMgr.getUniqueExternalLocation(ext2, "label1"));
-		assertEquals(loc4, extMgr.getUniqueExternalLocation(ext2, "label2"));
-		assertEquals(loc5, extMgr.getUniqueExternalLocation(ext2, loc5.getLabel()));
+		assertEquals(loc2, extMgr.getUniqueExternalLocation(ext1, null, "label1"));
+		assertEquals(loc3, extMgr.getUniqueExternalLocation(ext2, null, "label1"));
+		assertEquals(loc4, extMgr.getUniqueExternalLocation(ext2, null, "label2"));
+		assertEquals(loc5, extMgr.getUniqueExternalLocation(ext2, null, loc5.getLabel()));
 
+		assertEquals(loc2, extMgr.getUniqueExternalLocation("ext1", "label1"));
+		assertEquals(loc3, extMgr.getUniqueExternalLocation("ext2", "label1"));
+		assertEquals(loc4, extMgr.getUniqueExternalLocation("ext2", "label2"));
+		assertEquals(loc5, extMgr.getUniqueExternalLocation("ext2", loc5.getLabel()));
 	}
 
 	@Test

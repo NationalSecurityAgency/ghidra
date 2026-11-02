@@ -15,8 +15,7 @@
  */
 package ghidra.program.model.address;
 
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -230,4 +229,8 @@ public class GlobalSymbol implements Symbol {
 		return true;
 	}
 
+	@Override
+	public Library getLibrary() {
+		return null;
+	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,13 @@ import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.ExternalReference;
 
 public class ExtExternalReference extends ExtReference {
-	
+
 	String name;
+	String libraryName;
 	String origImport;
 	boolean isClass;
 	boolean isFunction;
-	
+
 	String libLabel;
 	String libAddr;
 	String libExtAddr;
@@ -36,8 +37,9 @@ public class ExtExternalReference extends ExtReference {
 		String label = extLoc.getLabel();
 		Address addr = extLoc.getAddress();
 		Address extAddr = extLoc.getExternalSpaceAddress();
-		
+
 		name = extLoc.getParentNameSpace().getName(true);
+		libraryName = extLoc.getLibraryName();
 		origImport = extLoc.getOriginalImportedName();
 		isClass = extLoc.getClass() != null;
 		isFunction = extLoc.getFunction() != null;

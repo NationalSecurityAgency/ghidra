@@ -22,8 +22,7 @@ import javax.swing.SwingUtilities;
 import ghidra.app.merge.*;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramChangeSet;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.util.*;
@@ -667,6 +666,11 @@ public class ListingMergeManager implements MergeResolver, ListingMergeConstants
 	Namespace resolveNamespace(Program srcProgram, Namespace srcNamespace)
 			throws DuplicateNameException, InvalidInputException {
 		return symbolMerger.resolveNamespace(srcProgram, srcNamespace);
+	}
+
+	public Library resolveLibrary(Program originProgram, Library libary)
+			throws DuplicateNameException, InvalidInputException {
+		return symbolMerger.resolveLibrary(originProgram, libary);
 	}
 
 	/**

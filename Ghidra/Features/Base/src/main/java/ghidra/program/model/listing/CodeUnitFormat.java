@@ -17,7 +17,6 @@ package ghidra.program.model.listing;
 
 import java.util.*;
 
-import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -51,6 +50,7 @@ public class CodeUnitFormat {
 	 * Supported memory address mask cases (mask value)
 	 */
 	private static final long[] MASK_CASES = new long[] { 0x0ffff, 0x0ffffffff };
+	public static final String LIBRARY_DELIMITER = ":";
 
 	/**
 	 * Default code unit format
@@ -1315,6 +1315,16 @@ public class CodeUnitFormat {
 		return name;
 	}
 
+	private String addLibrary(String name, Library library) {
+		if (library == null) {
+			return name;
+		}
+		if (options.showLibrary) {
+			return library.getName() + LIBRARY_DELIMITER + name;
+		}
+		return name;
+	}
+
 	private String addNamespace(Program program, Namespace parentNamespace, String name,
 			Address markupAddress) {
 		if (parentNamespace == null) {
@@ -1346,12 +1356,7 @@ public class CodeUnitFormat {
 			namespaceName = options.localPrefixOverride;
 		}
 		if (namespaceName == null) {
-			if (!options.showLibraryInNamespace) {
-				namespaceName = NamespaceUtils.getNamespacePathWithoutLibrary(parentNamespace);
-			}
-			else {
-				namespaceName = parentNamespace.getName(true);
-			}
+			namespaceName = parentNamespace.getName(true);
 		}
 		if (namespaceName.length() != 0 && !namespaceName.endsWith(Namespace.DELIMITER)) {
 			namespaceName += Namespace.DELIMITER;
@@ -1376,6 +1381,7 @@ public class CodeUnitFormat {
 		String name = symbol.getName();
 		String displayName =
 			addNamespace(program, symbol.getParentNamespace(), name, markupAddress);
+		displayName = addLibrary(displayName, symbol.getLibrary());
 		return simplifyTemplate(displayName);
 	}
 
@@ -1483,6 +1489,7 @@ public class CodeUnitFormat {
 				if (markupAddress != null) {
 					displayName = addNamespace(program, containingSymbol.getParentNamespace(),
 						displayName, markupAddress);
+					displayName = addLibrary(displayName, symbol.getLibrary());
 				}
 				return simplifyTemplate(displayName) + PLUS + SymbolUtilities.getDiffString(diff);
 			}

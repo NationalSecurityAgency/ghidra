@@ -23,10 +23,13 @@ import java.util.function.Consumer;
 import db.Transaction;
 import ghidra.app.util.opinion.Loaded;
 import ghidra.framework.model.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.database.symbol.MemorySymbol;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -224,7 +227,7 @@ public class ExternalSymbolResolver implements Closeable {
 				else if (libPath != null) {
 					logger.accept(
 						"\t[%s] -> %s, %d new symbols resolved".formatted(extLib.getName(),
-						loggedLibPath, extLib.resolvedSymbols.size()));
+							loggedLibPath, extLib.resolvedSymbols.size()));
 				}
 				else {
 					logger.accept("\t[%s] -> %s".formatted(extLib.getName(), loggedLibPath));
@@ -301,7 +304,7 @@ public class ExternalSymbolResolver implements Closeable {
 			}
 			return result;
 		}
-		
+
 		/**
 		 * Moves unresolved functions from the EXTERNAL/UNKNOWN namespace to the namespace of the 
 		 * external library if the extLib publishes a symbol with a matching name.
@@ -328,16 +331,9 @@ public class ExternalSymbolResolver implements Closeable {
 				String extLocName =
 					Objects.requireNonNullElse(extLoc.getOriginalImportedName(), extLoc.getLabel());
 				if (isExportedSymbol(extLib.libProgram, extLocName)) {
-					try {
-						s.setNamespace(extLib.lib);
-						idIterator.remove();
-						extLib.resolvedSymbols.add(s.getName());
-					}
-					catch (DuplicateNameException | InvalidInputException
-							| CircularDependencyException e) {
-						Msg.error(ExternalSymbolResolver.class,
-							"Error setting external symbol namespace for " + extLoc.getLabel(), e);
-					}
+					((MemorySymbol) s).setLibrary(extLib.lib);
+					idIterator.remove();
+					extLib.resolvedSymbols.add(s.getName());
 				}
 			}
 		}

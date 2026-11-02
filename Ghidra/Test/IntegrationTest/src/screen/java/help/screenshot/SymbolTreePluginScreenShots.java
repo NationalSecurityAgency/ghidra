@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,17 @@ public class SymbolTreePluginScreenShots extends GhidraScreenShotGenerator {
 		showProvider(SymbolTreeProvider.class);
 		SymbolTreeProvider provider = getProvider(SymbolTreeProvider.class);
 		GTree tree = (GTree) getInstanceField("tree", provider);
-		expandPath(tree, "Global", "Exports");
-		expandTree(tree, "Global", "Labels");
+		expandPath(tree, "Root", "Exports");
+		expandTree(tree, "Root", "Namespaces");
 		captureIsolatedProvider(provider, 400, 600);
+	}
+
+	@Test
+	public void testSymbolTreeSettings() {
+		showProvider(SymbolTreeProvider.class);
+		performAction("Settings", "SymbolTreePlugin", false);
+		captureDialog();
+
 	}
 
 	@Test
@@ -70,11 +78,11 @@ public class SymbolTreePluginScreenShots extends GhidraScreenShotGenerator {
 		try {
 			ExternalManager extMgr = program.getExternalManager();
 			Library lib = extMgr.addExternalLibraryName("TestLibrary", SourceType.IMPORTED);
-			extLoc = extMgr.addExtFunction("TestLibrary", "??1type_info@@UEAA@XZ",
+			extLoc = extMgr.addExtFunction("TestLibrary", "??1category_info@@UEAA@XZ",
 				addr(0x010012345), SourceType.IMPORTED);
 			GhidraClass typeInfoClass =
-				program.getSymbolTable().createClass(lib, "type_info", SourceType.ANALYSIS);
-			extLoc.setName(typeInfoClass, "~type_info", SourceType.ANALYSIS);
+				program.getSymbolTable().createClass(null, "category_info", SourceType.ANALYSIS);
+			extLoc.setName(typeInfoClass, "~category_info", SourceType.ANALYSIS);
 		}
 		finally {
 			program.endTransaction(txId, true);

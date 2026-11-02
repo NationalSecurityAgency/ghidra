@@ -22,6 +22,7 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
+import ghidra.app.plugin.core.symboltree.SymbolTreeFilterState;
 import ghidra.app.util.SymbolPath;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.CircularDependencyException;
@@ -29,8 +30,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.datastruct.AlphaNumericComparator;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class SymbolNode extends SymbolTreeNode {
@@ -38,8 +39,7 @@ public class SymbolNode extends SymbolTreeNode {
 	protected final Program program;
 	protected final Symbol symbol;
 
-	private String cachedName;
-
+	private String cachedDisplayName;
 	private boolean isCut;
 
 	SymbolNode(Program program, Symbol symbol) {
@@ -49,19 +49,24 @@ public class SymbolNode extends SymbolTreeNode {
 	}
 
 	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) {
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 		List<GTreeNode> list = new ArrayList<>();
 
 		if (program.isClosed()) {
 			return list;
 		}
+		SymbolTreeFilterState filterState = getFilterState();
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator iter = symbolTable.getChildren(symbol);
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
 				return Collections.emptyList();
 			}
-			list.add(createNode(iter.next(), program));
+
+			Symbol s = iter.next();
+			if (filterState.passesFilter(s)) {
+				list.add(createNode(s, program));
+			}
 		}
 
 		sort(list);
@@ -75,11 +80,6 @@ public class SymbolNode extends SymbolTreeNode {
 
 	@Override
 	public boolean canCut() {
-		return false;
-	}
-
-	@Override
-	public boolean canPaste(List<GTreeNode> pastedNodes) {
 		return false;
 	}
 
@@ -115,14 +115,18 @@ public class SymbolNode extends SymbolTreeNode {
 
 	@Override
 	public String getName() {
-		if (cachedName == null) {
-			String baseName = symbol.getName();
-			cachedName = getNameFromBaseName(baseName);
-		}
-		return cachedName;
+		return symbol.getName();
 	}
 
-	protected String getNameFromBaseName(String baseName) {
+	@Override
+	public String getDisplayText() {
+		if (cachedDisplayName == null) {
+			cachedDisplayName = computeDisplayName(getName());
+		}
+		return cachedDisplayName;
+	}
+
+	private String computeDisplayName(String baseName) {
 		if (symbol.isExternal()) {
 			ExternalLocation external =
 				symbol.getProgram().getExternalManager().getExternalLocation(symbol);
@@ -167,26 +171,21 @@ public class SymbolNode extends SymbolTreeNode {
 		return null;
 	}
 
-	@Override
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor taskMonitor) {
+	protected void doInsertNode(GTreeNode newNode) {
 
-		Symbol searchSymbol = key.getSymbol();
-		if (symbol == searchSymbol) {
-			return this;
+		Comparator<GTreeNode> comparator = getChildrenComparator();
+		List<GTreeNode> children = getChildren();
+		int index = Collections.binarySearch(children, newNode, comparator);
+		if (index >= 0) { // already a child			
+			return;
 		}
 
-		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
-	}
-
-	public static SymbolNode createKeyNode(Symbol symbol, String searchSymbolName,
-			Program program) {
-
-		SymbolNode newNode = new SearchKeySymbolNode(program, symbol, searchSymbolName);
-		return newNode;
+		index = -index - 1;
+		addNode(index, newNode);
 	}
 
 	public static SymbolNode createNode(Symbol symbol, Program program) {
+
 		SymbolType symbolType = symbol.getSymbolType();
 		if (symbolType.equals(SymbolType.CLASS)) {
 			return new ClassSymbolNode(program, symbol);
@@ -296,26 +295,25 @@ public class SymbolNode extends SymbolTreeNode {
 	// overridden to handle duplicate symbols
 	@Override
 	public int compareTo(GTreeNode node) {
-		int nameCompare = getName().compareToIgnoreCase(node.getName());
-		if (!(node instanceof SymbolNode)) {
-			return nameCompare;
-		}
+		String dt1 = getDisplayText();
+		String dt2 = node.getDisplayText();
 
-		// sort alphabetically first
+		int nameCompare = AlphaNumericComparator.CI.compare(dt1, dt2);
 		if (nameCompare != 0) {
 			return nameCompare;
 		}
 
-		// next, handle the case where the names are the same, but with different case--be consistent
-		nameCompare = getName().compareTo(node.getName());
+		// next, use case sensitive to tie-break
+		nameCompare = AlphaNumericComparator.CS.compare(dt1, dt2);
 		if (nameCompare != 0) {
-			// negate the result so that lower comes first
-			return -nameCompare;
+			return -nameCompare; // negate the result so that lower comes first
 		}
 
-		// next, when the names are the same, provide a consistent order via address and symbol
-		SymbolNode other = (SymbolNode) node;
-		int result = SYMBOL_COMPARATOR.compare(symbol, other.symbol);
-		return result;
+		if (node instanceof SymbolNode other) {
+			// when two symbol nodes have exactly the same name, use a tie-breaker
+			return SYMBOL_COMPARATOR.compare(symbol, other.symbol);
+		}
+
+		return 0;
 	}
 }

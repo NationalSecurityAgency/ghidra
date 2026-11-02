@@ -146,7 +146,7 @@ public class LibrarySymbol extends SymbolDB implements Comparable<LibrarySymbol>
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
-			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address);
 	}
 
 	/**

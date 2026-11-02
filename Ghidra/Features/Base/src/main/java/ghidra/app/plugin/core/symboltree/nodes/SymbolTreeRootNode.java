@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.symboltree.nodes;
 
+import static ghidra.app.plugin.core.symboltree.SymbolCategory.*;
 import static ghidra.program.model.symbol.SymbolType.*;
 
 import java.util.*;
@@ -24,6 +25,7 @@ import javax.swing.Icon;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
+import ghidra.app.plugin.core.symboltree.SymbolTreeFilterState;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
@@ -32,20 +34,21 @@ public class SymbolTreeRootNode extends GTreeNode {
 	private static Icon GLOBAL_ICON = new GIcon("icon.plugin.symboltree.node.root");
 	private final String name;
 
-	protected SymbolCategory symbolCategory;
 	protected Program program;
 	private int groupThreshold;
+	private SymbolTreeFilterState filterState;
 
-	public SymbolTreeRootNode(Program program, int groupThreshold) {
+	public SymbolTreeRootNode(Program program, int groupThreshold,
+			SymbolTreeFilterState filterState) {
 		this.groupThreshold = groupThreshold;
-		this.symbolCategory = SymbolCategory.ROOT_CATEGORY;
 		this.program = program;
+		this.filterState = filterState;
 
 		if (program == null) {
 			name = "No Symbol Tree";
 		}
 		else {
-			name = "Global";
+			name = "Root";
 		}
 	}
 
@@ -72,17 +75,32 @@ public class SymbolTreeRootNode extends GTreeNode {
 
 		List<GTreeNode> list = new ArrayList<>();
 
-		list.add(new ImportsCategoryNode(program));
-		list.add(new ExportsCategoryNode(program));
-		list.add(new FunctionCategoryNode(program));
-		list.add(new LabelCategoryNode(program));
-		list.add(new ClassCategoryNode(program));
-		list.add(new NamespaceCategoryNode(program));
+		if (filterState.showImports()) {
+			list.add(new ImportsCategoryNode(program, filterState));
+		}
+		if (filterState.showExports()) {
+			list.add(new ExportsCategoryNode(program, filterState));
+		}
+		if (filterState.showGlobals()) {
+			list.add(new GlobalsCategoryNode(program, filterState));
+		}
+		if (filterState.showNamespaces()) {
+			list.add(new NamespaceCategoryNode(program, filterState));
+		}
 
 		return list;
 	}
 
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
+	/**
+	 * Finds the given symbol in the tree.
+	 * @param symbol the symbol to search for
+	 * @param loadChildren if true, then lazy nodes will be loaded before searching. Otherwise,
+	 * unloaded nodes will not be searched.
+	 * @param monitor a TaskMonitor that can be used to cancel the search
+	 * @return the GTreeNode corresponding to the given symbol or null if the symbol is not found in
+	 * the tree.
+	 */
+	public GTreeNode findSymbolNode(Symbol symbol, boolean loadChildren, TaskMonitor monitor) {
 
 		//
 		// The finding of nodes starts here, at the root.  Optimize searching by using the 
@@ -94,92 +112,68 @@ public class SymbolTreeRootNode extends GTreeNode {
 		// -Namespaces - search the namespaces node, need recursive searching
 		//
 
-		Symbol searchSymbol = key.getSymbol();
-		SymbolType type = searchSymbol.getSymbolType();
+		SymbolType type = symbol.getSymbolType();
 		if (type == FUNCTION) {
-			return findFunctionSymbolNode(key, loadChildren, monitor);
+			return findFunctionRelatedSymbol(symbol, loadChildren, monitor);
 		}
 		else if (type == PARAMETER || type == LOCAL_VAR) {
-			return findVariableSymbolNode(key, loadChildren, monitor);
+			return findFunctionRelatedSymbol(symbol, loadChildren, monitor);
 		}
 		else if (type == CLASS) {
-			return findClassSymbol(key, loadChildren, monitor);
+			return findClassSymbol(symbol, loadChildren, monitor);
 		}
-		else if (type == LIBRARY || type == NAMESPACE) {
-			return findNamespaceSymbol(key, loadChildren, monitor);
+		else if (type == NAMESPACE) {
+			return findNamespaceSymbol(symbol, loadChildren, monitor);
+		}
+		else if (type == LIBRARY) {
+			return findLibrarySymbol(symbol, loadChildren, monitor);
 		}
 		else if (type == LABEL) {
-			return findCodeSymbol(key, loadChildren, monitor);
+			return findCodeSymbol(symbol, loadChildren, monitor);
 		}
 		//else { GLOBAL, GLOBAL_VAR } // not sure where these end up
 
 		return null;
 	}
 
-	private GTreeNode findCodeSymbol(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
+	private GTreeNode findCodeSymbol(Symbol symbol, boolean loadChildren, TaskMonitor monitor) {
 
-		//@formatter:off
-		List<SymbolCategoryNode> categories = Arrays.asList(
-			getLabelsNode(),					
-			getNamespacesNode(),
-			getClassesNode(),	
-			getFunctionsNode()
-		);
-		//@formatter:on
-		GTreeNode node = searchCategories(categories, key, loadChildren, monitor);
+		GTreeNode node =
+			searchCategories(symbol, loadChildren, monitor, IMPORTS, GLOBALS, NAMESPACES);
 		return node;
 	}
 
-	private GTreeNode findNamespaceSymbol(SymbolNode key, boolean loadChildren,
+	private GTreeNode findNamespaceSymbol(Symbol symbol, boolean loadChildren,
 			TaskMonitor monitor) {
-
-		SymbolCategoryNode category = getNamespacesNode();
-		return category.findSymbolTreeNode(key, loadChildren, monitor);
-	}
-
-	private GTreeNode findClassSymbol(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
-		SymbolCategoryNode category = getClassesNode();
-		return category.findSymbolTreeNode(key, loadChildren, monitor);
-	}
-
-	private GTreeNode findVariableSymbolNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor monitor) {
-
-		Symbol searchSymbol = key.getSymbol();
-		Symbol functionSymbol = searchSymbol.getParentSymbol();
-		SymbolNode parentKey = SymbolNode.createNode(functionSymbol, program);
-		GTreeNode functionNode = findFunctionSymbolNode(parentKey, loadChildren, monitor);
-		if (functionNode != null) {
-			return ((SymbolTreeNode) functionNode).findSymbolTreeNode(key, loadChildren, monitor);
-		}
-		return null;
-	}
-
-	private GTreeNode findFunctionSymbolNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor monitor) {
-
-		Symbol searchSymbol = key.getSymbol();
-		if (searchSymbol.isExternal()) {
-			// assumption: externals will always be in the Externals category
-			return searchCategory(getExternalsNode(), key, loadChildren, monitor);
-		}
-
-		//@formatter:off
-		List<SymbolCategoryNode> categories = Arrays.asList(
-			getFunctionsNode(),
-			getClassesNode(),
-			getNamespacesNode()
-		);
-		//@formatter:on
-		GTreeNode node = searchCategories(categories, key, loadChildren, monitor);
+		GTreeNode node = searchCategories(symbol, loadChildren, monitor, NAMESPACES);
 		return node;
 	}
 
-	private GTreeNode searchCategories(List<SymbolCategoryNode> categories, SymbolNode key,
-			boolean loadChildren, TaskMonitor monitor) {
+	private GTreeNode findLibrarySymbol(Symbol symbol, boolean loadChildren, TaskMonitor monitor) {
+		GTreeNode node = searchCategories(symbol, loadChildren, monitor, IMPORTS);
+		return node;
+	}
 
-		for (SymbolCategoryNode category : categories) {
-			GTreeNode node = searchCategory(category, key, loadChildren, monitor);
+	private GTreeNode findClassSymbol(Symbol symbol, boolean loadChildren, TaskMonitor monitor) {
+		GTreeNode node = searchCategories(symbol, loadChildren, monitor, NAMESPACES);
+		return node;
+	}
+
+	private GTreeNode findFunctionRelatedSymbol(Symbol symbol, boolean loadChildren,
+			TaskMonitor monitor) {
+		GTreeNode node =
+			searchCategories(symbol, loadChildren, monitor, IMPORTS, GLOBALS, NAMESPACES);
+		return node;
+	}
+
+	private GTreeNode searchCategories(Symbol symbol, boolean loadChildren, TaskMonitor monitor,
+			SymbolCategory... categories) {
+		for (SymbolCategory category : categories) {
+			SymbolCategoryNode categoryNode = getCategoryNode(category);
+			if (categoryNode == null) {
+				continue;
+			}
+			GTreeNode node = categoryNode.findSymbolNode(symbol, loadChildren, monitor);
 			if (node != null) {
 				return node;
 			}
@@ -188,62 +182,13 @@ public class SymbolTreeRootNode extends GTreeNode {
 		return null;
 	}
 
-	private GTreeNode searchCategory(SymbolCategoryNode category, SymbolNode key,
-			boolean loadChildren, TaskMonitor monitor) {
-
-		if (category == null) {
-			return null; // assume category is filtered out
-		}
-
-		GTreeNode node = category.findSymbolTreeNode(key, loadChildren, monitor);
-		return node;
-	}
-
-	private SymbolCategoryNode getLabelsNode() {
+	private SymbolCategoryNode getCategoryNode(SymbolCategory category) {
 		List<GTreeNode> children = getChildren();
 		for (GTreeNode child : children) {
-			if (child instanceof LabelCategoryNode) {
-				return (SymbolCategoryNode) child;
-			}
-		}
-		return null; // must be filtered out
-	}
-
-	private SymbolCategoryNode getFunctionsNode() {
-		List<GTreeNode> children = getChildren();
-		for (GTreeNode child : children) {
-			if (child instanceof FunctionCategoryNode) {
-				return (SymbolCategoryNode) child;
-			}
-		}
-		return null; // must be filtered out
-	}
-
-	private SymbolCategoryNode getExternalsNode() {
-		List<GTreeNode> children = getChildren();
-		for (GTreeNode child : children) {
-			if (child instanceof FunctionCategoryNode) {
-				return (SymbolCategoryNode) child;
-			}
-		}
-		return null; // must be filtered out
-	}
-
-	private SymbolCategoryNode getClassesNode() {
-		List<GTreeNode> children = getChildren();
-		for (GTreeNode child : children) {
-			if (child instanceof ClassCategoryNode) {
-				return (SymbolCategoryNode) child;
-			}
-		}
-		return null; // must be filtered out
-	}
-
-	private SymbolCategoryNode getNamespacesNode() {
-		List<GTreeNode> children = getChildren();
-		for (GTreeNode child : children) {
-			if (child instanceof NamespaceCategoryNode) {
-				return (SymbolCategoryNode) child;
+			if (child instanceof SymbolCategoryNode categoryNode) {
+				if (categoryNode.getSymbolCategory() == category) {
+					return categoryNode;
+				}
 			}
 		}
 		return null; // must be filtered out
@@ -267,18 +212,17 @@ public class SymbolTreeRootNode extends GTreeNode {
 		// we have to loop--the symbol may exist in more than one category
 		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode gNode : allChildren) {
-			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
-			symbolNode.symbolRemoved(symbol, oldName, monitor);
+			SymbolCategoryNode categoryNode = (SymbolCategoryNode) gNode;
+			categoryNode.symbolRemoved(symbol, symbol.getParentNamespace(), oldName, monitor);
 		}
 	}
 
 	public void symbolRemoved(Symbol symbol, Namespace oldNamespace, TaskMonitor monitor) {
-
 		// we have to loop--the symbol may exist in more than one category
 		List<GTreeNode> allChildren = getChildren();
 		for (GTreeNode gNode : allChildren) {
-			SymbolCategoryNode symbolNode = (SymbolCategoryNode) gNode;
-			symbolNode.symbolRemoved(symbol, oldNamespace, monitor);
+			SymbolCategoryNode categoryNode = (SymbolCategoryNode) gNode;
+			categoryNode.symbolRemoved(symbol, oldNamespace, symbol.getName(), monitor);
 		}
 	}
 
@@ -316,5 +260,18 @@ public class SymbolTreeRootNode extends GTreeNode {
 		}
 		SymbolTreeRootNode node = (SymbolTreeRootNode) o;
 		return getName().equals(node.getName());
+	}
+
+	public void setSymbolTreeFilterState(SymbolTreeFilterState filterState) {
+		this.filterState = filterState;
+		reloadChildren();
+	}
+
+	private void reloadChildren() {
+		setChildren(null);  // this will trigger generateChildren next time someone asks.
+	}
+
+	public SymbolTreeFilterState getSymbolTreeFilterState() {
+		return filterState;
 	}
 }

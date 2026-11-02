@@ -8471,10 +8471,8 @@ public class RecoveredClassHelper {
 		List<Namespace> namespaceByPath = NamespaceUtils.getNamespaceByPath(program, null, path);
 
 		// ignore namespaces contained within libraries
-		for (Namespace namespace : namespaceByPath) {
-			if (!namespace.isExternal()) {
-				return namespace;
-			}
+		if (!namespaceByPath.isEmpty()) {
+			return namespaceByPath.get(0);
 		}
 
 		Msg.debug(this, "Expected clas namespace not found: " + path);

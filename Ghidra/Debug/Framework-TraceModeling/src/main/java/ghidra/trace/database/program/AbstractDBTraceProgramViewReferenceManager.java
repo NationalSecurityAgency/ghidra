@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -26,6 +26,7 @@ import javax.help.UnsupportedOperationException;
 import generic.util.FlattenedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.symbol.DBTraceReference;
@@ -129,7 +130,8 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	}
 
 	@Override
-	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
+	public Reference addExternalReference(Address fromAddr, Library library, Namespace extNamespace,
+			String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException {
 		throw new UnsupportedOperationException();

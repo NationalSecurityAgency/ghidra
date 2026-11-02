@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,6 @@ import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class CodeSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Labels");
-	static final DataFlavor GLOBAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Labels");
-	static final DataFlavor EXTERNAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Data");
 
 	//@formatter:off
 	private static final Icon CODE_ICON = new GIcon("icon.plugin.symboltree.node.code");
@@ -89,10 +83,7 @@ public class CodeSymbolNode extends SymbolNode {
 
 	@Override
 	public DataFlavor getNodeDataFlavor() {
-		if (isExternal) {
-			return EXTERNAL_DATA_FLAVOR;
-		}
-		return symbol.isGlobal() ? GLOBAL_DATA_FLAVOR : LOCAL_DATA_FLAVOR;
+		return LABEL_DATA_FLAVOR;
 	}
 
 	@Override

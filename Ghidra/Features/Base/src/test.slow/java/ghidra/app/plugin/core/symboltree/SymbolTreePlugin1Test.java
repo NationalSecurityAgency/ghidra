@@ -21,6 +21,7 @@ import java.awt.Container;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellEditor;
@@ -45,11 +46,13 @@ import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.GhidraClass;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.DWordDataType;
+import ghidra.program.model.data.WordDataType;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -81,6 +84,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf createExternalLocationAction;
 	private DockingActionIf editExternalLocationAction;
 	private SymbolTreeTestUtils util;
+	private SymbolTreeProvider provider;
 
 	@Before
 	public void setUp() throws Exception {
@@ -92,6 +96,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(MarkerManagerPlugin.class.getName());
 		tool.addPlugin(SymbolTreePlugin.class.getName());
 		plugin = env.getPlugin(SymbolTreePlugin.class);
+		provider = plugin.getProvider();
 
 		cbPlugin = env.getPlugin(CodeBrowserPlugin.class);
 
@@ -116,79 +121,343 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> plugin.setNodeGroupThreshold(20));
 
 		showSymbolTree();
-		GTreeNode functionsNode = rootNode.getChild("Functions");
-		assertFalse(functionsNode.isLoaded());
-		functionsNode.expand();
-		waitForTree(tree);
-		assertTrue(functionsNode.isLoaded());
 
-		// add lots of nodes to cause functionsNode to close
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		assertFalse(globalsNode.isLoaded());
+		globalsNode.expand();
+		waitForTree(tree);
+		assertTrue(globalsNode.isLoaded());
+
+		// add function to exceed limit to trigger organization of the nodes
 		int reorganizeLimit = ((SymbolTreeRootNode) rootNode).getReorganizeLimit();
 		addFunctions(reorganizeLimit);
 		waitForTree(tree);
 
-		assertFalse(functionsNode.isLoaded());
+		assertFalse(globalsNode.isLoaded());
 
-		functionsNode.expand();
+		globalsNode.expand();
 		waitForTree(tree);
 
-		// should have 4 nodes, one for each of the original 3 functions and a org node with
-		// all new "FUNCTION*" named functions
-		assertEquals(4, functionsNode.getChildCount());
+		assertEquals(8, globalsNode.getChildCount());
+		assertEquals("ADVAPI32.dll_", globalsNode.getChild(0).getName());
+		assertEquals("doStuff", globalsNode.getChild(1).getName());
+		assertEquals("entry", globalsNode.getChild(2).getName());
+		assertEquals("FUNCTION_", globalsNode.getChild(3).getName());
+		assertEquals("ghidra", globalsNode.getChild(4).getName());
+		assertEquals("IsTextUnicode", globalsNode.getChild(5).getName());
+		assertEquals("Reg", globalsNode.getChild(6).getName());
+		assertEquals("sscanf", globalsNode.getChild(7).getName());
 	}
 
 	@Test
 	public void testShowDisplay() throws Exception {
 		showSymbolTree();
 
-		assertEquals(6, rootNode.getChildCount());
+		assertEquals(4, rootNode.getChildCount());
 		GTreeNode node = rootNode.getChild(0);
 		assertEquals("Imports", node.getName());
 		node = rootNode.getChild(1);
 		assertEquals("Exports", node.getName());
 		node = rootNode.getChild(2);
-		assertEquals("Functions", node.getName());
+		assertEquals("Globals", node.getName());
 		node = rootNode.getChild(3);
-		assertEquals("Labels", node.getName());
-		node = rootNode.getChild(4);
-		assertEquals("Classes", node.getName());
-		node = rootNode.getChild(5);
 		assertEquals("Namespaces", node.getName());
 	}
 
 	@Test
 	public void testExternals() throws Exception {
 		showSymbolTree();
-		List<?> list =
-			getChildren(globalNamespace, SymbolCategory.IMPORTS_CATEGORY.getSymbolType());
+		List<?> list = getChildren(globalNamespace, SymbolType.LIBRARY);
 
-		GTreeNode extNode = rootNode.getChild(0);
-		util.expandNode(extNode);
-		assertEquals(list.size(), extNode.getChildCount());
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		assertEquals(list.size(), importsNode.getChildCount());
 
-		checkGTreeNodes(list, extNode);
+		checkLabelNodes(list, importsNode);
 
-		GTreeNode node = extNode.getChild(0);
-		util.expandNode(node);
-		GTreeNode fNode = node.getChild(0);
+		GTreeNode libraryNode = importsNode.getChild(0);
+		util.expandNode(libraryNode);
+		GTreeNode fNode = libraryNode.getChild(0);
 		util.selectNode(fNode);
 
 		assertTrue(goToExtLocAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
+	public void testExternalInNamespace() throws Exception {
+		showSymbolTree();
+
+		createExternalFooInNamespaceBob();
+
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		GTreeNode user32 = importsNode.getChild("USER32.dll");
+		util.expandNode(user32);
+		assertEquals(1, user32.getChildCount());
+		GTreeNode bobNs = user32.getChild(0);
+		assertEquals("bob", bobNs.getName());
+		util.expandNode(bobNs);
+		assertEquals("foo", bobNs.getChild(0).getName());
+
+		createExternalBar();
+		setBarNamespace("bob");
+
+		user32 = importsNode.getChild("USER32.dll");
+		assertEquals(1, user32.getChildCount());
+		bobNs = user32.getChild(0);
+		assertEquals("bob", bobNs.getName());
+		assertEquals(2, bobNs.getChildCount());
+		assertEquals("bar", bobNs.getChild(0).getName());
+		assertEquals("foo", bobNs.getChild(1).getName());
+
+		setBarNamespace(null);
+		assertEquals(2, user32.getChildCount());
+		assertEquals("bar", user32.getChild(0).getName());
+		assertEquals("bob", user32.getChild(1).getName());
+	}
+
+	@Test
+	public void testDeleteExternalSymbolInNamespace() throws Exception {
+		showSymbolTree();
+
+		Symbol fooSym = createExternalFooInNamespaceBob();
+		createExternalBar();
+
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		GTreeNode user32 = importsNode.getChild("USER32.dll");
+		util.expandNode(user32);
+		assertEquals(2, user32.getChildCount());
+		assertEquals("bar", user32.getChild(0).getName());
+		assertEquals("bob", user32.getChild(1).getName());
+
+		deleteSymbol(fooSym);
+
+		user32 = importsNode.getChild("USER32.dll");
+		assertEquals(1, user32.getChildCount());
+		assertEquals("bar", user32.getChild(0).getName());
+	}
+
+	@Test
+	public void testExternalParameter() throws Exception {
+		showSymbolTree();
+
+		createExternalFunctionFoo();
+
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		GTreeNode user32 = importsNode.getChild("USER32.dll");
+		util.expandNode(user32);
+		assertEquals(1, user32.getChildCount());
+		assertEquals("foo", user32.getChild(0).getName());
+		GTreeNode foo = user32.getChild(0);
+		util.expandNode(foo);
+
+		addParameterToFunctionFoo();
+
+		foo = user32.getChild(0);
+		assertEquals(1, foo.getChildCount());
+		assertEquals("param1", foo.getChild(0).getName());
+
+		removeParametersForFunctionFoo();
+	}
+
+	@Test
+	public void testAddExternalFunction() throws Exception {
+		showSymbolTree();
+		List<?> list = getChildren(globalNamespace, SymbolType.LIBRARY);
+
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		assertEquals(list.size(), importsNode.getChildCount());
+		checkLabelNodes(list, importsNode);
+
+		GTreeNode advapi32 = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapi32);
+		assertEquals(7, advapi32.getChildCount());
+		GTreeNode node = advapi32.getChild("IsTextUnicode");
+		assertNotNull(node);
+
+		createExternaFunction();
+		assertEquals(8, advapi32.getChildCount());
+
+		node = advapi32.getChild(0);
+		assertEquals("doFoo", node.getName());
+		util.expandNode(node);
+		assertEquals(1, node.getChildCount());
+		assertEquals("p1", node.getChild(0).getName());
+
+		addAnotherParameter(node);
+		node = advapi32.getChild(0);	// have to re-aquiire node since it got removed/added 
+		assertEquals(2, node.getChildCount());
+		assertEquals("p1", node.getChild(0).getName());
+		assertEquals("p2", node.getChild(1).getName());
+
+	}
+
+	@Test
+	public void testAddExternalLabelInNamespace() throws Exception {
+		showSymbolTree();
+		GTreeNode importsNode = rootNode.getChild(SymbolCategory.IMPORTS.getName());
+		util.expandNode(importsNode);
+		GTreeNode advapiNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapiNode);
+		assertNull(advapiNode.getChild("fooNs"));
+		createExternaLabelInNamespace("bob", "fooNs");
+		GTreeNode fooNs = advapiNode.getChild("fooNs");
+		assertNotNull(fooNs);
+		assertFalse(fooNs.isLoaded());
+		util.expandNode(fooNs);
+		assertNotNull(fooNs.getChild("bob"));
+	}
+
+	@Test
+	public void testAddExternalLabelInNamespaceDeeper() throws Exception {
+		showSymbolTree();
+		GTreeNode importsNode = rootNode.getChild(SymbolCategory.IMPORTS.getName());
+		util.expandNode(importsNode);
+		GTreeNode advapiNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapiNode);
+		assertNull(advapiNode.getChild("fooNs"));
+		createExternaLabelInNamespace("bob", "fooNs", "barNs");
+		GTreeNode fooNs = advapiNode.getChild("fooNs");
+		assertNotNull(fooNs);
+		assertFalse(fooNs.isLoaded());
+		util.expandNode(fooNs);
+		GTreeNode barNs = fooNs.getChild("barNs");
+		assertNotNull(barNs);
+		util.expandNode(barNs);
+		assertNotNull(barNs.getChild("bob"));
+	}
+
+	@Test
+	public void testAddExternalLabelInNamespaceAlreadyOpen() throws Exception {
+		showSymbolTree();
+		GTreeNode importsNode = rootNode.getChild(SymbolCategory.IMPORTS.getName());
+		util.expandNode(importsNode);
+		GTreeNode advapiNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapiNode);
+		assertNull(advapiNode.getChild("fooNs"));
+		createExternaLabelInNamespace("bob", "fooNs");
+
+		GTreeNode fooNs = advapiNode.getChild("fooNs");
+		assertNotNull(fooNs);
+		assertFalse(fooNs.isLoaded());
+		util.expandNode(fooNs);
+		assertNotNull(fooNs.getChild("bob"));
+		createExternaLabelInNamespace("joe", "fooNs");
+
+		assertNotNull(fooNs.getChild("joe"));
+	}
+
+	@Test
+	public void testRemoveExternalLabelInNamespaceRemovesEmptyNamespace() throws Exception {
+		showSymbolTree();
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		GTreeNode advapiNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapiNode);
+		assertNull(advapiNode.getChild("fooNs"));
+
+		createExternaLabelInNamespace("bob", "fooNs");
+		createExternaLabelInNamespace("joe", "fooNs");
+
+		GTreeNode fooNs = advapiNode.getChild("fooNs");
+		util.expandNode(fooNs);
+		assertNotNull(fooNs.getChild("bob"));
+		assertNotNull(fooNs.getChild("joe"));
+
+		removeSymbol("bob", "fooNs");
+
+		assertNull(fooNs.getChild("bob"));
+		assertNotNull(fooNs.getChild("joe"));
+
+		removeSymbol("joe", "fooNs");
+
+		assertNull(fooNs.getParent()); // fooNs should be disposed
+		assertNull(advapiNode.getChild("fooNs"));
+	}
+
+	@Test
+	public void testRemoveExternalLabelInNamespaceRemovesEmptyNamespaceDownOneLevel()
+			throws Exception {
+		showSymbolTree();
+		GTreeNode importsNode = rootNode.getChild(SymbolCategory.IMPORTS.getName());
+		util.expandNode(importsNode);
+		GTreeNode advapiNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(advapiNode);
+		assertNull(advapiNode.getChild("fooNs"));
+		createExternaLabelInNamespace("bob", "fooNs", "barNs");
+		createExternaLabelInNamespace("joe", "fooNs", "barNs");
+		GTreeNode fooNs = advapiNode.getChild("fooNs");
+		util.expandNode(fooNs);
+		GTreeNode barNs = fooNs.getChild("barNs");
+		assertNotNull(barNs.getChild("bob"));
+		assertNotNull(barNs.getChild("joe"));
+
+		removeSymbol("bob", "fooNs", "barNs");
+
+		assertNull(barNs.getChild("bob"));
+		assertNotNull(barNs.getChild("joe"));
+
+		removeSymbol("joe", "fooNs", "barNs");
+
+		assertNull(barNs.getParent()); // barNs should be disposed
+		assertNull(fooNs.getParent()); // fooNs should be disposed
+		assertNull(advapiNode.getChild("fooNs"));
+	}
+
+	private void removeSymbol(String symbolName, String... namespaceNames) throws Exception {
+		program.withTransaction("test", () -> {
+			SymbolTable symbolMgr = program.getSymbolTable();
+			Namespace namespace = getNamespace(namespaceNames);
+			List<Symbol> symbols = symbolMgr.getSymbols(symbolName, namespace);
+			Symbol s = symbols.get(0);
+			s.delete();
+		});
+		waitForTree(tree);
+
+	}
+
+	private void createExternaLabelInNamespace(String labelName, String... namespaceNames)
+			throws Exception {
+		program.withTransaction("test", () -> {
+			ExternalManager extMgr = program.getExternalManager();
+			SymbolTable symbolMgr = program.getSymbolTable();
+			Library advapi32 = (Library) symbolMgr.getLibrarySymbol("ADVAPI32.dll").getObject();
+			Namespace namespace = getNamespace(namespaceNames);
+			extMgr.addExtLocation(advapi32, namespace, labelName, null, SourceType.USER_DEFINED);
+		});
+		waitForSwing();
+		waitForTree(tree);
+	}
+
+	private Namespace getNamespace(String[] namespaceNames) throws Exception {
+		SymbolTable symbolMgr = program.getSymbolTable();
+		Namespace namespace = program.getGlobalNamespace();
+		for (String namespaceName : namespaceNames) {
+			Namespace ns = symbolMgr.getNamespace(namespaceName, namespace);
+			if (ns == null) {
+				ns = symbolMgr.createNameSpace(namespace, namespaceName, SourceType.USER_DEFINED);
+			}
+			namespace = ns;
+		}
+		return namespace;
+	}
+
+	@Test
 	public void testGoToExternal() throws Exception {
 		showSymbolTree();
 
-		GTreeNode extNode = rootNode.getChild(0);
-		util.expandNode(extNode);
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
 
-		GTreeNode node = extNode.getChild(0);
-		util.expandNode(node);
-		GTreeNode fNode = node.getChild(0);
-		util.selectNode(fNode);
+		GTreeNode libraryNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(libraryNode);
+		GTreeNode node = libraryNode.getChild("IsTextUnicode");
+		util.selectNode(node);
 
-		Symbol extSym = ((SymbolNode) fNode).getSymbol();
+		Symbol extSym = ((SymbolNode) node).getSymbol();
 		assertEquals(SymbolType.LABEL, extSym.getSymbolType());
 		assertTrue(extSym.isExternal());
 		assertNotNull(extSym);
@@ -207,18 +476,17 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		cbPlugin.updateNow();
 
 		// reselect - setting path rebuilt tree
-		extNode = rootNode.getChild(0);
-		node = extNode.getChild(0);
-		util.expandNode(node);
-		node = extNode.getChild(0);
-		fNode = node.getChild(0);
-		assertEquals("IsTextUnicode", fNode.getName());
-		util.selectNode(fNode);
+		importsNode = rootNode.getChild("Imports");
+		libraryNode = importsNode.getChild("ADVAPI32.dll");
+		util.expandNode(libraryNode);
+		node = libraryNode.getChild("IsTextUnicode");
+		assertEquals("IsTextUnicode", node.getName());
+		util.selectNode(node);
 
 		TreePath selectionPath = tree.getSelectionPath();
 		assertNotNull(selectionPath);
 		Object selectedObject = selectionPath.getLastPathComponent();
-		assertEquals(fNode, selectedObject);
+		assertEquals(node, selectedObject);
 
 		waitForSwing();
 
@@ -231,29 +499,16 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testFunctions() throws Exception {
+	public void testGlobals() throws Exception {
 		showSymbolTree();
-		List<?> list =
-			getChildren(globalNamespace, SymbolCategory.FUNCTION_CATEGORY.getSymbolType());
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		List<Symbol> list = getChildren(globalNamespace, SymbolType.FUNCTION);
+		list.addAll(getChildren(globalNamespace, SymbolType.LABEL));
+		Collections.sort(list, util.getSymbolComparator());
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		assertEquals(list.size(), fNode.getChildCount());
-		checkGTreeNodes(list, fNode);
-	}
-
-	@Test
-	public void testLabels() throws Exception {
-		showSymbolTree();
-		List<?> list = getChildren(globalNamespace, SymbolCategory.LABEL_CATEGORY.getSymbolType());
-		GTreeNode labelNode = rootNode.getChild(3);
-		util.expandNode(labelNode);
-
-		for (int i = 0; i < labelNode.getChildCount(); i++) {
-			GTreeNode node = labelNode.getChild(i);
-			util.expandNode(node);
-		}
-		checkLabelNodes(list, labelNode);
+		assertEquals(list.size(), globalsNode.getChildCount());
+		checkGTreeNodes(list, globalsNode);
 	}
 
 	@Test
@@ -279,40 +534,40 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		showSymbolTree();
 		// cut label from a function
 		// select Global; paste should be enabled
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		GTreeNode gNode = fNode.getChild(1);
-		util.expandNode(gNode);
-		GTreeNode node = gNode.getChild(9);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
+		GTreeNode ghidraNode = globalsNode.getChild("ghidra");
+		util.expandNode(ghidraNode);
+		GTreeNode node = ghidraNode.getChild("AnotherLocal");
 		util.selectNode(node);
 		performAction(cutAction, util.getSymbolTreeContext(), true);
 
 		// move a function to a namespace
 		// cut a function; select global; paste should be enabled
-		GTreeNode nsParentNode = rootNode.getChild(5);
-		GTreeNode nsNode = util.createObject(nsParentNode, "MyNamespace", createNamespaceAction);
-		doDrag(nsNode, gNode, DnDConstants.ACTION_MOVE);
+
+		GTreeNode nsNode = util.createObject(namespacesNode, "MyNamespace", createNamespaceAction);
+		doDrag(nsNode, ghidraNode, DnDConstants.ACTION_MOVE);
 
 		util.waitForTree();
 		flushAndWaitForTree();
 
-		nsParentNode = rootNode.getChild(5);
-		nsNode = nsParentNode.getChild(0);
+		namespacesNode = rootNode.getChild("Namespaces");
+		nsNode = namespacesNode.getChild(0);
 		util.expandNode(nsNode);
 		util.waitForTree();
 		waitForSwing();
 		util.waitForTree();
-		gNode = nsNode.getChild(0);
+		ghidraNode = nsNode.getChild(0);
 
-		if (gNode == null) {
+		if (ghidraNode == null) {
 			if (tree.isExpanded(nsNode.getTreePath())) {
-				gNode = nsNode.getChild(0);
+				ghidraNode = nsNode.getChild(0);
 			}
 		}
-		assertNotNull(gNode);
+		assertNotNull(ghidraNode);
 
-		gNode = nsNode.getChild(0);
-		util.selectNode(gNode);
+		ghidraNode = nsNode.getChild(0);
+		util.selectNode(ghidraNode);
 		assertTrue(cutAction.isEnabledForContext(util.getSymbolTreeContext()));
 		performAction(cutAction, util.getSymbolTreeContext(), true);
 	}
@@ -331,17 +586,13 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		flushAndWaitForTree();
 
-		// Functions node
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-
-		GTreeNode labelsNode = rootNode.getChild("Labels");
+		GTreeNode globalsNode = rootNode.getChild("Globals");
 		GTreeNode namespaceNode = rootNode.getChild("Namespaces");
 		util.selectNode(namespaceNode);
 		performAction(createNamespaceAction, util.getSymbolTreeContext(), true);
 		util.waitForTree();
 		runSwing(() -> tree.stopEditing());
-		GTreeNode fredNode = labelsNode.getChild("fred");
+		GTreeNode fredNode = globalsNode.getChild("fred");
 		util.selectNode(fredNode);
 
 		waitForSwing();
@@ -355,7 +606,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// doStuff function node
 		waitForSwing();
-		GTreeNode dNode = fNode.getChild(0);
+		GTreeNode dNode = globalsNode.getChild(0);
 		util.selectNode(dNode);
 		assertFalse(pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
@@ -408,11 +659,11 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		// select the external symbol category;
 		// no actions should be applicable
 		showSymbolTree();
-		GTreeNode extNode = rootNode.getChild(0);
-		util.selectNode(extNode);
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.selectNode(importsNode);
 		ActionContext context = util.getSymbolTreeContext();
 		boolean createLibraryIsEnabled = createLibraryAction.isEnabledForContext(context);
-		if (extNode.getName().equals("Imports")) {
+		if (importsNode.getName().equals("Imports")) {
 			assertTrue(createLibraryIsEnabled);
 		}
 		else {
@@ -443,9 +694,9 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testParameterActionEnablement() throws Exception {
 		showSymbolTree();
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		GTreeNode pNode = gNode.getChild(0);
 		util.selectNode(pNode);
@@ -462,9 +713,9 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testFunctionActionEnablement() throws Exception {
 		showSymbolTree();
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		util.selectNode(gNode);
 		ActionContext context = util.getSymbolTreeContext();
@@ -480,9 +731,9 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testLocalSymbolActionEnablement() throws Exception {
 		showSymbolTree();
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		GTreeNode pNode = gNode.getChild(9);
 		util.selectNode(pNode);
@@ -541,14 +792,14 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testCreateClass() throws Exception {
 		showSymbolTree();
 
-		util.selectNode(rootNode.getChild("Classes"));
+		namespacesNode = rootNode.getChild("Namespaces");
+		util.selectNode(namespacesNode);
 		performAction(createClassAction, util.getSymbolTreeContext(), true);
 
-		GTreeNode cnode = rootNode.getChild(4);
-		util.expandNode(cnode);
+		util.expandNode(namespacesNode);
 
 		// wait until NewClass gets added
-		GTreeNode newNode = waitForValue(() -> cnode.getChild(0));
+		GTreeNode newNode = waitForValue(() -> namespacesNode.getChild(0));
 
 		assertNotNull(newNode);
 		Symbol s = ((SymbolNode) newNode).getSymbol();
@@ -572,7 +823,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCreateClassInNamespace() throws Exception {
 		showSymbolTree();
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
 		util.selectNode(nsParentNode);
 		GTreeNode nsNode = util.createObject(nsParentNode, "MyNamespace", createNamespaceAction);
 		GTreeNode cNode = util.createObject(nsNode, "MyClass", createClassAction);
@@ -584,9 +835,9 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testRenameExternalLib() throws Exception {
 		showSymbolTree();
 
-		GTreeNode extNode = rootNode.getChild(0);
-		util.expandNode(extNode);
-		GTreeNode advNode = extNode.getChild(0);
+		GTreeNode importsNode = rootNode.getChild("Imports");
+		util.expandNode(importsNode);
+		GTreeNode advNode = importsNode.getChild(0);
 		util.rename(advNode, "MyADVAI32.dll");
 
 		Symbol s = ((SymbolNode) advNode).getSymbol();
@@ -615,7 +866,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testRenameLabel() throws Exception {
 		showSymbolTree();
 
-		GTreeNode labelNode = rootNode.getChild(3);
+		GTreeNode labelNode = rootNode.getChild("Globals");
 		util.expandNode(labelNode);
 
 		GTreeNode isTextUnicodeNode = labelNode.getChild("ADVAPI32.dll_IsTextUnicode");
@@ -634,7 +885,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		undo(program);
 
 		util.waitForTree();
-		labelNode = rootNode.getChild(3);
+		labelNode = rootNode.getChild("Globals");
 		isTextUnicodeNode = labelNode.getChild("ADVAPI32.dll_IsTextUnicode");
 		s = ((SymbolNode) isTextUnicodeNode).getSymbol();
 		assertEquals(oldName, s.getName());
@@ -642,7 +893,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		redo(program);
 		util.waitForTree();
 
-		labelNode = rootNode.getChild(3);
+		labelNode = rootNode.getChild("Globals");
 		renamedNode = labelNode.getChild("MYADVAPI32.dll_IsTextUnicode");
 		s = ((SymbolNode) renamedNode).getSymbol();
 		assertEquals(newName, s.getName());
@@ -658,11 +909,11 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		//
 		showSymbolTree();
 
-		GTreeNode labelNode = rootNode.getChild(3);
-		util.expandNode(labelNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
 		String advapiName = "ADVAPI32.dll_IsTextUnicode";
-		GTreeNode advapi32Node = labelNode.getChild(advapiName);
+		GTreeNode advapi32Node = globalsNode.getChild(advapiName);
 
 		Symbol s = ((SymbolNode) advapi32Node).getSymbol();
 		String newNamespace = "bob";
@@ -716,13 +967,13 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		showSymbolTree();
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
-		GTreeNode pNode = gNode.getChild(2);
+		GTreeNode pNode = gNode.getChild("param_2");
 
 		Symbol s = ((SymbolNode) pNode).getSymbol();
 		String newName = "MY" + s.getName();
@@ -734,13 +985,13 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testRenameLocalLabel() throws Exception {
 		showSymbolTree();
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 
-		GTreeNode node = gNode.getChild(5);
+		GTreeNode node = gNode.getChild("AnotherLocal");
 		Symbol s = ((SymbolNode) node).getSymbol();
 		String newName = "MY" + s.getName();
 		util.rename(node, newName);
@@ -767,15 +1018,15 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		// triggering the exception before the fix.
 		//
 		showSymbolTree();
-		GTreeNode classesNode = rootNode.getChild("Classes");
-		assertFalse(classesNode.isLoaded());
-		classesNode.expand();
+		namespacesNode = rootNode.getChild("Namespaces");
+		assertFalse(namespacesNode.isLoaded());
+		namespacesNode.expand();
 		waitForTree(tree);
-		assertTrue(classesNode.isLoaded());
+		assertTrue(namespacesNode.isLoaded());
 		addFunctionInClass(100);
 		waitForTree(tree);
 
-		GTreeNode parentClassNode = classesNode.getChild("PARENT_CLASS");
+		GTreeNode parentClassNode = namespacesNode.getChild("PARENT_CLASS");
 		parentClassNode.expand();
 		waitForTree(tree);
 
@@ -788,6 +1039,9 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		symbolRootNode.symbolAdded(symbol, TaskMonitor.DUMMY);
 	}
 
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 	private void addFunctions(int count) throws Exception {
 		tx(program, () -> {
 			for (int i = 0; i < count; i++) {
@@ -814,10 +1068,6 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 			}
 		});
 	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================
 
 	private void doDrag(final GTreeNode destinationNode, GTreeNode dragNode, final int dragAction) {
 		final GTreeDragNDropHandler dragNDropHandler = tree.getDragNDropHandler();
@@ -923,7 +1173,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(goToExtLocAction);
 	}
 
-	private List<?> getChildren(Namespace namespace, SymbolType type) {
+	private List<Symbol> getChildren(Namespace namespace, SymbolType type) {
 		List<Symbol> list = new ArrayList<>();
 
 		SymbolIterator it = program.getSymbolTable().getSymbols(namespace);
@@ -993,4 +1243,104 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		util.waitForTree();
 	}
+
+	@SuppressWarnings("deprecation")
+	private void removeParametersForFunctionFoo() {
+		ExternalManager extMgr = program.getExternalManager();
+		ExternalLocation extLoc = extMgr.getUniqueExternalLocation("USER32.dll", "foo");
+		Function function = extLoc.getFunction();
+
+		tx(program, () -> {
+			function.removeParameter(0);
+		});
+		waitForTree(tree);
+	}
+
+	private void deleteSymbol(Symbol s) {
+		tx(program, () -> {
+			s.delete();
+		});
+		waitForTree(tree);
+	}
+
+	@SuppressWarnings("deprecation")
+	private void addParameterToFunctionFoo() {
+		ExternalManager extMgr = program.getExternalManager();
+		ExternalLocation extLoc = extMgr.getUniqueExternalLocation("USER32.dll", "foo");
+		Function function = extLoc.getFunction();
+
+		tx(program, () -> {
+			ParameterImpl p = new ParameterImpl("param1", new WordDataType(), program);
+			function.addParameter(p, SourceType.USER_DEFINED);
+		});
+		waitForTree(tree);
+	}
+
+	private void setBarNamespace(String namespaceName) {
+		tx(program, () -> {
+			SymbolTable symbolTable = program.getSymbolTable();
+			Namespace ns = namespaceName == null ? program.getGlobalNamespace()
+					: symbolTable.getNamespace(namespaceName, null);
+			symbolTable.getSymbols("bar").next().setNamespace(ns);
+		});
+		waitForTree(tree);
+	}
+
+	private void createExternalBar() throws UsrException {
+		ExternalManager extMgr = program.getExternalManager();
+		Library library = extMgr.getExternalLibrary("USER32.dll");
+		program.withTransaction("test", () -> {
+			extMgr.addExtLocation(library, "bar", null, SourceType.USER_DEFINED);
+		});
+		waitForTree(tree);
+	}
+
+	private Symbol createExternalFooInNamespaceBob() throws UsrException {
+		ExternalManager extMgr = program.getExternalManager();
+		Library library = extMgr.getExternalLibrary("USER32.dll");
+		AtomicReference<Symbol> fooSym = new AtomicReference<Symbol>();
+		program.withTransaction("test", () -> {
+			Namespace bob =
+				program.getSymbolTable().createNameSpace(null, "bob", SourceType.USER_DEFINED);
+			ExternalLocation extLoc =
+				extMgr.addExtLocation(library, "foo", null, SourceType.USER_DEFINED);
+			Symbol s = extLoc.getSymbol();
+			s.setNamespace(bob);
+			fooSym.set(s);
+		});
+		waitForTree(tree);
+		return fooSym.get();
+	}
+
+	private void createExternalFunctionFoo() throws UsrException {
+		ExternalManager extMgr = program.getExternalManager();
+		Library library = extMgr.getExternalLibrary("USER32.dll");
+		program.withTransaction("test", () -> {
+			extMgr.addExtFunction(library, "foo", null, SourceType.USER_DEFINED);
+		});
+		waitForTree(tree);
+	}
+
+	private void addAnotherParameter(GTreeNode node) throws UsrException {
+		Symbol symbol = ((SymbolNode) node).getSymbol();
+		Function function = (Function) symbol.getObject();
+		program.withTransaction("test", () -> {
+			Parameter param = new ParameterImpl("p2", new DWordDataType(), 4, program);
+			function.addParameter(param, SourceType.USER_DEFINED);
+		});
+		waitForSwing();
+	}
+
+	private void createExternaFunction() throws UsrException {
+		program.withTransaction("test", () -> {
+			ExternalManager extMgr = program.getExternalManager();
+			ExternalLocation extLoc =
+				extMgr.addExtFunction("ADVAPI32.dll", "doFoo", null, SourceType.USER_DEFINED);
+			Function function = extLoc.getFunction();
+			Parameter parameter1 = new ParameterImpl("p1", new DWordDataType(), 4, program);
+			function.addParameter(parameter1, SourceType.USER_DEFINED);
+		});
+		waitForSwing();
+	}
+
 }

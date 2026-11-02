@@ -75,12 +75,6 @@ public interface Namespace {
 	}
 
 	/**
-	 * Returns true if this namespace is external (i.e., associated with a Library)
-	 * @return true if this namespace is external (i.e., associated with a Library)
-	 */
-	public boolean isExternal();
-
-	/**
 	 * {@return the simple namespace name (without parent path)}
 	 * <p>
 	 * See {@link #getName(boolean)} for the namespace-qualified variant.
@@ -98,20 +92,18 @@ public interface Namespace {
 
 	/**
 	 * Get the namespace path as a list of namespace names.
-	 * @param omitLibrary if true Library name (if applicable) will be 
-	 * omitted from returned list and treated same as global namespace.
 	 * @return namespace path list or empty list for global namespace
 	 */
-	public default List<String> getPathList(boolean omitLibrary) {
+	public default List<String> getPathList() {
 		if (isGlobal()) {
 			return Collections.emptyList();
 		}
-		ArrayDeque<String> list = new ArrayDeque<>();
-		for (Namespace n = this; !n.isGlobal() && !(omitLibrary && n.isLibrary()); n =
-			n.getParentNamespace()) {
-			list.addFirst(n.getName());
+		List<String> list = new ArrayList<>();
+		for (Namespace n = this; !n.isGlobal(); n = n.getParentNamespace()) {
+			list.add(n.getName());
 		}
-		return List.copyOf(list);
+		Collections.reverse(list);
+		return list;
 	}
 
 	/**
@@ -153,14 +145,4 @@ public interface Namespace {
 	public default boolean isGlobal() {
 		return getID() == GLOBAL_NAMESPACE_ID;
 	}
-
-	/**
-	 * Return true if this is a library
-	 * @return  true if this is a library
-	 */
-	public default boolean isLibrary() {
-		Symbol s = getSymbol();
-		return s != null && s.getSymbolType() == SymbolType.LIBRARY;
-	}
-
 }

@@ -15,12 +15,8 @@
  */
 package ghidra.program.database.symbol;
 
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Library;
-import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -56,21 +52,6 @@ class LibraryDB implements Library {
 	}
 
 	@Override
-	public Namespace getParentNamespace() {
-		return symbol.getParentNamespace();
-	}
-
-	@Override
-	public AddressSetView getBody() {
-		return namespaceMgr.getAddressSet(this);
-	}
-
-	@Override
-	public String getName(boolean includeNamespacePath) {
-		return symbol.getName(includeNamespacePath);
-	}
-
-	@Override
 	public int hashCode() {
 		return symbol.hashCode();
 	}
@@ -89,12 +70,6 @@ class LibraryDB implements Library {
 	}
 
 	@Override
-	public void setParentNamespace(Namespace parentNamespace)
-			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
-		symbol.setNamespace(parentNamespace);
-	}
-
-	@Override
 	public String getAssociatedProgramPath() {
 		return symbol.getExternalLibraryPath();
 	}
@@ -102,11 +77,6 @@ class LibraryDB implements Library {
 	@Override
 	public void setAssociatedProgramPath(String programPath) throws InvalidInputException {
 		symbol.setExternalLibraryPath(programPath);
-	}
-
-	@Override
-	public boolean isExternal() {
-		return true;
 	}
 
 	@Override

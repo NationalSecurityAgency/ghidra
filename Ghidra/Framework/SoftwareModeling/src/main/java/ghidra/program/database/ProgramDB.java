@@ -124,8 +124,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 19-Sep-2025 - version 32   Expanded number of SourceType values and record storage affecting
 	 *                            SymbolDB, FunctionDB and RefListFlagsV0
 	 * 14-Apr-2026 - version 33   Introduced Library symbol ordinal assignment.
+	 * 1-Oct-2026  - version 34   Change where Libraries are no longer represent a namespace.
 	 */
-	static final int DB_VERSION = 33;
+	static final int DB_VERSION = 34;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -2132,7 +2133,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 				// Force function manager to reconcile calling conventions
 				managers[FUNCTION_MGR].setDomainObject(this);
-				managers[FUNCTION_MGR].domainObjectReady(OpenMode.UPDATE, getStoredVersion(), monitor);
+				managers[FUNCTION_MGR].domainObjectReady(OpenMode.UPDATE, getStoredVersion(),
+					monitor);
 
 				if (translator != null) {
 					// allow complex language upgrades to transform instructions/context

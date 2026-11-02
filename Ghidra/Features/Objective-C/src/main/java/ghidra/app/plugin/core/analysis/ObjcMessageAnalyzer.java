@@ -391,7 +391,7 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 			setCommentAndReference(program, msg, parameters, log);
 		}
 	}
-	
+
 	private synchronized void updateExternalBlock(Program program, Message msg, MessageLog log) {
 		Memory mem = program.getMemory();
 		FunctionManager funcMgr = program.getFunctionManager();
@@ -439,8 +439,10 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 				new AddressSet(funcAddr), SourceType.ANALYSIS);
 			Symbol externalSymbol = symbolTable.getExternalSymbol(objcClassName);
 			if (externalSymbol != null) {
-				ExternalLocation loc = extMgr.addExtLocation(externalSymbol.getParentNamespace(),
-					currentMethodName, null, SourceType.IMPORTED);
+				Library library = externalSymbol.getLibrary();
+				ExternalLocation loc =
+					extMgr.addExtLocation(library, externalSymbol.getParentNamespace(),
+						currentMethodName, null, SourceType.IMPORTED);
 				func.setThunkedFunction(loc.createFunction());
 			}
 			List<Parameter> params = List.of(new ParameterImpl("self", dataTypes.id, program),
@@ -1088,7 +1090,7 @@ public class ObjcMessageAnalyzer extends AbstractAnalyzer {
 			if (block != null && block.getName().equals(SectionNames.TEXT)) {
 				ret.add(function);
 			}
-			
+
 		}
 		return ret;
 	}

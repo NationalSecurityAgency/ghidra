@@ -94,10 +94,10 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 			cbPlugin.goToField(util.addr(0x01002d06L), OperandFieldFactory.FIELD_NAME, 0, 0));
 
 		util.waitForTree();
-		GTreeNode fNode = rootNode.getChild(2);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
 		util.waitForTree();
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.waitForTree();
 
 		GTreeNode pNode = gNode.getChild("param_8");
@@ -130,11 +130,11 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 		util.waitForTree();
 
 		// param_14 should be selected in the symbol tree
-		GTreeNode fNode = rootNode.getChild(2);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
 
 		util.waitForTree();
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.waitForTree();
 
 		GTreeNode pNode = gNode.getChild("param_8");
@@ -150,8 +150,8 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 
 		util.waitForTree();
 
-		fNode = rootNode.getChild(2);
-		gNode = fNode.getChild(1);
+		globalsNode = rootNode.getChild("Globals");
+		gNode = globalsNode.getChild("ghidra");
 		assertEquals(count - 1, gNode.getChildCount());
 
 		for (int i = 0; i < count - 1; i++) {
@@ -210,7 +210,8 @@ public class SymbolTreePluginX86Test extends AbstractGhidraHeadedIntegrationTest
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
 
-		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
 		assertNotNull(navigateIncomingAction);
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,18 +79,18 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCutPasteAtNamespace() throws Exception {
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 
 		// create a new namespace;
 		// cut and paste a function at the new namespace
-		GTreeNode nsParentNode = rootNode.getChild(5);
-		GTreeNode nsNode = util.createObject(nsParentNode, "MYNamespace", createNamespaceAction);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
+		GTreeNode nsNode = util.createObject(nsParentNode, "MyNamespace", createNamespaceAction);
 		util.waitForTree();
-		fNode = rootNode.getChild(2);
-		gNode = fNode.getChild(1);
+		globalsNode = rootNode.getChild("Globals");
+		gNode = globalsNode.getChild("ghidra");
 		util.selectNode(gNode);
 
 		performAction(cutAction, util.getSymbolTreeContext(), true);
@@ -104,70 +104,26 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 
 		// re-acquire nsNode
-		nsParentNode = rootNode.getChild(5);
-		nsNode = nsParentNode.getChild(0);
+		nsParentNode = rootNode.getChild("Namespaces");
+		nsNode = nsParentNode.getChild("MyNamespace");
 		util.expandNode(nsNode);
 		util.waitForTree();
-		gNode = nsNode.getChild(0);
+		gNode = nsNode.getChild("ghidra");
 
 		Symbol s = ((SymbolNode) gNode).getSymbol();
 		assertEquals("ghidra", s.getName());
 
-		fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-		assertEquals(2, fNode.getChildCount());
-	}
-
-	@Test
-	public void testCutPasteAtClass() throws Exception {
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-
-		GTreeNode gNode = fNode.getChild(1);
-
-		// create a new namespace;
-		// cut and paste a function at the new class
-		GTreeNode cParentNode = rootNode.getChild(4);
-		GTreeNode cNode = util.createObject(cParentNode, "MYClass", createClassAction);
-		int index = cNode.getIndexInParent();
-		util.waitForTree();
-		fNode = rootNode.getChild(2);
-		gNode = fNode.getChild(1);
-
-		util.selectNode(gNode);
-
-		performAction(cutAction, util.getSymbolTreeContext(), true);
-		util.selectNode(cNode);
-
-		SymbolTreeProvider provider = plugin.getProvider();
-		assertTrue(pasteAction.isEnabledForContext(provider.getActionContext(null)));
-		performAction(pasteAction, util.getSymbolTreeContext(), true);
-		program.flushEvents();
-		waitForSwing();
-
-		// re-acquire cNode
-		cParentNode = rootNode.getChild(4);
-		cNode = cParentNode.getChild(index);
-		util.expandNode(cNode);
-		util.waitForTree();
-		waitForSwing();
-		gNode = cNode.getChild(0);
-		Symbol s = ((SymbolNode) gNode).getSymbol();
-		assertEquals("ghidra", s.getName());
-
-		fNode = rootNode.getChild(2);
-		assertNotNull(fNode);
-		util.expandNode(fNode);
-		assertEquals(2, fNode.getChildCount());
+		globalsNode = rootNode.getChild("Globals");
+		assertNull(globalsNode.getChild("ghidra"));
 	}
 
 	@Test
 	public void testMakeSelection() throws Exception {
 		// select the ghidra function; make selection
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		util.selectNode(gNode);
 
@@ -178,11 +134,11 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 		performAction(selectionAction, util.getSymbolTreeContext(), true);
 		assertTrue(f.getBody().hasSameAddresses(cbPlugin.getCurrentSelection()));
 
-		GTreeNode dNode = fNode.getChild(0);
+		GTreeNode dNode = globalsNode.getChild("doStuff");
 		util.expandNode(dNode);
-		GTreeNode pNode = dNode.getChild(0);
+		GTreeNode pNode = dNode.getChild("param_1");
 
-		GTreeNode sNode = fNode.getChild(2);
+		GTreeNode sNode = globalsNode.getChild("sscanf");
 		s = ((SymbolNode) sNode).getSymbol();
 		f = (Function) s.getObject();
 		util.selectNodes(new GTreeNode[] { pNode, sNode });
@@ -291,10 +247,10 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testClone_WithFilter() throws Exception {
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		util.selectNode(gNode);
 
@@ -329,10 +285,10 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 		setFilterOptions(gTree, TextFilterStrategy.MATCHES_EXACTLY, false);
 		filter(gTree, "param_1");
 
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
+		GTreeNode globalsNode = rootNode.getChild("Globals");
+		util.expandNode(globalsNode);
 
-		GTreeNode gNode = fNode.getChild(1);
+		GTreeNode gNode = globalsNode.getChild("ghidra");
 		util.expandNode(gNode);
 		util.selectNode(gNode);
 

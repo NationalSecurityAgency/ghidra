@@ -19,8 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -208,5 +207,10 @@ public class StubSymbol implements Symbol {
 			fillListWithNamespacePath(parentNamespace, list);
 		}
 		list.add(namespace.getName());
+	}
+
+	@Override
+	public Library getLibrary() {
+		return null;
 	}
 }
