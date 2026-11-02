@@ -58,6 +58,12 @@ public enum Platform {
 	/// Identifies a FreeBSD ARM 64-bit OS
 	FREEBSD_ARM_64(OperatingSystem.FREE_BSD, Architecture.ARM_64, "freebsd_arm_64", ".so", ""),
 
+	/// Identifies a FreeBSD PowerPC 64-bit big-endian OS
+	FREEBSD_PPC_64(OperatingSystem.FREE_BSD, Architecture.POWERPC_64, "freebsd_ppc_64", ".so", ""),
+
+	/// Identifies a FreeBSD PowerPC 64-bit little-endian OS
+	FREEBSD_PPC_64LE(OperatingSystem.FREE_BSD, Architecture.POWERPC_64LE, "freebsd_ppc_64le", ".so", ""),
+
 	/// Identifies a OpenBSD x86 64-bit OS
 	OPENBSD_X86_64(OperatingSystem.OPEN_BSD, Architecture.X86_64, "openbsd_x86_64", ".so", ""),
 
