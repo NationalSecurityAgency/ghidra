@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.*;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -800,7 +800,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		TraceObject process = tb.obj("Processes[1]");
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 		waitForSwing();
 		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
@@ -819,7 +819,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		rmiCx.setLastSnapshot(tb.trace, 1);
 		traceManager.activateSnap(1);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, false);
 		traceManager.activateSnap(0);
 		waitForSwing();
 		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
@@ -1136,7 +1136,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		performAction(actionEdit);
@@ -1179,7 +1179,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		performAction(actionEdit);
@@ -1223,7 +1223,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		performAction(actionEdit);

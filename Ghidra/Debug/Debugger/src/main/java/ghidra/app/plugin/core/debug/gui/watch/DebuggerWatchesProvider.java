@@ -35,7 +35,6 @@ import db.Transaction;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
-import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
 import generic.theme.GColor;
@@ -394,7 +393,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	protected GhidraTable watchTable;
 	protected GhidraTableFilterPanel<DefaultWatchRow> watchFilterPanel;
 
-	ToggleDockingAction actionEnableEdits;
 	DockingAction actionApplyDataType;
 	DockingAction actionSelectRange;
 	DockingAction actionSelectAllReads;
@@ -533,11 +531,6 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	protected void createActions() {
-		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
-				.enabledWhen(c -> current.getTrace() != null)
-				.onAction(c -> {
-				})
-				.buildAndInstallLocal(this);
 		actionApplyDataType = ApplyDataTypeAction.builder(plugin)
 				.withContext(DebuggerWatchActionContext.class)
 				.enabledWhen(ctx -> current.getTrace() != null && selHasDataType(ctx))
@@ -1017,7 +1010,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	public boolean isEditsEnabled() {
-		return actionEnableEdits.isSelected();
+		if (currentTrace == null) {
+			return false;
+		}
+		return controlService.getCurrentMode(currentTrace).isEditable();
 	}
 
 	public void goToTime(TraceSchedule time) {

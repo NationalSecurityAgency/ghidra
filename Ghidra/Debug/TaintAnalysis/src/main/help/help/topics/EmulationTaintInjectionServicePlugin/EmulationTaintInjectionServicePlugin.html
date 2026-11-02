@@ -1,0 +1,41 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Emulation: Injecting Taint</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Emulation: Injecting Taint</H1>
+
+    <P>This plugin presents actions for injecting taint directly into the emulator's p-code.
+		Depending on the current context (decompiler, disassembly, or p-code instruction),
+		the actions select the left-most identifiable varnode and attempt to generate sleigh
+		instructions to be injected into the emulated stream.
+	</P>
+
+    <H2>Actions</H2>
+
+    <P>The plugin provides several actions which are enabled when the debugger's <A
+	href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">control-mode</A>
+	is set to emulation.</P>
+
+    <H3><A name="taint_by_arr"></A>Toggle taint by array</H3>
+
+    <P>This action toggles the taint of the given machine variable with an array of taint symbols,
+		as described in the <B>TaintPcodeUserOpLibrary</B>
+	</P>
+
+
+	<H3><A name="taint_by_var"></A>Toggle taint by var</H3>
+
+	<P>This action toggles the taint the given machine variable with a single taint symbol.
+	</P>
+
+   </BODY>
+</HTML>

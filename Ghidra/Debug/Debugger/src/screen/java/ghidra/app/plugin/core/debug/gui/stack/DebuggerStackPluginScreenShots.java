@@ -315,7 +315,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = controlService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();

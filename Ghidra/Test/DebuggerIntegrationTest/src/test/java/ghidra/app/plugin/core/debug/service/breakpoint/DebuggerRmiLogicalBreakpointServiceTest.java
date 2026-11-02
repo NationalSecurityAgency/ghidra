@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -39,8 +38,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
+import ghidra.trace.model.breakpoint.TraceBreakpointLocation;
+import ghidra.trace.model.breakpoint.TraceBreakpointSpec;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.TraceObject;
@@ -272,7 +272,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		traceManager.openTrace(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
 		// Needs to have a target or be emulated for the breakpoint service to care
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		TraceBreakpointLocation bpt;
 		try (Transaction tid = tb.startTransaction()) {
@@ -316,7 +316,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		traceManager.openTrace(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
 		// Needs to have a target or be emulated for the breakpoint service to care
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		TraceBreakpointLocation bpt;
 		try (Transaction tid = tb.startTransaction()) {
@@ -368,7 +368,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		traceManager.openTrace(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
 		// Needs to have a target or be emulated for the breakpoint service to care
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		createProgramFromTrace();
 		intoProject(program);
@@ -420,7 +420,7 @@ public class DebuggerRmiLogicalBreakpointServiceTest extends
 		traceManager.openTrace(tb.trace);
 		traceManager.activate(DebuggerCoordinates.NOWHERE.trace(tb.trace).snap(1));
 		// Needs to have a target or be emulated for the breakpoint service to care
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		createProgramFromTrace();
 		intoProject(program);

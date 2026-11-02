@@ -1230,9 +1230,20 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * @param trace the trace
 	 * @param mode the mode
+	 * @param canEdit allow edits to state
+	 */
+	default void setControlMode(Trace trace, ControlMode mode, boolean canEdit) {
+		requireService(DebuggerControlService.class).setCurrentMode(trace, mode, canEdit);
+	}
+
+	/**
+	 * Set the control mode of the given trace
+	 * 
+	 * @param trace the trace
+	 * @param mode the mode
 	 */
 	default void setControlMode(Trace trace, ControlMode mode) {
-		requireService(DebuggerControlService.class).setCurrentMode(trace, mode);
+		requireService(DebuggerControlService.class).setCurrentMode(trace, mode, mode.isEditable());
 	}
 
 	/**

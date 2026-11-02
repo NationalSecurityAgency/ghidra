@@ -319,4 +319,5 @@ public interface DebuggerEmulationService {
 	 * @param listener the listener
 	 */
 	void removeStateListener(EmulatorStateListener listener);
+
 }
