@@ -15,6 +15,8 @@
  */
 package ghidra.app.services;
 
+import generic.json.Json;
+
 public class QueryData {
 
 	/**
@@ -60,5 +62,10 @@ public class QueryData {
 
 	public static boolean hasWildCards(String query) {
 		return query.contains(ANY_STRING_WILDCARD) || query.contains(ANY_CHAR_WILDCARD);
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 }

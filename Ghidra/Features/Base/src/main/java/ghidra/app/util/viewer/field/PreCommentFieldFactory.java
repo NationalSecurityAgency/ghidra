@@ -22,8 +22,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.FieldUtils;
+import docking.widgets.fieldpanel.support.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -141,7 +140,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
+	public ProgramLocation getProgramLocation(int screenRow, int screenCol, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
 		if (!(obj instanceof CodeUnit)) {
 			return null;
@@ -152,8 +151,14 @@ public class PreCommentFieldFactory extends FieldFactory {
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();
 		}
+
+		ListingTextField btf = (ListingTextField) bf;
+		RowColLocation rowCol = btf.screenToDataLocation(screenRow, screenCol);
+		int dataRow = rowCol.row();
+		int dataCol = rowCol.col();
+
 		return new CommentFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, comment,
-			CommentType.PRE, row, col);
+			CommentType.PRE, dataRow, dataCol);
 	}
 
 	@Override
