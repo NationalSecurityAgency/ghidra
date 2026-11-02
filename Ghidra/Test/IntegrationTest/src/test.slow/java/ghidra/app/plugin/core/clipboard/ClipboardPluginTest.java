@@ -646,8 +646,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(currentLocation instanceof CommentFieldLocation);
 		commentFieldLocation = (CommentFieldLocation) currentLocation;
 		String[] comments = commentFieldLocation.getComment();
-		assertEquals(2, comments.length);
-		assertEquals(commentText, comments[0]);
+		assertEquals(3, comments.length);
+		assertEquals(commentText, comments[1]);
 	}
 
 	@Test
