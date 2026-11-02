@@ -94,15 +94,21 @@ public class DyldChainedFixups {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				symbol = SymbolUtilities.replaceInvalidChars(chainedImport.getName(), true);
-				libOrdinal = chainedImport.getLibOrdinal();
-				List<Symbol> globalSymbols = symbolTable.getGlobalSymbols(symbol);
-				if (globalSymbols.size() > 0) {
-					newChainValue = globalSymbols.getFirst().getAddress().getOffset();
-					newChainValue += isAuthenticated ? auth_value_add : addend;
+				newChainValue = null;
+				if (chainedImport != null) {
+					symbol = SymbolUtilities.replaceInvalidChars(chainedImport.getName(), true);
+					libOrdinal = chainedImport.getLibOrdinal();
+					List<Symbol> globalSymbols = symbolTable.getGlobalSymbols(symbol);
+					if (globalSymbols.size() > 0) {
+						newChainValue = globalSymbols.getFirst().getAddress().getOffset();
+						newChainValue += isAuthenticated ? auth_value_add : addend;
+					}
 				}
 				else {
-					newChainValue = null;
+					log.appendMsg(
+						"Chain ordinal 0x%x at offset 0x%x is outside of expected range [0, 0x%x]"
+								.formatted(chainOrdinal, chainLoc,
+									chainedImports.getImportsCount() - 1));
 				}
 			}
 			else {
