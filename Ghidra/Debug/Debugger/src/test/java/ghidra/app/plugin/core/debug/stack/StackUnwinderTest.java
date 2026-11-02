@@ -887,7 +887,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -947,7 +947,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -1179,7 +1179,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -1226,7 +1226,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();
@@ -1267,7 +1267,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();
@@ -1308,7 +1308,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();

@@ -280,6 +280,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 		createActions();
 		addDisplayListener(readsMemTrait.getDisplayListener());
+		setEditMode(true);
 
 		JPanel northPanel = new JPanel(new BorderLayout());
 		northPanel.add(locationLabel);
@@ -705,9 +706,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	}
 
 	protected void doGoToTracked() {
-		if (editModeAction.isSelected()) {
-			return;
-		}
+//		if (editModeAction.isSelected()) {
+//			return;
+//		}
 		ProgramLocation loc = trackingTrait.getTrackedLocation();
 		if (loc == null) {
 			return;
@@ -850,4 +851,10 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		options.setBytesPerLine(bytesPerLine);
 		updateConfigOptions(options, Set.of(hexColumn, "Chars"));
 	}
+
+	@Override
+	public boolean hasEditAction() {
+		return false;
+	}
+
 }

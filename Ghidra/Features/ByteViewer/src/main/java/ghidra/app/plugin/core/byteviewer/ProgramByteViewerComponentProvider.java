@@ -727,7 +727,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	}
 
 	@Override
-	void setEditMode(boolean isEditable) {
+	protected void setEditMode(boolean isEditable) {
 		super.setEditMode(isEditable);
 		enablePaste(isEditable);
 	}

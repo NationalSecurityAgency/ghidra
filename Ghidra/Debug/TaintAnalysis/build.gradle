@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
+apply from: "${rootProject.projectDir}/gradle/helpProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"

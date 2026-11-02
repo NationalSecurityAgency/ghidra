@@ -15,15 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.variable;
 
+import static docking.widgets.table.CustomToStringCellRenderer.CustomFont.*;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.Collectors;
+
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.*;
-import java.util.List;
-import java.util.function.*;
-import java.util.stream.Collectors;
 
 import db.Transaction;
 import docking.Tool;
@@ -41,8 +44,6 @@ import ghidra.trace.model.Trace;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
-
-import static docking.widgets.table.CustomToStringCellRenderer.CustomFont.MONOSPACED;
 
 public class DebuggerVariableViewerModel
 		extends ThreadedTableModelStub<AbstractDebuggerVariableViewerVarValue> {
@@ -356,7 +357,7 @@ public class DebuggerVariableViewerModel
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		if (getColumn(
 				columnIndex) instanceof AbstractDebuggerVariableColumn<?, ?> abstractDebuggerVariableColumn) {
-			return provider.actionEnableEdits.isSelected() &&
+			return provider.isEditable() &&
 					abstractDebuggerVariableColumn.isEditable() && getRowObject(rowIndex).canEdit();
 		}
 		return false;

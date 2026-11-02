@@ -263,7 +263,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		}
 		waitForDomainObject(tb.trace);
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		StateEditor editor = controlService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();

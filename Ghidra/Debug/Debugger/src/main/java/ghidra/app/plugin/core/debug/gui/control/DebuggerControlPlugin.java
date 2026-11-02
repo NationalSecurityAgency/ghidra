@@ -16,13 +16,12 @@
 package ghidra.app.plugin.core.debug.gui.control;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import docking.ActionContext;
 import docking.DockingContextListener;
-import docking.action.DockingAction;
-import docking.action.DockingActionIf;
+import docking.action.*;
 import docking.menu.ActionState;
-import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -30,13 +29,15 @@ import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
-import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.control.*;
+import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
@@ -70,7 +71,8 @@ import ghidra.util.Swing;
 	servicesRequired = {
 		DebuggerControlService.class,
 		DebuggerTraceManagerService.class,
-	})
+	}
+)
 public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		implements DockingContextListener {
 
@@ -110,7 +112,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
-	protected MultiStateDockingAction<ControlMode> actionControlMode;
+	protected ControlModeAction actionControlMode;
+	protected ToggleDockingAction actionEnableEdits;
 
 	DockingAction actionTargetResume;
 	DockingAction actionTargetInterrupt;
@@ -154,18 +157,12 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected Set<DockingAction> getActionSet(ControlMode mode) {
-		switch (mode) {
-			case RO_TARGET:
-			case RW_TARGET:
-				return actionsTargetAll;
-			case RO_TRACE:
-			case RW_TRACE:
-				return actionsTrace;
-			case RW_EMULATOR:
-				return actionsEmulate;
-			default:
-				throw new AssertionError();
-		}
+		return switch(mode) {
+			case TargetControlMode _ -> actionsTargetAll;
+			case TraceControlMode _ -> actionsTrace;
+			case EmulatorControlMode _ -> actionsEmulate;
+			default -> throw new AssertionError();
+		};
 	}
 
 	protected Set<DockingAction> getActionSet() {
@@ -222,6 +219,11 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	protected void createActions() {
 		actionControlMode = new ControlModeAction(this);
 		tool.addAction(actionControlMode);
+		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(this)
+				.enabledWhen(_ -> current.getTrace() != null)
+				.onAction(_ -> toggleEnableEdits())
+				.toolBarGroup(DebuggerResources.GROUP_CONTROL, "")
+				.buildAndInstall(tool);
 
 		actionTargetResume = TargetResumeAction.builder(this)
 				.build();
@@ -282,6 +284,13 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		updateActions();
 	}
 
+	private void toggleEnableEdits() {
+		ControlMode mode = computeCurrentControlMode();
+		mode.toggleEditable();
+		actionControlMode.setToolBarData(
+			new ToolBarData(mode.icon, DebuggerResources.GROUP_CONTROL, ""));
+	}
+
 	protected void addTargetStepExtActions(Target target) {
 		for (ActionEntry entry : target
 				.collectActions(ActionName.STEP_EXT, context,
@@ -337,7 +346,20 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (controlService == null) {
 			return;
 		}
-		controlService.setCurrentMode(current.getTrace(), state.getUserData());
+		ControlMode mode = state.getUserData();
+		controlService.setCurrentMode(current.getTrace(), mode, mode.isEditable());
+		if (mode instanceof EmulatorControlMode emode) {
+			// Post GP-3090, this can be replaced
+			Collection<EmulatorFactory> emulatorFactories = emulationService.getEmulatorFactories();
+			for (EmulatorFactory factory : emulatorFactories) {
+				if (emode.name.equals(factory.getTitle())) {
+					emulationService.setEmulatorFactory(factory);
+				}
+			}
+		}
+		actionControlMode.setToolBarData(
+			new ToolBarData(mode.icon, DebuggerResources.GROUP_CONTROL, ""));
+		actionEnableEdits.setSelected(mode.isEditable());
 		// TODO: Limit selectable modes?
 		// No sense showing Write Target, if the trace can never be live, again....
 	}
@@ -525,7 +547,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			return ControlMode.DEFAULT;
 		}
 		if (current.getTrace() == null) {
-			return ControlMode.DEFAULT;
+			return ControlMode.DEFAULT.getAlternative(current);
 		}
 		return controlService.getCurrentMode(current.getTrace());
 	}
@@ -590,12 +612,23 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	@AutoServiceConsumed
 	private void setEmulationService(DebuggerEmulationService emulationService) {
+		List<String> names = actionControlMode.getAllActionStates()
+				.stream()
+				.map(state -> state.getName())
+				.collect(Collectors.toList());
 		if (this.emulationService != null) {
 			this.emulationService.removeStateListener(listenerForEmuStateChanges);
 		}
 		this.emulationService = emulationService;
 		if (this.emulationService != null) {
 			this.emulationService.addStateListener(listenerForEmuStateChanges);
+			Collection<EmulatorFactory> emulatorFactories = emulationService.getEmulatorFactories();
+			for (EmulatorFactory factory : emulatorFactories) {
+				EmulatorControlMode m = new EmulatorControlMode(factory);
+				if (!names.contains(m.name)) {
+					actionControlMode.addActionState(new ActionState<>(m.name, m.icon, m));
+				}
+			}
 		}
 		updateActions();
 	}
@@ -610,4 +643,5 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			traceClosed(ev.getTrace());
 		}
 	}
+
 }

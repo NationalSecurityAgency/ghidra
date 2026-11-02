@@ -15,339 +15,47 @@
  */
 package ghidra.debug.api.control;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import db.Transaction;
-import generic.theme.GIcon;
-import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.memory.TraceMemoryOperations;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.program.TraceVariableSnapProgramView;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.model.time.schedule.TraceSchedule.ScheduleForm;
-import ghidra.trace.util.TraceRegisterUtils;
 
 /**
  * The control / state editing modes
  */
-public enum ControlMode {
-	/**
-	 * Control actions, breakpoint commands are directed to the target, but state edits are
-	 * rejected.
-	 */
-	RO_TARGET("Control Target w/ Edits Disabled", new GIcon(
-		"icon.debugger.control.mode.ro.target")) {
-		@Override
-		public boolean isTarget() {
-			return true;
-		}
+public abstract class ControlMode {
 
-		@Override
-		public boolean followsPresent() {
-			return true;
-		}
+	// LATER: these should be instance fields of the plugin
+	private static final List<ControlMode> ALL_INTERNAL = new ArrayList<>();
+	public static final List<ControlMode> ALL = Collections.unmodifiableList(ALL_INTERNAL);
 
-		@Override
-		public boolean canEdit(DebuggerCoordinates coordinates) {
-			return false;
-		}
+	public static final TargetControlMode TARGET = new TargetControlMode();
+	public static final TraceControlMode TRACE = new TraceControlMode();
+	public static final EmulatorControlMode EMULATOR = new EmulatorControlMode();
 
-		@Override
-		public boolean isVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			return false;
-		}
-
-		@Override
-		public CompletableFuture<Void> setVariable(PluginTool tool,
-				DebuggerCoordinates coordinates, Address address, byte[] data) {
-			return CompletableFuture.failedFuture(new MemoryAccessException("Read-only mode"));
-		}
-
-		@Override
-		public boolean useEmulatedBreakpoints() {
-			return false;
-		}
-
-		@Override
-		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAlive();
-		}
-
-		@Override
-		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
-			return RW_EMULATOR;
-		}
-	},
-	/**
-	 * Control actions, breakpoint commands, and state edits are all directed to the target.
-	 */
-	RW_TARGET("Control Target", new GIcon("icon.debugger.control.mode.rw.target")) {
-		@Override
-		public boolean isTarget() {
-			return true;
-		}
-
-		@Override
-		public boolean followsPresent() {
-			return true;
-		}
-
-		@Override
-		public boolean canEdit(DebuggerCoordinates coordinates) {
-			return coordinates.isAliveAndPresent();
-		}
-
-		@Override
-		public boolean isVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			if (!coordinates.isAliveAndPresent()) {
-				return false;
-			}
-			Target target = coordinates.getTarget();
-			return target.isVariableExists(platformFor(coordinates, address),
-				coordinates.getThread(), coordinates.getFrame(), address, length);
-		}
-
-		@Override
-		public CompletableFuture<Void> setVariable(PluginTool tool,
-				DebuggerCoordinates coordinates, Address address, byte[] data) {
-			Target target = coordinates.getTarget();
-			if (target == null) {
-				return CompletableFuture
-						.failedFuture(new MemoryAccessException("Trace has no live target"));
-			}
-			if (!coordinates.isAliveAndPresent()) {
-				return CompletableFuture
-						.failedFuture(new MemoryAccessException("View is not the present"));
-			}
-			return target.writeVariableAsync(platformFor(coordinates, address),
-				coordinates.getThread(), coordinates.getFrame(), address, data);
-		}
-
-		@Override
-		public boolean useEmulatedBreakpoints() {
-			return false;
-		}
-
-		@Override
-		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAlive();
-		}
-
-		@Override
-		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
-			return RW_EMULATOR;
-		}
-	},
-	/**
-	 * Control actions activate trace snapshots, breakpoint commands are directed to the emulator,
-	 * and state edits are rejected.
-	 */
-	RO_TRACE("Control Trace w/ Edits Disabled", new GIcon("icon.debugger.control.mode.ro.trace")) {
-		@Override
-		public boolean isTarget() {
-			return false;
-		}
-
-		@Override
-		public boolean followsPresent() {
-			return false;
-		}
-
-		@Override
-		public boolean canEdit(DebuggerCoordinates coordinates) {
-			return false;
-		}
-
-		@Override
-		public boolean isVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			return false;
-		}
-
-		@Override
-		public CompletableFuture<Void> setVariable(PluginTool tool,
-				DebuggerCoordinates coordinates, Address address, byte[] data) {
-			return CompletableFuture.failedFuture(new MemoryAccessException("Read-only mode"));
-		}
-
-		@Override
-		public boolean useEmulatedBreakpoints() {
-			return true;
-		}
-	},
-	/**
-	 * Control actions activate trace snapshots, breakpoint commands are directed to the emulator,
-	 * and state edits modify the current trace snapshot.
-	 */
-	RW_TRACE("Control Trace", new GIcon("icon.debugger.control.mode.rw.trace")) {
-		@Override
-		public boolean isTarget() {
-			return false;
-		}
-
-		@Override
-		public boolean followsPresent() {
-			return false;
-		}
-
-		@Override
-		public boolean canEdit(DebuggerCoordinates coordinates) {
-			return coordinates.getTrace() != null;
-		}
-
-		@Override
-		public boolean isVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			return address.isMemoryAddress() || coordinates.getThread() != null;
-		}
-
-		@Override
-		public CompletableFuture<Void> setVariable(PluginTool tool,
-				DebuggerCoordinates coordinates, Address guestAddress, byte[] data) {
-			Trace trace = coordinates.getTrace();
-			TracePlatform platform = platformFor(coordinates, guestAddress);
-			long snap = coordinates.getViewSnap();
-			Address hostAddress = platform.mapGuestToHost(guestAddress);
-			if (hostAddress == null) {
-				throw new IllegalArgumentException(
-					"Guest address " + guestAddress + " is not mapped");
-			}
-			TraceMemoryOperations memOrRegs;
-			Address overlayAddress;
-			try (Transaction tx = trace.openTransaction("Edit Variable")) {
-				if (hostAddress.isRegisterAddress()) {
-					TraceThread thread = coordinates.getThread();
-					if (thread == null) {
-						throw new IllegalArgumentException("Register edits require a thread.");
-					}
-					TraceMemorySpace regs = trace.getMemoryManager()
-							.getMemoryRegisterSpace(thread, coordinates.getFrame(),
-								true);
-					memOrRegs = regs;
-					overlayAddress = regs.getAddressSpace().getOverlayAddress(hostAddress);
-				}
-				else {
-					memOrRegs = trace.getMemoryManager();
-					overlayAddress = hostAddress;
-				}
-				if (memOrRegs.putBytes(snap, overlayAddress,
-					ByteBuffer.wrap(data)) != data.length) {
-					return CompletableFuture.failedFuture(new MemoryAccessException());
-				}
-			}
-			return CompletableFuture.completedFuture(null);
-		}
-
-		@Override
-		public boolean useEmulatedBreakpoints() {
-			return true;
-		}
-	},
-	/**
-	 * Control actions, breakpoint commands, and state edits are directed to the emulator.
-	 * 
-	 * <p>
-	 * Edits are accomplished by appending patch steps to the current schedule and activating that
-	 * schedule.
-	 */
-	RW_EMULATOR("Control Emulator", new GIcon("icon.debugger.control.mode.rw.emulator")) {
-		@Override
-		public boolean isTarget() {
-			return false;
-		}
-
-		@Override
-		public boolean followsPresent() {
-			return false;
-		}
-
-		@Override
-		public boolean canEdit(DebuggerCoordinates coordinates) {
-			return coordinates.getTrace() != null;
-		}
-
-		@Override
-		public boolean isVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			if (coordinates.getThread() == null) {
-				// A limitation in TraceSchedule, which is used to manifest patches
-				return false;
-			}
-			if (!RW_TRACE.isVariableEditable(coordinates, address, length)) {
-				return false;
-			}
-			// TODO: Limitation from using Sleigh for patching
-			Register ctxReg = coordinates.getTrace().getBaseLanguage().getContextBaseRegister();
-			if (ctxReg == Register.NO_CONTEXT) {
-				return true;
-			}
-			AddressRange ctxRange = TraceRegisterUtils.rangeForRegister(ctxReg);
-			if (ctxRange.contains(address)) {
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public CompletableFuture<Void> setVariable(PluginTool tool,
-				DebuggerCoordinates coordinates, Address address, byte[] data) {
-			if (!(coordinates.getView() instanceof TraceVariableSnapProgramView)) {
-				throw new IllegalArgumentException("Cannot emulate using a Fixed Program View");
-			}
-			TraceThread thread = coordinates.getThread();
-			if (thread == null) {
-				// TODO: Well, technically, only for register edits
-				// It's a limitation in TraceSchedule. Every step requires a thread
-				throw new IllegalArgumentException("Emulator edits require a thread.");
-			}
-			Language language = coordinates.getPlatform().getLanguage();
-			TraceSchedule time = coordinates.getTime()
-					.patched(thread, language,
-						PatchStep.generateSleigh(language, address, data));
-
-			DebuggerCoordinates withTime = coordinates.time(time);
-			DebuggerTraceManagerService traceManager =
-				Objects.requireNonNull(tool.getService(DebuggerTraceManagerService.class),
-					"No trace manager service");
-
-			return traceManager.activateAndNotify(withTime, ActivationCause.EMU_STATE_EDIT);
-		}
-
-		@Override
-		public boolean useEmulatedBreakpoints() {
-			return true;
-		}
-	};
-
-	public static final List<ControlMode> ALL = List.of(values());
-	public static final ControlMode DEFAULT = RO_TARGET;
+	public static final ControlMode DEFAULT = TARGET;
 
 	public final String name;
-	public final Icon icon;
+	public Icon icon;
+	public Icon iconEditable;
+	public Icon iconUneditable;
+	protected boolean isEditEnabled = false;
 
-	private ControlMode(String name, Icon icon) {
+	protected ControlMode(String name, Icon iconEditable, Icon iconUneditable) {
 		this.name = name;
-		this.icon = icon;
+		this.icon = iconUneditable;
+		this.iconEditable = iconEditable;
+		this.iconUneditable = iconUneditable;
+		ALL_INTERNAL.add(this);
 	}
 
 	/**
@@ -478,7 +186,7 @@ public enum ControlMode {
 	 * If the mode can no longer be selected for new coordinates, get the new mode
 	 * 
 	 * <p>
-	 * For example, if a target terminates while the mode is {@link #RO_TARGET}, this specifies the
+	 * For example, if a target terminates while the mode is {@link #TARGET}, this specifies the
 	 * new mode.
 	 * 
 	 * @param coordinates the new coordinates
@@ -511,4 +219,32 @@ public enum ControlMode {
 	 * @return true if it controls the target
 	 */
 	public abstract boolean isTarget();
+
+	/**
+	 * Toggles canEdit and associated icon
+	 */
+	public void toggleEditable() {
+		isEditEnabled = !isEditEnabled;
+		icon = isEditEnabled ? iconEditable : iconUneditable;
+	}
+
+	/**
+	 * Does the mode support editing 
+	 * 
+	 * @return true if editable, false if not
+	 */
+	public boolean isEditable() {
+		return isEditEnabled;
+	}
+
+	/**
+	 * Set the mode as editable
+	 * 
+	 * @param editable is editable
+	 */
+	public void setEditable(boolean editable) {
+		this.isEditEnabled = editable;
+		icon = isEditEnabled ? iconEditable : iconUneditable;
+	}
+
 }

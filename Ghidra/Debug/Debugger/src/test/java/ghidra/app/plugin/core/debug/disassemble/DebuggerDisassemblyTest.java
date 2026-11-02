@@ -623,7 +623,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -651,7 +651,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		// Don't cheat here and choose v8T!
 		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -683,7 +683,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -713,7 +713,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -762,7 +762,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 		createTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -781,7 +781,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 		TraceThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -800,7 +800,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 		TraceThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));

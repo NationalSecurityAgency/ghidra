@@ -16,32 +16,23 @@
 package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import javax.swing.Icon;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
 
 import db.Transaction;
-import docking.ActionContext;
-import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
-import docking.action.builder.ActionBuilder;
-import docking.action.builder.ToggleActionBuilder;
-import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.emulation.DebuggerEmulateFunctionDialog;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
@@ -50,6 +41,7 @@ import ghidra.debug.api.emulation.EmulatorFactory;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -63,25 +55,24 @@ import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.*;
+import ghidra.program.model.listing.ProgramUserData;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.CommonSet;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.trace.model.time.schedule.Scheduler.RunResult;
-import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
+import ghidra.util.xml.XmlUtilities;
 
 @PluginInfo(
 	shortDescription = "Debugger Emulation Service Plugin",
@@ -100,114 +91,17 @@ import ghidra.util.task.TaskMonitor;
 	},
 	servicesProvided = {
 		DebuggerEmulationService.class
-	})
+	}
+)
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
+	protected static final String KEY_DBGEMU = "DBGEMU";
+	protected static final String PREFIX_DBGEMU = "DBGEMU";
+	protected static final String KEY_LAST = "last";
+
 	protected static final int MAX_CACHE_SIZE = 5;
 
-	private static final AutoConfigState.ClassHandler<
-		DebuggerEmulationServicePlugin> CONFIG_STATE_HANDLER =
-			AutoConfigState.wireHandler(DebuggerEmulationServicePlugin.class,
-				MethodHandles.lookup());
-
-	public interface EmulateProgramAction {
-		String NAME = "Emulate Program in new Trace";
-		String DESCRIPTION = "Emulate the current program in a new trace starting at the cursor";
-		Icon ICON = DebuggerResources.ICON_EMULATE;
-		String GROUP = DebuggerResources.GROUP_GENERAL;
-		String HELP_ANCHOR = "emulate_program";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.menuIcon(ICON)
-					.menuGroup(GROUP)
-					.popupMenuPath(NAME)
-					.popupMenuIcon(ICON)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateFunctionAction {
-		String NAME = "Emulate Function";
-		String DESCRIPTION = "Emulate the current function in a new trace";
-		Icon ICON = DebuggerResources.ICON_EMULATE;
-		String GROUP = DebuggerResources.GROUP_GENERAL;
-		String HELP_ANCHOR = "emulate_function";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.menuIcon(ICON)
-					.menuGroup(GROUP)
-					.popupMenuPath(NAME)
-					.popupMenuIcon(ICON)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateAddThreadAction {
-		String NAME = "Add Emulated Thread to Trace";
-		String DESCRIPTION = "Add an emulated thread to the current trace starting here";
-		Icon ICON = DebuggerResources.ICON_THREAD;
-		String GROUP = DebuggerResources.GROUP_GENERAL;
-		String HELP_ANCHOR = "add_emulated_thread";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.menuIcon(ICON)
-					.menuGroup(GROUP)
-					.popupMenuPath(NAME)
-					.popupMenuIcon(ICON)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ConfigureEmulatorAction {
-		String NAME = "Configure Emulator";
-		String DESCRIPTION = "Choose and configure the current emulator";
-		String GROUP = DebuggerResources.GROUP_GENERAL;
-		String HELP_ANCHOR = "configure_emulator";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface InvalidateEmulatorCacheAction {
-		String NAME = "Invalidate Emulator Cache";
-		String DESCRIPTION =
-			"Prevent the emulation service from using cached snapshots from the current trace";
-		String GROUP = DebuggerResources.GROUP_MAINTENANCE;
-		String HELP_ANCHOR = "invalidate_cache";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(DebuggerPluginPackage.NAME, ConfigureEmulatorAction.NAME, NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	protected static class CacheKey implements Comparable<CacheKey> {
-		// TODO: Should key on platform, not trace
+
 		protected final Trace trace;
 		protected final TracePlatform platform;
 		protected final TraceSchedule time;
@@ -333,8 +227,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	protected final NavigableMap<CacheKey, CachedEmulator> cache = new TreeMap<>();
 	protected final AsyncLazyMap<CacheKey, Long> requests =
 		new AsyncLazyMap<>(new HashMap<>(), this::doBackgroundEmulate)
-				.forgetErrors((key, t) -> true)
-				.forgetValues((key, l) -> true);
+				.forgetErrors((_, _) -> true)
+				.forgetValues((_, _) -> true);
 	protected final Map<CachedEmulator, Integer> busy = new LinkedHashMap<>();
 	protected final ListenerSet<EmulatorStateListener> stateListeners =
 		new ListenerSet<>(EmulatorStateListener.class, true);
@@ -393,17 +287,28 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private DebuggerStaticMappingService staticMappings;
 	@AutoServiceConsumed
 	private DebuggerControlService controlService;
+	@AutoServiceConsumed
+	private EmulationTaintInjectionService taintService;
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	DockingAction actionEmulateProgram;
-	DockingAction actionEmulateFunction;
-	DockingAction actionEmulateAddThread;
-	DockingAction actionInvalidateCache;
+	String EMULATE_PROGRAM = "Emulate Program";
+	String EMULATE_TARGET = "Emulate Target";
+	String EMULATE_FUNCTION = "Emulate Function";
+	String ADD_THREAD = "Add Emulated Thread to Trace";
+	String INVALIDATE_CACHE = "Invalidate Emulator Cache";
+
 	Map<Class<? extends EmulatorFactory>, ToggleDockingAction> actionsChooseEmulatorFactory =
 		new HashMap<>();
+	private Map<String, EmulatorFactory> emulatorMap = new HashMap<>();
 
-	final ChangeListener classChangeListener = this::classesChanged;
+	protected EmulateMultiAction emulateAction;
+	// We add these to the tool independently as menu items with a null
+	//  program to signal viewer dependent behavior
+	protected EmulateProgramAction emulateProgramAction;
+	protected EmulateFunctionAction emulateFunctionAction;
+
+	protected SaveState toolLaunchConfigs = new SaveState();
 
 	public DebuggerEmulationServicePlugin(PluginTool tool) {
 		super(tool);
@@ -417,223 +322,30 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	protected void createActions() {
-		actionEmulateProgram = EmulateProgramAction.builder(this)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::emulateProgramEnabled)
-				.popupWhen(this::emulateProgramEnabled)
-				.onAction(this::emulateProgramActivated)
-				.buildAndInstall(tool);
-		actionEmulateFunction = EmulateFunctionAction.builder(this)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::emulateFunctionEnabled)
-				.popupWhen(this::emulateFunctionEnabled)
-				.onAction(this::emulateFunctionActivated)
-				.buildAndInstall(tool);
-		actionEmulateAddThread = EmulateAddThreadAction.builder(this)
-				.withContext(ProgramLocationActionContext.class)
-				.enabledWhen(this::emulateAddThreadEnabled)
-				.popupWhen(this::emulateAddThreadEnabled)
-				.onAction(this::emulateAddThreadActivated)
-				.buildAndInstall(tool);
-		actionInvalidateCache = InvalidateEmulatorCacheAction.builder(this)
-				.enabledWhen(this::invalidateCacheEnabled)
-				.onAction(this::invalidateCacheActivated)
-				.buildAndInstall(tool);
-		ClassSearcher.addChangeListener(classChangeListener);
-		updateConfigureEmulatorStates();
+		emulateAction = new EmulateMultiAction(this);
+		tool.addAction(emulateAction);
+
+		emulateProgramAction = new EmulateProgramAction(this, null);
+		tool.addAction(emulateProgramAction);
+
+		emulateFunctionAction = new EmulateFunctionAction(this, null);
+		tool.addAction(emulateFunctionAction);
 	}
 
-	private void classesChanged(ChangeEvent e) {
-		updateConfigureEmulatorStates();
-	}
+	protected void tryEmulatorFromMode(Trace trace) {
+		if (controlService != null && trace != null) {
+			ControlMode mode = controlService.getCurrentMode(trace);
+			emulatorFactory = emulatorMap.get(mode.name);
 
-	private ToggleDockingAction createActionChooseEmulator(EmulatorFactory factory) {
-		ToggleDockingAction action = ConfigureEmulatorAction.builder(this)
-				.menuPath(DebuggerPluginPackage.NAME, ConfigureEmulatorAction.NAME,
-					factory.getTitle())
-				.onAction(ctx -> configureEmulatorActivated(factory))
-				.buildAndInstall(tool);
-		String[] path = action.getMenuBarData().getMenuPath();
-		tool.setMenuGroup(Arrays.copyOf(path, path.length - 1), "zz");
-		return action;
-	}
-
-	private void updateConfigureEmulatorStates() {
-		Map<Class<? extends EmulatorFactory>, EmulatorFactory> byClass =
-			getEmulatorFactories().stream()
-					.collect(Collectors.toMap(EmulatorFactory::getClass, Objects::requireNonNull));
-		Iterator<Entry<Class<? extends EmulatorFactory>, ToggleDockingAction>> it =
-			actionsChooseEmulatorFactory.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<Class<? extends EmulatorFactory>, ToggleDockingAction> ent = it.next();
-			if (!byClass.keySet().contains(ent.getKey())) {
-				tool.removeAction(ent.getValue());
-			}
-		}
-		for (Entry<Class<? extends EmulatorFactory>, EmulatorFactory> ent : byClass.entrySet()) {
-			if (!actionsChooseEmulatorFactory.containsKey(ent.getKey())) {
-				ToggleDockingAction action = createActionChooseEmulator(ent.getValue());
-				action.setSelected(ent.getKey() == emulatorFactory.getClass());
-				actionsChooseEmulatorFactory.put(ent.getKey(), action);
-			}
-		}
-	}
-
-	private boolean emulateProgramEnabled(ProgramLocationActionContext ctx) {
-		Program program = ctx.getProgram();
-		// To avoid confusion of "forked from trace," only permit action from static context
-		if (program == null || program instanceof TraceProgramView) {
-			return false;
-		}
-		/*MemoryBlock block = program.getMemory().getBlock(ctx.getAddress());
-		if (!block.isExecute()) {
-			return false;
-		}*/
-		return true;
-	}
-
-	private void emulateProgramActivated(ProgramLocationActionContext ctx) {
-		Program program = ctx.getProgram();
-		if (program == null) {
-			return;
-		}
-		Trace trace = null;
-		try {
-			trace = ProgramEmulationUtils.launchEmulationTrace(program, ctx.getAddress(), this);
-			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
-			if (controlService != null) {
-				controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
-			}
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, actionEmulateProgram.getDescription(),
-				"Could not create trace for emulation", e);
-		}
-		finally {
-			if (trace != null) {
-				trace.release(this);
-			}
-		}
-	}
-
-	private boolean emulateFunctionEnabled(ProgramLocationActionContext ctx) {
-		Program program = ctx.getProgram();
-		Address address = ctx.getAddress();
-		if (program == null || program instanceof TraceProgramView || address == null) {
-			return false;
-		}
-		Function function = program.getFunctionManager().getFunctionContaining(address);
-		if (function == null) {
-			return false;
-		}
-		return true;
-	}
-
-	private void emulateFunctionActivated(ProgramLocationActionContext ctx) {
-		Program program = ctx.getProgram();
-		Address address = ctx.getAddress();
-		if (program == null || address == null) {
-			return;
-		}
-		Function function = program.getFunctionManager().getFunctionContaining(address);
-		if (function == null) {
-			return;
-		}
-		tool.showDialog(new DebuggerEmulateFunctionDialog(tool, function));
-	}
-
-	private boolean emulateAddThreadEnabled(ProgramLocationActionContext ctx) {
-		Program programOrView = ctx.getProgram();
-		if (programOrView instanceof TraceProgramView view) {
-			if (!ProgramEmulationUtils.isEmulatedProgram(view.getTrace())) {
-				return false;
-			}
-			/*MemoryBlock block = view.getMemory().getBlock(ctx.getAddress());
-			return block.isExecute();*/
-			return true;
-		}
-
-		// Action was probably activated in a static listing.
-		// Bail if current trace is not emulated. Otherwise map and check region.
-		DebuggerCoordinates current = traceManager.getCurrent();
-		if (current.getTrace() == null ||
-			!ProgramEmulationUtils.isEmulatedProgram(current.getTrace())) {
-			return false;
-		}
-		ProgramLocation programLoc = ctx.getLocation();
-		if (programLoc == null) {
-			return false;
-		}
-		TraceLocation traceLoc = staticMappings.getOpenMappedLocation(
-			current.getTrace(), programLoc, current.getSnap());
-		if (traceLoc == null) {
-			return false;
-		}
-		/*TraceMemoryRegion region = current.getTrace()
-				.getMemoryManager()
-				.getRegionContaining(current.getSnap(), traceLoc.getAddress());
-		return region != null && region.isExecute();*/
-		return true;
-	}
-
-	private void emulateAddThreadActivated(ProgramLocationActionContext ctx) {
-		Program programOrView = ctx.getProgram();
-		if (programOrView instanceof TraceProgramView view) {
-			Trace trace = view.getTrace();
-			Address tracePc = ctx.getAddress();
-
-			/*MemoryBlock block = view.getMemory().getBlock(tracePc);
-			if (!block.isExecute()) {
-				return;
-			}*/
-
-			long snap =
-				view.getViewport().getOrderedSnaps().stream().filter(s -> s >= 0).findFirst().get();
-			ProgramLocation progLoc = staticMappings.getOpenMappedLocation(
-				new DefaultTraceLocation(trace, null, Lifespan.at(snap), tracePc));
-			Program program = progLoc == null ? null : progLoc.getProgram();
-			Address programPc = progLoc == null ? null : progLoc.getAddress();
-
-			TraceThread thread = ProgramEmulationUtils.launchEmulationThread(trace, snap, program,
-				tracePc, programPc);
-			traceManager.activateThread(thread);
-		}
-		else {
-			Program program = programOrView;
-			Address programPc = ctx.getAddress();
-
-			DebuggerCoordinates current = traceManager.getCurrent();
-			long snap = current.getSnap();
-			Trace trace = current.getTrace();
-			TraceLocation traceLoc =
-				staticMappings.getOpenMappedLocation(trace, ctx.getLocation(), snap);
-			if (traceLoc == null) {
+			if (emulatorFactory == null) {
+				mode = ControlMode.EMULATOR;
+				emulatorFactory = new DefaultEmulatorFactory();
+				defaultEmulator = emulatorFactory.getTitle();
+				controlService.setCurrentMode(trace, mode, mode.isEditable());
 				return;
 			}
-			Address tracePc = traceLoc.getAddress();
-			/*TraceMemoryRegion region =
-				trace.getMemoryManager().getRegionContaining(snap, tracePc);
-			if (region == null || !region.isExecute()) {
-				return;
-			}*/
-			TraceThread thread = ProgramEmulationUtils.launchEmulationThread(trace, snap, program,
-				tracePc, programPc);
-			traceManager.activateThread(thread);
+			defaultEmulator = emulatorFactory.getTitle();
 		}
-	}
-
-	private boolean invalidateCacheEnabled(ActionContext ignored) {
-		return traceManager.getCurrentTrace() != null;
-	}
-
-	private void invalidateCacheActivated(ActionContext ignored) {
-		invalidateCache();
-	}
-
-	private void configureEmulatorActivated(EmulatorFactory factory) {
-		// TODO: Pull up config page. Tool Options? Program/Trace Options?
-		setEmulatorFactory(factory);
 	}
 
 	@Override
@@ -641,7 +353,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		DebuggerCoordinates current = traceManager.getCurrent();
 		Trace trace = current.getTrace();
 		long version = trace.getEmulatorCacheVersion();
-		try (Transaction tx = trace.openTransaction("Invalidate Emulator Cache")) {
+		try (Transaction _ = trace.openTransaction("Invalidate Emulator Cache")) {
 			trace.setEmulatorCacheVersion(version + 1);
 		}
 		// Do not call clearUndo() here. This is supposed to be undoable.
@@ -660,6 +372,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	public synchronized void setEmulatorFactory(EmulatorFactory factory) {
 		emulatorFactory = Objects.requireNonNull(factory);
 		defaultEmulator = emulatorFactory.getTitle();
+		emulatorMap.put(defaultEmulator, factory);
 		for (ToggleDockingAction toggle : actionsChooseEmulatorFactory.values()) {
 			toggle.setSelected(false);
 		}
@@ -754,6 +467,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		Trace trace = key.trace;
 		TracePlatform platform = key.platform;
 		TraceSchedule time = key.time;
+		tryEmulatorFromMode(trace);
 
 		TraceSnapshot tracePrefix = trace.getTimeManager().findSnapshotWithNearestPrefix(time);
 		if (tracePrefix != null && tracePrefix.isSnapOnly(true)) {
@@ -779,6 +493,9 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				emu.clearAllInjects();
 				emu.clearAccessBreakpoints();
 				emu.setSuspended(false);
+				if (taintService != null) {
+					taintService.injectTaint(be.ce.emulator());
+				}
 				installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 
 				monitor.initialize(time.totalTickCount() - prevKey.time.totalTickCount());
@@ -796,6 +513,9 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 		PcodeMachine<?> emu = emulatorFactory.create(from, writer);
 		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu, writer))) {
+			if (taintService != null) {
+				taintService.injectTaint(be.ce.emulator());
+			}
 			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 			monitor.initialize(time.totalTickCount() -
 				(tracePrefix != null ? tracePrefix.getSchedule().totalTickCount() : 0));
@@ -829,7 +549,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
 		TraceSnapshot destSnap;
-		try (Transaction tx = key.trace.openTransaction("Emulate")) {
+		try (Transaction _ = key.trace.openTransaction("Emulate")) {
 			destSnap = key.trace.getTimeManager().findScratchSnapshot(key.time);
 			destSnap.setDescription("Emulated");
 			try {
@@ -885,7 +605,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		// Cause object-register support to copy values into new register spaces
 		// TODO: I wish this were not necessary
 		monitor.setMessage("Creating register spaces");
-		try (Transaction tx = trace.openTransaction("Prepare emulation")) {
+		try (Transaction _ = trace.openTransaction("Prepare emulation")) {
 			for (TraceThread thread : time.getThreads(trace)) {
 				trace.getMemoryManager().getMemoryRegisterSpace(thread, 0, true);
 			}
@@ -960,6 +680,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	public EmulationResult run(TracePlatform platform, TraceSchedule from, TaskMonitor monitor,
 			Scheduler scheduler) throws CancelledException {
 		Trace trace = platform.getTrace();
+		tryEmulatorFromMode(trace);
 		requireOpen(trace);
 		return doRun(new CacheKey(platform, from), monitor, scheduler);
 	}
@@ -1014,18 +735,167 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	protected void executeTask(Task task) {
+		ProgressService progressService = tool.getService(ProgressService.class);
+		if (progressService != null) {
+			progressService.execute(task);
+		}
+		else {
+			tool.execute(task);
+		}
+	}
+
+	protected static String getProgramName(Program program) {
+		if (program == null) {
+			return "";
+		}
+		DomainFile df = program.getDomainFile();
+		if (df != null) {
+			return df.getName();
+		}
+		return program.getName();
+	}
+
 	@Override
 	public void readConfigState(SaveState saveState) {
-		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
-
-		for (ToggleDockingAction toggle : actionsChooseEmulatorFactory.values()) {
-			toggle.setSelected(toggle.getMenuBarData().getMenuItemName().equals(defaultEmulator));
+		super.readConfigState(saveState);
+		SaveState read = saveState.getSaveState(KEY_DBGEMU);
+		if (read != null) {
+			toolLaunchConfigs = read;
 		}
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
-		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+		super.writeConfigState(saveState);
+		if (toolLaunchConfigs != null) {
+			saveState.putSaveState(KEY_DBGEMU, toolLaunchConfigs);
+		}
+	}
+
+	protected SaveState readProgramLaunchConfig(Program program, String actionName,
+			boolean forPrompt) {
+		SaveState state = readToolLaunchConfig(actionName);
+		if (program == null) {
+			return state;
+		}
+		ProgramUserData userData = program.getProgramUserData();
+		String property = userData.getStringProperty(PREFIX_DBGEMU + actionName, null);
+		if (property == null) {
+			return state;
+		}
+		try {
+			Element element = XmlUtilities.fromString(property);
+			return new SaveState(element);
+		}
+		catch (JDOMException | IOException e) {
+			if (forPrompt) {
+				Msg.error(this,
+					"Saved launcher args are corrupt, or launcher parameters changed. Defaulting.",
+					e);
+				return state;
+			}
+			throw new RuntimeException(
+				"Saved launcher args are corrupt, or launcher parameters changed. Not launching.",
+				e);
+		}
+	}
+
+	protected SaveState readToolLaunchConfig(String actionName) {
+		if (!toolLaunchConfigs.hasValue(actionName)) {
+			return new SaveState();
+		}
+		return toolLaunchConfigs.getSaveState(actionName);
+	}
+
+	protected void writeProgramLaunchConfig(Program program, String actionName, SaveState state) {
+		if (program == null) {
+			writeToolLaunchConfig(actionName, state);
+			return;
+		}
+		ProgramUserData userData = program.getProgramUserData();
+		state.putLong(KEY_LAST, System.currentTimeMillis());
+		try (Transaction _ = userData.openTransaction()) {
+			Element element = state.saveToXml();
+			userData.setStringProperty(PREFIX_DBGEMU + actionName, XmlUtilities.toString(element));
+		}
+	}
+
+	protected void writeToolLaunchConfig(String actionName, SaveState state) {
+		state.putLong(KEY_LAST, System.currentTimeMillis());
+		toolLaunchConfigs.putSaveState(actionName, state);
+	}
+
+	protected record ConfigLast(String configName, long last, Program program) {}
+
+	protected ConfigLast checkSavedConfig(Program program, ProgramUserData userData,
+			String propName) {
+		if (!propName.startsWith(PREFIX_DBGEMU)) {
+			return null;
+		}
+		String configName = propName.substring(PREFIX_DBGEMU.length());
+		String propVal = Objects.requireNonNull(
+			userData.getStringProperty(propName, null));
+		Element element;
+		try {
+			element = XmlUtilities.fromString(propVal);
+		}
+		catch (JDOMException | IOException e) {
+			Msg.error(this, "Could not load launcher config for " + configName + ": " + e, e);
+			return null;
+		}
+		return checkSavedConfig(program, configName, new SaveState(element));
+	}
+
+	protected ConfigLast checkSavedConfig(Program program, String saveName, SaveState state) {
+		if (!state.hasValue(KEY_LAST)) {
+			return null;
+		}
+		return new ConfigLast(saveName, state.getLong(KEY_LAST, 0), program);
+	}
+
+	protected Stream<ConfigLast> streamSavedConfigs(Program program) {
+		if (program == null) {
+			return Stream.of(toolLaunchConfigs.getNames())
+					.map(n -> checkSavedConfig(null, n, toolLaunchConfigs.getSaveState(n)))
+					.filter(c -> c != null);
+		}
+		ProgramUserData userData = program.getProgramUserData();
+		return userData.getStringPropertyNames()
+				.stream()
+				.map(n -> checkSavedConfig(program, userData, n))
+				.filter(c -> c != null);
+	}
+
+	protected ConfigLast findMostRecentConfig() {
+		return Stream.concat(Stream.of(tool.getService(ProgramManager.class).getAllOpenPrograms())
+				.flatMap(this::streamSavedConfigs),
+			this.streamSavedConfigs(null))
+				.max(Comparator.comparing(c -> c.last))
+				.orElse(null);
+	}
+
+	protected Map<String, Long> loadSavedConfigs(Program program) {
+		return streamSavedConfigs(program)
+				.collect(Collectors.toMap(c -> c.configName(), c -> c.last()));
+	}
+
+	public DebuggerTraceManagerService getTraceManager() {
+		return traceManager;
+	}
+
+	public DebuggerStaticMappingService getStaticMappings() {
+		return staticMappings;
+	}
+
+	DockingActionIf getAction(String actionName) {
+		List<DockingActionIf> actionList = emulateAction.getRestrictedActionList();
+		for (DockingActionIf a : actionList) {
+			if (a.getName().equals(actionName)) {
+				return a;
+			}
+		}
+		return null;
 	}
 
 }

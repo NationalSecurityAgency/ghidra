@@ -98,7 +98,7 @@ public class DebuggerEmulationServicePluginScreenShots extends GhidraScreenShotG
 
 	@SuppressWarnings("unchecked")
 	<T extends DataType> T resolve(T dt) {
-		try (Transaction tx = program.openTransaction("Resolved %s".formatted(dt))) {
+		try (Transaction _ = program.openTransaction("Resolved %s".formatted(dt))) {
 			DataTypeConflictHandler handler = DataTypeConflictHandler.DEFAULT_HANDLER;
 			return (T) dtm.resolve(dt, handler);
 		}
@@ -109,7 +109,7 @@ public class DebuggerEmulationServicePluginScreenShots extends GhidraScreenShotG
 		program = createDefaultProgram("game", ToyProgramBuilder._X64, this);
 		intoProject(program);
 		dtm = program.getDataTypeManager();
-		try (Transaction tx = program.openTransaction("Create Function")) {
+		try (Transaction _ = program.openTransaction("Create Function")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,
 						MONITOR, false);
@@ -134,7 +134,7 @@ public class DebuggerEmulationServicePluginScreenShots extends GhidraScreenShotG
 		}
 		programManager.openProgram(program);
 		goTo(tool, progam, function.getEntryPoint());
-		performAction(emuService.actionEmulateFunction, false);
+		performAction(emuService.getAction(emuService.EMULATE_FUNCTION), false);
 
 		DebuggerEmulateFunctionDialog dialog =
 			waitForDialogComponent(DebuggerEmulateFunctionDialog.class);
