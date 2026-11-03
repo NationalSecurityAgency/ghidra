@@ -283,7 +283,7 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	 * @param matchSet The {@code VTMatchSet}.
 	 * @param sourceAddress The {@code Address} in the source program.
 	 * @param destinationAddress The {@code Address} in the destination program.
-	 * @return
+	 * @return the match
 	 */
 	protected VTMatch getMatch(VTMatchSet matchSet, Address sourceAddress,
 			Address destinationAddress) {
@@ -371,16 +371,13 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 		return "No " + type + " matches!";
 	}
 
-	/**
-	 * Run Dummy Task Monitor, flush events and wait for Swing.
-	 * @param task
-	 * @throws Exception
-	 */
 	protected void runTask(Task task) throws Exception {
 
 		task.run(TaskMonitor.DUMMY);
 		destProg.flushEvents();
-		waitForSwing();
+		waitForTasks();
+
+		session.flushEvents();
 		waitForTasks();
 	}
 
@@ -516,11 +513,6 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 		return correlatorOptionsPanel;
 	}
 
-	/**
-	 * Verify the Address Set Options panel.
-	 * @param excludeAccepted
-	 * @param limitAddressSets
-	 */
 	protected void checkAddressSetOptionsPanel(boolean excludeAccepted, boolean limitAddressSets) {
 
 		// Address Set Options Panel
