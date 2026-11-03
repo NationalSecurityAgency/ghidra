@@ -383,6 +383,7 @@ public abstract class MemorySymbol extends SymbolDB {
 			}
 			checkDeleted();
 			record.setLongValue(SymbolDatabaseAdapter.SYMBOL_LIBRARY_ID_COL, newLibrary.getID());
+			updateRecord();
 			ProgramDB program = symbolMgr.getProgram();
 			program.symbolChanged(this, ProgramEvent.SYMBOL_LIBRARY_CHANGED, getAddress(), this,
 				oldLibrary, newLibrary);

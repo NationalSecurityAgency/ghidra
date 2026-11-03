@@ -1840,12 +1840,7 @@ public class MachoProgramBuilder {
 		ExternalLocation loc =
 			extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol);
 		if (loc != null) {
-			try {
-				loc.setName(null, symbol, SourceType.IMPORTED);
-			}
-			catch (InvalidInputException e) {
-				throw new Exception(e.getMessage());
-			}
+			loc.setLibrary(library);
 		}
 	}
 }
