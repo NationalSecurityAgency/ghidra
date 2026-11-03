@@ -13,8 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Generate the TILE-Gx SLEIGH specification.
+
+Reads tilegx_encodings.txt, the instruction fields, fixed-bit encodings and
+operand lists that extract_ug401_encodings.py takes from the Tilera TILE-Gx
+ISA manual (UG401), and writes the little-endian slaspec.
+
+Usage: generate_tilegx_sleigh.py tilegx_encodings.txt TILE_le.slaspec
+"""
 import argparse
-import subprocess
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -36,122 +44,16 @@ REGISTER_NAMES = (
 )
 SHADOW_REGISTER_NAMES = [f"{name}_new" for name in REGISTER_NAMES]
 
-# Binutils tilegx_operands[] index -> SLEIGH display/pattern symbol.
-OPERANDS = {
-    0: "imm8_x0",
-    1: "imm8_x1",
-    2: "imm8_y0",
-    3: "imm8_y1",
-    4: "imm16_x0",
-    5: "imm16_x1",
-    6: "dest_x1",
-    7: "srca_x1",
-    8: "dest_x0",
-    9: "srca_x0",
-    10: "dest_y0",
-    11: "srca_y0",
-    12: "dest_y1",
-    13: "srca_y1",
-    14: "srca_y2",
-    15: "srca_x1",
-    16: "srcb_x0",
-    17: "srcb_x1",
-    18: "srcb_y0",
-    19: "srcb_y1",
-    20: "broff_x1",
-    21: "bfstart_x0",
-    22: "bfend_x0",
-    23: "dest_x0",
-    24: "dest_y0",
-    25: "jumpoff_x1",
-    26: "srcbdest_y2",
-    27: "mf_spr_x1",
-    28: "mt_imm14_x1",
-    29: "shamt_x0",
-    30: "shamt_x1",
-    31: "shamt_y0",
-    32: "shamt_y1",
-    33: "srcbdest_y2",
-    34: "dest_imm8_x1",
-}
-
-# Register operands need small constructors so register 63 behaves as the
-# architectural zero register: reads return zero and writes are discarded.
-REGISTER_OPERANDS = {
-    6: ("D_x1", "dest_x1", "write"),
-    7: ("A_x1", "srca_x1", "read"),
-    8: ("D_x0", "dest_x0", "write"),
-    9: ("A_x0", "srca_x0", "read"),
-    10: ("D_y0", "dest_y0", "write"),
-    11: ("A_y0", "srca_y0", "read"),
-    12: ("D_y1", "dest_y1", "write"),
-    13: ("A_y1", "srca_y1", "read"),
-    14: ("A_y2", "srca_y2", "read"),
-    15: ("AD_x1", "srca_x1", "readwrite"),
-    16: ("B_x0", "srcb_x0", "read"),
-    17: ("B_x1", "srcb_x1", "read"),
-    18: ("B_y0", "srcb_y0", "read"),
-    19: ("B_y1", "srcb_y1", "read"),
-    23: ("AD_x0", "dest_x0", "readwrite"),
-    24: ("AD_y0", "dest_y0", "readwrite"),
-    26: ("D_y2", "srcbdest_y2", "write"),
-    33: ("AD_y2", "srcbdest_y2", "readwrite"),
-}
-
-FIELDS = {
-    "mode": (62, 63, False),
-    "imm8_x0": (12, 19, True),
-    "imm8_x1": (43, 50, True),
-    "imm8_y0": (12, 19, True),
-    "imm8_y1": (43, 50, True),
-    "imm16_x0": (12, 27, True),
-    "imm16_x1": (43, 58, True),
-    "dest_x1": (31, 36, False),
-    "srca_x1": (37, 42, False),
-    "dest_x0": (0, 5, False),
-    "srca_x0": (6, 11, False),
-    "dest_y0": (0, 5, False),
-    "srca_y0": (6, 11, False),
-    "dest_y1": (31, 36, False),
-    "srca_y1": (37, 42, False),
-    "srca_y2": (20, 25, False),
-    "srcb_x0": (12, 17, False),
-    "srcb_x1": (43, 48, False),
-    "srcb_y0": (12, 17, False),
-    "srcb_y1": (43, 48, False),
-    "bfstart_x0": (18, 23, False),
-    "bfend_x0": (12, 17, False),
-    "jumpoff_x1": (31, 57, True),
-    "srcbdest_y2": (51, 56, False),
-    "mf_imm14_x1": (37, 50, False),
-    "shamt_x0": (12, 17, False),
-    "shamt_x1": (43, 48, False),
-    "shamt_y0": (12, 17, False),
-    "shamt_y1": (43, 48, False),
-    "br_lo": (31, 36, False),
-    "br_hi": (43, 53, True),
-    "mt_lo": (31, 36, False),
-    "mt_hi": (43, 50, False),
-    "destimm_lo": (31, 36, False),
-    "destimm_hi": (43, 44, True),
-}
-
-REGISTER_FIELDS = (
-    "dest_x1",
-    "srca_x1",
-    "dest_x0",
-    "srca_x0",
-    "dest_y0",
-    "srca_y0",
-    "dest_y1",
-    "srca_y1",
-    "srca_y2",
-    "srcb_x0",
-    "srcb_x1",
-    "srcb_y0",
-    "srcb_y1",
-    "srcbdest_y2",
-)
+# Operand field kinds that name a general register, with the prefix of the
+# SLEIGH symbol that reads or writes them.
+REGISTER_KINDS = {"Dest": "D", "SrcA": "A", "SrcB": "B", "SrcBDest": "SB"}
+# Immediates the manual sign-extends: Imm8 and Imm16 (section 2.1.1), BrOff
+# and JumpOff (signExtend17 and signExtend27 in the control instructions), and
+# the store-with-add Dest_Imm8, an Imm8 split around the SrcB field.
+SIGNED_KINDS = {"Imm8", "Imm16", "BrOff", "JumpOff", "Dest_Imm8"}
+# Offsets in bundles relative to the current bundle.
+OFFSET_KINDS = {"BrOff", "JumpOff"}
+SLICE = re.compile(r"^(.+)\[(\d+):(\d+)\]$")
 
 
 @dataclass(frozen=True)
@@ -160,24 +62,54 @@ class Opcode:
     name: str
     mask: int
     value: int
-    operands: tuple[int, ...]
+    operands: tuple[tuple[str, str], ...]  # (manual field name, r/w/rw/i)
 
 
-def load_opcodes(dumper: Path) -> list[Opcode]:
-    result = subprocess.run([str(dumper)], check=True, capture_output=True, text=True)
+def field_kind(field: str) -> str:
+    """'Dest_X0' -> 'Dest', 'BrOff_X1[5:0]' -> 'BrOff', 'Dest_Imm8_X1[7:6]' -> 'Dest_Imm8'."""
+    return SLICE.sub(r"\1", field).rsplit("_", 1)[0]
+
+
+def field_pipe(field: str) -> str:
+    return SLICE.sub(r"\1", field).rsplit("_", 1)[1].lower()
+
+
+def sleigh_name(field: str) -> str:
+    """'BrOff_X1[16:6]' -> 'broff_x1_16_6', 'Dest_X0' -> 'dest_x0'."""
+    return SLICE.sub(r"\1_\2_\3", field).lower()
+
+
+def is_register(field: str) -> bool:
+    return field_kind(field) in REGISTER_KINDS
+
+
+def load_encodings(path: Path):
+    fields = {}
     opcodes = []
     seen = set()
-    for line in result.stdout.splitlines():
-        columns = line.split("\t")
-        pipe, name = int(columns[0]), columns[1]
-        mask, value = int(columns[2], 16), int(columns[3], 16)
-        operand_count = int(columns[4])
-        operands = tuple(map(int, columns[5 : 5 + operand_count]))
-        key = (pipe, mask, value)
-        if key not in seen:
-            opcodes.append(Opcode(pipe, name, mask, value, operands))
-            seen.add(key)
-    return opcodes
+    for line in path.read_text().splitlines():
+        if not line or line.startswith("#"):
+            continue
+        kind, *columns = line.split("\t")
+        if kind == "field":
+            name, low, high = columns
+            fields[name] = (int(low), int(high))
+            continue
+        pipe, name, mask, value, operands = columns
+        key = (pipe, int(mask, 16), int(value, 16))
+        if key in seen:
+            continue  # prefetch_l1 shares its encoding with prefetch
+        seen.add(key)
+        opcodes.append(
+            Opcode(
+                PIPE_NAMES.index(pipe.lower()),
+                name,
+                int(mask, 16),
+                int(value, 16),
+                tuple(tuple(operand.split(":")) for operand in operands.split()),
+            )
+        )
+    return fields, opcodes
 
 
 def mask_runs(mask: int):
@@ -224,58 +156,99 @@ def prioritize(opcodes: list[Opcode]):
     return ordered, exclusions
 
 
-def composite_operands() -> str:
-    return "\n".join(
-        (
-            "broff_x1: reloc is br_hi & br_lo "
-            "[ reloc = inst_start + (((br_hi << 6) | br_lo) << 3); ] "
-            "{ export *[ram]:8 reloc; }",
-            "mf_spr_x1: mf_imm14_x1 is mf_imm14_x1 "
-            "{ local value:8 = mf_imm14_x1; export value; }",
-            'mt_imm14_x1: mt_hi^":"^mt_lo is mt_hi & mt_lo '
-            "{ local value:8 = (mt_hi << 6) | mt_lo; export value; }",
-            "dest_imm8_x1: immediate is destimm_hi & destimm_lo "
-            "[ immediate = (destimm_hi << 6) | destimm_lo; ] "
-            "{ export *[const]:8 immediate; }",
-            "jumpoff_target: reloc is jumpoff_x1 "
-            "[ reloc = inst_start + (jumpoff_x1 << 3); ] "
-            "{ export *[ram]:8 reloc; }",
-        )
-    )
-
-
-def register_operand_constructors() -> str:
-    lines = []
-    for symbol, field, mode in dict.fromkeys(REGISTER_OPERANDS.values()):
-        if mode == "read":
-            zero_semantics = "export 0:8;"
-        else:
-            zero_semantics = "local ignored:8 = 0; export ignored;"
-        lines.append(
-            f"{symbol}: {field} is {field} & {field}_num=0x3f "
-            f"{{ {zero_semantics} }}"
-        )
-        if mode == "read":
-            lines.append(
-                f"{symbol}: {field} is {field} & {field}_num!=0x3f "
-                f"{{ export {field}; }}"
+def split_pieces(fields: dict) -> dict:
+    """Manual operand base name -> [(sleigh field, slice low)] for split fields."""
+    pieces = {}
+    for field in fields:
+        match = SLICE.match(field)
+        if match:
+            pieces.setdefault(match.group(1), []).append(
+                (sleigh_name(field), int(match.group(3)))
             )
-            continue
-        initialize = f"{field}_new = {field}; " if mode == "readwrite" else ""
-        lines.append(
-            f"{symbol}: {field} is {field} & {field}_new & {field}_num!=0x3f "
-            f"{{ {initialize}export {field}_new; "
-            f"<<COMMIT>> {field} = {field}_new; }}"
-        )
+    return {base: sorted(items, key=lambda item: -item[1]) for base, items in pieces.items()}
+
+
+def operand_symbol(field: str, mode: str) -> str:
+    if mode != "i":
+        return f"{REGISTER_KINDS[field_kind(field)]}{mode}_{field_pipe(field)}"
+    base = sleigh_name(field)
+    if field_kind(field) in OFFSET_KINDS:
+        return base + "_target"
+    return base
+
+
+def is_destination(field: str, mode: str) -> bool:
+    return field_kind(field) in {"Dest", "SrcBDest"} and mode in {"w", "rw"}
+
+
+def token_fields(fields: dict) -> list[str]:
+    top_slice = {}
+    for field in fields:
+        match = SLICE.match(field)
+        if match:
+            base = match.group(1)
+            top_slice[base] = max(top_slice.get(base, 0), int(match.group(2)))
+    lines = []
+    for field, (low, high) in sorted(fields.items(), key=lambda item: (item[1], item[0])):
+        match = SLICE.match(field)
+        top = not match or int(match.group(2)) == top_slice[match.group(1)]
+        signed = top and field_kind(field) in SIGNED_KINDS
+        lines.append(f"    {sleigh_name(field)}=({low},{high}){' signed' if signed else ''}")
+        if is_register(field):
+            lines.append(f"    {sleigh_name(field)}_num=({low},{high})")
+            lines.append(f"    {sleigh_name(field)}_new=({low},{high})")
+    return lines
+
+
+def composite_operands(fields: dict) -> str:
+    lines = []
+    pieces = split_pieces(fields)
+    bases = {SLICE.sub(r"\1", field) for field in fields if not is_register(field)}
+    for base in sorted(bases):
+        kind = field_kind(base)
+        if base in pieces:
+            terms = " & ".join(name for name, _ in pieces[base])
+            expression = " | ".join(
+                f"({name} << {shift})" if shift else name for name, shift in pieces[base]
+            )
+        elif kind in OFFSET_KINDS:
+            terms = expression = sleigh_name(base)
+        else:
+            continue  # a plain field is its own operand
+        if kind in OFFSET_KINDS:
+            lines.append(
+                f"{sleigh_name(base)}_target: reloc is {terms} "
+                f"[ reloc = inst_start + (({expression}) << 3); ] "
+                "{ export *[ram]:8 reloc; }"
+            )
+        else:
+            lines.append(
+                f"{sleigh_name(base)}: immediate is {terms} "
+                f"[ immediate = {expression}; ] {{ export *[const]:8 immediate; }}"
+            )
     return "\n".join(lines)
 
 
-def operand_symbol(index: int) -> str:
-    if index == 25:
-        return "jumpoff_target"
-    if index in REGISTER_OPERANDS:
-        return REGISTER_OPERANDS[index][0]
-    return OPERANDS[index]
+def register_operand_constructors(register_operands) -> str:
+    # Register 63 is the architectural zero register: reads return zero and
+    # writes are discarded. Other writes go to a shadow register that the
+    # bundle commits after every slot has read its inputs.
+    lines = []
+    for field, mode in sorted(register_operands):
+        symbol = operand_symbol(field, mode)
+        name = sleigh_name(field)
+        zero_semantics = "export 0:8;" if mode == "r" else "local ignored:8 = 0; export ignored;"
+        lines.append(f"{symbol}: {name} is {name} & {name}_num=0x3f {{ {zero_semantics} }}")
+        if mode == "r":
+            lines.append(f"{symbol}: {name} is {name} & {name}_num!=0x3f {{ export {name}; }}")
+            continue
+        initialize = f"{name}_new = {name}; " if mode == "rw" else ""
+        lines.append(
+            f"{symbol}: {name} is {name} & {name}_new & {name}_num!=0x3f "
+            f"{{ {initialize}export {name}_new; "
+            f"<<COMMIT>> {name} = {name}_new; }}"
+        )
+    return "\n".join(lines)
 
 
 def load_size(name: str):
@@ -583,6 +556,9 @@ def pcode(opcode: Opcode, operands: list[str]) -> str:
         "wh64",
     }:
         return ""
+    if name.startswith("prefetch_add_"):
+        address, immediate = operands
+        return f"{address} = {address} + {immediate};"
 
     if name == "move":
         return f"{operands[0]} = {operands[1]};"
@@ -894,16 +870,16 @@ def pcode(opcode: Opcode, operands: list[str]) -> str:
     if name == "mfspr":
         dest, spr = operands
         return (
-            f"if ({spr} != 0x2780) goto <other_spr>; "
+            f"local spr:8 = {spr}; if (spr != 0x2780) goto <other_spr>; "
             f"{dest} = cmpexch_value; goto <spr_done>; "
-            f"<other_spr> {dest} = tilegx_mfspr({spr}); <spr_done>"
+            f"<other_spr> {dest} = tilegx_mfspr(spr); <spr_done>"
         )
     if name == "mtspr":
         spr, source = operands
         return (
-            f"if ({spr} != 0x2780) goto <other_spr>; "
+            f"local spr:8 = {spr}; if (spr != 0x2780) goto <other_spr>; "
             f"cmpexch_value = {source}; goto <spr_done>; "
-            f"<other_spr> tilegx_mtspr({spr}, {source}); <spr_done>"
+            f"<other_spr> tilegx_mtspr(spr, {source}); <spr_done>"
         )
     if name in {"finv", "flush", "icoh"}:
         return f"tilegx_{name}({operands[0]});"
@@ -923,22 +899,23 @@ def pcode(opcode: Opcode, operands: list[str]) -> str:
             "tilegx_trap(trap_number);"
         )
 
-    destination_indexes = {6, 8, 10, 12, 23, 24, 26}
     register_arguments = [
-        operand
-        for index, operand in zip(opcode.operands, operands)
-        if index in REGISTER_OPERANDS
+        symbol
+        for (field, mode), symbol in zip(opcode.operands, operands)
+        if mode != "i"
     ]
-    if opcode.operands and opcode.operands[0] in destination_indexes:
+    if opcode.operands and is_destination(*opcode.operands[0]):
         arguments = ", ".join(register_arguments[1:])
         return f"{operands[0]} = tilegx_{name}({arguments});"
     return f"tilegx_{name}({', '.join(register_arguments)});"
 
 
-def render(opcodes: list[Opcode]) -> str:
+def render(fields: dict, opcodes: list[Opcode]) -> str:
     opcodes, exclusions = prioritize(opcodes)
-    semantics = {opcode: pcode(opcode, [operand_symbol(i) for i in opcode.operands])
-                 for opcode in opcodes}
+    semantics = {
+        opcode: pcode(opcode, [operand_symbol(field, mode) for field, mode in opcode.operands])
+        for opcode in opcodes
+    }
     custom_userops = sorted({
         f"tilegx_{opcode.name}"
         for opcode, body in semantics.items()
@@ -952,8 +929,14 @@ def render(opcodes: list[Opcode]) -> str:
         for run in mask_runs(extra_mask)
     )
     runs = sorted(runs)
+    register_fields = [sleigh_name(field) for field in fields if is_register(field)]
+    register_operands = {
+        (field, mode) for opcode in opcodes for field, mode in opcode.operands if mode != "i"
+    }
     lines = [
-        "# Generated from GNU binutils tilegx-opc.c.",
+        "# Generated by support/generate_tilegx_sleigh.py from",
+        "# support/tilegx_encodings.txt, the instruction encodings extracted from the",
+        "# Tilera TILE-Gx ISA manual (UG401 release 1.3). Do not edit by hand.",
         "# Common scalar, memory, and control instructions include p-code.",
         "# Complex DSP/system instructions remain explicit user-ops.",
         "define endian=little;",
@@ -994,15 +977,10 @@ def render(opcodes: list[Opcode]) -> str:
         "define token bundle(64)",
         "    bundle_bits=(0,63)",
     ])
-    for name, (low, high, signed) in FIELDS.items():
-        lines.append(f"    {name}=({low},{high}){' signed' if signed else ''}")
-    for name in REGISTER_FIELDS:
-        low, high, _ = FIELDS[name]
-        lines.append(f"    {name}_num=({low},{high})")
-        lines.append(f"    {name}_new=({low},{high})")
+    lines.extend(token_fields(fields))
     for low, high in runs:
         lines.append(f"    m_{low:02d}_{high:02d}=({low},{high})")
-    lines.extend((";", "", f"attach variables [ {' '.join(REGISTER_FIELDS)} ] ["))
+    lines.extend((";", "", f"attach variables [ {' '.join(register_fields)} ] ["))
     lines.extend(
         "    " + " ".join(REGISTER_NAMES[start : start + 16])
         for start in range(0, len(REGISTER_NAMES), 16)
@@ -1011,7 +989,7 @@ def render(opcodes: list[Opcode]) -> str:
         (
             "];",
             "",
-            f"attach variables [ {' '.join(f'{name}_new' for name in REGISTER_FIELDS)} ] [",
+            f"attach variables [ {' '.join(f'{name}_new' for name in register_fields)} ] [",
         )
     )
     lines.extend(
@@ -1022,9 +1000,9 @@ def render(opcodes: list[Opcode]) -> str:
         (
             "];",
             "",
-            register_operand_constructors(),
+            register_operand_constructors(register_operands),
             "",
-            composite_operands(),
+            composite_operands(fields),
             "bundle_address: address is epsilon [ address = inst_start; ] "
             "{ export *[ram]:8 address; }",
             "",
@@ -1033,7 +1011,7 @@ def render(opcodes: list[Opcode]) -> str:
 
     for opcode in opcodes:
         pipe_name = PIPE_NAMES[opcode.pipe]
-        operand_names = [operand_symbol(index) for index in opcode.operands]
+        operand_names = [operand_symbol(field, mode) for field, mode in opcode.operands]
         display = f'"{opcode.name}"'
         if operand_names:
             display += '^" "^' + '^", "^'.join(operand_names)
@@ -1084,9 +1062,9 @@ def self_test(opcodes: list[Opcode]) -> None:
 
 
 def self_test_generated(source: str) -> None:
-    assert "D_x1 = zext(*[ram]:4 addr);" in source
-    assert "D_x0 = (A_x0 << 32) | (B_x0 & 0xffffffff);" in source
-    assert "branch_taken = A_x1 == 0;" in source
+    assert "Dw_x1 = zext(*[ram]:4 addr);" in source
+    assert "Dw_x0 = (Ar_x0 << 32) | (Br_x0 & 0xffffffff);" in source
+    assert "branch_taken = Ar_x1 == 0;" in source
     assert "crossbuild bundle_address,COMMIT;" in source
     assert "<<COMMIT>> dest_x0 = dest_x0_new;" in source
     assert ':"{" x0 ";" x1 "}"' in source
@@ -1100,13 +1078,13 @@ def self_test_generated(source: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("dumper", type=Path)
+    parser.add_argument("encodings", type=Path)
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
 
-    opcodes = load_opcodes(args.dumper)
+    fields, opcodes = load_encodings(args.encodings)
     self_test(opcodes)
-    source = render(opcodes)
+    source = render(fields, opcodes)
     self_test_generated(source)
     args.output.write_text(source)
 

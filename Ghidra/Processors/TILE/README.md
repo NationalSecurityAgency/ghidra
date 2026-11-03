@@ -16,16 +16,21 @@ modeled use mnemonic-specific user-ops.
 
 ## Opcode source
 
-`data/languages/TILE_le.slaspec` is generated from the opcode masks in GNU
-binutils 2.35.1 `opcodes/tilegx-opc.c`. The generated SLEIGH file is committed
-and is the module's build input. Regeneration is optional:
+`data/languages/TILE_le.slaspec` is generated from `support/tilegx_encodings.txt`,
+the instruction fields, fixed-bit encodings and operand lists of the Tilera
+TILE-Gx ISA manual ("TILE-Gx Instruction Set Architecture", UG401, release 1.3,
+June 2013). `support/extract_ug401_encodings.py` reads that table out of the
+manual's per-instruction "Bits Encoding" figures, Syntax lines and Functional
+Descriptions; it documents the three figures it transcribes by hand. The
+generated SLEIGH file and the encodings table are committed and are the
+module's build input. Regeneration is optional:
 
 ```bash
-cc <binutils include and library flags> support/dump_tilegx_opcodes.c \
-    <binutils libraries> -o dump_tilegx_opcodes
+python3 support/extract_ug401_encodings.py UG401-ISA.pdf support/tilegx_encodings.txt
 python3 support/generate_tilegx_sleigh.py \
-    ./dump_tilegx_opcodes data/languages/TILE_le.slaspec
+    support/tilegx_encodings.txt data/languages/TILE_le.slaspec
 ```
 
-The generator contains decoder and semantic self-checks. The processor test
-also emulates a cross-slot dependency to verify parallel bundle semantics.
+The extractor needs `pdfplumber`; the generator uses only the standard library
+and contains decoder and semantic self-checks. The processor test also emulates
+a cross-slot dependency to verify parallel bundle semantics.

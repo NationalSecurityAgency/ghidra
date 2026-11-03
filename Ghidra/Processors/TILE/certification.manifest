@@ -6,3 +6,4 @@ data/languages/TILE.ldefs||GHIDRA||||END|
 data/languages/TILE.opinion||GHIDRA||||END|
 data/languages/TILE.pspec||GHIDRA||||END|
 data/languages/TILE_le.slaspec||GHIDRA||reviewed||END|
+support/tilegx_encodings.txt||GHIDRA||||END|
