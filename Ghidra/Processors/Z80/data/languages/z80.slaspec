@@ -1419,9 +1419,9 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	IX = IX_temp + pRegPair4_2;
 }
 
-:ADD IY,pRegPair4_2 is op0_8=0xfd & IY; op6_2=0x0 & pRegPair4_2 & bits0_4=0x9 {
+:ADD IY,rRegPair4_2 is op0_8=0xfd & IY; op6_2=0x0 & rRegPair4_2 & bits0_4=0x9 {
 	local IY_temp = IY;
-	local Reg_temp = pRegPair4_2;
+	local Reg_temp = rRegPair4_2;
 
 	additionFlagsNoPV(IY_temp, Reg_temp);
 	IY = IY_temp + Reg_temp;
