@@ -39,7 +39,7 @@ public class Sequence implements Comparable<Sequence> {
 	 * 
 	 * <p>
 	 * This takes a semicolon-separated list of steps in the form specified by
-	 * {@link Step#parse(String, TimeRadix)}. Each step may or may not specify a thread, but it's
+	 * {@link Step#parse(String, Radix)}. Each step may or may not specify a thread, but it's
 	 * uncommon for any but the first step to omit the thread. The sequence is normalized as it is
 	 * parsed, so any step after the first that omits a thread will be combined with the previous
 	 * step. When the first step applies to the "last thread," it typically means the "event thread"

@@ -158,7 +158,7 @@ public interface TraceTimeManager {
 	/**
 	 * Get the radix for displaying and parsing time (snapshots and step counts)
 	 * 
-	 * @see #setTimeRadix(TimeRadix)
+	 * @see #setTimeRadix(Radix)
 	 * @return radix the radix
 	 */
 	Radix getTimeRadix();
