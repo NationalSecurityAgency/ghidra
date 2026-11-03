@@ -4267,6 +4267,12 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build cpsrmask;
   build shift1;
   cpsr = (cpsr& ~cpsrmask) | (shift1 & cpsrmask);
+  local tmp = cpsr >> 27 & 0x1f;
+  Q  = ((tmp     ) & 0x1) != 0;
+  OV = ((tmp >> 1) & 0x1) != 0;
+  CY = ((tmp >> 2) & 0x1) != 0;
+  ZR = ((tmp >> 3) & 0x1) != 0;
+  NG = ((tmp >> 4) & 0x1) != 0;
 }
 
 :msr^COND cpsrmask,rm 		is $(AMODE) & ARMcond=1 & COND & c2027=18 & cpsrmask & c1215=15 & c0811=0 & c0407=0 & rm
