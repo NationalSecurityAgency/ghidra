@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
@@ -628,6 +629,52 @@ public class BinaryReaderTest {
 		// tests variable length decoding
 		BinaryReader br = br(true, -22, -87, 'A', 0);
 		assertEquals("\ufffdA" /* unicode replacement char, 'A'*/, br.readUtf8String(0));
+	}
+
+	// ------------------------------------------------------------------------------------
+	// Array element count overflow
+	// ------------------------------------------------------------------------------------
+
+	@Test
+	public void testReadIntArray_countTimesSizeOverflow() {
+		// 0x40000001 * 4 overflows int to 4, which previously passed the range check
+		// and caused a ~4GB allocation (OOM) from a 16 byte input
+		BinaryReader br = br(true, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+		try {
+			br.readIntArray(0, 0x40000001);
+			fail("Should have thrown IOException");
+		}
+		catch (IOException e) {
+			// good
+		}
+		assertEquals(0, br.getPointerIndex());
+	}
+
+	@Test
+	public void testReadNextLongArray_countTimesSizeOverflow() {
+		// 0x20000001 * 8 overflows int to 8
+		BinaryReader br = br(true, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+		try {
+			br.readNextLongArray(0x20000001);
+			fail("Should have thrown IOException");
+		}
+		catch (IOException e) {
+			// good
+		}
+		assertEquals(0, br.getPointerIndex());
+	}
+
+	@Test
+	public void testReadString_charCountTimesCharLenOverflow() {
+		// 0x40000001 * 4 overflows int to 4, previously silently returned a 1 char string
+		BinaryReader br = br(true, 'A', 0, 0, 0, 'B', 0, 0, 0);
+		try {
+			br.readString(0, 0x40000001, Charset.forName("UTF-32LE"), 4);
+			fail("Should have thrown IOException");
+		}
+		catch (IOException e) {
+			// good
+		}
 	}
 
 }
