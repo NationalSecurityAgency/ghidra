@@ -279,11 +279,11 @@ public final class Objc1TypeEncodings {
 			}
 			case _C_LNG: {
 				buffer.deleteCharAt(0);
-				return new TypedefDataType("long", new QWordDataType());
+				return new TypedefDataType("long", new DWordDataType());
 			}
 			case _C_ULNG: {
 				buffer.deleteCharAt(0);
-				return new TypedefDataType("unsigned long", new QWordDataType());
+				return new TypedefDataType("unsigned long", new DWordDataType());
 			}
 			case _C_LNG_LNG: {
 				buffer.deleteCharAt(0);
@@ -311,7 +311,7 @@ public final class Objc1TypeEncodings {
 			}
 			case _C_BOOL: {
 				buffer.deleteCharAt(0);
-				return new TypedefDataType("bool", new DWordDataType());
+				return new TypedefDataType("bool", new BooleanDataType());
 			}
 			case _C_VOID: {
 				buffer.deleteCharAt(0);
