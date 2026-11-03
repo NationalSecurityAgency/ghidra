@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.demangler.DemangledFunction;
+import ghidra.app.util.demangler.DemangledLabel;
 import ghidra.app.util.demangler.DemangledStructure;
 import ghidra.util.exception.AssertException;
 
@@ -703,6 +704,148 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 			throw new AssertException("Demangled object is not a function");
 		}
 		assertEquals(demangled, function.toString());
+	}
+
+	@Test
+	public void testAsyncFunctionPointer() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=AsyncFunctionPointer
+		  kind=Function
+		    kind=Module, text="SwiftDemanglerTest"
+		    kind=Identifier, text="fetch"
+		    kind=LabelList
+		    kind=Type
+		      kind=FunctionType
+		        kind=AsyncAnnotation
+		        kind=ArgumentTuple
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		        kind=ReturnType
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		async function pointer to SwiftDemanglerTest.fetch(Swift.Int) async -> Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest5fetchyS2iYaFTu";
+		String demangled =
+			"async function pointer to SwiftDemanglerTest.fetch(Swift.Int) async -> Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testDynamicallyReplaceableFunctionKey() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=DynamicallyReplaceableFunctionKey
+		  kind=Function
+		    kind=Module, text="SwiftDemanglerTest"
+		    kind=Identifier, text="replaceable"
+		    kind=LabelList
+		    kind=Type
+		      kind=FunctionType
+		        kind=ArgumentTuple
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		        kind=ReturnType
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		dynamically replaceable key for SwiftDemanglerTest.replaceable(Swift.Int) -> Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest11replaceableyS2iFTx";
+		String demangled =
+			"dynamically replaceable key for SwiftDemanglerTest.replaceable(Swift.Int) -> Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testDynamicallyReplaceableFunctionVar() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=DynamicallyReplaceableFunctionVar
+		  kind=Function
+		    kind=Module, text="SwiftDemanglerTest"
+		    kind=Identifier, text="replaceable"
+		    kind=LabelList
+		    kind=Type
+		      kind=FunctionType
+		        kind=ArgumentTuple
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		        kind=ReturnType
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		dynamically replaceable variable for SwiftDemanglerTest.replaceable(Swift.Int) -> Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest11replaceableyS2iFTX";
+		String demangled =
+			"dynamically replaceable variable for SwiftDemanglerTest.replaceable(Swift.Int) -> Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testOutlinedVariable() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=OutlinedVariable, index=0
+		  kind=GlobalVariableOnceFunction
+		    kind=Module, text="SwiftDemanglerTest"
+		    kind=GlobalVariableOnceDeclList
+		      kind=Identifier, text="sharedNode"
+		outlined variable #0 of one-time initialization function for sharedNode
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest10sharedNode_WZTv_";
+		String demangled =
+			"outlined variable #0 of one-time initialization function for sharedNode";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testOutlinedReadOnlyObject() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=OutlinedReadOnlyObject, index=0
+		  kind=GlobalVariableOnceFunction
+		    kind=Module, text="SwiftDemanglerTest"
+		    kind=GlobalVariableOnceDeclList
+		      kind=Identifier, text="table"
+		outlined read-only object #0 of one-time initialization function for table
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest5table_WZTv_r";
+		String demangled =
+			"outlined read-only object #0 of one-time initialization function for table";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
 	}
 
 	@Test
