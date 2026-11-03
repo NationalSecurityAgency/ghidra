@@ -849,6 +849,141 @@ public class SwiftDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testObjCClassFunction() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=ObjCAttribute
+		  kind=Function
+		    kind=Class
+		      kind=Module, text="SwiftDemanglerTest"
+		      kind=Identifier, text="MyClass"
+		    kind=Identifier, text="myMethod"
+		    kind=LabelList
+		      kind=Identifier, text="label1"
+		      kind=Identifier, text="label2"
+		    kind=Type
+		      kind=FunctionType
+		        kind=ArgumentTuple
+		          kind=Type
+		            kind=Tuple
+		              kind=TupleElement
+		                kind=Type
+		                  kind=Structure
+		                    kind=Module, text="Swift"
+		                    kind=Identifier, text="Int"
+		              kind=TupleElement
+		                kind=Type
+		                  kind=Structure
+		                    kind=Module, text="Swift"
+		                    kind=Identifier, text="Int"
+		        kind=ReturnType
+		          kind=Type
+		            kind=Structure
+		              kind=Module, text="Swift"
+		              kind=Identifier, text="Int"
+		@objc SwiftDemanglerTest.MyClass.myMethod(label1: Swift.Int, label2: Swift.Int) -> Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest7MyClassC8myMethod6label16label2S2i_SitFTo";
+		String demangled =
+			"@objc SwiftDemanglerTest.MyClass.myMethod(label1: Swift.Int, label2: Swift.Int) -> Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testObjCClassConstructor() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=ObjCAttribute
+		  kind=Constructor
+		    kind=Class
+		      kind=Module, text="SwiftDemanglerTest"
+		      kind=Identifier, text="MyClass"
+		    kind=LabelList
+		      kind=Identifier, text="label1"
+		    kind=Type
+		      kind=FunctionType
+		        kind=ArgumentTuple
+		          kind=Type
+		            kind=Tuple
+		              kind=TupleElement
+		                kind=Type
+		                  kind=Structure
+		                    kind=Module, text="Swift"
+		                    kind=Identifier, text="Int"
+		        kind=ReturnType
+		          kind=Type
+		            kind=Class
+		              kind=Module, text="SwiftDemanglerTest"
+		              kind=Identifier, text="MyClass"
+		@objc SwiftDemanglerTest.MyClass.init(label1: Swift.Int) -> SwiftDemanglerTest.MyClass
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest7MyClassC6label1ACSi_tcfcTo";
+		String demangled =
+			"@objc SwiftDemanglerTest.MyClass.init(label1: Swift.Int) -> SwiftDemanglerTest.MyClass";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testObjCClassGetter() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=ObjCAttribute
+		  kind=Getter
+		    kind=Variable
+		      kind=Class
+		        kind=Module, text="SwiftDemanglerTest"
+		        kind=Identifier, text="MyClass"
+		      kind=Identifier, text="z"
+		      kind=Type
+		        kind=Structure
+		          kind=Module, text="Swift"
+		          kind=Identifier, text="Int"
+		@objc SwiftDemanglerTest.MyClass.z.getter : Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest7MyClassC1zSivgTo";
+		String demangled = "@objc SwiftDemanglerTest.MyClass.z.getter : Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
+	public void testObjCClassSetter() throws Exception {
+		/*-********************************************************************
+		kind=Global
+		  kind=ObjCAttribute
+		  kind=Setter
+		    kind=Variable
+		      kind=Class
+		        kind=Module, text="SwiftDemanglerTest"
+		        kind=Identifier, text="MyClass"
+		      kind=Identifier, text="z"
+		      kind=Type
+		        kind=Structure
+		          kind=Module, text="Swift"
+		          kind=Identifier, text="Int"
+		@objc SwiftDemanglerTest.MyClass.z.setter : Swift.Int
+		**********************************************************************/
+		String mangled = "_$s18SwiftDemanglerTest7MyClassC1zSivsTo";
+		String demangled = "@objc SwiftDemanglerTest.MyClass.z.setter : Swift.Int";
+
+		if (!(demangler.demangle(mangled) instanceof DemangledLabel label)) {
+			throw new AssertException("Demangled object is not a label");
+		}
+		assertEquals(demangled, label.getOriginalDemangled());
+	}
+
+	@Test
 	public void testUnsupportedString() throws Exception {
 		String mangled = "__mh_execute_header";
 		assertNull(demangler.demangle(mangled));

@@ -35,8 +35,11 @@ public class SwiftGlobalNode extends SwiftNode {
 			switch (child.getKind()) {
 				case GenericSpecialization:
 				case MergedFunction:
-				case ObjCAttribute:
 					continue;
+				case ObjCAttribute:
+					// The symbol is the Objective-C thunk of the entity in the next child; its
+					// signature and calling convention are Objective-C, not Swift
+					return getUnknown();
 				case AccessibleFunctionRecord:
 				case AsyncFunctionPointer:
 				case CoroFunctionPointer:
