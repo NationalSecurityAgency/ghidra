@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
+import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 import static org.junit.Assert.*;
 
@@ -23,6 +24,7 @@ import java.util.*;
 
 import org.junit.Test;
 
+import ghidra.app.util.bin.format.golang.rtti.types.GoKind;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -82,6 +84,35 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
 		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == true);
 		assertTrue(baseTypeDT.hasLanguageDependantLength());
+	}
+
+	@Test
+	public void testGoComplexBaseType() throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry c64DIE =
+			addGoBaseType("complex64", 8, DWARFEncoding.DW_ATE_complex_float, GoKind.Complex64);
+		DebugInfoEntry c128DIE =
+			addGoBaseType("complex128", 16, DWARFEncoding.DW_ATE_complex_float, GoKind.Complex128);
+		DebugInfoEntry cDIE = addBaseType("complex double", 16, DWARFEncoding.DW_ATE_complex_float);
+
+		importAllDataTypes();
+
+		assertTrue(baseOf(c64DIE) instanceof Complex8DataType);
+		assertTrue(baseOf(c128DIE) instanceof Complex16DataType);
+		assertFalse(baseOf(cDIE) instanceof AbstractComplexDataType);
+	}
+
+	private DebugInfoEntry addGoBaseType(String name, int size, int encoding, GoKind kind) {
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_base_type).addString(DW_AT_name, name)
+				.addInt(DW_AT_byte_size, size)
+				.addInt(DW_AT_encoding, encoding)
+				.addInt(DW_AT_go_kind, kind.ordinal())
+				.create();
+	}
+
+	private DataType baseOf(DebugInfoEntry die) {
+		DataType dt = dwarfDTM.getDataType(die.getOffset(), null);
+		return dt instanceof TypeDef td ? td.getBaseDataType() : dt;
 	}
 
 	@Test
