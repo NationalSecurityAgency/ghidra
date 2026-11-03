@@ -89,7 +89,7 @@ public class VSCodeIntegrationOptionsPlugin extends Plugin implements Applicatio
 					new File(System.getenv("PROGRAMFILES"), "Microsoft VS Code/bin/code.cmd");
 				yield admin.exists() ? admin : local;
 			case MAC_OS_X:
-				yield new File("/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
+				yield new File("/Applications/Visual Studio Code.app/Contents/MacOS/Code");
 			case LINUX:
 				yield new File("/usr/bin/code");
 			default:
