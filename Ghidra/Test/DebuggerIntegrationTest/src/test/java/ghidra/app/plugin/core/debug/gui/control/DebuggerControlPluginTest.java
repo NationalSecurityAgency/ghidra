@@ -429,8 +429,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		DebuggerDisassemblerPlugin disassemblerPlugin =
 			addPlugin(tool, DebuggerDisassemblerPlugin.class);
 
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
-
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
@@ -485,8 +483,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	public void testPatchDataActionInDynamicListingEmu() throws Throwable {
 		DebuggerDisassemblerPlugin disassemblerPlugin =
 			addPlugin(tool, DebuggerDisassemblerPlugin.class);
-
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -546,8 +542,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
 		DockingActionIf pasteAction = getLocalAction(listingProvider, "Paste");
-
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();

@@ -40,11 +40,13 @@ public class EmulatorControlMode extends ControlMode {
 		super("Default Concrete P-code Emulator",
 			new GIcon("icon.debugger.control.mode.rw.emulator"),
 			new GIcon("icon.debugger.emulate"));
+		isEditEnabled = true;
 	}
 
 	public EmulatorControlMode(EmulatorFactory factory) {
 		super(factory.getTitle(), new GIcon("icon.debugger.control.mode.rw.emulator"),
 			new GIcon("icon.debugger.emulate"));
+		isEditEnabled = true;
 	}
 
 	@Override

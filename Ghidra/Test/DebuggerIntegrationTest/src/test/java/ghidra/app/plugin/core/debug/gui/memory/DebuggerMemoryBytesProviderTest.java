@@ -1137,9 +1137,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		runSwingLater(() -> sendKeyStrokesForText("42"));
 		/**
@@ -1151,7 +1149,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		 */
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x40));
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x02));
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}
@@ -1180,9 +1177,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		runSwing(() -> sendKeyStrokesForText("42"));
 
@@ -1191,7 +1186,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(new Bytes(0x42), data);
 
 		assertTrue(rmiMethodWriteMem.argQueue().isEmpty());
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}
@@ -1224,9 +1218,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		Clipboard clipboard = GClipboard.getSystemClipboard();
 		clipboard.setContents(new StringSelection("42 53 64 75"), null);
@@ -1242,8 +1234,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		OptionDialog confirm = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(confirm, "Yes");
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x42, 0x53, 0x64, 0x75));
-
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}
