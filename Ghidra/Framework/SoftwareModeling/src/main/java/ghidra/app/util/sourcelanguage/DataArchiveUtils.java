@@ -25,15 +25,13 @@ import com.google.gson.stream.JsonReader;
 import generic.jar.ResourceFile;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.sourcelanguage.SourceLanguageDataArchive.DataArchiveRule;
-import ghidra.app.util.sourcelanguage.SourceLanguageSpecExtension.SpecExtensionRule;
-import ghidra.program.database.SpecExtension;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
 public class DataArchiveUtils {
 
 	/**
-	 * An entry from a spec extension JSON configuration file
+	 * An entry from a data archive JSON configuration file
 	 * 
 	 * @param processor The name of the processor (could be empty/null for wildcard)
 	 * @param endian The processor endianness ("little" or "big") (could be empty/null for wildcard)
@@ -47,15 +45,14 @@ public class DataArchiveUtils {
 			List<String> formats, String file) {}
 
 	/**
-	 * {@return a {@link List} of {@link SpecExtensionRule}s based on the given JSON configuration
+	 * {@return a {@link List} of {@link DataArchiveRule}s based on the given JSON configuration
 	 * file}
 	 * 
 	 * @param jsonFile The JSON configuration file
 	 * @param program The {@link Program}
 	 * @param log The error log
 	 * @param monitor The monitor
-	 * @throws IOException if there was a problem reading the JSON configuration file or the
-	 *   {@link SpecExtension} XML files it references
+	 * @throws IOException if there was a problem reading the JSON configuration file
 	 */
 	public static List<DataArchiveRule> readDataArchiveJsonConfig(ResourceFile jsonFile,
 			Program program, MessageLog log, TaskMonitor monitor) throws IOException {
