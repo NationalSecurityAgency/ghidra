@@ -179,88 +179,89 @@ public class ImpliedMatchUtils {
 
 		// Get the source reference's "to" address (the address the reference is pointing to)
 		// and make sure it is in the current program memory space
-		Address srcRefToAddress = sourceRef.getToAddress();
-		if (!srcRefToAddress.isMemoryAddress()) {
+		Address srcRefToAddr = sourceRef.getToAddress();
+		if (!srcRefToAddr.isMemoryAddress()) {
 			return null;
 		}
 
-		// Get corrected source reference "to" address if necessary (ie if thunk get the thunked
-		// function)
-		srcRefToAddress = getReference(sourceFunction.getProgram(), srcRefToAddress);
+		// handle thunk functions
+		srcRefToAddr = updateRefToAddress(sourceFunction.getProgram(), srcRefToAddr);
+		Address srcRefFromAddr = sourceRef.getFromAddress();
 
-		// Get the source reference's "from" address (where the reference itself is located)
-		Address srcRefFromAddress = sourceRef.getFromAddress();
-
-		// Get the destination reference address corresponding to the given source reference address
 		AddressCorrelationRange range =
-			correlator.getCorrelatedDestinationRange(srcRefFromAddress, monitor);
+			correlator.getCorrelatedDestinationRange(srcRefFromAddr, monitor);
 		if (range == null) {
 			return null;
 		}
-		Address destinationAddress = range.getMinAddress();
+		Address destFromAddr = range.getMinAddress();
 		ReferenceManager destRefMgr = destinationFunction.getProgram().getReferenceManager();
-		Reference[] referencesFrom = destRefMgr.getReferencesFrom(destinationAddress);
-		Reference destinationRef = findMatchingRef(refType, referencesFrom);
-		if (destinationRef == null) {
+		Reference[] refsFrom = destRefMgr.getReferencesFrom(destFromAddr);
+		Reference destRef = getRefByType(refType, refsFrom);
+		if (destRef == null) {
 			return null;
 		}
 
-		// Get the destination reference's "to" address
-		Address destRefToAddress = destinationRef.getToAddress();
-
-		// Get corrected destination reference "to" address if necessary (ie if thunk get the
-		// thunked function)
-		destRefToAddress = getReference(destinationFunction.getProgram(), destRefToAddress);
+		Address destRefToAddr = destRef.getToAddress();
+		destRefToAddr = updateRefToAddress(destinationFunction.getProgram(), destRefToAddr);
 
 		// Create the initial empty matchInfo for this possible implied match
 		VTImpliedMatchInfo matchInfo =
-			new VTImpliedMatchInfo(possibleMatchSet, sourceRef, destinationRef);
+			new VTImpliedMatchInfo(possibleMatchSet, sourceRef, destRef);
 
-		// Add the source and destination addresses of the possible implied match
-		matchInfo.setSourceAddress(srcRefToAddress);
-		matchInfo.setDestinationAddress(destRefToAddress);
-
-		VTAssociationType type;
-
-		if (refType.isData()) {
-			type = DATA;
-			if (sourceFunction.getProgram()
-					.getListing()
-					.getInstructionAt(srcRefToAddress) != null) {
-				if (refType != RefType.DATA) {
-					return null; // read/write reference to instruction - not sure what this is
-				}
-				// otherwise assume it is a function
-				type = FUNCTION;
-			}
-		}
-		else {
-			type = FUNCTION;
-		}
-
+		Program srcProgram = sourceFunction.getProgram();
+		VTAssociationType type = getAssociationType(refType, srcProgram, srcRefToAddr);
 		if (type == FUNCTION) {
-			if (sourceFunction.getProgram()
-					.getFunctionManager()
-					.getFunctionAt(srcRefToAddress) == null) {
-				return null; // source function may not have been created here.
-			}
-
-			if (destinationFunction.getProgram()
-					.getFunctionManager()
-					.getFunctionAt(destRefToAddress) == null) {
-				return null; // destination function may not have been created here.
+			if (!hasToFunctions(sourceFunction, destinationFunction, srcRefToAddr, destRefToAddr)) {
+				return null;
 			}
 		}
 
-		// Add association type, score, and confidence
+		matchInfo.setSourceAddress(srcRefToAddr);
+		matchInfo.setDestinationAddress(destRefToAddr);
 		matchInfo.setAssociationType(type);
 		matchInfo.setSimilarityScore(new VTScore(0));
 		matchInfo.setConfidenceScore(new VTScore(1));
 
-		// Update the length of the match
 		updateVTSourceAndDestinationLengths(matchInfo);
 
 		return matchInfo;
+	}
+
+	private static boolean hasToFunctions(Function srcFunction, Function destFunction,
+			Address srcRefToAddr, Address destRefToAddr) {
+
+		Program srcProgram = srcFunction.getProgram();
+		FunctionManager srcFuncMgr = srcProgram.getFunctionManager();
+		if (srcFuncMgr.getFunctionAt(srcRefToAddr) == null) {
+			return false; // source function may not have been created here.
+		}
+
+		Program destProgram = destFunction.getProgram();
+		FunctionManager destFuncMgr = destProgram.getFunctionManager();
+		if (destFuncMgr.getFunctionAt(destRefToAddr) == null) {
+			return false; // destination function may not have been created here.
+		}
+
+		return true;
+	}
+
+	private static VTAssociationType getAssociationType(RefType refType, Program sourceProgram,
+			Address srcRefToAddress) {
+
+		if (!refType.isData()) {
+			return FUNCTION;
+		}
+
+		VTAssociationType type = DATA;
+		Listing listing = sourceProgram.getListing();
+		if (listing.getInstructionAt(srcRefToAddress) != null) {
+			if (refType != RefType.DATA) {
+				return null; // read/write reference to instruction - not sure what this is
+			}
+			// otherwise assume it is a function
+			return FUNCTION;
+		}
+		return type;
 	}
 
 	/**
@@ -271,7 +272,7 @@ public class ImpliedMatchUtils {
 	 * @return Returns either the same address passed in or the address of the thunked function if
 	 * the original address refers to a thunk
 	 */
-	private static Address getReference(Program program, Address refToAddress) {
+	private static Address updateRefToAddress(Program program, Address refToAddress) {
 		// If the type is a call then get the function
 		// If the function is a thunk - get the thunked to function and make that the implied match
 		// source not the thunk
@@ -322,7 +323,7 @@ public class ImpliedMatchUtils {
 		}
 	}
 
-	private static Reference findMatchingRef(RefType refType, Reference[] referencesFrom) {
+	private static Reference getRefByType(RefType refType, Reference[] referencesFrom) {
 		if (referencesFrom == null) {
 			return null;
 		}
