@@ -42,10 +42,6 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private volatile TestRunnable lastCreatedMultiThreadedTestRunner;
 
-	public RunManagerTest() {
-		super();
-	}
-
 	@Override
 	protected void testFailed(Throwable e) {
 		failed = true;
@@ -53,7 +49,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRunNow() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 		BasicTestRunnable runnable = new BasicTestRunnable();
 
@@ -75,7 +71,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		// runnables
 		//
 
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 		TimeSpecificTestRunnable firstRunnable = new TimeSpecificTestRunnable(3000);
 
@@ -104,7 +100,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCancel_SingleRunnable() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 
 		TimeSpecificTestRunnable runnable = new TimeSpecificTestRunnable(10000);
@@ -122,7 +118,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCancel_MultipleRunnables() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 
 		TimeSpecificTestRunnable runnable = new TimeSpecificTestRunnable(10000);
@@ -150,7 +146,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testRunLater() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 
 		BasicTestRunnable runnable = new BasicTestRunnable();
@@ -164,7 +160,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSchedule_CancelOnlyStopsCurrentRunnable() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 
 		TimeSpecificTestRunnable runnable = new TimeSpecificTestRunnable(10000);
@@ -217,14 +213,13 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSwingRunnerCallback() {
-		TestTaskListener listener = new TestTaskListener();
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 		TestSwingRunnable runnable = new TestSwingRunnable();
 
 		runManager.runNow(runnable, "Test Swing Runnable");
 
 		waitForRunManagerToFinish(runManager);
-
 		waitForSwing();
 
 		assertTrue(runnable.hasCompleted());
@@ -232,15 +227,14 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testTaskListenerTaskCompleted() {
-		TestTaskListener listener = new TestTaskListener();
+	public void testListener_JobCompleted() {
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 		BasicTestRunnable runnable = new BasicTestRunnable();
 
 		runManager.runNow(runnable, "Test Runnable");
 
 		waitForRunManagerToFinish(runManager);
-
 		waitForSwing();
 
 		assertEquals(0, listener.taskCancelled);
@@ -248,8 +242,8 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testTaskListenerTaskCancelled() {
-		TestTaskListener listener = new TestTaskListener();
+	public void testListener_JobCancelled() {
+		TestRunManagerListener listener = new TestRunManagerListener();
 		RunManager runManager = new RunManager(listener);
 		RunUntilCancelledTestRunnable runnable = new RunUntilCancelledTestRunnable();
 
@@ -260,13 +254,27 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		runManager.cancelAllRunnables();
 
 		waitForRunnableToFinish(runManager, runnable);
-
-		Msg.debug(this, "before waiting");
 		waitForSwing();
-		Msg.debug(this, "after waiting");
 
 		assertEquals(0, listener.taskCompleted);
 		assertEquals(1, listener.taskCancelled);
+	}
+
+	@Test
+	public void testListener_JobFailed() {
+		TestRunManagerListener listener = new TestRunManagerListener();
+		RunManager runManager = new RunManager(listener);
+		ExceptionRunnable runnable = new ExceptionRunnable();
+
+		runManager.runNow(runnable, "Test Runnable");
+
+		waitForRunManagerToStart(runManager, runnable);
+
+		waitForRunManagerToFinish(runManager);
+
+		assertEquals(0, listener.taskCompleted);
+		assertEquals(0, listener.taskCancelled);
+		assertNotNull(listener.failedThrowable);
 	}
 
 	@Test
@@ -321,20 +329,6 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		waitForComponentToBeHidden(component);
 		frame.setVisible(false);
-	}
-
-	private void waitForComponentToBeHidden(JComponent component) {
-		int numWaits = 0;
-		int sleepyTime = 100;
-		int maxWaits = 20;
-
-		while (component.isShowing() && maxWaits > numWaits++) {
-			sleep(sleepyTime);
-		}
-
-		if (numWaits >= maxWaits) {
-			Assert.fail("Component not hidden!");
-		}
 	}
 
 	@Test
@@ -393,6 +387,20 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================	
+
+	private void waitForComponentToBeHidden(JComponent component) {
+		int numWaits = 0;
+		int sleepyTime = 100;
+		int maxWaits = 20;
+
+		while (component.isShowing() && maxWaits > numWaits++) {
+			sleep(sleepyTime);
+		}
+
+		if (numWaits >= maxWaits) {
+			Assert.fail("Component not hidden!");
+		}
+	}
 
 	private void waitForRunManagerToStart(RunManager runManager, TestRunnable runnable) {
 		assertTrue("Failed waiting for runnable to start", runnable.waitForStart(MAX_WAIT_TIME));
@@ -468,20 +476,27 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private class TestTaskListener implements TaskListener {
+	private class TestRunManagerListener implements RunManagerListener {
 		private volatile int taskCancelled;
 		private volatile int taskCompleted;
+		private volatile Throwable failedThrowable;
 
 		@Override
-		public void taskCancelled(Task task) {
-			trace("taskCancelled() - " + task);
+		public void jobCancelled() {
+			trace("jobCancelled()");
 			taskCancelled++;
 		}
 
 		@Override
-		public void taskCompleted(Task task) {
-			trace("taskCompleted()");
+		public void jobFinished() {
+			trace("jobFinished()");
 			taskCompleted++;
+		}
+
+		@Override
+		public void jobFailed(Throwable t) {
+			trace("jobFailed()");
+			failedThrowable = t;
 		}
 	}
 
@@ -708,6 +723,18 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 			doneLatch.countDown();
 		}
+	}
 
+	private class ExceptionRunnable extends TestRunnable {
+		@Override
+		public void monitoredRun(TaskMonitor monitor) {
+			trace(getClass().getSimpleName() + " - started");
+			startLatch.countDown();
+
+			// Note: we do not countdown the doneLatch, so tests using this runnable cannot wait 
+			// for that
+
+			throw new RuntimeException("Test runnable 'unexpected exception'");
+		}
 	}
 }

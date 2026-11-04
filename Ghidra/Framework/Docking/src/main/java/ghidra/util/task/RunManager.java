@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.awt.Component;
 import javax.swing.*;
 
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
 
@@ -65,13 +65,13 @@ public class RunManager {
 	private TaskMonitorComponent monitor;
 	private final Worker worker;
 	private final String runManagerName;
-	private TaskListener taskListener;
+	private final RunManagerListener listener;
 
 	public RunManager() {
 		this(null, null, null);
 	}
 
-	public RunManager(TaskListener listener) {
+	public RunManager(RunManagerListener listener) {
 		this(null, null, listener);
 	}
 
@@ -79,10 +79,10 @@ public class RunManager {
 		this(name, defaultComponent, null);
 	}
 
-	public RunManager(String name, Component defaultComponent, TaskListener listener) {
+	public RunManager(String name, Component defaultComponent, RunManagerListener listener) {
 		this.runManagerName = name;
 		this.defaultComponent = defaultComponent;
-		this.taskListener = listener;
+		this.listener = listener;
 
 		createProgressPanel();
 
@@ -264,22 +264,28 @@ public class RunManager {
 		monitor.showProgressIcon(showIcon);
 	}
 
-	private void notifyTaskCompleted(final MonitoredRunnable monitoredRunnable) {
-		if (taskListener == null) {
+	private void notifyJobCompleted() {
+		if (listener == null) {
 			return;
 		}
 
-		Runnable runnable = () -> taskListener.taskCompleted(null);
-		SwingUtilities.invokeLater(runnable);
+		Swing.runLater(() -> listener.jobFinished());
 	}
 
-	private void notifyTaskCancelled(final MonitoredRunnable monitoredRunnable) {
-		if (taskListener == null) {
+	private void notifyJobCancelled() {
+		if (listener == null) {
 			return;
 		}
 
-		Runnable runnable = () -> taskListener.taskCancelled(null);
-		SwingUtilities.invokeLater(runnable);
+		Swing.runLater(() -> listener.jobCancelled());
+	}
+
+	private void notifyJobFailed(Throwable t) {
+		if (listener == null) {
+			return;
+		}
+
+		Swing.runLater(() -> listener.jobFailed(t));
 	}
 
 //==================================================================================================
@@ -307,18 +313,18 @@ public class RunManager {
 		public void run(TaskMonitor monitor) {
 			try {
 				doExecute(monitor);
+
+				if (monitor.isCancelled()) {
+					runManager.notifyJobCancelled();
+				}
+				else {
+					runManager.notifyJobCompleted();
+				}
 			}
 			catch (Exception e) {
 				progressDone = true;
 				Msg.error(this, "Unexpected error processing runnable: " + name, e);
-			}
-			finally {
-				if (monitor.isCancelled()) {
-					runManager.notifyTaskCancelled(runnable);
-				}
-				else {
-					runManager.notifyTaskCompleted(runnable);
-				}
+				runManager.notifyJobFailed(e);
 			}
 		}
 
@@ -337,7 +343,7 @@ public class RunManager {
 			progressDone = true;
 
 			trace("calling SwingRunnable callback");
-			SystemUtilities.runSwingNow(new SwingRunner(monitor.isCancelled()));
+			Swing.runNow(new SwingRunner(monitor.isCancelled()));
 
 			trace("completed = true");
 
@@ -368,7 +374,7 @@ public class RunManager {
 					showTimer.start();
 				}
 			};
-			SwingUtilities.invokeLater(showProgressRunnable);
+			Swing.runLater(showProgressRunnable);
 		}
 
 		private class SwingRunner implements Runnable {
