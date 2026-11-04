@@ -141,4 +141,25 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	public void testAssemble_T_tbb_m0_r0() {
 		assertAllSyntaxErrors("tbb [0, r0]");
 	}
+
+	@Test
+	public void testAssemble_vqabs_s8_q6_q7() {
+		assertOneCompatRestExact("vqabs.s8 q6,q7", "4e:c7:b0:f3");
+	}
+
+	@Test
+	public void testAssemble_vqneg_s8_q6_q7() {
+		assertOneCompatRestExact("vqneg.s8 q6,q7", "ce:c7:b0:f3");
+	}
+
+	@Test
+	public void testAssemble_vqabs_s8_d6_d7() {
+		assertOneCompatRestExact("vqabs.s8 d6,d7", "07:67:b0:f3");
+	}
+
+	@Test
+	public void testAssemble_T_vqneg_s8_q6_q7() {
+		assertOneCompatRestExact("vqneg.s8 q6,q7", "b0:ff:ce:c7",
+		THUMB, 0x00400000, "vqneg.s8 q6,q7");
+	}
 }
