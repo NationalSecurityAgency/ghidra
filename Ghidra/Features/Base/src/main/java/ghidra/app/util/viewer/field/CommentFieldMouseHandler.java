@@ -15,14 +15,16 @@
  */
 package ghidra.app.util.viewer.field;
 
+import static ghidra.util.StringUtilities.*;
+
 import java.awt.event.MouseEvent;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.QueryData;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.*;
-import ghidra.util.StringUtilities;
 
 /**
  * A handler to process {@link CommentFieldLocation} clicks.
@@ -59,9 +61,8 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 
 		}
 
-		String clickedWord =
-			StringUtilities.findWord(StringUtilities.convertTabsToSpaces(comments[commentRow]),
-				column, GoToService.VALID_GOTO_CHARS);
+		String converted = convertTabsToSpaces(comments[commentRow]);
+		String clickedWord = findWord(converted, column, GoToService.VALID_GOTO_CHARS);
 
 		return checkWord(clickedWord, serviceProvider, sourceNavigatable);
 	}
@@ -87,14 +88,15 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		if (wordString == null) {
 			return false;
 		}
-		ProgramLocation location = sourceNavigatable.getLocation();
+
 		GoToService goToService = serviceProvider.getService(GoToService.class);
 		if (goToService == null) {
 			return false;
 		}
 		QueryData queryData = new QueryData(wordString, false);
-		return goToService.goToQuery(sourceNavigatable, location.getAddress(), queryData, null,
-			null);
+		ProgramLocation location = sourceNavigatable.getLocation();
+		Address fromAddr = location.getAddress();
+		return goToService.goToQuery(sourceNavigatable, fromAddr, queryData, null, null);
 
 	}
 }
