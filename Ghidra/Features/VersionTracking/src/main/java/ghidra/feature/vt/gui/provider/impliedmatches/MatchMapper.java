@@ -63,6 +63,19 @@ class MatchMapper implements VTMatch {
 		return rowObject.getSimilarityScore();
 	}
 
+	/**
+	 * Delegates to the underlying match's stored PDiff score. Returns null for
+	 * implied matches that don't yet have a concrete match in the DB.
+	 */
+	@Override
+	public VTScore getPdiffSimilarityScore() {
+		VTMatch existingMatch = rowObject.getMatch();
+		if (existingMatch != null) {
+			return existingMatch.getPdiffSimilarityScore();
+		}
+		return null;
+	}
+
 	@Override
 	public Address getSourceAddress() {
 		return rowObject.getSourceAddress();
