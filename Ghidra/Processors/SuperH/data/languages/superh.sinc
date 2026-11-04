@@ -29,6 +29,15 @@ define register offset=0x180 size=4 [tbr];
 @define CS_FLAG  "sr[13,1]"
 @define BO_FLAG  "sr[14,1]"
 
+# Writable SR bits. SH-1/SH-2: T, S, I3-I0, Q, M (SH-1/SH-2 Programming Manual, LDC and RTE).
+@if SH_VERSION == "2A"
+@define SR_LDC_MASK "0x0FFF0FFF"
+@define SR_RTE_MASK "0x000063F3"
+@else
+@define SR_LDC_MASK "0x000003F3"
+@define SR_RTE_MASK "0x000003F3"
+@endif
+
 @if defined(FPU)
 
 # Floating-Point Registers
@@ -1018,9 +1027,10 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     
     old_q = $(Q_FLAG);
     $(Q_FLAG) = (0x80000000 & rn_08_11) != 0;
-    tmp2 = rm_04_07;
     rn_08_11 = rn_08_11 << 1;
     rn_08_11 = rn_08_11 | zext($(T_FLAG));
+    # Read Rm after the shift: for DIV1 Rn,Rn the divisor is the shifted value (manual 6.19).
+    tmp2 = rm_04_07;
     old_q_eq_m = old_q == $(M_FLAG);
     m_eq_q = $(M_FLAG) == $(Q_FLAG);
     
@@ -1104,110 +1114,33 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :mac.l  @rm_04_07+,@rn_08_11+  is opcode_12_15=0b0000 & rn_08_11 & rm_04_07 & opcode_00_03=0b1111 
 {
-    # FIXME: review this instruction
-    
-    local RnL;
-    local RnH;
-    local RmL;
-    local RmH;
-    local Res0;
-    local Res1:4;
-    local Res2:4;
-    
-    local temp0;
-    local temp1:4;
-    local temp2:4;
-    local temp3;
-    
-    local tempm:4;
-    local tempn:4;
-    local fnLmL:4;
-    
-    tempn = *:4 rn_08_11;
+    # Signed 32x32 -> 64-bit multiply-accumulate (SH-1/SH-2 manual 6.29).
+    # S=0: MACH:MACL += product (64-bit, wraps).
+    # S=1: 48-bit saturating accumulate; the 48-bit accumulator is
+    #      MACH[15:0]:MACL, saturated to H'FFFF8000:00000000..H'00007FFF:FFFFFFFF.
+    local tempn:4 = *:4 rn_08_11;
     rn_08_11 = rn_08_11 + 4;
-    tempm = *:4 rm_04_07;
+    local tempm:4 = *:4 rm_04_07;
     rm_04_07 = rm_04_07 + 4;
 
-    fnLmL = -1 * zext((tempn ^ tempm) s<0);
-    
-    if( tempn s>= 0) goto <SKIP_TEMPN>;
-    tempn = 0 - tempn;
-    
-    <SKIP_TEMPN>
-    if( tempm s>= 0) goto <SKIP_TEMPM>;
-    tempm = 0 - tempm;
-    
-    <SKIP_TEMPM>
-    
-    temp1 = tempn;
-    temp2 = tempm;
-    
-    RnL = temp1 & 0x0000FFFF;
-    RnH = (temp1 >> 16) & 0x0000FFFF;
-    RmL = temp2 & 0x0000FFFF;
-    RmH = (temp2 >> 16) & 0x0000FFFF;
-    temp0 = RmL * RnL;
-    temp1 = RmH * RnL;
-    temp2 = RmL * RnH;
-    temp3 = RmH * RnH;
+    local prod:8 = sext(tempn) * sext(tempm);
+    local acc:8 = (zext(mach) << 32) | zext(macl);
 
-    Res2 = 0;
-    Res1 = temp1 + temp2;
-    
-    if(Res2 >= temp1) goto <SKIP_RES2_ADD>;
-    Res2 = Res2 + 0x00010000;              
-    <SKIP_RES2_ADD>
-    
-    temp1 = (Res1 << 16) & 0xFFFF0000;
+    if ($(S_FLAG) == 1) goto <SATURATE>;
+    acc = acc + prod;
+    goto <WRITE>;
 
-    Res0 = temp0 + temp1;    
-    Res2 = Res2 + zext(Res0 < temp0);
-    
-    Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+    <SATURATE>
+    acc = ((acc << 16) s>> 16) + prod;
+    if (acc s>= 0xFFFF800000000000) goto <NO_MIN>;
+    acc = 0xFFFF800000000000;
+    <NO_MIN>
+    if (acc s<= 0x00007FFFFFFFFFFF) goto <WRITE>;
+    acc = 0x00007FFFFFFFFFFF;
 
-    if(fnLmL s>= 0) goto <CHECK_S>;
-    Res2 = ~Res2;
-    
-    if(Res0 == 0) goto <RES0_0>;
-    Res0 = (~Res0) + 1;
-    goto <CHECK_S>;
-    
-    <RES0_0>
-    Res2 = Res2 + 1;
-    
-    <CHECK_S>
-    
-    if($(S_FLAG) != 1) goto <S_0>;
-    
-    Res0 = macl + Res0;
-    Res2 = Res2 + zext(macl > Res0);
-    
-    Res2 = Res2 + (mach & 0x0000FFFF);
-    
-    if((Res2 s>= 0) || Res2 >= 0xFFFF8000) goto <SKIP_1>;
-    Res2 = 0xFFFF8000;
-    Res0 = 0x00000000;
-    
-    <SKIP_1>    
-    if((Res2 s<= 0) || Res2 <= 0x00007FFF) goto <SKIP_2>;
-    Res2 = 0x00007FFF;
-    Res0 = 0xFFFFFFFF;
-    
-    <SKIP_2>
-    mach = (Res2 & 0x0000FFFF) | (mach & 0xFFFF0000);
-    macl = Res0;
-    
-    goto <END>;
-    
-    <S_0>
-    Res0 = macl + Res0;
-    Res2 = Res2 + zext(macl > Res0);
-    
-    Res2 = Res2 + mach;
-    mach = Res2;
-    macl = Res0;
-    
-    <END>
+    <WRITE>
+    mach = acc(4);
+    macl = acc:4;
 }
 @endif
 
@@ -1222,18 +1155,19 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     local ans;
     local templ:4;
     
-    tempn = *:2 rn_08_11;
+    # 16-bit operands, (Rn) read first
+    local opn:2 = *:2 rn_08_11;
     rn_08_11 = rn_08_11 + 2;    
-    tempm = *:2 rm_04_07;
+    local opm:2 = *:2 rm_04_07;
     rm_04_07 = rm_04_07 + 2;
     
     templ = macl;
-    tempm = sext(tempn:2) * sext(tempm:2);
+    tempm = sext(opn) * sext(opm);
     
     dest = (macl s< 0);
     
-    src = zext(1*(tempm s>= 0));
-    tempn = sext(-1*(tempm s>= 0));
+    src = zext(1*(tempm s< 0));
+    tempn = sext(-1*(tempm s< 0));
 
     src = src + zext(dest);
     macl = macl + tempm;    
@@ -1270,7 +1204,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     
     mach = mach + tempn;
 
-    macl = macl + zext(1*(templ s> macl));
+    mach = mach + zext(1*(templ > macl));
     
 @if SH_VERSION == "1"
     if((mach & 0x00000200) == 0) goto <ZERO_EXTEND>;
@@ -1444,7 +1378,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 :xor.b  imm_00_07,@(r0,gbr)  is r0 & gbr & opcode_08_15=0b11001110 & imm_00_07  
 {
     local temp = *:1 (gbr + r0);
-    temp = temp & (imm_00_07 & 0x000000FF);
+    temp = temp ^ (imm_00_07 & 0x000000FF);
     
     *:1 (gbr + r0) = temp;
 }
@@ -1764,12 +1698,12 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :ldc    rm_08_11,sr  is sr & opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001110 
 {
-    sr = rm_08_11 & 0x0FFF0FFF;
+    sr = rm_08_11 & $(SR_LDC_MASK);
 }
 
 :ldc.l  @rm_08_11+,sr  is sr & opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00000111 
 {
-    sr = *rm_08_11 & 0x0FFF0FFF;
+    sr = *rm_08_11 & $(SR_LDC_MASK);
     rm_08_11 = rm_08_11 + 4;
     
 }
@@ -1858,7 +1792,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     _pc:4 = *r15;
     r15 = r15 + 4;
     
-    _sr:4 = *r15 & 0x000063F3;
+    _sr:4 = *r15 & $(SR_RTE_MASK);
     r15  = r15 + 4;
     
     delayslot(1);
