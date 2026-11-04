@@ -55,6 +55,8 @@ public class ServerAdmin implements GhidraLaunchable {
 	 *   UserAdmin.invocation - identifies the name of the application used when displaying usage text.
 	 *   UserAdmin.config - identifies the config file instead of passing on command line.
 	 * </pre>
+	 * <p>
+	 * NOTE: The use of stdin, stdout, and stderr is acceptable for this console application.
 	 * @param args command line arguments
 	 */
 	@Override

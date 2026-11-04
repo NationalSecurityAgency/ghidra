@@ -79,7 +79,7 @@ public class GhidraGo implements GhidraLaunchable {
 			}
 		}
 		catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-			System.err.println("\n" + "USAGE: ghidraGo <ghidraURL>\n\n" +
+			Msg.error(this, "\n" + "USAGE: ghidraGo <ghidraURL>\n\n" +
 				"Ghidra URL Forms (ghidraURL):\n" +
 				"    ghidra://<hostname>[:<port>]/<repo-name>[/<folder-path>[/<program-name>]]\n" +
 				"    ghidra:/[<local-dirpath>/]<project-name>[?/<folder-path>[/<program-name>]]\n");
