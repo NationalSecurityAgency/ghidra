@@ -39,12 +39,30 @@ import ghidra.framework.Platform;
 import ghidra.util.ColorUtils;
 import ghidra.util.Msg;
 
+/**
+ * An adapter to make drag and drop for GTrees easier by combining the various interfaces into one
+ * implementation. 
+ * <p>
+ * When starting a drag operation we would like the cursor to show the type of operations being 
+ * performed, a move or a copy.  Once the user moves the mouse, the cursor should update to reflect
+ * whether the drop is valid at the current mouse location. We signal a cursor change by calling 
+ * accept or reject for a given drag event. Unfortunately, Java has a cursor update issue when 
+ * initially dragging.  Specifically, Java will not change the cursor until an accept/reject state
+ * has been toggled. Initially the drag state is reject, since you can't drop a node on itself. As
+ * the user keeps dragging over new nodes, as long as the state stays rejected, the cursor is not
+ * updated, since state did not toggle. 
+ * <p>
+ * To work around the issue above we track the initial drag node and use this to artificially signal
+ * an accept drag state so that the cursor will change once it is over a new node when a reject is
+ * triggered.
+ */
 public class GTreeDragNDropAdapter
 		implements DragSourceListener, DragGestureListener, DropTargetListener {
 
 	private JTree tree;
 	private GTreeDragNDropHandler dragNDropHandler;
 	private GTree gTree;
+	private GTreeNode startNode;
 
 	public GTreeDragNDropAdapter(GTree gTree, JTree tree, GTreeDragNDropHandler dragNDropHandler) {
 		this.gTree = gTree;
@@ -63,6 +81,7 @@ public class GTreeDragNDropAdapter
 	@Override
 	public void dragDropEnd(DragSourceDropEvent dsde) {
 		resetRenderer();
+		startNode = null;
 	}
 
 	@Override
@@ -127,6 +146,8 @@ public class GTreeDragNDropAdapter
 			return;
 		}
 
+		// keep the start node to work around cursor update issues (see the class header)
+		startNode = (GTreeNode) path.getLastPathComponent();
 		Transferable transferable = new GTreeNodeTransferable(dragNDropHandler, selectedData);
 
 		Image image = getDragImage(selectedData);
@@ -255,6 +276,17 @@ public class GTreeDragNDropAdapter
 		gTree.setActiveDropTargetNode(null);
 		tree.repaint();
 		GTreeNode dropNode = (GTreeNode) path.getLastPathComponent();
+		if (dropNode == startNode) {
+			// allow the initial drag node to show the cursor for the drag operation by not 
+			// rejecting the drag
+			gTree.setActiveDropTargetNode(dropNode);
+			dtde.acceptDrag(dtde.getDropAction());
+			return;
+		}
+
+		// once we are no longer over the start drag node, we do not need to work around Java's 
+		// cursor update problem
+		startNode = null;
 		if (dragNDropHandler.isDropSiteOk(dropNode, dtde.getCurrentDataFlavors(),
 			dtde.getDropAction())) {
 			gTree.setActiveDropTargetNode(dropNode);

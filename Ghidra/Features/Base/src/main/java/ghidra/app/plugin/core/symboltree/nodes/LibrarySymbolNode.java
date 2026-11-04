@@ -46,6 +46,13 @@ public class LibrarySymbolNode extends SymbolNode {
 		}
 	}
 
+	/**
+	 * {@return the Library represented by this node}
+	 */
+	public Library getLibrary() {
+		return getSymbol().getLibrary();
+	}
+
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 		List<GTreeNode> list = new ArrayList<>();

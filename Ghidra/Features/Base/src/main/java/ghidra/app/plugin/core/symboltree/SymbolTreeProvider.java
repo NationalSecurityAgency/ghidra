@@ -46,6 +46,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.symbol.MemorySymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -501,6 +502,14 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		program.flushEvents();
 		domainChangeUpdateManager.updateNow();
 		tree.startEditing(parent, childName);
+	}
+
+	public void setLibrary(Library library, List<MemorySymbol> symbols) {
+		program.withTransaction("Set Library", () -> {
+			for (MemorySymbol memorySymbol : symbols) {
+				memorySymbol.setLibrary(library);
+			}
+		});
 	}
 
 	public int reparentSymbols(Namespace namespace, List<Symbol> symbolList) {
