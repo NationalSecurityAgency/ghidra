@@ -42,6 +42,8 @@ first, consider the following tips to ensure a smooth process when submitting a 
   architectual sense to be there. When in doubt, do not include unit tests in your pull request
   unless a Ghidra team member asks you to during the review process.
 
+- Follow the [Ghidra Coding Standards](GhidraDocs/GhidraCodingStandards.md).
+
 - Limit your patches to the smallest reasonable change to achieve your intended goal. For example, 
   do not make unnecessary indentation changes; but don't go out of your way to make the patch so 
   minimal that it isn't easy to read, either. Consider the reviewer's perspective.

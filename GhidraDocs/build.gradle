@@ -67,6 +67,9 @@ rootProject.assembleMarkdownToHtml {
 	from ("${this.projectDir}/GettingStarted.md") {
 		into "."
 	}
+	from ("${this.projectDir}/GhidraCodingStandards.md") {
+		into "docs"
+	}
 	from ("${this.projectDir}/GhidraClass/BSim") {
 		include "*.md"
 		into "docs/GhidraClass/BSim"
