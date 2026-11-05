@@ -20,6 +20,7 @@ import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -52,7 +53,7 @@ public class SymbolServerService2Test extends AbstractGhidraHeadedIntegrationTes
 
 	private File mkFile(File file, byte[] bytes) throws IOException {
 		FileUtilities.checkedMkdirs(file.getParentFile());
-		FileUtilities.writeBytes(file, bytes);
+		Files.write(file.toPath(), bytes);
 		return file;
 	}
 
