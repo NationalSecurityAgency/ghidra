@@ -821,7 +821,6 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 
 :ADC A, ixMem8         is op0_8=0xdd; op0_8=0x8e; ixMem8 & A{
 	val:1 = ixMem8;
-	MemRead(val,HL);
 	local a_temp = A;
 	
 	additionWithCarry(a_temp, val, a_temp);
@@ -832,7 +831,6 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 :ADC A, iyMem8         is op0_8=0xfd; op0_8=0x8e; iyMem8 & A {
 
 	val:1 = iyMem8;
-	MemRead(val,HL);
 	local a_temp = A;
 	
 	additionWithCarry(a_temp, val, a_temp);
@@ -2484,7 +2482,7 @@ ixl_iyl: IYL is op0_8=0xfd & IYL { export IYL; }
 :SBC A, ixh_iyh is ixh_iyh; op0_8=0x9c & A {
 	local a_temp = A;
 	subtractionWithCarry(a_temp, ixh_iyh, a_temp);
-	setResultFlags(A);
+	setResultFlags(a_temp);
 	A = a_temp;
 }
 
