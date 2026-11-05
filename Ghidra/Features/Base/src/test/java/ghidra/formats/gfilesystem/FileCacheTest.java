@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.formats.gfilesystem;
 import static org.junit.Assert.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 
 import org.junit.*;
@@ -154,7 +155,7 @@ public class FileCacheTest extends AbstractGenericTest {
 		assertTrue(fce.file.exists());
 		assertEquals("10428da10f5aa2793cb73c0b680e1621", fce.md5);
 
-		byte[] fileBytes = FileUtilities.getBytesFromFile(fce.file);
+		byte[] fileBytes = Files.readAllBytes(fce.file.toPath());
 		assertFalse(Arrays.equals("This is a test1".getBytes(), fileBytes));
 
 		try (ObfuscatedInputStream ois = new ObfuscatedInputStream(new FileInputStream(fce.file))) {

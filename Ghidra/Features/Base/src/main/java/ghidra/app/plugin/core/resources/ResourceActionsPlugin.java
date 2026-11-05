@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.resources;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -41,7 +42,6 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
-import utilities.util.FileUtilities;
 
 /**
  * A plugin that adds actions to manage data resources in the listing
@@ -155,7 +155,7 @@ public class ResourceActionsPlugin extends Plugin {
 					return;
 				}
 				byte[] bytes = data.getBytes();
-				FileUtilities.writeBytes(f, bytes);
+				Files.write(f.toPath(), bytes);
 				tool.setStatusInfo(
 					"Image resource at " + data.getAddress() + " saved as: " + f.getName());
 			}
