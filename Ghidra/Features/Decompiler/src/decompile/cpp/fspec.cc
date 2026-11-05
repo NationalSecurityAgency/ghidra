@@ -1887,10 +1887,9 @@ bool ParamTrial::operator<(const ParamTrial &b) const
   int4 grpb = b.entry->getGroup();
   if (grpa != grpb)
     return (grpa < grpb);
-  if (entry != b.entry)		// Compare entry pointers directly
-    return (entry < b.entry);
-  if (entry->isExclusion()) {
-    return (offset < b.offset);
+  if (entry == b.entry && entry->isExclusion()) {
+    if (offset != b.offset)
+      return (offset < b.offset);
   }
   if (addr != b.addr) {
     if (entry->isReverseStack())
