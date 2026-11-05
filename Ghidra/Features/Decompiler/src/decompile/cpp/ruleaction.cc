@@ -7608,7 +7608,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleAndStructure
-/// \brief Convert `and(x,#mask) => zext(sub(x,#c)` when the mask corresponds to a field access
+/// \brief Convert `x & #mask => zext(sub(x,#c))` when the mask corresponds to a field access
 void RuleAndStructure::getOpList(vector<uint4> &oplist) const
 
 {
@@ -7634,6 +7634,9 @@ int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
   Datatype *ct = baseType->findSmallestContainer(structOff, size, &structOff);
   if (ct->getSize() >= vn->getSize() || structOff != 0)
     return 0;
+  if (ct->getMetatype() == TYPE_UNKNOWN && ct->getSize() == 1 &&
+      meta == TYPE_ARRAY && ((TypeArray *)baseType)->getBase() == ct)
+    return 0;		// Don't apply to undefined array
   PcodeOp *subOp = data.newOp(2, op->getAddr());
   data.opSetOpcode(subOp, CPUI_SUBPIECE);
   data.opSetInput(subOp,data.newConstant(4, 0),1);
@@ -7644,17 +7647,20 @@ int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
   addr.renormalize(vn->getSize());		// Allow for possible join address
   Varnode *outvn = data.newVarnodeOut(ct->getSize(), addr, subOp);
   outvn->updateType(ct);
-  if (calc_mask(size) == off) {
+  if (calc_mask(size) == off && size == ct->getSize()) {	// Field is not modified by the INT_AND
     data.opRemoveInput(op, 1);
     data.opSetInput(op, outvn, 0);
-    data.opSetOpcode(op, CPUI_INT_ZEXT);
+    data.opSetOpcode(op, CPUI_INT_ZEXT);	// SUBPIECE truncates everything, so INT_AND is not needed anymore
     data.opSetInput(subOp,vn,0);
     data.opInsertBefore(subOp, op);
   }
-  else {
+  else {					// INT_AND zeroes out bits in the field
     PcodeOp *newZext = data.newOp(1, op->getAddr());
-    data.opSetOpcode(newZext, CPUI_INT_ZEXT);
+    data.opSetOpcode(newZext, CPUI_INT_ZEXT);	// Create new INT_ZEXT but keep original INT_AND
     Varnode *outzext = data.newUniqueOut(vn->getSize(), newZext);
+    Datatype *outct = op->getOut()->getTypeDefFacing();
+    if (outct->getMetatype() == TYPE_UINT)
+      outzext->updateType(outct);
     data.opSetInput(op, outzext, 0);
     data.opSetInput(subOp, vn, 0);
     data.opSetInput(newZext,outvn,0);
