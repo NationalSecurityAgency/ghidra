@@ -5458,7 +5458,6 @@ int4 RuleBoolNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn;
   PcodeOp *flip_op;
   OpCode opc;
-  bool flipyes;
 
   vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
@@ -5470,8 +5469,9 @@ int4 RuleBoolNegate::applyOp(PcodeOp *op,Funcdata &data)
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter)
     if ((*iter)->code() != CPUI_BOOL_NEGATE) return 0;
 
-  opc = get_booleanflip(flip_op->code(),flipyes);
+  opc = flip_op->getOpcode()->getBooleanFlip();
   if (opc == CPUI_MAX) return 0;
+  bool flipyes = flip_op->getOpcode()->isBooleanFlipReorder();
   data.opSetOpcode(flip_op,opc); // Set the negated opcode
   if (flipyes)			// Do we need to reverse the two operands
     data.opSwapInput(flip_op,0,1);
