@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,21 @@ package ghidra.app.plugin.assembler.sleigh;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 
 import db.Transaction;
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
+import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -96,5 +98,28 @@ public class PublicAPITest extends AbstractGenericTest {
 		assertEquals(2, result.size());
 		assertEquals("brds", result.get(0).getMnemonicString());
 		assertEquals("_add", result.get(1).getMnemonicString());
+	}
+
+	@Test
+	public void testEmptyOperandDoesNotMatchDefaultFunctionNames() throws Exception {
+		Language aarch64 = getLanguage("AARCH64:LE:64:v8A");
+		program = new ProgramDB("test", aarch64, aarch64.getDefaultCompilerSpec(), this);
+
+		try (Transaction tx = program.openTransaction("Test")) {
+			program.getMemory()
+					.createInitializedBlock(".text", addr(0x00400000), 0x1000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			// Default-named functions are stored with an empty name
+			program.getFunctionManager()
+					.createFunction(null, addr(0x00400100), new AddressSet(addr(0x00400100)),
+						SourceType.DEFAULT);
+		}
+		Assembler asm = Assemblers.getAssembler(program);
+
+		Collection<AssemblyParseResult> results = asm.parseLine("ldr x0,[x1, #]");
+		assertFalse(results.isEmpty());
+		for (AssemblyParseResult result : results) {
+			assertTrue(result.isError());
+		}
 	}
 }

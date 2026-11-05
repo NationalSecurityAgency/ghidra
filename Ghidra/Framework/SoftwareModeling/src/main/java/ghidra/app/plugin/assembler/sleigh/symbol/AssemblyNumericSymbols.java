@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,6 +133,22 @@ public final class AssemblyNumericSymbols {
 	}
 
 	/**
+	 * Check whether the program's symbol table should be searched for the given name
+	 * 
+	 * <p>
+	 * {@link SymbolTable#getSymbols(String)} returns every default-named symbol (e.g.,
+	 * {@code FUN_00401000}) for the empty name, since those are stored without a name. For the
+	 * assembler, that would produce one candidate operand per such symbol. That behavior seems
+	 * wrong; if it is ever addressed, the empty-name check here can be removed.
+	 * 
+	 * @param name the name
+	 * @return true to search the symbol table
+	 */
+	private boolean shouldSearchSymbolTable(String name) {
+		return program != null && !name.isEmpty();
+	}
+
+	/**
 	 * Choose any symbol with the given name
 	 * 
 	 * <p>
@@ -145,7 +161,7 @@ public final class AssemblyNumericSymbols {
 	public Set<Long> chooseAll(String name) {
 		Set<Long> result = new TreeSet<>();
 		result.addAll(programEquates.getOrDefault(name, Set.of()));
-		if (program != null) {
+		if (shouldSearchSymbolTable(name)) {
 			StreamSupport.stream(program.getSymbolTable().getSymbols(name).spliterator(), false)
 					.flatMap(sym -> streamNonExternalAddresses(sym))
 					.forEach(a -> result.add(a.getAddressableWordOffset()));
@@ -165,7 +181,7 @@ public final class AssemblyNumericSymbols {
 	 */
 	public Set<Long> chooseBySpace(String name, AddressSpace space) {
 		Set<Long> result = new TreeSet<>();
-		if (program != null) {
+		if (shouldSearchSymbolTable(name)) {
 			StreamSupport.stream(program.getSymbolTable().getSymbols(name).spliterator(), false)
 					.flatMap(sym -> streamAddresses(sym))
 					.filter(a -> a.getAddressSpace() == space)
