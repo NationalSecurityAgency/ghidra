@@ -126,6 +126,11 @@ public class LibrarySymbol extends SymbolDB implements Comparable<LibrarySymbol>
 	}
 
 	@Override
+	public Library getLibrary() {
+		return getObject();
+	}
+
+	@Override
 	public Library getObject() {
 		try (Closeable c = lock.read()) {
 			if (!refreshIfNeeded()) {
