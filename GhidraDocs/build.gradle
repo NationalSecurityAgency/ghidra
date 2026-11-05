@@ -74,4 +74,8 @@ rootProject.assembleMarkdownToHtml {
 		include "*.md"
 		into "docs/GhidraClass/BSim"
 	}
+	from ("${this.projectDir}/languages") {
+		include "**/*.md"
+		into "docs/languages"
+	}
 }

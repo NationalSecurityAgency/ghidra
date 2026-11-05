@@ -1,5 +1,5 @@
 # sleigh specification file for Skeleton Processor
-#   >> see docs/languages/sleigh.htm or sleigh.pdf for Sleigh syntax
+#   >> see docs/languages/manuals/sleigh.md or sleigh.html for Sleigh syntax
 # Other language modules (see Ghidra/Processors) may provide better examples
 # when creating a new language module.
 
