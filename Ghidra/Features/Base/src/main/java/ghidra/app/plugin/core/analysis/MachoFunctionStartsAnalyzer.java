@@ -97,7 +97,10 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 	public boolean canAnalyze(Program program) {
 		String format = program.getExecutableFormat();
 		isDyld = DyldCacheLoader.DYLD_CACHE_NAME.equals(format);
-		return isDyld || MachoLoader.MACH_O_NAME.equals(format);
+		// An image extracted from a dyld cache is a Mach-O too. Its format name is a string
+		// because DyldCacheExtractLoader is in FileFormats.
+		return isDyld || MachoLoader.MACH_O_NAME.equals(format) ||
+			"Extracted DYLD Component".equals(format);
 	}
 
 	@Override
