@@ -3319,14 +3319,6 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
    return [pc];
 }
 
-:push^ItCond^".w"    thstrlist_dec           is TMode=1 & ItCond & op0=0xe8ad; thc1515=0 & thc1313=0 & thstrlist_dec
-{
-   build ItCond;
-   mult_addr = sp-4;
-   build thstrlist_dec;
-   sp = mult_addr + 4;
-}
-
 :push^ItCond^".w"    Rt1215           is TMode=1 & ItCond & op0=0xf84d; Rt1215 & offset12=0xd04
 {
    build ItCond;
