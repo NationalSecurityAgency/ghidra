@@ -50,6 +50,8 @@ public class DWARFFunction {
 	public Function function;	// ghidra function
 
 	public DWARFLocation funcEntryFrameBaseLoc;
+	private DWARFStackValueReader wildcardStackValues;
+	private final Map<Long, DWARFStackValueReader> stackValues = new HashMap<>();
 
 	public String callingConventionName;
 
@@ -140,6 +142,17 @@ public class DWARFFunction {
 
 	public DWARFProgram getProgram() {
 		return diea.getProgram();
+	}
+
+	DWARFStackValueReader getStackValueReader(long lexicalOffset, boolean wildcard) {
+		if (wildcard) {
+			if (wildcardStackValues == null) {
+				wildcardStackValues = new DWARFStackValueReader(this, 0, true);
+			}
+			return wildcardStackValues;
+		}
+		return stackValues.computeIfAbsent(lexicalOffset,
+			offset -> new DWARFStackValueReader(this, offset, false));
 	}
 
 	public String getDescriptiveName() {
