@@ -3150,7 +3150,7 @@ define pcodeop cpuid_brand_part3_info;
 #   The side-effects of the call will show up, but not the correct values
 
 :CPUID          is vexMode=0 & byte=0xf; byte=0xa2                  {
-    tmpptr:$(SIZE) = 0;
+    local tmpdata:16;
     if (EAX == 0) goto <basic_info>;
     if (EAX == 1) goto <Version_info>;
     if (EAX == 2) goto <cache_tlb_info>;
@@ -3167,67 +3167,71 @@ define pcodeop cpuid_brand_part3_info;
     if (EAX == 0x80000002) goto <brand_part1_info>;
     if (EAX == 0x80000003) goto <brand_part2_info>;
     if (EAX == 0x80000004) goto <brand_part3_info>;
-    tmpptr = cpuid(EAX);
+    tmpdata = cpuid(EAX);
     goto <finish>;
  <basic_info>
-    tmpptr = cpuid_basic_info(EAX);
+    tmpdata = cpuid_basic_info(EAX);
     goto <finish>;
  <Version_info>
-    tmpptr = cpuid_Version_info(EAX);
+    tmpdata = cpuid_Version_info(EAX);
     goto <finish>;
  <cache_tlb_info>
-    tmpptr = cpuid_cache_tlb_info(EAX);
+    tmpdata = cpuid_cache_tlb_info(EAX);
     goto <finish>;
  <serial_info>
-    tmpptr = cpuid_serial_info(EAX);
+    tmpdata = cpuid_serial_info(EAX);
     goto <finish>;
  <Deterministic_Cache_Parameters_info>
-    tmpptr = cpuid_Deterministic_Cache_Parameters_info(EAX);
+    tmpdata = cpuid_Deterministic_Cache_Parameters_info(EAX);
     goto <finish>;    
  <MONITOR_MWAIT_Features_info>
-    tmpptr = cpuid_MONITOR_MWAIT_Features_info(EAX);
+    tmpdata = cpuid_MONITOR_MWAIT_Features_info(EAX);
     goto <finish>;    
  <Thermal_Power_Management_info>
-    tmpptr = cpuid_Thermal_Power_Management_info(EAX);
+    tmpdata = cpuid_Thermal_Power_Management_info(EAX);
     goto <finish>;
  <Extended_Feature_Enumeration_info>
-    tmpptr = cpuid_Extended_Feature_Enumeration_info(EAX);
+    tmpdata = cpuid_Extended_Feature_Enumeration_info(EAX);
     goto <finish>;
  <Direct_Cache_Access_info>
-    tmpptr = cpuid_Direct_Cache_Access_info(EAX);
+    tmpdata = cpuid_Direct_Cache_Access_info(EAX);
     goto <finish>;
  <Architectural_Performance_Monitoring_info>
-    tmpptr = cpuid_Architectural_Performance_Monitoring_info(EAX);
+    tmpdata = cpuid_Architectural_Performance_Monitoring_info(EAX);
     goto <finish>;
  <Extended_Topology_info>
-    tmpptr = cpuid_Extended_Topology_info(EAX);
+    tmpdata = cpuid_Extended_Topology_info(EAX);
     goto <finish>;
  <Processor_Extended_States_info>
-    tmpptr = cpuid_Processor_Extended_States_info(EAX);
+    tmpdata = cpuid_Processor_Extended_States_info(EAX);
     goto <finish>;
  <Quality_of_Service_info>
-    tmpptr = cpuid_Quality_of_Service_info(EAX);
+    tmpdata = cpuid_Quality_of_Service_info(EAX);
     goto <finish>;
  <brand_part1_info>
-    tmpptr = cpuid_brand_part1_info(EAX);
+    tmpdata = cpuid_brand_part1_info(EAX);
     goto <finish>;
  <brand_part2_info>
-    tmpptr = cpuid_brand_part2_info(EAX);
+    tmpdata = cpuid_brand_part2_info(EAX);
     goto <finish>;
  <brand_part3_info>
-    tmpptr = cpuid_brand_part3_info(EAX);
+    tmpdata = cpuid_brand_part3_info(EAX);
     goto <finish>;  
  <finish>
 @ifdef IA64
-	RAX = zext(*:4 (tmpptr));
-	RBX = zext(*:4 (tmpptr + 4));
-	RDX = zext(*:4 (tmpptr + 8));
-	RCX = zext(*:4 (tmpptr + 12));
+    tmpA:4 = tmpdata(0);
+    tmpB:4 = tmpdata(4);
+    tmpD:4 = tmpdata(8);
+    tmpC:4 = tmpdata(12);
+    RAX = zext(tmpA);
+    RBX = zext(tmpB);
+    RDX = zext(tmpD);
+    RCX = zext(tmpC);
 @else
-	EAX = *tmpptr;
-	EBX = *(tmpptr + 4);
-	EDX = *(tmpptr + 8);
-	ECX = *(tmpptr + 12);
+    EAX = tmpdata(0);
+    EBX = tmpdata(4);
+    EDX = tmpdata(8);
+    ECX = tmpdata(12);
 @endif
 }
 
@@ -5266,7 +5270,7 @@ define pcodeop xend;
 @endif
 
 define pcodeop xinuse;
-:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local test = (ECX == 1); local xiu:8 = xinuse(test); local tXCR0 = (zext(test) * XCR0) + (zext(!test) * (XCR0 & xiu)); local tmp = tXCR0 >> 32; EDX = tmp:4;  EAX = tXCR0:4; }
+:XGETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD0  { local test = (ECX == 1); local xiu:8 = xinuse(test); local tXCR0 = (zext(!test) * XCR0) + (zext(test) * (XCR0 & xiu)); local tmp = tXCR0 >> 32; EDX = tmp:4;  EAX = tXCR0:4; }
 :XSETBV         is vexMode=0 & byte=0x0F; byte=0x01; byte=0xD1  { local sel = ECX; XCR0 = (zext(EDX) << 32) | zext(EAX); }
 
 define pcodeop xsave;

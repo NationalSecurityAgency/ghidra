@@ -17,6 +17,7 @@ package ghidra.app.services;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.debug.api.emulation.EmulatorFactory;
@@ -30,12 +31,12 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.Scheduler.RunResult;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * A service for accessing managed emulators.
- * 
  * <p>
  * Managed emulators are employed by the UI and trace manager to perform emulation requested by the
  * user. Scripts may interact with these managed emulators, or they may instantiate their own
@@ -89,7 +90,6 @@ public interface DebuggerEmulationService {
 
 		/**
 		 * Get the emulator
-		 * 
 		 * <p>
 		 * <b>WARNING:</b> This emulator belongs to this service. You may interrupt it, but stepping
 		 * it, or otherwise manipulating it without the service's knowledge can lead to unintended
@@ -142,12 +142,10 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Set the current emulator factory
-	 * 
 	 * <p>
 	 * TODO: Should this be set on a per-program, per-trace basis? Need to decide what is saved to
 	 * the tool and what is saved to the program/trace. My inclination is to save current factory to
 	 * the tool, but the config options for each factory to the program/trace.
-	 * 
 	 * <p>
 	 * TODO: Should there be some opinion service for choosing default configs? Seems overly
 	 * complicated for what it offers. For now, we won't save anything, we'll default to the
@@ -156,6 +154,25 @@ public interface DebuggerEmulationService {
 	 * @param factory the chosen factory
 	 */
 	void setEmulatorFactory(EmulatorFactory factory);
+
+	/**
+	 * Set the current emulator factory by title
+	 * <p>
+	 * This sets the factory to the one having the given title. The factory must be one discoverable
+	 * by the {@link ClassSearcher}. If multiple factories have the same title, one is chosen
+	 * arbitrarily. That should not happen unless an extension has introduced factories with
+	 * duplicate titles.
+	 * 
+	 * @see #setEmulatorFactory(EmulatorFactory)
+	 * @param title
+	 * @throws NoSuchElementException if no factory has the given title
+	 */
+	default void setEmulatorFactory(String title) {
+		setEmulatorFactory(getEmulatorFactories().stream()
+				.filter(f -> f.getTitle().equals(title))
+				.findAny()
+				.orElseThrow());
+	}
 
 	/**
 	 * Get the current emulator factory
@@ -167,7 +184,6 @@ public interface DebuggerEmulationService {
 	/**
 	 * Load the given program into a trace suitable for emulation in the UI, starting at the given
 	 * address
-	 * 
 	 * <p>
 	 * Note that the program bytes are not actually loaded into the trace. Rather a static mapping
 	 * is generated, allowing the emulator to load bytes from the target program lazily. The trace
@@ -182,13 +198,11 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Perform emulation to realize the machine state of the given time coordinates
-	 * 
 	 * <p>
 	 * Only those address ranges actually modified during emulation are written into the scratch
 	 * space. It is the responsibility of anyone reading from scratch space to retrieve state and/or
 	 * annotations from the initial snap, when needed. The scratch snapshot is given the description
 	 * "{@code emu:[time]}", where {@code [time]} is the given time parameter as a string.
-	 * 
 	 * <p>
 	 * The service may use a cached emulator in order to realize the requested machine state. This
 	 * is especially important to ensure that a user stepping forward does not incur ever increasing
@@ -221,7 +235,6 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Allow the emulator to "run free" until it is interrupted or encounters an error
-	 *
 	 * <p>
 	 * The service may perform some preliminary emulation to realize the machine's initial state. If
 	 * the monitor cancels during preliminary emulation, this method throws a
@@ -245,7 +258,6 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Invoke {@link #emulate(Trace, TraceSchedule, TaskMonitor)} in the background
-	 * 
 	 * <p>
 	 * This is the preferred means of performing definite emulation. Because the underlying emulator
 	 * may request a <em>blocking</em> read from a target, it is important that
@@ -261,7 +273,6 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Invoke {@link #run(TracePlatform, TraceSchedule, TaskMonitor, Scheduler)} in the background
-	 * 
 	 * <p>
 	 * This is the preferred means of performing indefinite emulation, for the same reasons as
 	 * {@link #backgroundEmulate(TracePlatform, TraceSchedule) emulate}.
@@ -277,7 +288,6 @@ public interface DebuggerEmulationService {
 
 	/**
 	 * Get the cached emulator for the given trace and time
-	 * 
 	 * <p>
 	 * To guarantee the emulator is present, call
 	 * {@link #backgroundEmulate(TracePlatform, TraceSchedule)} first.

@@ -94,4 +94,42 @@ public class EmuLinuxAmd64SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscal
 				RAX = emu_syscall(RAX);
 				""").build();
 	}
+
+	@PcodeUserop(canInline = true)
+	@EmuSyscall("arch_prctl")
+	public SleighPcodeUseropDefinition linux_amd64_arch_prctl(BuilderStage1 builder) {
+		return builder.params("op", "addr").body(_ -> """
+				if (op == 0x1001) goto <arch_set_GS>;
+				if (op == 0x1002) goto <arch_set_FS>;
+				if (op == 0x1003) goto <arch_get_FS>;
+				if (op == 0x1004) goto <arch_get_GS>;
+				if (op == 0x3001) goto <arch_cet_status>;
+				emu_swi();
+				goto <finish>;
+				<arch_set_GS>
+				GS_OFFSET = addr;
+				__op_output = 0;
+				goto <finish>;
+				<arch_set_FS>
+				FS_OFFSET = addr;
+				__op_output = 0;
+				goto <finish>;
+				<arch_get_FS>
+				*addr = FS_OFFSET;
+				__op_output = 0;
+				goto <finish>;
+				<arch_get_GS>
+				*addr = GS_OFFSET;
+				__op_output = 0;
+				goto <finish>;
+				<arch_cet_status>
+				__op_output = -1;
+				<finish>
+				""").build();
+	}
+
+	@Override
+	protected String getMachine() {
+		return "x86_64";
+	}
 }

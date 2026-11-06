@@ -81,9 +81,6 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 	}
 
 	protected void doAddXRef(DBTraceReferenceEntry entry) {
-		if (!entry.toAddrMin.isMemoryAddress()) {
-			return;
-		}
 		DBTraceReferenceSpace space = getReferenceSpace(entry.toAddrMin.getAddressSpace(), true);
 		space.doAddXRef(entry);
 	}
@@ -206,9 +203,9 @@ public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DB
 
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesFromRange(Lifespan span,
-			AddressRange range) {
-		return delegateRead(range.getAddressSpace(), s -> s.getReferencesFromRange(span, range),
-			Collections.emptyList());
+			AddressRange range, Rectangle2DDirection order) {
+		return delegateRead(range.getAddressSpace(),
+			s -> s.getReferencesFromRange(span, range, order), Collections.emptyList());
 	}
 
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.function.BiFunction;
 
-import javax.swing.*;
+import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 
@@ -48,32 +48,34 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 
 	public static final CustomToStringCellRenderer<Date> TIME_24HMSms =
 		new CustomToStringCellRenderer<>(CustomFont.DEFAULT, Date.class,
-			(v, s) -> v == null ? "<null>" : TIME_FORMAT_24HMSms.format(v), false);
+			(v, _) -> v == null ? "<null>" : TIME_FORMAT_24HMSms.format(v), false);
 	public static final CustomToStringCellRenderer<String> HTML =
 		new CustomToStringCellRenderer<String>(CustomFont.DEFAULT, String.class,
-			(v, s) -> v == null ? "<null>" : v, true);
+			(v, _) -> v == null ? "<null>" : v, true);
 	public static final CustomToStringCellRenderer<Object> MONO_OBJECT =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Object.class,
-			(v, s) -> v == null ? "<null>" : v.toString(), false);
+			(v, _) -> v == null ? "<null>" : v.toString(), false);
 	public static final CustomToStringCellRenderer<String> MONO_HTML =
 		new CustomToStringCellRenderer<String>(CustomFont.MONOSPACED, String.class,
-			(v, s) -> v == null ? "<null>" : v, true);
+			(v, _) -> v == null ? "<null>" : v, true);
 	public static final CustomToStringCellRenderer<Long> MONO_LONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
-			(v, s) -> v == null ? "<null>" : longToPrefixedHexString(v), false);
+			(v, _) -> v == null ? "<null>" : longToPrefixedHexString(v), false);
 	public static final CustomToStringCellRenderer<Long> MONO_ULONG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, Long.class,
-			(v, s) -> v == null ? "<null>" : "0x" + Long.toUnsignedString(v, 16), false);
+			(v, _) -> v == null ? "<null>" : "0x" + Long.toUnsignedString(v, 16), false);
 	public static final CustomToStringCellRenderer<BigInteger> MONO_BIG_HEX =
 		new CustomToStringCellRenderer<>(CustomFont.MONOSPACED, BigInteger.class,
-			(v, s) -> v == null ? "<null>" : bigIntToPrefixedHexString(v), false);
+			(v, _) -> v == null ? "<null>" : bigIntToPrefixedHexString(v), false);
+
+	@SuppressWarnings("unchecked")
+	public static final <T> CustomToStringCellRenderer<T> monoObject() {
+		return (CustomToStringCellRenderer<T>) MONO_OBJECT;
+	}
 
 	private final CustomFont customFont;
 	private final Class<T> cls;
 	private final BiFunction<T, Settings, String> toString;
-
-	private final JPanel panelForSize = new JPanel();
-	private final BoxLayout layoutForSize = new BoxLayout(panelForSize, BoxLayout.Y_AXIS);
 
 	public CustomToStringCellRenderer(Class<T> cls, BiFunction<T, Settings, String> toString,
 			boolean enableHtml) {
@@ -86,8 +88,6 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 		this.customFont = font;
 		this.cls = cls;
 		this.toString = toString;
-
-		panelForSize.setLayout(layoutForSize);
 	}
 
 	@Override

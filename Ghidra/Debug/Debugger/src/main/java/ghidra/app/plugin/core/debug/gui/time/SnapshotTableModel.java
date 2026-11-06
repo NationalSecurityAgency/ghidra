@@ -38,18 +38,35 @@ class SnapshotTableModel
 
 	private class SnapshotListener extends TraceDomainObjectListener {
 		public SnapshotListener() {
-			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, _ -> objectRestored());
 
 			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
 			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
 			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 
+			// Radix, stack-based PC
 			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+
+			// reg-based PC, Instruction
+			listenFor(TraceEvents.BYTES_CHANGED, this::invalidateCaches);
+
+			// Function
+			listenFor(TraceEvents.MAPPING_ADDED, this::invalidateCaches);
+			listenFor(TraceEvents.MAPPING_DELETED, this::invalidateCaches);
+
+			// Module
+			listenFor(TraceEvents.MODULE_ADDED, this::invalidateCaches);
+			listenFor(TraceEvents.MODULE_CHANGED, this::invalidateCaches);
+			listenFor(TraceEvents.MODULE_DELETED, this::invalidateCaches);
 		}
 
 		private void objectRestored() {
 			reload();
+		}
+
+		private void invalidateCaches() {
+			cacheVersion++;
 		}
 
 		private void snapAdded(TraceSnapshot snapshot) {
@@ -65,12 +82,14 @@ class SnapshotTableModel
 		}
 
 		private void valueCreated(TraceObjectValue value) {
+			invalidateCaches();
 			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
 				fireTableDataChanged();
 			}
 		}
 
 		private void valueDeleted(TraceObjectValue value) {
+			invalidateCaches();
 			if (value.getCanonicalPath().equals(KeyPath.of(TraceTimeManager.KEY_TIME_RADIX))) {
 				fireTableDataChanged();
 			}
@@ -83,6 +102,7 @@ class SnapshotTableModel
 	private volatile Trace currentTrace; // Because it gets set before current
 	private volatile DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	private boolean hideScratch;
+	/*pkg*/ volatile int cacheVersion;
 
 	public SnapshotTableModel(PluginTool tool) {
 		super(tool, "Snapshots", SnapshotTableColumns.class, null, true);
@@ -152,7 +172,7 @@ class SnapshotTableModel
 		for (TraceSnapshot snapshot : hideScratch
 				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
 				: manager.getAllSnapshots()) {
-			SnapshotRow row = new SnapshotRow(snapshot, serviceProvider);
+			SnapshotRow row = new SnapshotRow(snapshot, this, serviceProvider);
 			rowMap.put(snapshot, row);
 			accumulator.add(row);
 			monitor.setProgress(Math.max(0, snapshot.getKey()));
@@ -165,7 +185,7 @@ class SnapshotTableModel
 			return;
 		}
 		SnapshotRow row =
-			rowMap.computeIfAbsent(snapshot, s -> new SnapshotRow(s, serviceProvider));
+			rowMap.computeIfAbsent(snapshot, s -> new SnapshotRow(s, this, serviceProvider));
 		addObject(row);
 	}
 

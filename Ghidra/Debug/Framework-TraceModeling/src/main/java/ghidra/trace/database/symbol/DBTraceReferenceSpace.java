@@ -283,7 +283,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		}
 
 		protected void doDelete() {
-			try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
+			try (LockHold _ = LockHold.lock(space.lock.writeLock())) {
 				space.referenceMapSpace.deleteData(this);
 				space.manager.doDelXRef(this);
 			}
@@ -464,7 +464,9 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			}
 
 			// This sends events and updates primary. Do I want that here?
-			DBTraceUtils.makeWay(ent, span, (e, s) -> e.setLifespan(s), e -> e.ref.delete());
+			DBTraceUtils.makeWay(ent, span, (e, s) -> e.setLifespan(s), e -> {
+				e.ref.delete();
+			});
 		}
 	}
 
@@ -474,7 +476,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		if (operandIndex < -1) {
 			throw new IllegalArgumentException("operandIndex");
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			makeWay(lifespan, fromAddress, toRange, operandIndex);
 
 			DBTraceReferenceEntry entry = referenceMapSpace.put(fromAddress, lifespan, null);
@@ -502,7 +504,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			throw new IllegalArgumentException("operandIndex");
 		}
 
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 
 			// Handle EXTERNAL Block offset-reference transformation
 			TypeEnum type = TypeEnum.OFFSET;
@@ -555,7 +557,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		if (operandIndex < -1) {
 			throw new IllegalArgumentException("operandIndex");
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			AddressRange toRange = new AddressRangeImpl(toAddress, toAddress);
 			makeWay(lifespan, fromAddress, toRange, operandIndex);
 
@@ -588,7 +590,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	@Override
 	public DBTraceReference getReference(long snap, Address fromAddress, AddressRange toRange,
 			int operandIndex) {
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
+		try (LockHold _ = LockHold.lock(lock.readLock())) {
 			for (DBTraceReferenceEntry entry : referenceMapSpace
 					.reduce(TraceAddressSnapRangeQuery.at(fromAddress, snap))
 					.values()) {
@@ -625,10 +627,19 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesFromRange(Lifespan span,
-			AddressRange range) {
+			AddressRange range, Rectangle2DDirection order) {
+		if (order == null) {
+			return new LazyCollection<>(
+				() -> referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
+						.values()
+						.stream()
+						.map(e -> e.ref));
+		}
 		return new LazyCollection<>(
-			() -> referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
-					.values()
+			() -> referenceMapSpace
+					.reduce(
+						TraceAddressSnapRangeQuery.intersecting(range, span).starting(order))
+					.orderedValues()
 					.stream()
 					.map(e -> e.ref));
 	}
@@ -651,7 +662,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public void clearReferencesFrom(Lifespan span, AddressRange range) {
-		try (LockHold hold = manager.getTrace().lockWrite()) {
+		try (LockHold _ = manager.getTrace().lockWrite()) {
 			long startSnap = span.lmin();
 
 			var submap =
@@ -694,9 +705,16 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesToRange(Lifespan span,
 			AddressRange range, Rectangle2DDirection order) {
+		if (order == null) {
+			return new LazyCollection<>(() -> xrefMapSpace
+					.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
+					.values()
+					.stream()
+					.map(this::getRefForXRefEntry));
+		}
 		return new LazyCollection<>(() -> xrefMapSpace
 				.reduce(TraceAddressSnapRangeQuery.intersecting(range, span).starting(order))
-				.values()
+				.orderedValues()
 				.stream()
 				.map(this::getRefForXRefEntry));
 	}
@@ -715,7 +733,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public void clearReferencesTo(Lifespan span, AddressRange range) {
-		try (LockHold hold = manager.getTrace().lockWrite()) {
+		try (LockHold _ = manager.getTrace().lockWrite()) {
 			long startSnap = span.lmin();
 
 			var submap = xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span));
@@ -737,14 +755,14 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	public AddressSetView getReferenceSources(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
-			e -> true);
+			_ -> true);
 	}
 
 	@Override
 	public AddressSetView getReferenceDestinations(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
-			e -> true);
+			_ -> true);
 	}
 
 	@Override
@@ -763,7 +781,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public void invalidateCache() {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			referenceMapSpace.invalidateCache();
 			xrefMapSpace.invalidateCache();
 		}

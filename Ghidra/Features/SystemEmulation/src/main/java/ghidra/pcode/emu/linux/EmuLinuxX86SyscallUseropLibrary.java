@@ -113,18 +113,22 @@ public class EmuLinuxX86SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallU
 			}
 			PseudoInstruction instruction = decoder.decodeInstruction();
 			Address next = instruction.getAddress().add(instruction.getLength());
-			PcodeProgram prog =
-				SleighProgramCompiler.compileUserop(executor.getLanguage(), "swi",
-					List.of(SleighPcodeUseropDefinition.OUT_SYMBOL_NAME), """
-							EAX = emu_syscall(EAX);
-							%s = 0x%x;
-							""".formatted(
-						SleighPcodeUseropDefinition.OUT_SYMBOL_NAME, next.getOffset()),
-					library, List.of(out));
+			PcodeProgram prog = SleighProgramCompiler.compileUserop(executor.getLanguage(), "swi",
+				List.of(SleighPcodeUseropDefinition.OUT_SYMBOL_NAME), """
+						EAX = emu_syscall(EAX);
+						%s = 0x%x;
+						""".formatted(
+					SleighPcodeUseropDefinition.OUT_SYMBOL_NAME, next.getOffset()),
+				library, List.of(out));
 			executor.execute(prog, library);
 		}
 		else {
 			throw new PcodeExecutionException("Unknown interrupt: 0x%x".formatted(intNo));
 		}
+	}
+
+	@Override
+	protected String getMachine() {
+		return "i686";
 	}
 }

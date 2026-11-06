@@ -30,8 +30,11 @@ public class GTreeTableCellRenderer<T extends GTreeTableNode> extends GTableCell
 	private class ExpandCollapseBorder implements Border {
 		GTreeTableNode node;
 
-		ExpandCollapseBorder(GTreeTableNode node) {
+		ExpandCollapseBorder() {
 			super();
+		}
+
+		public void setNode(GTreeTableNode node) {
 			this.node = node;
 		}
 
@@ -61,6 +64,9 @@ public class GTreeTableCellRenderer<T extends GTreeTableNode> extends GTableCell
 	private final Insets insets = new Insets(0, 0, 0, 0);
 	private final Icon expandedIcon;
 	private final Icon collapsedIcon;
+	private final ExpandCollapseBorder expanderBorder;
+	private final Border expanderFocusBorder;
+	private final Border expanderNoFocusBorder;
 	private final int maxIconWidth;
 
 	public GTreeTableCellRenderer() {
@@ -69,6 +75,9 @@ public class GTreeTableCellRenderer<T extends GTreeTableNode> extends GTableCell
 		final int expandedWidth = expandedIcon == null ? 0 : expandedIcon.getIconWidth();
 		final int collapsedWidth = collapsedIcon == null ? 0 : collapsedIcon.getIconWidth();
 		maxIconWidth = Math.max(expandedWidth, collapsedWidth);
+		expanderBorder = new ExpandCollapseBorder();
+		expanderFocusBorder = BorderFactory.createCompoundBorder(focusBorder, expanderBorder);
+		expanderNoFocusBorder = BorderFactory.createCompoundBorder(noFocusBorder, expanderBorder);
 	}
 
 	@Override
@@ -88,28 +97,25 @@ public class GTreeTableCellRenderer<T extends GTreeTableNode> extends GTableCell
 				selected ? table.getSelectionForeground() : table.getForeground());
 			renderer.setBackground(selected ? table.getSelectionBackground()
 					: getAlternatingBackgroundColor(table, data.getRowViewIndex()));
-			renderer.setFont(table.getFont());
 			renderer.setToolTipText(c.getName());
-			insets.left = maxIconWidth + (c.getLevel() * PIXELS_PER_LEVEL);
+			insets.left = maxIconWidth + (c.getLevel() - 1) * PIXELS_PER_LEVEL;
 			renderer.setIcon(c.getIcon());
 			renderer.setText(c.getTreeData());
-			renderer.setBorder(new ExpandCollapseBorder(c));
+			expanderBorder.setNode(c);
+			renderer.setBorder(data.hasFocus() ? expanderFocusBorder : expanderNoFocusBorder);
 		}
 		return renderer;
-
 	}
 
 	/**
 	 * Check if x position is in the expand icon space
 	 *
-	 * @param node
-	 * 		Node to determine how indented the expand icon is
-	 * @param x
-	 * 		X coordinate to check against
+	 * @param node Node to determine how indented the expand icon is
+	 * @param x X coordinate to check against
 	 * @return true/false if X coordinate is in expand icon space
 	 */
 	public boolean inExpandIcon(GTreeTableNode node, int x) {
-		final int iconStart = (node.getLevel() * PIXELS_PER_LEVEL);
+		final int iconStart = (node.getLevel() - 1) * PIXELS_PER_LEVEL;
 		return ((x > iconStart) && (x < (iconStart + maxIconWidth)));
 	}
 }

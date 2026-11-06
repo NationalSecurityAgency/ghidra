@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package ghidra.pcode.emu.unix;
 import java.util.*;
 
 import ghidra.pcode.emu.sys.EmuIOException;
+import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary.Errno;
 
 /**
  * A simulated UNIX file system
@@ -25,9 +26,9 @@ import ghidra.pcode.emu.sys.EmuIOException;
  * @param <T> the type of values stored in the files
  */
 public interface EmuUnixFileSystem<T> {
+
 	/**
 	 * Open flags as defined by the simulator
-	 * 
 	 * <p>
 	 * See a UNIX manual for the exact meaning of each.
 	 */
@@ -37,7 +38,8 @@ public interface EmuUnixFileSystem<T> {
 		O_RDWR,
 		O_CREAT,
 		O_TRUNC,
-		O_APPEND;
+		O_APPEND,
+		;
 
 		/**
 		 * Construct a set of flags
@@ -59,10 +61,9 @@ public interface EmuUnixFileSystem<T> {
 			if (flags.contains(O_RDONLY) && flags.contains(O_WRONLY)) {
 				throw new IllegalArgumentException("Cannot be read only and write only");
 			}
-			if (flags instanceof EnumSet) {
-				return Collections.unmodifiableSet((EnumSet<OpenFlag>) flags);
-			}
-			return Collections.unmodifiableSet(EnumSet.copyOf(flags));
+			return Collections.unmodifiableSet(flags instanceof EnumSet<OpenFlag> es
+					? es
+					: flags.isEmpty() ? EnumSet.noneOf(OpenFlag.class) : EnumSet.copyOf(flags));
 		}
 
 		/**
@@ -83,6 +84,21 @@ public interface EmuUnixFileSystem<T> {
 		 */
 		public static boolean isWrite(Collection<OpenFlag> flags) {
 			return flags.contains(OpenFlag.O_WRONLY) || flags.contains(OpenFlag.O_RDWR);
+		}
+	}
+
+	enum AModeFlag {
+		R_OK,
+		W_OK,
+		X_OK,
+		;
+
+		public static final List<AModeFlag> ALL = List.of(AModeFlag.values());
+
+		public static Set<AModeFlag> set(Collection<AModeFlag> flags) {
+			return Collections.unmodifiableSet(flags instanceof EnumSet<AModeFlag> es
+					? es
+					: flags.isEmpty() ? EnumSet.noneOf(AModeFlag.class) : EnumSet.copyOf(flags));
 		}
 	}
 
@@ -111,7 +127,6 @@ public interface EmuUnixFileSystem<T> {
 
 	/**
 	 * Get the named file
-	 * 
 	 * <p>
 	 * This is accessed by the emulator user, not the target program.
 	 * 
@@ -122,8 +137,21 @@ public interface EmuUnixFileSystem<T> {
 	EmuUnixFile<T> getFile(String pathname) throws EmuIOException;
 
 	/**
-	 * Place the given file at the given location
+	 * Get the named file or throw {@link Errno#ENOENT}.
 	 * 
+	 * @param pathname the pathname of the requested file
+	 * @return the file
+	 */
+	default EmuUnixFile<T> requireFile(String pathname) {
+		EmuUnixFile<T> file = getFile(pathname);
+		if (file == null) {
+			throw new EmuUnixException("File %s does not exist".formatted(pathname), Errno.ENOENT);
+		}
+		return file;
+	}
+
+	/**
+	 * Place the given file at the given location
 	 * <p>
 	 * This is accessed by the emulator user, not the target program. If the file already exists, it
 	 * is replaced silently.

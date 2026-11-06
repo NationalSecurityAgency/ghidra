@@ -45,7 +45,6 @@ import ghidra.util.datastruct.ListenerSet;
 
 /**
  * A VT100 terminal emulator in a panel.
- * 
  * <p>
  * This implementation uses Ghidra's {@link FieldPanel} for its rendering, highlighting, cursor
  * positioning, etc. This one follows the same pattern as many other such panels in Ghidra with some
@@ -461,7 +460,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		 * Prevent the user from doing this. Cursor location is controlled by pty. While we've
 		 * prevented key strokes from causing this, we've not prevented mouse clicks from doing it.
 		 * Next best thing is to just move it back.
-		 * 
+		 * <p>
 		 * NOTE: We schedule the cursor re-placement for later, because the FieldPanel may be about
 		 * to scroll to the cursor. If we re-place immediately, it will likely scroll to the bottom
 		 * of the terminal. This is especially annoying when the user is trying to make a selection.
@@ -473,7 +472,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Select the whole word at the given location.
-	 * 
 	 * <p>
 	 * This is used for double-click to select the whole word.
 	 * 
@@ -495,7 +493,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Process the given bytes as application output.
-	 * 
 	 * <p>
 	 * In most circumstances, there is a thread that just reads an output stream, usually from a
 	 * pty, and feeds it into this method.
@@ -623,7 +620,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Set the callback for application input, i.e., terminal output
-	 * 
 	 * <p>
 	 * In most circumstances, the bytes are sent to an input stream, usually from a pty.
 	 * 
@@ -677,7 +673,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Send the given text to the application, as if typed on the keyboard
-	 * 
 	 * <p>
 	 * Note the application may request a mode called "bracketed paste," in which case the text will
 	 * be surrounded by special control sequences, allowing the application to distinguish pastes
@@ -702,7 +697,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Get the text selected by the user
-	 * 
 	 * <p>
 	 * If the selection is disjoint, this returns null.
 	 * 
@@ -751,7 +745,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Search the terminal's buffer for the given text.
-	 * 
 	 * <p>
 	 * The start location should be given, so that the search can progress to each successive
 	 * result. If no location is given, e.g., because this is the first time the user has searched,
@@ -796,7 +789,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Set the terminal to a fixed size.
-	 * 
 	 * <p>
 	 * The terminal will no longer respond to the window resizing, and scrollbars are displayed as
 	 * needed. If the terminal size changes as a result of this call,
@@ -814,7 +806,6 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	/**
 	 * Set the terminal to fit the window size.
-	 * 
 	 * <p>
 	 * Immediately fit the terminal to the window. It will also respond to the window resizing by
 	 * recalculating the rows and columns and adjusting the buffer's contents to fit. Whenever the

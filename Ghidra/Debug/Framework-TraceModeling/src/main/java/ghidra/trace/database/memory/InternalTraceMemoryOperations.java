@@ -90,7 +90,7 @@ public interface InternalTraceMemoryOperations extends TraceMemoryOperations {
 		if (!value.hasAnyValue()) {
 			return 0;
 		}
-		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
+		try (LockHold _ = LockHold.lock(getLock().writeLock())) {
 			Register register = value.getRegister();
 			AddressRange range = platform.getConventionalRegisterRange(getSpace(), register);
 			if (!value.hasValue() || !TraceRegisterUtils.isByteBound(register)) {

@@ -233,11 +233,10 @@ public class XRefFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		if (!(obj instanceof CodeUnit)) {
+		if (!(obj instanceof CodeUnit cu)) {
 			return null;
 		}
 
-		CodeUnit cu = (CodeUnit) obj;
 		Counter fullCount = new Counter();
 		List<Reference> xrefs = XReferenceUtils.getXReferences(cu, maxXRefs, fullCount);
 		int maxOffcuts = Math.max(0, maxXRefs - xrefs.size());

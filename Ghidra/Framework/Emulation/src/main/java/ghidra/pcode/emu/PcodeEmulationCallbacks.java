@@ -359,9 +359,94 @@ public interface PcodeEmulationCallbacks<T> {
 	}
 
 	/**
+	 * Data was read from the given state piece (abstract addressing).
+	 * <p>
+	 * <b>NOTE:</b> In contrast to the operation-driven callbacks, e.g., {@link #beforeLoad}, the
+	 * {@code thread} parameter here may be null. It is not necessarily the thread executing the op,
+	 * but the thread associated to the state being accessed. In particular, when this is the
+	 * <em>shared</em> state, {@code thread} will be null. When this is the <em>local</em> state,
+	 * {@code thread} will be the thread of execution. If this behavior poses a serious limitation,
+	 * then we may consider changing this to always be the thread of execution.
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <U> the piece's value domain
+	 * @param thread the thread associated to the piece
+	 * @param piece the state piece
+	 * @param space the address space of the operand
+	 * @param offset the offset of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, U> void dataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			AddressSpace space, A offset, int length, U value, Reason reason) {
+	}
+
+	/**
+	 * Typically used from within
+	 * {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}
+	 * to forward the call to the callback for concrete addressing
+	 * {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, Address, int, Object, Reason)}.
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <U> the piece's value domain
+	 * @param thread the thread associated to the piece. See
+	 *            {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}
+	 * @param piece the state piece
+	 * @param space the address space of the operand
+	 * @param offset the offset of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, U> void delegateDataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			AddressSpace space, A offset, int length, U value, Reason reason) {
+		dataRead(thread, piece, piece.getAddressArithmetic().toAddress(offset, space, Purpose.LOAD),
+			length, value, reason);
+	}
+
+	/**
+	 * Data was read from the given state piece (concrete addressing).
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <U> the piece's value domain
+	 * @param thread the thread associated to the piece. See
+	 *            {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}
+	 * @param piece the state piece
+	 * @param address the address of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, U> void dataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			Address address, int length, U value, Reason reason) {
+	}
+
+	/**
+	 * Typically used from within
+	 * {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, Address, int, Object, Reason)} to
+	 * forward the call to the callback for abstract addressing
+	 * {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}.
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <U> the piece's value domain
+	 * @param thread the thread associated to the piece. See
+	 *            {@link #dataRead(PcodeThread, PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}
+	 * @param piece the state piece
+	 * @param address the address of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, U> void delegateDataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			Address address, int length, U value, Reason reason) {
+		dataRead(thread, piece, address.getAddressSpace(),
+			piece.getAddressArithmetic().fromConst(address), length, value, reason);
+	}
+
+	/**
 	 * The emulator is preparing to read from uninitialized portions of the given state piece
 	 * (abstract addressing).
-	 * 
 	 * <p>
 	 * This callback provides an opportunity for something to initialize the required portion
 	 * lazily. In most cases, this should either return 0 indicating the requested portion remains
@@ -499,6 +584,18 @@ public interface PcodeEmulationCallbacks<T> {
 		public <A, U> void dataWritten(PcodeExecutorStatePiece<A, U> piece, AddressSpace space,
 				A offset, int length, U value) {
 			cb.dataWritten(thread, piece, space, offset, length, value);
+		}
+
+		@Override
+		public <A, U> void dataRead(PcodeExecutorStatePiece<A, U> piece, Address address,
+				int length, U value, Reason reason) {
+			cb.dataRead(thread, piece, address, length, value, reason);
+		}
+
+		@Override
+		public <A, U> void dataRead(PcodeExecutorStatePiece<A, U> piece, AddressSpace space,
+				A offset, int length, U value, Reason reason) {
+			cb.dataRead(thread, piece, space, offset, length, value, reason);
 		}
 
 		@Override

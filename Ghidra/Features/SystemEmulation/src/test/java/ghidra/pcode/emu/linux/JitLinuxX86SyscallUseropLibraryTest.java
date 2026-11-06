@@ -43,9 +43,9 @@ public class JitLinuxX86SyscallUseropLibraryTest extends EmuLinuxX86SyscallUsero
 				}
 
 				@Override
-				public void unix_group_exit(long status) {
+				public void unix_exit_group(long status) {
 					fail("Linux-x86 shoud use exit");
-					super.unix_group_exit(status);
+					super.unix_exit_group(status);
 				}
 
 				@Override
