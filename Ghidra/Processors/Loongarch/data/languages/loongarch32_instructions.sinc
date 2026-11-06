@@ -656,6 +656,12 @@
 #0x4c000000	0xfc000000	r0:5,r5:5,so10:16<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_16_s0']
 :jirl  RD, RelJ16              is op26_31=0x13 & RD & RJsrc & RelJ16 {
 	RD = inst_next;
+	goto [RelJ16];
+}
+
+# call for rd = ra
+:jirl  RD, RelJ16              is op26_31=0x13 & RD & rD=0x1 & RJsrc & RelJ16 {
+	RD = inst_next;
 	call [RelJ16];
 }
 
