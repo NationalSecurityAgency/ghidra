@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.List;
 import java.util.Objects;
 
 import com.sun.net.httpserver.*;
@@ -169,6 +170,54 @@ public class MockHttpServerUtils {
 			byte[] resultBody) {
 		return httpExchange -> {
 			try {
+				byte[] actualResult =
+					httpExchange.getRequestMethod().equals("GET") ? resultBody : null;
+				httpExchange.getResponseHeaders().set(CONTENT_TYPE_HEADER, contentType);
+				httpExchange.sendResponseHeaders(resultCode,
+					actualResult != null ? actualResult.length : -1);
+				if (actualResult != null) {
+					httpExchange.getResponseBody().write(resultBody);
+				}
+			}
+			catch (Throwable th) {
+				logMockHttp(httpExchange,
+					"Error during mockStaticResponseHandler: " + th.getMessage());
+				throw th;
+			}
+			finally {
+				httpExchange.close();
+			}
+		};
+	}
+
+	/**
+	 * Creates a HttpHandler that returns a specified body and logs the query URI.
+	 * 
+	 * @param contentType http content type header value (eg. "text/plain")
+	 * @param resultBody bytes to send as body
+	 * @param results list to log the query URI into
+	 * @return new HttpHandler
+	 */
+	public static HttpHandler createRequestTrackingResponseHandler(String contentType,
+			byte[] resultBody, List<URI> results) {
+		return createRequestTrackingResponseHandler(HTTP_OK, contentType, resultBody, results);
+	}
+
+	/**
+	 * Creates a HttpHandler that returns a specified body and result code and logs the query URI.
+	 * 
+	 * @param resultCode http result code to return (eg. HTTP_OK / 200 )
+	 * @param contentType http content type header value (eg. "text/plain")
+	 * @param resultBody bytes to send as body
+	 * @param results list to log the query URI into
+	 * @return new HttpHandler
+	 */
+	public static HttpHandler createRequestTrackingResponseHandler(int resultCode,
+			String contentType, byte[] resultBody, List<URI> results) {
+		return httpExchange -> {
+			try {
+				results.add(httpExchange.getRequestURI());
+
 				byte[] actualResult =
 					httpExchange.getRequestMethod().equals("GET") ? resultBody : null;
 				httpExchange.getResponseHeaders().set(CONTENT_TYPE_HEADER, contentType);

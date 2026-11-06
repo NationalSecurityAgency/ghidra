@@ -17,11 +17,13 @@ package ghidra.app.util.bin.format.dwarf.external;
 
 import static ghidra.test.MockHttpServerUtils.*;
 import static java.net.HttpURLConnection.*;
+import static java.util.stream.Collectors.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -76,6 +78,39 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 		finally {
 			server.stop(0);
 		}
+	}
+
+	@Test
+	public void testExtraSourcePathTraversal() throws IOException, CancelledException {
+		// ensure that the source file path is not modified ("..", etc) when used as URI
+
+		List<URI> uriResults = new ArrayList<>();
+		HttpServer server = createMockHttpServer();
+		server.createContext("/buildid/", createRequestTrackingResponseHandler(
+			"application/octet-stream", "result1".getBytes(), uriResults));
+
+		HttpDebugInfoDProvider httpProvider =
+			new HttpDebugInfoDProvider(getURI(server.getAddress()));
+		try {
+			server.start();
+
+			assertStreamResult("result1", httpProvider.getStream(srcId("/path1"), monitor));
+			assertStreamResult("result1", httpProvider.getStream(srcId("/../../path2"), monitor));
+			assertStreamResult("result1",
+				httpProvider.getStream(srcId("/path3///file.txt"), monitor));
+		}
+		finally {
+			server.stop(0);
+		}
+
+		assertEquals(0, httpProvider.getRetriedCount());
+		assertEquals(0, httpProvider.getNotFoundCount());
+
+		Set<String> uriStrings = uriResults.stream().map(uri -> uri.toString()).collect(toSet());
+		assertEquals(3, uriStrings.size());
+		assertContainsSubstring("/path1", uriStrings);
+		assertContainsSubstring("/../../path2", uriStrings);
+		assertContainsSubstring("/path3///file.txt", uriStrings);
 	}
 
 	@Test
@@ -189,6 +224,19 @@ public class HttpDebugInfoDProviderTest extends AbstractGenericTest {
 			String hash = HashUtilities.getHash("SHA1", stream.is());
 			assertEquals(expectedHash, hash);
 		}
+	}
+
+	private void assertContainsSubstring(String expectedSubstring, Collection<String> strings) {
+		for (String s : strings) {
+			if (s.contains(expectedSubstring)) {
+				return;
+			}
+		}
+		fail("Did not contain expected substring: " + expectedSubstring + ", " + strings);
+	}
+
+	private BuildIdDebugInfo srcId(String srcPath) {
+		return new BuildIdDebugInfo(new byte[20], ObjectType.SOURCE, srcPath);
 	}
 
 }
