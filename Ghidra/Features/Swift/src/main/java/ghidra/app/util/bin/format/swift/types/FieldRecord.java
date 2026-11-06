@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.swift.types;
 
 import java.io.IOException;
+import java.util.OptionalLong;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
@@ -37,6 +38,7 @@ public final class FieldRecord extends SwiftTypeMetadataStructure {
 	public static final int SIZE = 12;
 
 	private int flags;
+	private int mangledTypeNameOffset;
 	private String mangledTypeName;
 	private String fieldName;
 
@@ -49,8 +51,14 @@ public final class FieldRecord extends SwiftTypeMetadataStructure {
 	public FieldRecord(BinaryReader reader) throws IOException {
 		super(reader.getPointerIndex());
 		flags = reader.readNextInt();
-		mangledTypeName = reader.readNext(SwiftTypeMetadataUtils::relativeString);
-		fieldName = reader.readNext(SwiftTypeMetadataUtils::relativeString);
+		long typePointerAddress = reader.getPointerIndex();
+		mangledTypeNameOffset = reader.readNextInt();
+		mangledTypeName = mangledTypeNameOffset == 0 ? null
+				: reader.readAsciiString(typePointerAddress + mangledTypeNameOffset);
+		long namePointerAddress = reader.getPointerIndex();
+		int fieldNameOffset = reader.readNextInt();
+		fieldName = fieldNameOffset == 0 ? null
+				: reader.readAsciiString(namePointerAddress + fieldNameOffset);
 	}
 
 	/**
@@ -61,14 +69,38 @@ public final class FieldRecord extends SwiftTypeMetadataStructure {
 	}
 
 	/**
-	 * {@return the mangled type name}
+	 * {@return the ASCII view of the mangled type name, or null for an absent relative pointer}
 	 */
 	public String getMangledTypeName() {
 		return mangledTypeName;
 	}
 
 	/**
-	 * {@return the field name}
+	 * {@return the signed relative displacement of the mangled type name, or zero if absent}
+	 */
+	public int getMangledTypeNameOffset() {
+		return mangledTypeNameOffset;
+	}
+
+	/**
+	 * {@return the address of the relative mangled type name pointer field}
+	 */
+	public long getMangledTypeNameFieldAddress() {
+		return getBase() + Integer.BYTES;
+	}
+
+	/**
+	 * Gets the referenced bytes without relying on the ASCII view of a symbolic type reference.
+	 *
+	 * @return the referenced byte address, or empty for a null relative pointer
+	 */
+	public OptionalLong getMangledTypeNameAddress() {
+		return mangledTypeNameOffset == 0 ? OptionalLong.empty()
+				: OptionalLong.of(getMangledTypeNameFieldAddress() + mangledTypeNameOffset);
+	}
+
+	/**
+	 * {@return the field name, or null for an absent relative pointer}
 	 */
 	public String getFieldName() {
 		return fieldName;
