@@ -123,6 +123,9 @@ public class MultiMemberAssign extends AssignAction {
 					param) == FAIL) {
 					return FAIL;
 				}
+				if (param.address == null) {	// No storage for member
+					return FAIL;
+				}
 				if (!consumeFromStack && stackEntry != null) {
 					if (before != tmpStatus[stackEntry.getGroup()])
 						return FAIL;

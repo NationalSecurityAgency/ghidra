@@ -299,6 +299,14 @@ TEST(paramstore_x64_go) {
   ASSERT(theEnviron.test(model, "float8 func(int8 a,int8 b[10])[5];", "stack58:40,RAX,stack8:80"));
   ASSERT(theEnviron.test(model, "char func(char a[3],char b[7],int8 c)[5];", "stack18:5,stack8:3,stackb:7,RAX"));
   ASSERT(theEnviron.test(model, "void func(float4 a,int8 b[1],int8 c[2]);","void,XMM0:4,RAX,stack8:16"));
+  theEnviron.parseType(model,"struct Buffer { char a[250]; char b; };");
+  bool sawUnassignedError = false;
+  try {
+    theEnviron.test(model, "void func(Buffer a,Buffer b);", "");	// b overflows the 500-byte stack entry
+  } catch(ParamUnassignedError &err) {
+    sawUnassignedError = true;
+  }
+  ASSERT(sawUnassignedError);
 }
 
 TEST(paramstore_ppc64be_stdcall) {
