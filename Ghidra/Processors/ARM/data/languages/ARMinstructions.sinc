@@ -1687,6 +1687,15 @@ immed12_4: "#"^tmp is $(AMODE) & immed12 & immed4 [tmp = (immed12 << 4) | immed4
 	software_hvc(immed12_4);
 }
 
+# Requires Virtualization Extensions or ARMv8; outside Hyp mode, same as subs pc,lr,#0
+:eret^COND			is $(AMODE) & COND & c0027=0x160006e
+{
+	build COND;
+	cpsr = spsr;
+	ALUWritePC(lr);
+	return [pc];
+}
+
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 define pcodeop SG;
