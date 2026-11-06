@@ -2311,6 +2311,22 @@ macro fucompe(val1, val2) {
 
 # The base level constructors
 #   The prefixes
+@ifdef IA64
+# In 64-bit mode the CS/SS/DS/ES segment override prefixes are null prefixes: they are
+# still valid bytes to encounter (and are reused elsewhere, e.g. as branch hints or
+# mandatory prefixes), but they must not change which segment is actually accessed.
+# Without the four guards below, a CS/SS/DS/ES byte occurring closer to the opcode than
+# an earlier FS/GS override would incorrectly clobber that FS/GS override, since segover
+# only ever remembers the most recently matched prefix (Intel SDM Vol. 2A section 2.1.1).
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x2e & segover=5; instruction [ segover=5; ] {} # CS override has no effect in 64-bit mode; FS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x2e & segover=6; instruction [ segover=6; ] {} # CS override has no effect in 64-bit mode; GS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x36 & segover=5; instruction [ segover=5; ] {} # SS override has no effect in 64-bit mode; FS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x36 & segover=6; instruction [ segover=6; ] {} # SS override has no effect in 64-bit mode; GS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x3e & segover=5; instruction [ segover=5; ] {} # DS override has no effect in 64-bit mode; FS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x3e & segover=6; instruction [ segover=6; ] {} # DS override has no effect in 64-bit mode; GS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x26 & segover=5; instruction [ segover=5; ] {} # ES override has no effect in 64-bit mode; FS override stays in effect
+:^instruction is $(LONGMODE_ON) & instrPhase=0 & over=0x26 & segover=6; instruction [ segover=6; ] {} # ES override has no effect in 64-bit mode; GS override stays in effect
+@endif
 :^instruction is instrPhase=0 & over=0x2e; instruction     [ segover=1; ]  {} # CS override
 :^instruction is instrPhase=0 & over=0x36; instruction     [ segover=2; ]  {} # SS override
 :^instruction is instrPhase=0 & over=0x3e; instruction     [ segover=3; ]  {} # DS override
