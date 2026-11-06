@@ -93,6 +93,20 @@ public final class TargetEnumDescriptor extends TargetTypeContextDescriptor {
 	}
 
 	/**
+	 * {@return the number of non-empty cases in the low 24 bits of the packed field}
+	 */
+	public int getNumPayloadCases() {
+		return numPayloadCasesAndPayloadSizeOffset & 0x00ffffff;
+	}
+
+	/**
+	 * {@return the unsigned number of empty cases in the enum}
+	 */
+	public long getNumEmptyCasesUnsigned() {
+		return Integer.toUnsignedLong(numEmptyCases);
+	}
+
+	/**
 	 * {@return the number of empty cases in the enum}
 	 */
 	public int getNumEmptyCases() {
