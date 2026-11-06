@@ -10921,6 +10921,20 @@ void RuleExpandLoad::modifyAndComparison(Funcdata &data,Varnode *oldVn,Varnode *
   }
 }
 
+/// \brief Check that a pointer refers to a declared field or symbol
+///
+/// A PTRSUB, possibly indexed as an array through PTRADD, names an object of the pointed-to size.
+/// \param ptr is the pointer being loaded through
+/// \return \b true if \b ptr is a field or symbol reference
+bool RuleExpandLoad::isFieldReference(Varnode *ptr)
+
+{
+  while (ptr->isWritten() && ptr->getDef()->code() == CPUI_PTRADD)
+    ptr = ptr->getDef()->getIn(0);
+  if (!ptr->isWritten()) return false;
+  return (ptr->getDef()->code() == CPUI_PTRSUB);
+}
+
 /// \class RuleExpandLoad
 /// \brief Convert LOAD size to match pointer data-type
 ///
@@ -10960,6 +10974,7 @@ int4 RuleExpandLoad::applyOp(PcodeOp *op,Funcdata &data)
   elType = ((TypePointer *)elType)->getPtrTo();
   if (elType->getSize() <= outSize) return 0;		// Pointer data-type must be bigger than LOAD
   if (elType->getSize() < outSize + offset) return 0;
+  if (!elType->isEnumType() && !isFieldReference(rootPtr)) return 0;	// Bare pointer: object size unknown
 
   type_metatype meta = elType->getMetatype();
   if (meta == TYPE_UNKNOWN || meta == TYPE_STRUCT || meta == TYPE_ARRAY || meta == TYPE_UNION
