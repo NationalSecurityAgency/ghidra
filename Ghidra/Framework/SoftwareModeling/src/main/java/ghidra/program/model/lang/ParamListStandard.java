@@ -45,6 +45,7 @@ public class ParamListStandard implements ParamList {
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
 	protected boolean autoKilledByCall;	// Is storage in this list automatically "killed by call"
 	protected boolean splitMetatype;	// Are metatyped entries in separate resource sections
+	protected boolean stackLtr;			// Are stack parameters pushed left-to-right (first parameter at highest address)
 //	protected int[] resourceStart;		// The starting group for each resource section
 	protected ParamEntry[] entry;
 	protected ModelRule[] modelRules;	// Rules to apply when assigning addresses
@@ -206,6 +207,39 @@ public class ParamListStandard implements ParamList {
 				return;
 			}
 		}
+		if (stackLtr) {
+			mirrorStack(status, res);
+		}
+	}
+
+	/**
+	 * Parameters have been assigned in right-to-left order. For a model that pushes parameters
+	 * left-to-right, mirror the stack slots occupied by the parameters, so that the first
+	 * parameter ends up at the highest address.  The first element of the list is the return
+	 * value and is left untouched.
+	 * @param status is the consumed resource status array, indicating the total number of stack slots used
+	 * @param res is the list of assigned parameters
+	 */
+	private void mirrorStack(int[] status, ArrayList<ParameterPieces> res) {
+		ParamEntry stackEntry = getStackEntry();
+		if (stackEntry == null) {
+			return;
+		}
+		int align = stackEntry.getAlign();
+		int totalSlots = status[stackEntry.getGroup()];
+		for (int i = 1; i < res.size(); ++i) {
+			ParameterPieces param = res.get(i);
+			if (param.address == null || param.joinPieces != null ||
+				param.address.getAddressSpace() != stackEntry.getSpace()) {
+				continue;
+			}
+			int startSlot = (int) ((param.address.getOffset() - stackEntry.getAddressBase()) / align);
+			int numSlots = (param.type.getAlignedLength() + align - 1) / align;
+			int newSlot = totalSlots - startSlot - numSlots;
+			// Keep any justification offset within the slot
+			long offset = param.address.getOffset() + (long) (newSlot - startSlot) * align;
+			param.address = param.address.getAddressSpace().getAddress(offset);
+		}
 	}
 
 	@Override
@@ -242,6 +276,9 @@ public class ParamListStandard implements ParamList {
 			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
 		encoder.writeBool(ATTRIB_KILLEDBYCALL, autoKilledByCall);
+		if (stackLtr) {
+			encoder.writeBool(ATTRIB_STACKLTR, true);
+		}
 		if (isInput && !splitMetatype) {
 			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
@@ -336,6 +373,7 @@ public class ParamListStandard implements ParamList {
 		int pointermax = 0;
 		thisbeforeret = false;
 		autoKilledByCall = false;
+		stackLtr = false;
 		splitMetatype = true;
 		XmlElement mainel = parser.start();
 		String attribute = mainel.getAttribute(ATTRIB_POINTERMAX.name());
@@ -353,6 +391,10 @@ public class ParamListStandard implements ParamList {
 		attribute = mainel.getAttribute(ATTRIB_SEPARATEFLOAT.name());
 		if (attribute != null) {
 			splitMetatype = SpecXmlUtils.decodeBoolean(attribute);
+		}
+		attribute = mainel.getAttribute(ATTRIB_STACKLTR.name());
+		if (attribute != null) {
+			stackLtr = SpecXmlUtils.decodeBoolean(attribute);
 		}
 //		resourceStart = new int[0];
 		for (;;) {
@@ -500,6 +542,9 @@ public class ParamListStandard implements ParamList {
 			return false;
 		}
 		if (autoKilledByCall != op2.autoKilledByCall) {
+			return false;
+		}
+		if (stackLtr != op2.stackLtr) {
 			return false;
 		}
 		return true;
