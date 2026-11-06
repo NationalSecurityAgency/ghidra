@@ -30,6 +30,7 @@ define token instr2 (16)
   part2c0505=(5,5)
   part2c0404=(4,4)
   part2Rd0003=(0,3)
+  part2c0000=(0,0)
 ;
 
 define token instrThumb (16)
@@ -1548,7 +1549,7 @@ bxns: "ns" is thc0002=0b100 { }
 
 @if defined(VERSION_5)
 
-:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & (op11=0x1e;part2op=0x1d) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
+:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & (op11=0x1e;part2op=0x1d & part2c0000=0) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
 {
   build ItCond;
   lr = inst_next|1;
@@ -1557,7 +1558,7 @@ bxns: "ns" is thc0002=0b100 { }
   # Don't set this, assume return will set for emulation.  Was screwing up decompiler. TB = 1;
 }
 
-:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & CALLoverride=1 & (op11=0x1e;part2op=0x1d) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
+:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & CALLoverride=1 & (op11=0x1e;part2op=0x1d & part2c0000=0) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
 {
   build ItCond;
   lr = inst_next|1;
@@ -1565,7 +1566,7 @@ bxns: "ns" is thc0002=0b100 { }
   goto ThArmAddr23;
 }
 
-:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & (op11=0x1e; part2c1415=3 & part2c1212=0) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
+:blx^ItCond 	ThArmAddr23 			is TMode=1 & ItCond & (op11=0x1e; part2c1415=3 & part2c1212=0 & part2c0000=0) & ThArmAddr23 [ TMode=0; globalset(ThArmAddr23,TMode); TMode=1; ]
 {
   build ItCond;
   lr = inst_next|1;
