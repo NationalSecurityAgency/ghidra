@@ -1,3 +1,5 @@
+# FMA3 retains its existing IA64 language availability.
+@ifdef IA64
 #
 # x86 FMA instructions
 #
@@ -978,4 +980,49 @@ macro fnmsub231(dest, src1, src2, src3) {
 	# XmmReg1[32,96] = XmmReg1[32,96];
 	ZmmReg1 = zext(XmmReg1);
 }
+@endif
 
+# Packed single-precision FMA4. Userops preserve the fused, single-rounding
+# operation instead of incorrectly expanding it into two rounded operations.
+define pcodeop vfmaddps_fma4;
+define pcodeop vfmsubps_fma4;
+
+:VFMADDPS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, Xmm_imm8_7_4 is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x68; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; Xmm_imm8_7_4 {
+	local result:16 = vfmaddps_fma4(vexVVVV_XmmReg, XmmReg2_m128, Xmm_imm8_7_4);
+	ZmmReg1 = zext(result);
+}
+
+:VFMADDPS XmmReg1, vexVVVV_XmmReg, Xmm_imm8_7_4, XmmReg2_m128 is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x68; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; Xmm_imm8_7_4 {
+	local result:16 = vfmaddps_fma4(vexVVVV_XmmReg, Xmm_imm8_7_4, XmmReg2_m128);
+	ZmmReg1 = zext(result);
+}
+
+:VFMADDPS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, Ymm_imm8_7_4 is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x68; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; Ymm_imm8_7_4 {
+	local result:32 = vfmaddps_fma4(vexVVVV_YmmReg, YmmReg2_m256, Ymm_imm8_7_4);
+	ZmmReg1 = zext(result);
+}
+
+:VFMADDPS YmmReg1, vexVVVV_YmmReg, Ymm_imm8_7_4, YmmReg2_m256 is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x68; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; Ymm_imm8_7_4 {
+	local result:32 = vfmaddps_fma4(vexVVVV_YmmReg, Ymm_imm8_7_4, YmmReg2_m256);
+	ZmmReg1 = zext(result);
+}
+
+:VFMSUBPS XmmReg1, vexVVVV_XmmReg, XmmReg2_m128, Xmm_imm8_7_4 is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x6C; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; Xmm_imm8_7_4 {
+	local result:16 = vfmsubps_fma4(vexVVVV_XmmReg, XmmReg2_m128, Xmm_imm8_7_4);
+	ZmmReg1 = zext(result);
+}
+
+:VFMSUBPS XmmReg1, vexVVVV_XmmReg, Xmm_imm8_7_4, XmmReg2_m128 is $(VEX_DDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_XmmReg; byte=0x6C; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; Xmm_imm8_7_4 {
+	local result:16 = vfmsubps_fma4(vexVVVV_XmmReg, Xmm_imm8_7_4, XmmReg2_m128);
+	ZmmReg1 = zext(result);
+}
+
+:VFMSUBPS YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, Ymm_imm8_7_4 is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x6C; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; Ymm_imm8_7_4 {
+	local result:32 = vfmsubps_fma4(vexVVVV_YmmReg, YmmReg2_m256, Ymm_imm8_7_4);
+	ZmmReg1 = zext(result);
+}
+
+:VFMSUBPS YmmReg1, vexVVVV_YmmReg, Ymm_imm8_7_4, YmmReg2_m256 is $(VEX_DDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & vexVVVV_YmmReg; byte=0x6C; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; Ymm_imm8_7_4 {
+	local result:32 = vfmsubps_fma4(vexVVVV_YmmReg, Ymm_imm8_7_4, YmmReg2_m256);
+	ZmmReg1 = zext(result);
+}
