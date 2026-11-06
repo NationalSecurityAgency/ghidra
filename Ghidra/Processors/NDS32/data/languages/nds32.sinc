@@ -1,6 +1,8 @@
 ### General ###
 
-define endian=big;
+# Instruction endianness is always big, but data load/store endian is controlled by PSW.BE
+# We support staticly setting data endianness (not dynamically via PSW.BE)
+define endian=$(ENDIAN);
 define alignment=2;
 define space ram type=ram_space size=4 wordsize=1 default;
 define space register type=register_space size=4;
@@ -18,13 +20,37 @@ define register offset=0x90 size=4
 define register offset=0x100 size=8
 [d0 d1];
 
+@if ENDIAN == "little"
+define register offset=0x100 size=4
+[d0.lo d0.hi d1.lo d1.hi];
+@else
 define register offset=0x100 size=4
 [d0.hi d0.lo d1.hi d1.lo];
+@endif
 
 define register offset=0x200 size=4
 [ itb lb lc le ifc_lp
   fpcsr  fpcfg
 ];
+
+# IFC mode flag.  Set by `ifcall` / `ifcall9`; cleared by any taken
+# branch / call / return.  Pcode for the affected instructions is
+# runtime-conditional on this register.  The decompiler folds the
+# conditional via const-prop when the value is known at the point of
+# evaluation (which is the case after an inlined ifcall).
+define register offset=0x220 size=1 [IFC_ON];
+
+# Synthetic chooser register used as the `ifcall`/`ifcall9` CBRANCH
+# condition.  Never written by any instruction; initialized to 0 by
+# the pspec.  At runtime the CBRANCH(chooser != 0) is always false, so
+# control falls through to the unconditional `goto Rel16IFC`.  At
+# analysis time Ghidra's symbolic propagator treats the register as
+# unknown (because the const-prop seed says it's 0 but the variable
+# isn't actually tracked across instructions consistently), so both
+# the target branch AND the fallthrough edge are followed, allowing
+# stack-depth and value tracking to propagate to the post-ifcall
+# continuation.
+define register offset=0x221 size=1 [IFC_CHOOSER];
 
 define register offset=0x1000 size=4
 [ fs0 fs1 fs2 fs3 fs4 fs5 fs6 fs7
@@ -51,7 +77,7 @@ define context contextreg
 	regNum		= (27,31)	# register for load/store multiple instructions
 ;
 
-define token instr32(32)
+define token instr32(32) endian=big
     OpSz        = (31, 31)
     Opc         = (25, 30)
     Rt          = (20, 24)
@@ -222,6 +248,48 @@ attach variables [ Fdt Fda Fdb ]
 @define GPR     "(Alu2Mod=0b0001)"
 
 
+macro branch_if(cond, target) {
+    if (!cond) goto inst_next;
+    IFC_ON = 0;
+    goto target;
+}
+
+macro call_if(cond, target) {
+    if (!cond) goto inst_next;
+    call target;
+}
+
+# IFC support. IFC (Inline Function Call) introduces a 1-bit mode
+# `IFC_ON` plus a link register `ifc_lp`. Semantics documented in
+# IFC_PLAN.md and the NDS32 V3 programming guide.
+#
+# Modeling philosophy: IFC is purely *control flow*, not a function
+# call.  ifcall is a GOTO into the target, with `ifc_lp = inst_next`
+# stashed in a register that ifret will jump back to via
+# `goto [ifc_lp]`.  This means:
+#
+# * `ifcall T`: set ifc_lp = inst_next (unless nested); IFC_ON = 1;
+#   goto T.  The target body becomes part of the *caller's* flow.
+# * `ifret`: if IFC_ON == 0 nop/fallthrough; else IFC_ON = 0;
+#   goto [ifc_lp].  Per-caller const-prop resolves `[ifc_lp]` to
+#   the specific call site's instruction-after-ifcall.
+# * Any taken branch / call / return clears IFC_ON.
+# * For instructions that write the link register (jal/jral/bgezal/
+#   bltzal/etc.), the written value is `ifc_lp` when IFC_ON == 1
+#   (then IFC_ON clears and the target is reached as a tail jump,
+#   not a call). When IFC_ON == 0 they behave as normal calls.
+#
+# Multi-flow membership (an ifcalled body appearing in multiple
+# callers' control flow simultaneously) is recovered at the Ghidra
+# core level by relaxing the function-body-overlap constraint plus
+# NDS32IFCAnalyzer extending each caller's body to include each
+# ifcalled target body.
+
+macro psw_ifcon_clear() {
+    IFC_ON = 0;
+}
+
+
 ### ALU Instruction with Immediate ###
 
 :addi  Rt, Ra, Imm15s is $(I32) & Opc=0b101000 & Rt & Ra & Imm15s { Rt = Ra + Imm15s; }
@@ -321,9 +389,10 @@ UsrName: "pfm_ctl"     is Group=2 & Usr=4 { tmp:2 = 0x208; export *[csreg]:4 tmp
 
 
 :mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { Rt = UsrName; }
-:mfusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100000  & pc { Rt = inst_next; } 
+:mfusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100000 & pc { Rt = inst_start; }
 :mtusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100001 { UsrName = Rt; }
-:mtusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100001 & pc { pc = Rt; goto[pc]; } # Not sure this works correctly
+# The manual explicitly states pc cannot be written.
+:mtusr Rt, pc is $(I32) & $(ALU_2) & Rt & Group=0 & Usr=0b11111 & $(ALU2Z) & Sub6=0b100001 & pc unimpl
 
 
 ### Divide Instructions ###
@@ -422,8 +491,17 @@ LsmwM_: "m" is LsmwRa & LsmwM=1 { LsmwRa = mult_addr; }
 
 ### Load / Store Instruction for Atomic Updates ###
 
+define pcodeop scw_succeed;
+
 :llw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011000 { Rt = *AddrRaRbsv; }
-:scw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011001 { *AddrRaRbsv = Rt; }
+:scw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011001 {
+    # scw_succeed is used to inhibit decompiler optimizing out the check
+    local ok:4 = scw_succeed(AddrRaRbsv:4, Rt:4);
+    if (ok == 0) goto <fail>;
+        *AddrRaRbsv = Rt;
+    <fail>
+    Rt = ok;
+}
 
 
 ### Load / Store Instructions with User-mode Privilege ###
@@ -436,45 +514,125 @@ LsmwM_: "m" is LsmwRa & LsmwM=1 { LsmwRa = mult_addr; }
 
 ### Jump Instruction ###
 
-Rel24: addr is Imm24s [ addr = inst_start + (Imm24s << 1); ] { export *:4 addr; }
+# Constant form of a PC-relative-16 operand for instructions that
+# load the absolute target into a non-PC register (mtlbi/mtlei
+# write LB/LE; the target isn't a flow destination, so we export
+# the value as a constant rather than a dereferenceable address).
+Rel16C: addr is Imm16s [ addr = inst_start + (Imm16s << 1); ] { export *[const]:4 addr; }
 
-:j    Rel24 is $(I32) & $(JI)   & JIt=0 & Rel24 { goto Rel24; }
-:jal  Rel24 is $(I32) & $(JI)   & JIt=1 & Rel24 { lp = inst_next; call Rel24; }
-:jr   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
-:ret  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
-:jral Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
+# Branch-target subconstructors.  Single variant each -- there is no
+# longer a `ifc_on` context bit driving decoding.  IFC-mode behavior
+# is handled at runtime via the `IFC_ON` register check in pcode.
+Rel24Br: addr is Imm24s
+    [ addr = inst_start + (Imm24s << 1); ]
+    { export *:4 addr; }
+
+Rel16Br: addr is Imm16s
+    [ addr = inst_start + (Imm16s << 1); ]
+    { export *:4 addr; }
+
+Rel14Br: addr is Imm14s
+    [ addr = inst_start + (Imm14s << 1); ]
+    { export *:4 addr; }
+
+
+:j    Rel24Br is $(I32) & $(JI)   & JIt=0 & Rel24Br
+{
+    psw_ifcon_clear();
+    goto Rel24Br;
+}
+
+# jal: always a CALL at the flow level (UNCONDITIONAL_CALL with
+# fallthrough).  The link register choice is runtime-conditional on
+# IFC_ON:
+#   non-IFC mode: lp = inst_next (standard call).
+#   IFC mode:     lp = ifc_lp (thunk tail-call -- when the callee
+#                 returns via lp, control resumes at the outer
+#                 ifcall's continuation), IFC_ON is cleared.
+#
+# Modeling as CALL (not goto) keeps the disassembler+decompiler from
+# treating the thunk body as the caller's flow directly -- instead,
+# the thunk is marked inline by NDS32IFCAnalyzer and the decompiler's
+# inline machinery emits the call to far_target into each caller's
+# decompile, with the correct return path via ifc_lp resolved by
+# const-prop.
+:jal  Rel24Br is $(I32) & $(JI) & JIt=1 & Rel24Br
+{
+    if (IFC_ON == 0) goto <not_ifc>;
+        lp = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        lp = inst_next;
+    <do_call>
+    call Rel24Br;
+}
+
+# Indirect jumps clear IFC_ON at runtime.
+:jr   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    goto [Rb];
+}
+:ret  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=1 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    return [Rb];
+}
+:jral Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00001
+{
+    if (IFC_ON == 0) goto <not_ifc>;
+        Rt = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        Rt = inst_next;
+    <do_call>
+    call [Rb];
+}
 
 
 ### Branch Instruction ###
-Rel14: addr is Imm14s [ addr = inst_start + (Imm14s << 1); ] { export *:4 addr; }
-Rel16: addr is Imm16s [ addr = inst_start + (Imm16s << 1); ] { export *:4 addr; }
 
-:beq  Rt, Ra, Rel14 is $(I32) & $(BR1) & Rt & Ra & Br1t=0 & Rel14 { if(Rt == Ra) goto Rel14; }
-:bne  Rt, Ra, Rel14 is $(I32) & $(BR1) & Rt & Ra & Br1t=1 & Rel14 { if(Rt != Ra) goto Rel14; }
-:beqz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0010 & Rel16 { if(Rt == 0)  goto Rel16; }
-:bnez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0011 & Rel16 { if(Rt != 0)  goto Rel16; }
-:bgez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0100 & Rel16 { if(Rt s>= 0) goto Rel16; }
-:bltz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0101 & Rel16 { if(Rt s< 0)  goto Rel16; }
-:bgtz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0110 & Rel16 { if(Rt s> 0)  goto Rel16; }
-:blez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0111 & Rel16 { if(Rt s<= 0) goto Rel16; }
+:beq  Rt, Ra, Rel14Br is $(I32) & $(BR1) & Rt & Ra & Br1t=0 & Rel14Br { branch_if(Rt == Ra, Rel14Br); }
+:bne  Rt, Ra, Rel14Br is $(I32) & $(BR1) & Rt & Ra & Br1t=1 & Rel14Br { branch_if(Rt != Ra, Rel14Br); }
+:beqz Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0010 & Rel16Br { branch_if(Rt == 0,  Rel16Br); }
+:bnez Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0011 & Rel16Br { branch_if(Rt != 0,  Rel16Br); }
+:bgez Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0100 & Rel16Br { branch_if(Rt s>= 0, Rel16Br); }
+:bltz Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0101 & Rel16Br { branch_if(Rt s< 0,  Rel16Br); }
+:bgtz Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0110 & Rel16Br { branch_if(Rt s> 0,  Rel16Br); }
+:blez Rt,     Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b0111 & Rel16Br { branch_if(Rt s<= 0, Rel16Br); }
 
 
 ### Branch with link Instruction ###
 
-:bgezal Rt, Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b1100 & Rel16
-{   
-    lp = inst_next;
-    if(Rt s>= 0) goto <end>;
-        call Rel16;
-    <end>
+# bgezal/bltzal: conditional call.  In IFC mode (IFC_ON != 0) the
+# link write uses ifc_lp; the call still happens as a normal CALL
+# semantically (modeled at flow level) -- see jal comment for why.
+:bgezal Rt, Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b1100 & Rel16Br
+{
+    if (!(Rt s>= 0)) goto inst_next;
+    if (IFC_ON == 0) goto <not_ifc>;
+        lp = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        lp = inst_next;
+    <do_call>
+    call Rel16Br;
 }
 
-:bltzal Rt, Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b1101 & Rel16
-{   
-    lp = inst_next;
-    if(Rt s< 0) goto <end>;
-        call Rel16;
-    <end>
+:bltzal Rt, Rel16Br is $(I32) & $(BR2) & Rt & Br2t=0b1101 & Rel16Br
+{
+    if (!(Rt s< 0)) goto inst_next;
+    if (IFC_ON == 0) goto <not_ifc>;
+        lp = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        lp = inst_next;
+    <do_call>
+    call Rel16Br;
 }
 
 
@@ -494,10 +652,38 @@ csr: csr_reg is SrIdx [ csr_reg = $(CSR_REG_START) + SrIdx; ] { export *[csreg]:
 
 # TODO : special constraint (address translation off)
 
-:jr.itoff  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
-:jr.toff   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
-:jral.iton Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
-:jral.ton  Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
+:jr.itoff  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    goto [Rb];
+}
+:jr.toff   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    goto [Rb];
+}
+:jral.iton Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00001
+{
+    if (IFC_ON == 0) goto <not_ifc>;
+        Rt = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        Rt = inst_next;
+    <do_call>
+    call [Rb];
+}
+:jral.ton  Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00001
+{
+    if (IFC_ON == 0) goto <not_ifc>;
+        Rt = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        Rt = inst_next;
+    <do_call>
+    call [Rb];
+}
 
 
 ### MMU Instruction ###
@@ -516,7 +702,7 @@ define pcodeop TLB_FlushAll;
 :tlbop Ra,"RWrite"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=2 & Sub5=0b01110 { TLB_RWrite(Ra:4); }
 :tlbop Ra,"RWriteLock"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=3 & Sub5=0b01110 { TLB_RWriteLock(Ra:4); }
 :tlbop Ra,"Unlock"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=4 & Sub5=0b01110 { TLB_Unlock(Ra:4); }
-:tlbop Rt,Ra,"Probe"    is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=5 & Sub5=0b01110 { TLB_Probe(Rt:4, Ra:4); }
+:tlbop Rt,Ra,"Probe"    is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=5 & Sub5=0b01110 { Rt = TLB_Probe(Ra:4); }
 :tlbop Ra,"Invalidate"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=6 & Sub5=0b01110 { TLB_Invalidate(Ra:4); }
 :tlbop "FlushAll"       is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=7 & Sub5=0b01110 { TLB_FlushAll(); }
 
@@ -552,11 +738,8 @@ define pcodeop isync;
 
 define pcodeop dpref;
 
-OffsetRbsv2: (Rb "<<" sv) is Rb & sv { off:4 = Rb << (sv + 1); export off; }
-AddrRaRbsv2: [Ra + OffsetRbsv2] is Ra & OffsetRbsv2 { addr:4 = Ra + OffsetRbsv2; export addr; }
-
-:dpref DprefSub, AddrRaRbsv2 is $(I32) & $(MEM) & DprefD=0 & DprefSub & AddrRaRbsv2 & Sub8=0b00010011 {
-    dpref(DprefSub:1, AddrRaRbsv2:4);
+:dpref DprefSub, AddrRaRbsv is $(I32) & $(MEM) & DprefD=0 & DprefSub & AddrRaRbsv & Sub8=0b00010011 {
+    dpref(DprefSub:1, AddrRaRbsv:4);
 }
 
 DprefD_: "w" is DprefD=0 { }
@@ -611,11 +794,23 @@ define pcodeop trap;
 
 ### Special Return Instruction ###
 
-:iret is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & Rd=0 & Sub5=0b00100 { return [ipc]; }
+:iret is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & Rd=0 & Sub5=0b00100
+{
+    psw_ifcon_clear();
+    return [ipc];
+}
 
 # TODO : special constraint (address translation off)
-:ret.itoff Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
-:ret.toff  Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
+:ret.itoff Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=1 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    return [Rb];
+}
+:ret.toff  Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=1 & Sub5=0b00000
+{
+    psw_ifcon_clear();
+    return [Rb];
+}
 
 
 ### Cache Control Instruction ###
@@ -623,7 +818,7 @@ define pcodeop trap;
 # TODO : special function, with subfunctions
 define pcodeop cctl;
 
-:cctl Rt, Ra, CctlLevel, CctlSub is $(I32) & $(MISC) & Rt & Ra & CctlZ=0 & CctlLevel & CctlSub & Sub5=0b00001 { cctl(Rt:4, Ra:4, CctlLevel:1, CctlSub:1); }
+:cctl Rt, Ra, CctlLevel, CctlSub is $(I32) & $(MISC) & Rt & Ra & CctlZ=0 & CctlLevel & CctlSub & Sub5=0b00001 { Rt = cctl(Rt:4, Ra:4, CctlLevel:1, CctlSub:1); }
 
 
 # Miscellaneous Instructions (Baseline)
@@ -644,7 +839,8 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 
 :setend.^SetendBE is $(I32) & $(MISC) & ToggleL=0 & SetendBE & SrIdx=0b0010000000 & Rd=0b00001 & Sub5=0b00011 { }
 
-:standby StandbySub is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & StandbyZ=0 & StandbySub & Sub5=0b00000 { goto inst_start; }
+define pcodeop standby;
+:standby StandbySub is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & StandbyZ=0 & StandbySub & Sub5=0b00000 { standby(StandbySub:1); }
 
 
 
@@ -652,7 +848,7 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 
 ### ALU Instructions ###
 
-:addi.gp is $(I32) & $(SBGP) & Rt & GpSub1=0b1 & Imm19s { Rt = gp + Imm19s; }
+:addi.gp Rt, Imm19s is $(I32) & $(SBGP) & Rt & GpSub1=0b1 & Imm19s { Rt = gp + Imm19s; }
 
 
 ### Multiply and Divide Instructions (V2) ###
@@ -660,16 +856,15 @@ SetendBE: "b" is Toggle=1 { setend(1:1); }
 :mulr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101001 & Rtl & Rth
 {
     res:8 = zext(Ra) * zext(Rb);
-    Rtl = res[32,32];
-    Rth = res[0,32];
-
+    Rtl = res[0,32];
+    Rth = res[32,32];
 }
 
 :mulsr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101000 & Rtl & Rth
 {
     res:8 = sext(Ra) * sext(Rb);
-    Rtl = res[32,32];
-    Rth = res[0,32];
+    Rtl = res[0,32];
+    Rth = res[32,32];
 }
 
 :maddr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110011 { Rt = Rt + (Ra * Rb); }
@@ -723,20 +918,39 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 :sub_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00001 { Rt = Ra - (Rb << sh); }
 :xor_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00011 { Rt = Ra ^ (Rb << sh); }
 
-:add_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11100 { Rt = Ra + (Rb << sh); }
-:and_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11110 { Rt = Ra & (Rb << sh); }
-:or_srli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b10101 { Rt = Ra | (Rb << sh); }
-:sub_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11101 { Rt = Ra - (Rb << sh); }
-:xor_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11111 { Rt = Ra ^ (Rb << sh); }
+:add_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11100 { Rt = Ra + (Rb >> sh); }
+:and_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11110 { Rt = Ra & (Rb >> sh); }
+:or_srli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b10101 { Rt = Ra | (Rb >> sh); }
+:sub_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11101 { Rt = Ra - (Rb >> sh); }
+:xor_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11111 { Rt = Ra ^ (Rb >> sh); }
 
 ### Conditional Branch and Jump Instructions (V3) ###
 
-Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
-:beqc  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=0 & Imm11s & Rel8 { if(Rt == Imm11s) goto Rel8; }
-:bnec  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=1 & Imm11s & Rel8 { if(Rt != Imm11s) goto Rel8; }
+Rel8Br: addr is Imm8s
+    [ addr = inst_start + (Imm8s << 1); ]
+    { export *:4 addr; }
 
-:jralnez Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00011 { if(Rb == 0) goto <end>; Rt = inst_next; call [Rb]; <end> }
-:jrnez   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00010 { if(Rb == 0) goto <end>; goto [Rb]; <end> }
+:beqc  Rt, Imm11s, Rel8Br is $(I32) & $(BR3) & Rt & Bxxc=0 & Imm11s & Rel8Br { branch_if(Rt == Imm11s, Rel8Br); }
+:bnec  Rt, Imm11s, Rel8Br is $(I32) & $(BR3) & Rt & Bxxc=1 & Imm11s & Rel8Br { branch_if(Rt != Imm11s, Rel8Br); }
+
+:jralnez Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00011 {
+    if (Rb == 0) goto <end>;
+        if (IFC_ON == 0) goto <not_ifc>;
+            Rt = ifc_lp;
+            psw_ifcon_clear();
+            goto <do_call>;
+        <not_ifc>
+            Rt = inst_next;
+        <do_call>
+        call [Rb];
+    <end>
+}
+:jrnez   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00010 {
+    if(Rb == 0) goto <end>;
+        psw_ifcon_clear();
+        goto [Rb];
+    <end>
+}
 
 ### Bit Manipulation Instructions (V3) ###
 
@@ -755,14 +969,17 @@ Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
 
 :abs Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Rb=0 & $(ALU2Z) & Sub6=0b000011
 {
-    gez:4 = zext(Ra s>= 0);
-    ltz:4 = zext(Ra s< 0);
-    Rt = (Ra * gez) | ((-Ra) * ltz);
+    local sign:4 = Ra s>> 31;
+    local mag:4 = (Ra ^ sign) - sign;
+    local sat:4 = mag s>> 31;
+    Rt = mag ^ sat;
 }
 
 :ave Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b000010
 {
-    Rt = (Ra + Rb + 1) s>> 2;
+    local sum:8 = sext(Ra) + sext(Rb) + 1;
+    local shifted:8 = sum s>> 1;
+    Rt = shifted:4;
 }
 
 :max Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b000000
@@ -816,55 +1033,164 @@ Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
 
 :clz Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Imm5u=0 & $(ALU2Z) & Sub6=0b000111
 {
-  countTmp:4 = 0;
-  inputTmp:4 = Ra;
-
- <loopbegin>
-  if ((inputTmp & 0x80000000) != 0) goto <loopend>;
-
-  countTmp = countTmp + 1;
-  inputTmp = (inputTmp << 1) | 1;
-  goto <loopbegin>;
-
- <loopend>
-  Rt = countTmp;
+  Rt = lzcount(Ra);
 }
 
 :clo Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Imm5u=0 & $(ALU2Z) & Sub6=0b000110
 {
-  countTmp:4 = 0;
-  inputTmp:4 = Ra;
-
- <loopbegin>
-  if ((inputTmp & 0x80000000) == 0) goto <loopend>;
-
-  countTmp = countTmp + 1;
-  inputTmp = (inputTmp << 1) | 1;
-  goto <loopbegin>;
-
- <loopend>
-  Rt = countTmp;
+  Rt = lzcount(~Ra);
 }
 
 
 ### Performance Extension V2 ###
 
 
-# TODO : arithmetic functions: bs*
-:bse is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001100 unimpl
-:bsp is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001101 unimpl
+# BSE (Bit Stream Extraction) -- AndeStar_ISA_UM025_V2.2 section 9.4.1.
+# BSP (Bit Stream Packing)    -- AndeStar_ISA_UM025_V2.2 section 9.4.2.
+#
+# Both instructions read M = Rb[12:8] (extract/insert width minus one) and
+# N = Rb[4:0] (bit-offset from Ra(31)) and update Rt + Rb according to a
+# three-way case analysis on D = M + N (normal / boundary / over-or-under-
+# flow).  See the spec for the full state machine; the sleigh below
+# expresses each case directly so the decompiler can see the bit-field
+# extracts as plain shift/mask sequences.
+:bse Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001100 {
+    local M:4 = (Rb >> 8) & 0x1F;
+    local N:4 = Rb & 0x1F;
+    local D:4 = M + N;
+    local refillFlag:4 = (Rb >> 30) & 1;
+    local newRt:4 = Rt;
+    local newRb:4 = Rb;
+
+    # If Rb[30] == 0, clear the unused high bits of Rt: Rt[31:Len] = 0.
+    if (refillFlag != 0) goto <bse_skip_clear>;
+        local lenMask:4 = (1 << (M + 1)) - 1;
+        newRt = newRt & lenMask;
+    <bse_skip_clear>
+
+    # Rb[7:5] = 1
+    newRb = (newRb & 0xFFFFFF1F) | 0x20;
+
+    if (D < 31) goto <bse_normal>;
+    if (D == 31) goto <bse_empty>;
+    goto <bse_underflow>;
+
+    <bse_normal>
+        # Rt[M:0] = Ra[31-N:31-N-M]
+        local nFieldMask:4 = (1 << (M + 1)) - 1;
+        local nExtracted:4 = (Ra >> (31 - N - M)) & nFieldMask;
+        newRt = (newRt & ~nFieldMask) | nExtracted;
+        # Rb[4:0] = D + 1; Rb[31] = 0
+        newRb = (newRb & 0xFFFFFFE0) | ((D + 1) & 0x1F);
+        newRb = newRb & 0x7FFFFFFF;
+        # If old Rb[30] was 1, restore Rb[12:8] from Rb[20:16] and clear
+        # Rb[15:13].
+        if (refillFlag == 0) goto <bse_normal_done>;
+            local nSavedM:4 = (Rb >> 16) & 0x1F;
+            newRb = (newRb & 0xFFFFE0FF) | (nSavedM << 8);
+            newRb = newRb & 0xFFFF1FFF;
+        <bse_normal_done>
+        # Rb[30] = 0
+        newRb = newRb & 0xBFFFFFFF;
+        goto <bse_end>;
+
+    <bse_empty>
+        # Rt[M:0] = Ra[M:0]
+        local eMask:4 = (1 << (M + 1)) - 1;
+        newRt = (newRt & ~eMask) | (Ra & eMask);
+        # Rb[4:0] = 0; Rb[30] = 0; Rb[31] = 1
+        newRb = newRb & 0xFFFFFFE0;
+        newRb = (newRb & 0xBFFFFFFF) | 0x80000000;
+        goto <bse_end>;
+
+    <bse_underflow>
+        # Rb[20:16] = M; Rb[12:8] = D - 32; Rb[4:0] = 0; Rb[30] = 1; Rb[31] = 1
+        newRb = (newRb & 0xFFE0FFFF) | (M << 16);
+        newRb = (newRb & 0xFFFFE0FF) | (((D - 32) & 0x1F) << 8);
+        newRb = newRb & 0xFFFFFFE0;
+        newRb = newRb | 0xC0000000;
+        # Rt[M:M+N-31] = Ra[31-N:0]; Rt[M+N-32:0] = 0
+        local uFromRa:4 = Ra & ((1 << (32 - N)) - 1);
+        local uShifted:4 = uFromRa << (M + N - 31);
+        local uBottomMask:4 = (1 << (M + N - 31)) - 1;
+        newRt = newRt & ~uBottomMask;
+        newRt = newRt | uShifted;
+
+    <bse_end>
+    Rt = newRt;
+    Rb = newRb;
+}
+
+:bsp Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001101 {
+    local M:4 = (Rb >> 8) & 0x1F;
+    local N:4 = Rb & 0x1F;
+    local D:4 = M + N;
+    local overflowFlag:4 = (Rb >> 30) & 1;
+    local newRt:4 = Rt;
+    local newRb:4 = Rb;
+
+    # Rb[7:5] = 1
+    newRb = (newRb & 0xFFFFFF1F) | 0x20;
+
+    if (D < 31) goto <bsp_normal>;
+    if (D == 31) goto <bsp_full>;
+    goto <bsp_overflow>;
+
+    <bsp_normal>
+        # Rb[4:0] = D + 1; Rb[31] = 0
+        newRb = (newRb & 0xFFFFFFE0) | ((D + 1) & 0x1F);
+        newRb = newRb & 0x7FFFFFFF;
+        # Rt[31-N:31-N-M] = Ra[M:0]
+        local pFieldMask:4 = (1 << (M + 1)) - 1;
+        local pToInsert:4 = (Ra & pFieldMask) << (31 - N - M);
+        local pClearMask:4 = ~(pFieldMask << (31 - N - M));
+        newRt = (newRt & pClearMask) | pToInsert;
+        # If old Rb[30] was 1, restore Rb[12:8] from Rb[20:16].
+        if (overflowFlag == 0) goto <bsp_normal_done>;
+            local pSavedM:4 = (Rb >> 16) & 0x1F;
+            newRb = (newRb & 0xFFFFE0FF) | (pSavedM << 8);
+            newRb = newRb & 0xFFFF1FFF;
+        <bsp_normal_done>
+        # Rb[30] = 0
+        newRb = newRb & 0xBFFFFFFF;
+        goto <bsp_end>;
+
+    <bsp_full>
+        # Rb[4:0] = 0; Rb[30] = 0; Rb[31] = 1
+        newRb = newRb & 0xFFFFFFE0;
+        newRb = (newRb & 0xBFFFFFFF) | 0x80000000;
+        # Rt[M:0] = Ra[M:0]
+        local fMask:4 = (1 << (M + 1)) - 1;
+        newRt = (newRt & ~fMask) | (Ra & fMask);
+        goto <bsp_end>;
+
+    <bsp_overflow>
+        # Rb[20:16] = M; Rb[12:8] = D - 32; Rb[4:0] = 0; Rb[30] = 1; Rb[31] = 1
+        newRb = (newRb & 0xFFE0FFFF) | (M << 16);
+        newRb = (newRb & 0xFFFFE0FF) | (((D - 32) & 0x1F) << 8);
+        newRb = newRb & 0xFFFFFFE0;
+        newRb = newRb | 0xC0000000;
+        # Rt[31-N:0] = Ra[M:M+N-31]
+        local oFieldMask:4 = (1 << (32 - N)) - 1;
+        local oExtracted:4 = (Ra >> (M + N - 31)) & oFieldMask;
+        newRt = (newRt & ~oFieldMask) | oExtracted;
+
+    <bsp_end>
+    Rt = newRt;
+    Rb = newRb;
+}
 
 macro add_abs_diff(dst, src1, src2, shift)
 {
-    local src1_ = src1 >> shift;
-    local src2_ = src2 >> shift;
-    local src1__ = src1_:1;
-    local src2__ = src2_:1;
-    local a:1 = src1__ - src2__;
-    local agez:1 = zext(a s>= 0);
-    local altz:1 = zext(a s< 0);
-    local aabs:1 = (a * agez) | ((-a) * altz);
-    dst = dst + zext(aabs);
+    local aa = src1 >> shift;
+    local bb = src2 >> shift;
+    local b1:2 = zext(aa:1);
+    local b2:2 = zext(bb:1);
+    local d:2  = b1 - b2;
+    local sign:2 = d s>> 15;
+    local diff:2 = (d ^ sign) - sign;
+    local abs:1 = diff:1;
+    dst = dst + zext(abs);
 }
 :pbsad Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0000
 {
@@ -890,6 +1216,7 @@ macro add_abs_diff(dst, src1, src2, shift)
 	m2:1 = (Ra[8,8]  == match);
 	m3:1 = (Ra[16,8] == match);
 	m4:1 = (Ra[24,8] == match);
+@if ENDIAN == "little"
 	Rt = -4;
 	if (m1) goto inst_next;
 	Rt = -3;
@@ -898,9 +1225,17 @@ macro add_abs_diff(dst, src1, src2, shift)
 	if (m3) goto inst_next;
 	Rt = -1;
 	if (m4) goto inst_next;
+@else
+	Rt = -4;
+	if (m4) goto inst_next;
+	Rt = -3;
+	if (m3) goto inst_next;
+	Rt = -2;
+	if (m2) goto inst_next;
+	Rt = -1;
+	if (m1) goto inst_next;
+@endif
 	Rt = 0;
-	# choosery method
-	# rd = 0 + (zext(m1)*-4) + (zext(m2)*-3) + (zext(m3)*-2) + (zext(m4)*-1);
 }
 
 :ffbi Rt, Ra, Imm8u is $(I32) & $(ALU_2) & Rt & Ra & Imm8u & Sub7=0b1001110 {
@@ -909,6 +1244,7 @@ macro add_abs_diff(dst, src1, src2, shift)
 	m2:1 = (Ra[8,8]  == match);
 	m3:1 = (Ra[16,8] == match);
 	m4:1 = (Ra[24,8] == match);
+@if ENDIAN == "little"
 	Rt = -4;
 	if (m1) goto inst_next;
 	Rt = -3;
@@ -917,6 +1253,16 @@ macro add_abs_diff(dst, src1, src2, shift)
 	if (m3) goto inst_next;
 	Rt = -1;
 	if (m4) goto inst_next;
+@else
+	Rt = -4;
+	if (m4) goto inst_next;
+	Rt = -3;
+	if (m3) goto inst_next;
+	Rt = -2;
+	if (m2) goto inst_next;
+	Rt = -1;
+	if (m1) goto inst_next;
+@endif
 	Rt = 0;
 }
 
@@ -984,7 +1330,7 @@ macro add_abs_diff(dst, src1, src2, shift)
 
 ########### 16b ############
 
-define token instr16(16)
+define token instr16(16) endian=big
     opsz        = (15, 15)
     opc4        = (11, 14)
     opc5        = (10, 14)
@@ -1015,6 +1361,7 @@ define token instr16(16)
     imm6u       = (0, 5)
     imm7u       = (0, 6)
     imm8s       = (0, 7) signed
+    imm9u       = (0, 8)
     imm10s      = (0, 9) signed
     xwi37_ls    = (7, 7)
     swid9       = (0, 8)
@@ -1127,18 +1474,33 @@ fp_rel7w: [fp + rel7w] is fp & rel7w { addr:4 = fp + rel7w; export addr; }
 
 ### Branch and Jump Instruction ###
 
-rel8: addr is imm8s [ addr = inst_start + (imm8s << 1); ] { export *:4 addr; }
+rel8Br: addr is imm8s
+    [ addr = inst_start + (imm8s << 1); ]
+    { export *:4 addr; }
 
 
-:beqs38 rt3b,rel8 is $(I16) & opc4=0b1010 & rt3b & rel8 { if(a5 == rt3b) goto rel8; }
-:bnes38 rt3b,rel8 is $(I16) & opc4=0b1011 & rt3b & rel8 { if(a5 != rt3b) goto rel8; }
-:beqz38 rt3b,rel8 is $(I16) & opc4=0b1000 & rt3b & rel8 { if(rt3b == 0) goto rel8; }
-:bnez38 rt3b,rel8 is $(I16) & opc4=0b1001 & rt3b & rel8 { if(rt3b != 0) goto rel8; }
+:beqs38 rt3b,rel8Br is $(I16) & opc4=0b1010 & rt3b & rel8Br { branch_if(a5 == rt3b, rel8Br); }
+:bnes38 rt3b,rel8Br is $(I16) & opc4=0b1011 & rt3b & rel8Br { branch_if(a5 != rt3b, rel8Br); }
+:beqz38 rt3b,rel8Br is $(I16) & opc4=0b1000 & rt3b & rel8Br { branch_if(rt3b == 0, rel8Br); }
+:bnez38 rt3b,rel8Br is $(I16) & opc4=0b1001 & rt3b & rel8Br { branch_if(rt3b != 0, rel8Br); }
 
-:j8    rel8 is $(I16) & opc7=0b1010101     & rel8 { goto rel8; }
-:jr5   rb5  is $(I16) & opc10=0b1011101000 & rb5  { goto [rb5]; }
-:ret5  rb5  is $(I16) & opc10=0b1011101100 & rb5  { return [rb5]; }
-:jral5 rb5  is $(I16) & opc10=0b1011101001 & rb5  { lp = inst_next; call [rb5]; }
+:j8    rel8Br is $(I16) & opc7=0b1010101     & rel8Br { psw_ifcon_clear(); goto rel8Br; }
+:jr5   rb5    is $(I16) & opc10=0b1011101000 & rb5  { psw_ifcon_clear(); goto [rb5]; }
+:ret5  rb5    is $(I16) & opc10=0b1011101100 & rb5  { psw_ifcon_clear(); return [rb5]; }
+
+# jral5: 16-bit indirect call.  See jal comment for why this is
+# modeled as a CALL even in IFC mode (link register choice is
+# runtime-conditional, not the flow type).
+:jral5 rb5  is $(I16) & opc10=0b1011101001 & rb5 {
+    if (IFC_ON == 0) goto <not_ifc>;
+        lp = ifc_lp;
+        psw_ifcon_clear();
+        goto <do_call>;
+    <not_ifc>
+        lp = inst_next;
+    <do_call>
+    call [rb5];
+}
 
 
 ### Compare and Branch Instruction ###
@@ -1148,8 +1510,8 @@ rel8: addr is imm8s [ addr = inst_start + (imm8s << 1); ] { export *:4 addr; }
 :slt45   ra4, rb5   is $(I16) & opc6=0b110001 & ra4 & rb5   { ta = zext(ra4 < rb5); }
 :slts45  ra4, rb5   is $(I16) & opc6=0b110000 & ra4 & rb5   { ta = zext(ra4 s< rb5); }
 
-:beqzs8 rel8 is $(I16) & opc7=0b1101000 & rel8 { if(ta == 0) goto rel8; }
-:bnezs8 rel8 is $(I16) & opc7=0b1101001 & rel8 { if(ta != 0) goto rel8; }
+:beqzs8 rel8Br is $(I16) & opc7=0b1101000 & rel8Br { branch_if(ta == 0, rel8Br); }
+:bnezs8 rel8Br is $(I16) & opc7=0b1101001 & rel8Br { branch_if(ta != 0, rel8Br); }
 
 
 ### Misc Instruction ###
@@ -1179,7 +1541,7 @@ sp_rel7w: [+ rel7w] is rel7w { addr:4 = sp + rel7w; export addr; }
 
 imm6u_: imm8 is imm6u [ imm8 = imm6u << 2; ] { export *[const]:4 imm8; }
 :addri36.sp rt3, imm6u_ is $(I16) & opc6=0b011000 & rt3 & imm6u_ { rt3 = sp + imm6u_; }
-:add5.pc rt5b is $(I16) & opc10=0b1011101101 & rt5b { rt5b = pc + rt5b; }
+:add5.pc rt5b is $(I16) & opc10=0b1011101101 & rt5b { rt5b = inst_start + rt5b; }
 :and33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b110 { rt3 = rt3 & ra3; }
 :neg33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b010 { rt3 = -ra3; }
 :not33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b011 { rt3 = ~ra3; }
@@ -1188,7 +1550,7 @@ imm6u_: imm8 is imm6u [ imm8 = imm6u << 2; ] { export *[const]:4 imm8; }
 
 ### Bit Manipulation Instructions (V3 16-bit) ###
 
-:bmski33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b110 { rt3 = (rt3 >> imm3ub) & 1; }
+:bmski33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b110 { rt3 = rt3 & (1 << imm3ub); }
 :fexti33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b111 { rt3 = rt3 & ((1 << (imm3ub + 1)) - 1); }
 
 ### Misc. Instructions (V3 16-bit) ###
@@ -1217,21 +1579,22 @@ push25_re: re2 is re2 & re2=1 { push25_s2(); }
 push25_re: re2 is re2 & re2=2 { push25_s4(); }
 push25_re: re2 is re2 & re2=3 { push25_s8(); }
 
-:push25 push25_re, imm5u__ is $(I16) & opc8=0b11111000 & re2 & push25_re & imm5u__ {
+push25_set_s2: is re2 & re2=0 {}
+push25_set_s2: is re2 { s2 = inst_start & 0xfffffffc; }
+
+:push25 push25_re, imm5u__ is $(I16) & opc8=0b11111000 & re2 & push25_re & push25_set_s2 & imm5u__ {
 	mult_addr = sp;
 	push25_special();
 	build push25_re;
 	sp = mult_addr - imm5u__;
-	if(re2 < 1) goto <end>;
-		s2 = pc & 0xfffffffc;
-	<end>
+    build push25_set_s2;
 }
 
-macro pop25_special() { LmwOp(fp); LmwOp(gp); LmwOp(lp);   }
-macro pop25_s0() { LmwOp(s0); }
-macro pop25_s2() { pop25_s0(); LmwOp(s1); LmwOp(s2); }
-macro pop25_s4() { pop25_s2(); LmwOp(s3); LmwOp(s4); }
-macro pop25_s8() { pop25_s4(); LmwOp(s5); LmwOp(s6); LmwOp(s7); LmwOp(s8); }
+macro pop25_special() { Lmwai(fp); Lmwai(gp); Lmwai(lp); }
+macro pop25_s0() { Lmwai(s0); }
+macro pop25_s2() { pop25_s0(); Lmwai(s1); Lmwai(s2); }
+macro pop25_s4() { pop25_s2(); Lmwai(s3); Lmwai(s4); }
+macro pop25_s8() { pop25_s4(); Lmwai(s5); Lmwai(s6); Lmwai(s7); Lmwai(s8); }
 
 pop25_re: re2 is re2 & re2=0 { pop25_s0(); }
 pop25_re: re2 is re2 & re2=1 { pop25_s2(); }
@@ -1239,10 +1602,11 @@ pop25_re: re2 is re2 & re2=2 { pop25_s4(); }
 pop25_re: re2 is re2 & re2=3 { pop25_s8(); }
 
 :pop25 pop25_re, imm5u__ is $(I16) & opc8=0b11111001 & re2 & pop25_re & imm5u__ {
-	mult_addr = sp;
+	mult_addr = sp + imm5u__;
 	build pop25_re;
 	pop25_special();
-	sp = mult_addr + imm5u__;
+	sp = mult_addr;
+	psw_ifcon_clear();
 	return [lp];
 }
 
@@ -1259,6 +1623,93 @@ define pcodeop ex9;
 
 :ex9.it imm5u is $(I16) & opc10=0b1011101010 & imm5u {
 	ex9(imm5u:4);
+}
+
+##########################
+# DSP/ZOL
+
+:mtlbi   Rel16C is $(I32) & $(BR2) & Rt=0b00001 & Br2t=0b0000 & Rel16C { lb = Rel16C; }
+:mtlei   Rel16C is $(I32) & $(BR2) & Rt=0b00010 & Br2t=0b0000 & Rel16C { le = Rel16C; }
+
+
+##########################
+# IFC (Inline Function Call) Extension
+#
+# Single-constructor model: pcode is runtime-conditional on
+# IFC_ON/ifc_lp.  Multi-flow behavior (the same body decompiled
+# both as a normal function AND inlined into ifcall callers) is
+# recovered at decompile time by `Function.setInline(true)` on
+# IFC-exclusive entries -- see NDS32IFCAnalyzer.
+
+# Sub-constructor for ifcall9 target address.
+rel9IFC: addr is imm9u
+    [ addr = inst_start + (imm9u << 1); ]
+    { export *:4 addr; }
+
+# Sub-constructor for ifcall target address (32-bit form).
+Rel16IFC: addr is Imm16s
+    [ addr = inst_start + (Imm16s << 1); ]
+    { export *:4 addr; }
+
+# ifcall (32-bit).  Sets ifc_lp and IFC_ON for runtime tracking,
+# then CALLs the target.  Modeling as CALL (not goto) keeps the
+# caller's primary body extending past the ifcall instruction (CALL
+# has fallthrough at the flow level), so the post-ifcall code stays
+# part of the caller.  The actual IFC inlining -- having the target
+# body decompiled as part of the caller -- is recovered at decompile
+# time via NDS32IFCAnalyzer publishing a per-caller body-extension
+# AddressSetPropertyMap that DecompileCallback consults.  Nested
+# ifcall (IFC_ON already 1) preserves the OUTER caller's ifc_lp
+# so the inner ifret returns to the outermost ifcall site.
+:ifcall Rel16IFC is $(I32) & $(BR2) & Rt=0b00000 & Br2t=0b0000 & Rel16IFC
+{
+    if (IFC_ON != 0) goto <nested>;
+        ifc_lp = inst_next;
+    <nested>
+    IFC_ON = 1;
+    # CBRANCH on the synthetic IFC_CHOOSER register so both edges
+    # (target + fall-through) are followed by Ghidra's symbolic
+    # propagator (stack-depth tracking, value analysis).  Without this,
+    # a plain `goto Rel16IFC; goto inst_next;` pattern only follows
+    # the first branch at the pcode-walk level -- leaving stack depth
+    # "?" at the post-ifcall continuation.  IFC_CHOOSER is always 0
+    # at runtime so the conditional is never taken and control flows
+    # to the unconditional branch below.
+    if (IFC_CHOOSER != 0) goto inst_next;
+    goto Rel16IFC;
+}
+
+# ifret: conditional `goto [ifc_lp]` on IFC_ON.  Modeled as a
+# computed branch back to the caller's instruction-after-ifcall (NOT
+# a function return), so per-caller const-prop on ifc_lp resolves
+# this to the specific call site's fallthrough.  When IFC_ON = 0
+# at runtime, falls through (no-op) -- matches hardware semantics
+# for non-IFC invocations of shared-body functions.
+:ifret is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb=0 & DtIt=0b00 & Jz=0b01 & JrHint=1 & Sub5=0b00000
+{
+    if (IFC_ON == 0) goto inst_next;
+    psw_ifcon_clear();
+    goto [ifc_lp];
+}
+
+# ifcall9 (16-bit).  See note on ifcall above.
+:ifcall9 rel9IFC is $(I16) & opc6=0b111100 & rel9IFC
+{
+    if (IFC_ON != 0) goto <nested>;
+        ifc_lp = inst_next;
+    <nested>
+    IFC_ON = 1;
+    if (IFC_CHOOSER != 0) goto inst_next;
+    goto rel9IFC;
+}
+
+# ifret16: Special case of MOV55 encoding (Rt=sp, Ra=sp).  See ifret
+# note above for the goto vs return distinction.
+:ifret16 is $(I16) & opc5=0b00000 & rt5=0b11111 & ra5=0b11111
+{
+    if (IFC_ON == 0) goto inst_next;
+    psw_ifcon_clear();
+    goto [ifc_lp];
 }
 
 
@@ -1288,12 +1739,12 @@ define pcodeop fcpyss;
 
 define pcodeop fmadds;
 :fmadds Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x4 & Fst & Fsa & Fsb  & cop4=0x0 {
-	Fst = fmadds(Fsa, Fsb);
+	Fst = fmadds(Fst, Fsa, Fsb);
 }
 
 define pcodeop fmsubs;
 :fmsubs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x5 & Fst & Fsa & Fsb  & cop4=0x0 {
-	Fst = fmsubs(Fsa, Fsb);
+	Fst = fmsubs(Fst, Fsa, Fsb);
 }
 
 define pcodeop fcmovns;
@@ -1308,12 +1759,12 @@ define pcodeop fcmovzs;
 
 define pcodeop fnmadds;
 :fnmadds Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x8 & Fst & Fsa & Fsb  & cop4=0x0 {
-	Fst = fnmadds(Fsa, Fsb);
+	Fst = fnmadds(Fst, Fsa, Fsb);
 }
 
 define pcodeop fnmsubs;
 :fnmsubs Fst, Fsa, Fsb is $(I32) & $(COP) & fop4=0x9 & Fst & Fsa & Fsb  & cop4=0x0 {
-	Fst = fnmsubs(Fsa, Fsb);
+	Fst = fnmsubs(Fst, Fsa, Fsb);
 }
 
 define pcodeop fmuls;
@@ -1410,12 +1861,12 @@ define pcodeop fcpysd;
 
 define pcodeop fmaddd;
 :fmaddd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x4 & Fdt & Fda & Fdb  & cop4=0x8 {
-	Fdt = fmaddd(Fda, Fdb);
+	Fdt = fmaddd(Fdt, Fda, Fdb);
 }
 
 define pcodeop fmsubd;
 :fmsubd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x5 & Fdt & Fda & Fdb  & cop4=0x8 {
-	Fdt = fmsubd(Fda, Fdb);
+	Fdt = fmsubd(Fdt, Fda, Fdb);
 }
 
 define pcodeop fcmovnd;
@@ -1430,12 +1881,12 @@ define pcodeop fcmovzd;
 
 define pcodeop fnmaddd;
 :fnmaddd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x8 & Fdt & Fda & Fdb  & cop4=0x8 {
-	Fdt = fnmaddd(Fda, Fdb);
+	Fdt = fnmaddd(Fdt, Fda, Fdb);
 }
 
 define pcodeop fnmsubd;
 :fnmsubd Fdt, Fda, Fdb is $(I32) & $(COP) & fop4=0x9 & Fdt & Fda & Fdb  & cop4=0x8 {
-	Fdt = fnmsubd(Fda, Fdb);
+	Fdt = fnmsubd(Fdt, Fda, Fdb);
 }
 
 define pcodeop fmuld;
@@ -1481,7 +1932,7 @@ define pcodeop fd2ui;
 
 define pcodeop fd2ui.z;
 :fd2ui.z Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x14 & cop4=0x8 {
-	Fst = fs2ui.z(Fda);
+	Fst = fd2ui.z(Fda);
 }
 
 define pcodeop fd2si;
@@ -1491,7 +1942,7 @@ define pcodeop fd2si;
 
 define pcodeop fd2si.z;
 :fd2si.z Fst, Fda is $(I32) & $(COP) & fop4=0xf & Fst & Fda & f2op=0x1c & cop4=0x8 {
-	Fst = fs2si.z(Fda);
+	Fst = fd2si.z(Fda);
 }
 
 # FPU_FS2
@@ -1619,7 +2070,7 @@ OffImm12s: (offs) is Imm12s [ offs = Imm12s << 2; ] { export *[const]:4 offs; }
 	Rt = fpcsr;
 }
 
-:fmtcsr Rt is $(I32) & $(COP) & fop4=0xc & Rt & Fsa & f2op=0x1 & cop4=0x9 {
+:fmtcsr Rt is $(I32) & $(COP) & fop4=0xc & Rt & Fsa=0 & f2op=0x1 & cop4=0x9 {
 	fpcsr = Rt;
 }
 
