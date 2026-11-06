@@ -34,8 +34,8 @@ import ghidra.util.exception.CancelledException;
  */
 public class MachoFileSetExtractLoader extends MachoLoader {
 
-	public final static String MACHO_FILESET_EXTRACT_NAME = "Extracted Mach-O File Set Entry";
-
+	public final static String MACHO_FILESET_EXTRACT_PROPERTY = "Mach-O Extracted File Set Entry";
+	
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		if (provider.length() >= MachoFileSetExtractor.FOOTER_V1.length) {
@@ -55,7 +55,7 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 			FileBytes fileBytes =
 				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
 			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, false,
-				settings.log(), settings.monitor());
+				MACHO_FILESET_EXTRACT_PROPERTY, settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
 			return;
@@ -81,7 +81,7 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 			FileBytes fileBytes =
 				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
 			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, true,
-				settings.log(), settings.monitor());
+				MACHO_FILESET_EXTRACT_PROPERTY, settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
 			return;
@@ -96,12 +96,8 @@ public class MachoFileSetExtractLoader extends MachoLoader {
 
 	@Override
 	public boolean supportsLoadIntoProgram(Program program) {
-		return MACHO_FILESET_EXTRACT_NAME.equals(program.getExecutableFormat());
-	}
-
-	@Override
-	public String getName() {
-		return MACHO_FILESET_EXTRACT_NAME;
+		return program.getOptions(Program.PROGRAM_INFO)
+				.getBoolean(MACHO_FILESET_EXTRACT_PROPERTY, false);
 	}
 
 	@Override

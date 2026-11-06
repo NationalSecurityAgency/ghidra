@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,8 +70,9 @@ public class MachoFileSetBuilderPlugin extends Plugin {
 		String actionName = "Add To Program";
 		new ActionBuilder(actionName, getName()).withContext(ProgramLocationActionContext.class)
 				.enabledWhen(p -> p.getProgram()
-						.getExecutableFormat()
-						.equals(MachoFileSetExtractLoader.MACHO_FILESET_EXTRACT_NAME))
+						.getOptions(Program.PROGRAM_INFO)
+						.getBoolean(MachoFileSetExtractLoader.MACHO_FILESET_EXTRACT_PROPERTY,
+							false))
 				.onAction(plac -> TaskLauncher.launchModal(actionName,
 					monitor -> addMissingMachoFileSetEntry(plac.getLocation(), monitor)))
 				.popupMenuPath("References", actionName)

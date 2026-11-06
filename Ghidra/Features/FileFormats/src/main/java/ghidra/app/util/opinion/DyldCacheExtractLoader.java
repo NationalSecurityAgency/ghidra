@@ -37,8 +37,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldCacheExtractLoader extends MachoLoader {
 
-	public final static String DYLD_CACHE_EXTRACT_NAME = "Extracted DYLD Component";
-
+	public final static String DYLD_CACHE_EXTRACT_PROPERTY = "Mach-O Extracted DYLD Component";
+	
 	static final String LIBOBJC_OPTION_NAME = "Add libobjc.dylib";
 	static final boolean LIBOBJC_OPTION_DEFAULT = true;
 
@@ -82,7 +82,7 @@ public class DyldCacheExtractLoader extends MachoLoader {
 			FileBytes fileBytes =
 				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
 			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, false,
-				settings.log(), settings.monitor());
+				DYLD_CACHE_EXTRACT_PROPERTY, settings.log(), settings.monitor());
 			addOptionalComponents(program, settings.options(), settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
@@ -109,7 +109,7 @@ public class DyldCacheExtractLoader extends MachoLoader {
 			FileBytes fileBytes =
 				MemoryBlockUtils.createFileBytes(program, settings.provider(), settings.monitor());
 			MachoExtractProgramBuilder.buildProgram(program, settings.provider(), fileBytes, true,
-				settings.log(), settings.monitor());
+				DYLD_CACHE_EXTRACT_PROPERTY, settings.log(), settings.monitor());
 			addOptionalComponents(program, settings.options(), settings.log(), settings.monitor());
 		}
 		catch (CancelledException e) {
@@ -125,12 +125,8 @@ public class DyldCacheExtractLoader extends MachoLoader {
 
 	@Override
 	public boolean supportsLoadIntoProgram(Program program) {
-		return DYLD_CACHE_EXTRACT_NAME.equals(program.getExecutableFormat());
-	}
-
-	@Override
-	public String getName() {
-		return DYLD_CACHE_EXTRACT_NAME;
+		return program.getOptions(Program.PROGRAM_INFO)
+				.getBoolean(DYLD_CACHE_EXTRACT_PROPERTY, false);
 	}
 
 	@Override
@@ -264,8 +260,8 @@ public class DyldCacheExtractLoader extends MachoLoader {
 				}
 				ByteProvider p = fs.getByteProvider(file, monitor);
 				FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, p, monitor);
-				MachoExtractProgramBuilder.buildProgram(program, p, fileBytes, true, log,
-					monitor);
+				MachoExtractProgramBuilder.buildProgram(program, p, fileBytes, true,
+					DYLD_CACHE_EXTRACT_PROPERTY, log, monitor);
 			}
 		}
 	}

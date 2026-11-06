@@ -58,15 +58,20 @@ public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
 	 * @param loadInto True if the Mach-O is being loaded into an existing program; otherwise, false
+	 * @param extractProperty The name of the {@link Program} property to set to indicate this
+	 *   Mach-O component was extracted from a larger container
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean loadInto, MessageLog log, TaskMonitor monitor) throws Exception {
+			boolean loadInto, String extractProperty, MessageLog log, TaskMonitor monitor)
+			throws Exception {
 		MachoExtractProgramBuilder programBuilder = new MachoExtractProgramBuilder(program,
 			provider, fileBytes, loadInto, log, monitor);
 		programBuilder.build();
+
+		program.getOptions(Program.PROGRAM_INFO).setBoolean(extractProperty, true);
 	}
 
 	@Override
