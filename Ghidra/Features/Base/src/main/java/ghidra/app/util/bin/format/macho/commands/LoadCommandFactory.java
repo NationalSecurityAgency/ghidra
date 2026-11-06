@@ -115,6 +115,10 @@ public class LoadCommandFactory {
 				case LC_SEGMENT_SPLIT_INFO:
 				case LC_OPTIMIZATION_HINT:
 				case LC_DYLIB_CODE_SIGN_DRS:
+				case LC_ATOM_INFO:
+				case LC_FUNCTION_VARIANTS:
+				case LC_FUNCTION_VARIANT_FIXUPS:
+				case LC_LAZY_LOAD_DYLIB_INFO:
 					yield new LinkEditDataCommand(reader,
 						getLinkerLoadCommandReader(reader, header, splitDyldCache));
 				case LC_REEXPORT_DYLIB:
