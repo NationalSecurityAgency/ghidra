@@ -171,3 +171,26 @@ macro pclmul(src1, src2, dest) {
 	YmmReg1 = zext(XmmReg1);
 }
 
+
+# Each lane selects its qwords with immediate bits 0 and 4.
+:VPCLMULQDQ YmmReg1, vexVVVV_YmmReg, YmmReg2_m256, imm8 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0x44; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; imm8 & imm8_0 & imm8_4
+{
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local shift1:1 = imm8_0 * 64;
+	local shift2:1 = imm8_4 * 64;
+	local selected1:32 = src1 >> shift1;
+	local a:16 = zext(selected1[0,64]);
+	local selected2:32 = src2 >> shift2;
+	local b:16 = zext(selected2[0,64]);
+	local lo:16;
+	pclmul(a, b, lo);
+	selected1 = src1 >> (128 + shift1);
+	a = zext(selected1[0,64]);
+	selected2 = src2 >> (128 + shift2);
+	b = zext(selected2[0,64]);
+	local hi:16;
+	pclmul(a, b, hi);
+	local result:32 = (zext(hi) << 128) | zext(lo);
+	ZmmReg1 = zext(result);
+}
