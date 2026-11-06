@@ -33,7 +33,11 @@ public class MachoRustSourceLanguage extends RustSourceLanguage {
 	@Override
 	public boolean existsIn(Program program, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (!program.getExecutableFormat().equals(MachoLoader.MACH_O_NAME)) {
+		// An image extracted from a dyld cache is a Mach-O too. Its format name is a string
+		// because DyldCacheExtractLoader is in FileFormats.
+		String format = program.getExecutableFormat();
+		if (!MachoLoader.MACH_O_NAME.equals(format) &&
+			!"Extracted DYLD Component".equals(format)) {
 			return false;
 		}
 		for (MemoryBlock block : program.getMemory().getBlocks()) {

@@ -29,7 +29,11 @@ public class MachoSwiftSourceLanguage extends SwiftSourceLanguage {
 
 	@Override
 	public boolean existsIn(Program program, TaskMonitor monitor) {
-		if (!program.getExecutableFormat().equals(MachoLoader.MACH_O_NAME)) {
+		// An image extracted from a dyld cache is a Mach-O too. Its format name is a string
+		// because DyldCacheExtractLoader is in FileFormats.
+		String format = program.getExecutableFormat();
+		if (!MachoLoader.MACH_O_NAME.equals(format) &&
+			!"Extracted DYLD Component".equals(format)) {
 			return false;
 		}
 		return Arrays.stream(program.getMemory().getBlocks())
