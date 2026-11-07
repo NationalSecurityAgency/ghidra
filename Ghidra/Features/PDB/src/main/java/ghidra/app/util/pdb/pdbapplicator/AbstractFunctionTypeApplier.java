@@ -141,6 +141,14 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 				case NEAR_C: // we have seen this one 
 					convention = CompilerSpec.CALLING_CONVENTION_cdecl;
 					break;
+				case NEAR_STD:
+				case FAR_STD:
+					convention = CompilerSpec.CALLING_CONVENTION_stdcall;
+					break;
+				case NEAR_FAST:
+				case FAR_FAST:
+					convention = CompilerSpec.CALLING_CONVENTION_fastcall;
+					break;
 				case NEAR_VECTOR: // we have seen this one 
 					convention = CompilerSpec.CALLING_CONVENTION_vectorcall;
 					break;
