@@ -55,7 +55,7 @@ public class GZipFileSystemFactory
 
 			ByteProvider payloadProvider = fsService.getDerivedByteProvider(provider.getFSRL(),
 				null, "uncompressed " + payloadName, -1,
-				() -> new GzipCompressorInputStream(provider.getInputStream(0)), upwtm);
+				() -> new GzipCompressorInputStream(provider.getInputStream(0), true), upwtm);
 
 			payloadAttrs.add(SIZE_ATTR, payloadProvider.length());
 
