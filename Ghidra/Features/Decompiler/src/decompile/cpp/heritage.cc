@@ -2466,90 +2466,107 @@ void Heritage::calcMultiequals(const vector<Varnode *> &write)
 /// so the current \e active Varnode is always ready for any \e free Varnode that
 /// is encountered. In this was all \e free Varnodes are replaced with the
 /// appropriate write Varnode or are promoted to a formal \e input Varnode.
-/// \param bl is the current basic block in the dominance tree walk
+/// \param rootBl is the root basic block in the dominance tree walk
 /// \param varstack is the system of stacks, organized by address
-void Heritage::renameRecurse(BlockBasic *bl,VariableStack &varstack)
+void Heritage::renameRecurse(BlockBasic *rootBl,VariableStack &varstack)
 
 {
-  vector<Varnode *> writelist;	// List varnodes that are written in this block
-  BlockBasic *subbl;
-  list<PcodeOp *>::iterator oiter,suboiter;
-  PcodeOp *op,*multiop;
-  Varnode *vnout,*vnin,*vnnew;
-  int4 i,slot;
+  struct RenameFrame {
+    BlockBasic *bl;
+    int4 childSlot;
+    size_t writeMark;
+  };
+  vector<Varnode *> writelist;	// Shared write trail across dominance tree
+  vector<RenameFrame> workstack;
+  if (rootBl == (BlockBasic *)0) return;
+  workstack.push_back({rootBl, -1, 0});
 
-  for(oiter=bl->beginOp();oiter!=bl->endOp();++oiter) {
-    op = *oiter;
-    if (op->code() != CPUI_MULTIEQUAL) {
+  while (!workstack.empty()) {
+    RenameFrame &frame = workstack.back();
+    BlockBasic *bl = frame.bl;
+    if (frame.childSlot < 0) {
+      frame.writeMark = writelist.size();
+      frame.childSlot = 0;
+      for(list<PcodeOp *>::iterator oiter=bl->beginOp();oiter!=bl->endOp();++oiter) {
+	PcodeOp *op = *oiter;
+	if (op->code() != CPUI_MULTIEQUAL) {
 				// First replace reads with top of stack
-      for(slot=0;slot<op->numInput();++slot) {
-	vnin = op->getIn(slot);
-	if (vnin->isHeritageKnown()) continue; // not free
-	if (!vnin->isActiveHeritage()) continue; // Not being heritaged this round
-	vnin->clearActiveHeritage();
-	vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
-	if (stack.empty()) {
-	  vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
-	  vnnew = fd->setInputVarnode(vnnew);
-	  stack.push_back(vnnew);
-	}
-	else
-	  vnnew = stack.back();
-				// INDIRECTs and their op really happen AT SAME TIME
-	if (vnnew->isWritten() && (vnnew->getDef()->code()==CPUI_INDIRECT)) {
-	  if (PcodeOp::getOpFromConst(vnnew->getDef()->getIn(1)->getAddr()) == op) {
-	    if (stack.size()==1) {
+	  for(int4 slot=0;slot<op->numInput();++slot) {
+	    Varnode *vnin = op->getIn(slot);
+	    if (vnin->isHeritageKnown()) continue; // not free
+	    if (!vnin->isActiveHeritage()) continue; // Not being heritaged this round
+	    vnin->clearActiveHeritage();
+	    vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
+	    Varnode *vnnew;
+	    if (stack.empty()) {
 	      vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
 	      vnnew = fd->setInputVarnode(vnnew);
-	      stack.insert(stack.begin(),vnnew);
+	      stack.push_back(vnnew);
 	    }
 	    else
-	      vnnew = stack[stack.size()-2];
+	      vnnew = stack.back();
+				// INDIRECTs and their op really happen AT SAME TIME
+	    if (vnnew->isWritten() && (vnnew->getDef()->code()==CPUI_INDIRECT)) {
+	      if (PcodeOp::getOpFromConst(vnnew->getDef()->getIn(1)->getAddr()) == op) {
+		if (stack.size()==1) {
+		  vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
+		  vnnew = fd->setInputVarnode(vnnew);
+		  stack.insert(stack.begin(),vnnew);
+		}
+		else
+		  vnnew = stack[stack.size()-2];
+	      }
+	    }
+	    fd->opSetInput(op,vnnew,slot);
+	    if (vnin->hasNoDescend())
+	      fd->deleteVarnode(vnin);
 	  }
 	}
-	fd->opSetInput(op,vnnew,slot);
-	if (vnin->hasNoDescend())
-	  fd->deleteVarnode(vnin);
-      }
-    }
 				// Then push writes onto stack
-    vnout = op->getOut();
-    if (vnout == (Varnode *)0) continue;
-    if (!vnout->isActiveHeritage()) continue; // Not a normalized write
-    vnout->clearActiveHeritage();
-    varstack[ vnout->getAddr() ].push_back(vnout); // Push write onto stack
-    writelist.push_back(vnout);
-  }
-  for(i=0;i<bl->sizeOut();++i) {
-    subbl = (BlockBasic *)bl->getOut(i);
-    slot = bl->getOutRevIndex(i);
-    for(suboiter=subbl->beginOp();suboiter!=subbl->endOp();++suboiter) {
-      multiop = *suboiter;
-      if (multiop->code()!=CPUI_MULTIEQUAL) break; // For each MULTIEQUAL
-      vnin = multiop->getIn(slot);
-      if (!vnin->isHeritageKnown()) {
-	vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
-	if (stack.empty()) {
-	  vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
-	  vnnew = fd->setInputVarnode(vnnew);
-	  stack.push_back(vnnew);
+	Varnode *vnout = op->getOut();
+	if (vnout == (Varnode *)0) continue;
+	if (!vnout->isActiveHeritage()) continue; // Not a normalized write
+	vnout->clearActiveHeritage();
+	varstack[ vnout->getAddr() ].push_back(vnout); // Push write onto stack
+	writelist.push_back(vnout);
+      }
+      for(int4 i=0;i<bl->sizeOut();++i) {
+	BlockBasic *subbl = (BlockBasic *)bl->getOut(i);
+	int4 slot = bl->getOutRevIndex(i);
+	for(list<PcodeOp *>::iterator suboiter=subbl->beginOp();suboiter!=subbl->endOp();++suboiter) {
+	  PcodeOp *multiop = *suboiter;
+	  if (multiop->code()!=CPUI_MULTIEQUAL) break; // For each MULTIEQUAL
+	  Varnode *vnin = multiop->getIn(slot);
+	  if (!vnin->isHeritageKnown()) {
+	    vector<Varnode *> &stack( varstack[ vnin->getAddr() ] );
+	    Varnode *vnnew;
+	    if (stack.empty()) {
+	      vnnew = fd->newVarnode(vnin->getSize(),vnin->getAddr());
+	      vnnew = fd->setInputVarnode(vnnew);
+	      stack.push_back(vnnew);
+	    }
+	    else
+	      vnnew = stack.back();
+	    fd->opSetInput(multiop,vnnew,slot);
+	    if (vnin->hasNoDescend())
+	      fd->deleteVarnode(vnin);
+	  }
 	}
-	else
-	  vnnew = stack.back();
-	fd->opSetInput(multiop,vnnew,slot);
-	if (vnin->hasNoDescend())
-	  fd->deleteVarnode(vnin);
       }
     }
-  }
-				// Now we recurse to subtrees
-  i = bl->getIndex();
-  for(slot=0;slot<domchild[i].size();++slot)
-    renameRecurse((BlockBasic *)domchild[i][slot],varstack);
-				// Now we pop this blocks writes of the stack
-  for(i=0;i<writelist.size();++i) {
-    vnout = writelist[i];
-    varstack[vnout->getAddr()].pop_back();
+    int4 bIndex = bl->getIndex();
+    if (frame.childSlot < (int4)domchild[bIndex].size()) {
+      BlockBasic *childBl = (BlockBasic *)domchild[bIndex][frame.childSlot++];
+      workstack.push_back({childBl, -1, 0});
+    }
+    else {
+      while (writelist.size() > frame.writeMark) {
+	Varnode *vnout = writelist.back();
+	writelist.pop_back();
+	varstack[vnout->getAddr()].pop_back();
+      }
+      workstack.pop_back();
+    }
   }
 }
 
