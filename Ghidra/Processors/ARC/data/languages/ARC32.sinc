@@ -1,0 +1,650 @@
+define alignment=4;
+
+define space ram type=ram_space size=4 default;
+define space auxregs type=ram_space size=4;
+define space register type=register_space size=4;
+
+# Core register set
+define register offset=0 size=4 [
+	 r0  r1  r2  r3
+	 r4  r5  r6  r7
+	 r8  r9 r10 r11
+	r12 r13 r14 r15
+	r16 r17 r18 r19
+	r20 r21 r22 r23
+	r24 r25
+	gp
+	fp
+	sp
+	ilink1
+	ilink2
+	blink
+	r32 r33 r34 r35
+	r36 r37 r38 r39
+	r40 r41 r42 r43
+	r44 r45 r46 r47
+	r48 r49 r50 r51
+	r52 r53 r54 r55
+	r56 r57 r58 r59
+	lp_count
+	    r61 r62 r63
+];
+
+# Auxiliary register set (incomplete)
+define register offset=0x1000 size=4 [
+	status
+	semaphore
+	lp_start
+	lp_end
+	identity
+	debug
+	                                      ar6   ar7
+	  ar8   ar9  ar10  ar11  ar12  ar13  ar14  ar15
+	 ar16  ar17  ar18  ar19  ar20  ar21  ar22  ar23
+	 ar24  ar25  ar26  ar27  ar28  ar29  ar30  ar31
+	 ar32  ar33  ar34  ar35  ar36  ar37  ar38  ar39
+	 ar40  ar41  ar42  ar43  ar44  ar45  ar46  ar47
+	 ar48  ar49  ar50  ar51  ar52  ar53  ar54  ar55
+	 ar56  ar57  ar58  ar59  ar60  ar61  ar62  ar63
+	 ar64  ar65  ar66  ar67  ar68  ar69  ar70  ar71
+	 ar72  ar73  ar74  ar75  ar76  ar77  ar78  ar79
+	 ar80  ar81  ar82  ar83  ar84  ar85  ar86  ar87
+	 ar88  ar89  ar90  ar91  ar92  ar93  ar94  ar95
+	 ar96  ar97  ar98  ar99 ar100 ar101 ar102 ar103
+	ar104 ar105 ar106 ar107 ar108 ar109 ar110 ar111
+	ar112 ar113 ar114 ar115 ar116 ar117 ar118 ar119
+	ar120 ar121 ar122 ar123 ar124 ar125 ar126 ar127
+	ar128 ar129 ar130 ar131 ar132 ar133 ar134 ar135
+	ar136 ar137 ar138 ar139 ar140 ar141 ar142 ar143
+	ar144 ar145 ar146 ar147 ar148 ar149 ar150 ar151
+	ar152 ar153 ar154 ar155 ar156 ar157 ar158 ar159
+	ar160 ar161 ar162 ar163 ar164 ar165 ar166 ar167
+	ar168 ar169 ar170 ar171 ar172 ar173 ar174 ar175
+	ar176 ar177 ar178 ar179 ar180 ar181 ar182 ar183
+	ar184 ar185 ar186 ar187 ar188 ar189 ar190 ar191
+	ar192 ar193 ar194 ar195 ar196 ar197 ar198 ar199
+	ar200 ar201 ar202 ar203 ar204 ar205 ar206 ar207
+	ar208 ar209 ar210 ar211 ar212 ar213 ar214 ar215
+	ar216 ar217 ar218 ar219 ar220 ar221 ar222 ar223
+	ar224 ar225 ar226 ar227 ar228 ar229 ar230 ar231
+	ar232 ar233 ar234 ar235 ar236 ar237 ar238 ar239
+	ar240 ar241 ar242 ar243 ar244 ar245 ar246 ar247
+	ar248 ar249 ar250 ar251 ar252 ar253 ar254 ar255
+];
+
+define register offset=0x2000 size=1 [
+	# Condition codes.
+	Z   # Zero
+	NE  # Negative
+	CY  # Carry
+	V   # Overflow
+	E1  # Enable level 1 interrupts
+	E2  # Enable level 2 interrupts
+	H   # Halt
+
+	loop_enable
+];
+
+define register offset=0x3000 size=4 [
+	pc
+];
+
+define register offset=0x4000 size=4 [
+	dummy_write  # Dummy register to send writes to when the destination register points to an immediate.
+	contextreg
+];
+
+define context contextreg
+	# Instruction decoding phase.
+	phase = (0, 0)
+
+	# Indicate that this is the last instruction in a loop.
+	end_of_loop = (1, 1) noflow
+;
+
+define token instr(32)
+	I = (27, 31)
+	A = (21, 26)
+	B = (15, 20)
+	C = (9, 14)
+	D = (0, 8) signed
+	D2 = (0, 8) signed
+
+	L = (7, 26) signed
+	F = (8, 8)
+	N = (5, 6)
+	Q = (0, 4)
+
+	# ST fields
+	st_Di = (26, 26)
+	st_25 = (25, 25)
+	st_A  = (24, 24)
+	st_Z  = (22, 23)
+	st_21 = (21, 21)
+
+	# LD, generic
+	ldg_Di = (5, 5)
+	ldg_A  = (3, 3)
+	ldg_Z  = (1, 2)
+	ldg_X  = (0, 0)
+
+	# LD, simm
+	lds_Di = (14, 14)
+	lds_13 = (13, 13)
+	lds_A  = (12, 12)
+	lds_Z  = (10, 11)
+	lds_X  = (9, 9)
+
+	# LR/SR
+	ar_D = (0, 7)
+;
+
+define token imm(32)
+	Limm = (0, 31)
+;
+
+attach variables [ A B C ] [
+	 r0  r1  r2  r3
+	 r4  r5  r6  r7
+	 r8  r9 r10 r11
+	r12 r13 r14 r15
+	r16 r17 r18 r19
+	r20 r21 r22 r23
+	r24 r25
+	gp
+	fp
+	sp
+	ilink1
+	ilink2
+	blink
+	r32 r33 r34 r35
+	r36 r37 r38 r39
+	r40 r41 r42 r43
+	r44 r45 r46 r47
+	r48 r49 r50 r51
+	r52 r53 r54 r55
+	r56 r57 r58 r59
+	lp_count
+	    r61 r62 r63
+];
+
+attach variables [ ar_D ] [
+	status
+	semaphore
+	lp_start
+	lp_end
+	identity
+	debug
+	                                      ar6   ar7
+	  ar8   ar9  ar10  ar11  ar12  ar13  ar14  ar15
+	 ar16  ar17  ar18  ar19  ar20  ar21  ar22  ar23
+	 ar24  ar25  ar26  ar27  ar28  ar29  ar30  ar31
+	 ar32  ar33  ar34  ar35  ar36  ar37  ar38  ar39
+	 ar40  ar41  ar42  ar43  ar44  ar45  ar46  ar47
+	 ar48  ar49  ar50  ar51  ar52  ar53  ar54  ar55
+	 ar56  ar57  ar58  ar59  ar60  ar61  ar62  ar63
+	 ar64  ar65  ar66  ar67  ar68  ar69  ar70  ar71
+	 ar72  ar73  ar74  ar75  ar76  ar77  ar78  ar79
+	 ar80  ar81  ar82  ar83  ar84  ar85  ar86  ar87
+	 ar88  ar89  ar90  ar91  ar92  ar93  ar94  ar95
+	 ar96  ar97  ar98  ar99 ar100 ar101 ar102 ar103
+	ar104 ar105 ar106 ar107 ar108 ar109 ar110 ar111
+	ar112 ar113 ar114 ar115 ar116 ar117 ar118 ar119
+	ar120 ar121 ar122 ar123 ar124 ar125 ar126 ar127
+	ar128 ar129 ar130 ar131 ar132 ar133 ar134 ar135
+	ar136 ar137 ar138 ar139 ar140 ar141 ar142 ar143
+	ar144 ar145 ar146 ar147 ar148 ar149 ar150 ar151
+	ar152 ar153 ar154 ar155 ar156 ar157 ar158 ar159
+	ar160 ar161 ar162 ar163 ar164 ar165 ar166 ar167
+	ar168 ar169 ar170 ar171 ar172 ar173 ar174 ar175
+	ar176 ar177 ar178 ar179 ar180 ar181 ar182 ar183
+	ar184 ar185 ar186 ar187 ar188 ar189 ar190 ar191
+	ar192 ar193 ar194 ar195 ar196 ar197 ar198 ar199
+	ar200 ar201 ar202 ar203 ar204 ar205 ar206 ar207
+	ar208 ar209 ar210 ar211 ar212 ar213 ar214 ar215
+	ar216 ar217 ar218 ar219 ar220 ar221 ar222 ar223
+	ar224 ar225 ar226 ar227 ar228 ar229 ar230 ar231
+	ar232 ar233 ar234 ar235 ar236 ar237 ar238 ar239
+	ar240 ar241 ar242 ar243 ar244 ar245 ar246 ar247
+	ar248 ar249 ar250 ar251 ar252 ar253 ar254 ar255
+];
+
+
+define pcodeop DebugBreak;
+define pcodeop ProcessorSleep;
+define pcodeop SoftwareInterrupt;
+
+
+macro resultflags(dst) { # Set Z flag for results
+	Z = dst == 0;
+	NE = ((dst >> 31) & 1) != 0;
+}
+
+macro exec_add(dst, op1, op2, fl) {
+	dst = op1 + op2;
+	if (!fl) goto inst_next;
+	CY = scarry(op1, op2);  # Check for signed carry
+	local dst_sign:1 = ((dst >> 31) & 1) != 0;
+	local op1_sign:1 = ((op1 >> 31) & 1) != 0;
+	local op2_sign:1 = ((op2 >> 31) & 1) != 0;
+	V = op1_sign == op2_sign && dst_sign != op1_sign;
+	resultflags(dst);
+}
+
+macro exec_sub(dst, op1, op2, fl) {
+	dst = op1 - op2;
+	if (!fl) goto inst_next;
+	CY = op1 s< op2;  # Check for signed borrow
+	local dst_sign:1 = ((dst >> 31) & 1) != 0;
+	local op1_sign:1 = ((op1 >> 31) & 1) != 0;
+	local op2_sign:1 = ((op2 >> 31) & 1) != 0;
+	V = op1_sign != op2_sign && dst_sign != op1_sign;
+	resultflags(dst);
+}
+
+macro exec_adc(dst, op1, op2, fl) {
+	local tmp:4 = op2 + zext(CY);
+	dst = op1 + tmp;
+	if (!fl) goto inst_next;
+	CY = scarry(op1, tmp);  # Check for signed carry
+	resultflags(dst);
+}
+
+macro exec_sbc(dst, op1, op2, fl) {
+	local tmp:4 = op2 + zext(CY);
+	dst = op1 - tmp;
+	if (!fl) goto inst_next;
+	CY = op1 s< tmp;  # Check for signed borrow
+	resultflags(dst);
+}
+
+macro jumpflags(val) {
+	Z  = (val & (1 << 31)) != 0;
+	NE = (val & (1 << 30)) != 0;
+	CY = (val & (1 << 29)) != 0;
+	V  = (val & (1 << 28)) != 0;
+	E2 = (val & (1 << 27)) != 0;
+	E1 = (val & (1 << 26)) != 0;
+}
+
+macro set_flags(val) {
+	Z  = (val & (1 << 6)) != 0;
+	NE = (val & (1 << 5)) != 0;
+	CY = (val & (1 << 4)) != 0;
+	V  = (val & (1 << 3)) != 0;
+	E2 = (val & (1 << 2)) != 0;
+	E1 = (val & (1 << 1)) != 0;
+
+	# Technically, if the "Halt" bit is set, then the other bits should be
+	# unaffected, but implementing this is difficult and would not be very
+	# useful.
+	H  = (val & (1 << 0)) != 0;
+}
+
+macro update_status() {
+	status =          (zext(Z  & 1) << 31);
+	status = status | (zext(NE & 1) << 30);
+	status = status | (zext(CY & 1) << 29);
+	status = status | (zext(V  & 1) << 28);
+	status = status | (zext(E1 & 1) << 27);
+	status = status | (zext(E2 & 1) << 26);
+	status = status | (zext(H  & 1) << 25);
+	status = status | ((inst_next >> 2) & 0xffffff);
+}
+
+macro link() {
+	update_status();
+	blink = status;
+}
+
+macro mulext(dst, op1, op2) {
+	local op1_ext:4 = sext(op1);
+	local op2_ext:4 = sext(op2);
+	dst = op1_ext * op2_ext;
+}
+
+macro rormultiple(dst, op1, op2) {
+	dst = op1 << (32 - op2);
+	dst = dst | (op1 >> op2);
+}
+
+macro roronce(dst, op1) {
+	rormultiple(dst, op1, 1);
+}
+
+macro rorflags(dst, op1) {
+	CY = (op1 & 1) != 0;
+	resultflags(dst);
+}
+
+macro swapwords(dst, op1) {
+	dst = op1 << 16;
+	dst = dst | (op1 >> 16);
+}
+
+macro ldext(dst, val, extend) {
+	dst = zext(val);
+	if (!extend) goto <skip>;
+	dst = sext(val);
+	<skip>
+}
+
+macro writeback(dst, addr, flag) {
+	if (!flag) goto <skip>;
+	dst = addr;
+	<skip>
+}
+
+
+dest: A is A { export A; }
+dest: 0 is A=61 | A=62 | A=63 { export dummy_write; }
+
+Qcc: "al"	is Q=0x00	{ export 1:1; }
+Qcc: "eq"	is Q=0x01	{ local tmp:1 = (Z!=0); export tmp; }
+Qcc: "ne"	is Q=0x02	{ local tmp:1 = (Z==0); export tmp; }
+Qcc: "pl"	is Q=0x03	{ local tmp:1 = (NE==0); export tmp; }
+Qcc: "mi"	is Q=0x04	{ local tmp:1 = (NE!=0); export tmp; }
+Qcc: "cs"	is Q=0x05	{ local tmp:1 = (CY!=0); export tmp; }
+Qcc: "cc"	is Q=0x06	{ local tmp:1 = (CY==0); export tmp; }
+Qcc: "vs"	is Q=0x07	{ local tmp:1 = (V!=0); export tmp; }
+Qcc: "vc"	is Q=0x08	{ local tmp:1 = (V==0); export tmp; }
+Qcc: "gt"	is Q=0x09	{ local tmp:1 = !Z && ((NE && V) || (!NE && !V)); export tmp; }
+Qcc: "ge"	is Q=0x0a	{ local tmp:1 = (NE && V) || (!NE && !V); export tmp; }
+Qcc: "lt"	is Q=0x0b	{ local tmp:1 = (NE && !V) || (!NE && V); export tmp; }
+Qcc: "le"	is Q=0x0c	{ local tmp:1 = Z || (NE && !V) || (!NE && V); export tmp; }
+Qcc: "hi"	is Q=0x0d	{ local tmp:1 = !CY && !Z; export tmp; }
+Qcc: "ls"	is Q=0x0e	{ local tmp:1 = CY || Z; export tmp; }
+Qcc: "pnz"	is Q=0x0f	{ local tmp:1 = !NE && !Z; export tmp; }
+
+cc:         is Q=0x00 {}
+cc: "."Qcc  is Q & Qcc { if (!Qcc) goto inst_next; }
+cj:         is Q=0x00 {}
+cj:    Qcc  is Q & Qcc {}  # Handle conditional jumps in the Ndd table.
+
+Ndd: "nd"  is N=0b00 & Qcc { if (!Qcc) goto inst_next; }  # Only execute the next instruction when not jumping.
+Ndd: "d"   is N=0b01 & Qcc { delayslot(1); if (!Qcc) goto inst_next; }  # Always execute the next instruction.
+Ndd: "jd"  is N=0b10 & Qcc { if (!Qcc) goto inst_next; delayslot(1); }  # Only execute the next instruction when jumping.
+
+dd:         is N=0b00 & Ndd {}
+dd: "."Ndd  is N      & Ndd {}
+
+Ndl: "nd"  is N=0b00 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); if (Qcc) goto <skip>; goto [jump_dest]; <skip> }  # Only execute the next instruction when not jumping.
+Ndl: "d"   is N=0b01 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); delayslot(1); if (Qcc) goto <skip>; goto [jump_dest]; <skip> }  # Always execute the next instruction.
+Ndl: "jd"  is N=0b10 & L & Qcc { local jump_dest:4 = inst_next + (L << 2); if (Qcc) goto <skip>; goto [jump_dest]; <skip> delayslot(1); }  # Only execute the next instruction when jumping.
+
+dl:         is N=0b00 & Ndl {}
+dl: "."Ndl  is N      & Ndl {}
+
+f:       is F=0 { export 0:1; }
+f: ".f"  is F=1 { export 1:1; }
+fi:       is B=63 | C=63 { export 0:1; }
+fi: ".f"  is B=61 | C=61 { export 1:1; }
+
+# ST flags
+st_di:        is st_Di=0 {}
+st_di: ".di"  is st_Di=1 {}
+st_a:         is st_A=0 { export 0:1; }
+st_a:  ".a"   is st_A=1 { export 1:1; }
+
+# LD, generic flags
+ldg_di:        is ldg_Di=0 {}
+ldg_di: ".di"  is ldg_Di=1 {}
+ldg_a:         is ldg_A=0 { export 0:1; }
+ldg_a:  ".a"   is ldg_A=1 { export 1:1; }
+ldg_x:         is ldg_X=0 { export 0:1; }
+ldg_x:  ".x"   is ldg_X=1 { export 1:1; }
+
+# LD, simm flags
+lds_di:        is lds_Di=0 {}
+lds_di: ".di"  is lds_Di=1 {}
+lds_a:         is lds_A=0 { export 0:1; }
+lds_a:  ".a"   is lds_A=1 { export 1:1; }
+lds_x:         is lds_X=0 { export 0:1; }
+lds_x:  ".x"   is lds_X=1 { export 1:1; }
+
+
+:^instruction is phase=0 & instruction [ phase = 1; ] {
+	build instruction;
+}
+
+:^instruction is phase=0 & end_of_loop=1 & instruction [ phase = 1; ] {
+	if (loop_enable == 0) goto <end_loop>;
+	lp_count = lp_count - 1;
+	if (lp_count == 0) goto <end_loop>;
+	pc = lp_start;
+	goto [pc];
+	<end_loop>
+	loop_enable = 0;
+	build instruction;
+}
+
+with: phase=1 {
+
+
+:nop  is I=0b01111 & A=63 & B=63 & C=63 & D=0x1ff {}
+
+:brk    is I=0b00011 & A=63 & B=63 & C=63 & D=0x000 { DebugBreak(); }
+:sleep  is I=0b00011 & A=63 & B=63 & C=63 & D=0x001 { ProcessorSleep(); }
+:swi    is I=0b00011 & A=63 & B=63 & C=63 & D=0x002 { SoftwareInterrupt(); }
+
+:j^cj^dd^f #jump_dest  is I=0b00111 & A=0 & B=62 & C=0 & f & dd & cj ; Limm [ jump_dest = (Limm & 0xffffff) << 2; ] { if (!f) goto <skip>; jumpflags(Limm:4); <skip> goto [jump_dest:4]; }
+:j^cj^dd^f [B]         is I=0b00111 & A=0 & B & B=31 & C=0 & f & dd & cj { if (!f) goto <skip>; jumpflags(B); <skip> return [(B & 0xffffff) << 2]; }
+:j^cj^dd^f [B]         is I=0b00111 & A=0 & B & C=0 & f & dd & cj { if (!f) goto <skip>; jumpflags(B); <skip> goto [(B & 0xffffff) << 2]; }
+
+:jl^cj^dd^f #jump_dest  is I=0b00111 & A=0 & B=62 & C=1 & f & dd & cj ; Limm [ jump_dest = (Limm & 0xffffff) << 2; ] { link(); if (!f) goto <skip>; jumpflags(Limm:4); <skip> goto [jump_dest:4]; }
+:jl^cj^dd^f [B]         is I=0b00111 & A=0 & B & B=31 & C=1 & f & dd & cj { link(); if (!f) goto <skip>; jumpflags(B); <skip> return [(B & 0xffffff) << 2]; }
+:jl^cj^dd^f [B]         is I=0b00111 & A=0 & B & C=1 & f & dd & cj { link(); if (!f) goto <skip>; jumpflags(B); <skip> goto [(B & 0xffffff) << 2]; }
+
+:b^cj^dd #jump_dest  is I=0b00100 & L & dd & cj [ jump_dest = inst_next + (L << 2); ] { goto [jump_dest:4]; }
+:bl^cj^dd #jump_dest  is I=0b00101 & L & dd & cj [ jump_dest = inst_next + (L << 2); ] { link(); call [jump_dest:4]; }
+
+:lp^cj^dl #jump_dest  is I=0b00110 & L & dl & cj [
+	jump_dest = inst_next + (L << 2);
+	end_of_loop = 1;
+	globalset(jump_dest, end_of_loop);
+] {
+	lp_start = inst_next;
+	lp_end = jump_dest;
+	loop_enable = 1;
+}
+
+:adc^fi   dest, #D, #D2   is I=0b01001 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_adc(dest, D:4, D2:4, fi); }
+:adc^fi   dest, B, #D     is I=0b01001 & dest & B & (C=61 | C=63) & fi & D { exec_adc(dest, B, D:4, fi); }
+:adc^fi   dest, #D, C     is I=0b01001 & dest & (B=61 | B=63) & C & fi & D { exec_adc(dest, D:4, C, fi); }
+:adc^cc^f dest, B, #Limm  is I=0b01001 & dest & B & C=62 & f & cc ; Limm { exec_adc(dest, B, Limm:4, f); }
+:adc^cc^f dest, #Limm, C  is I=0b01001 & dest & B=62 & C & f & cc ; Limm { exec_adc(dest, Limm:4, C, f); }
+:adc^cc^f dest, B, C      is I=0b01001 & dest & B & C & f & cc { exec_adc(dest, B, C, f); }
+
+:add^fi   dest, #D, #D2   is I=0b01000 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_add(dest, D:4, D2:4, fi); }
+:add^fi   dest, B, #D     is I=0b01000 & dest & B & (C=61 | C=63) & fi & D { exec_add(dest, B, D:4, fi); }
+:add^fi   dest, #D, C     is I=0b01000 & dest & (B=61 | B=63) & C & fi & D { exec_add(dest, D:4, C, fi); }
+:add^cc^f dest, B, #Limm  is I=0b01000 & dest & B & C=62 & f & cc ; Limm { exec_add(dest, B, Limm:4, f); }
+:add^cc^f dest, #Limm, C  is I=0b01000 & dest & B=62 & C & f & cc ; Limm { exec_add(dest, Limm:4, C, f); }
+:add^cc^f dest, B, C      is I=0b01000 & dest & B & C & f & cc { exec_add(dest, B, C, f); }
+
+:mov^fi   dest, #D        is I=0b01100 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D { dest = D; }
+:mov^cc^f dest, #Limm     is I=0b01100 & dest & B=62 & C=62 & f & cc ; Limm { dest = Limm; }
+
+# The "(B=61 | B=63) & (C=61 | C=63)" case is handled by "mov", above.
+:and^fi   dest, B, #D     is I=0b01100 & dest & B & (C=61 | C=63) & fi & D { dest = B & D; if (!fi) goto inst_next; resultflags(dest); }
+:and^fi   dest, #D, C     is I=0b01100 & dest & (B=61 | B=63) & C & fi & D { dest = D & C; if (!fi) goto inst_next; resultflags(dest); }
+:and^cc^f dest, B, #Limm  is I=0b01100 & dest & B & C=62 & f & cc ; Limm { dest = B & Limm; if (!f) goto inst_next; resultflags(dest); }
+:and^cc^f dest, #Limm, C  is I=0b01100 & dest & B=62 & C & f & cc ; Limm { dest = Limm & C; if (!f) goto inst_next; resultflags(dest); }
+:and^cc^f dest, B, C      is I=0b01100 & dest & B & C & f & cc { dest = B & C; if (!f) goto inst_next; resultflags(dest); }
+
+:asl^fi   dest, #D, #D2   is I=0b10000 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D << D2; if (!fi) goto inst_next; resultflags(dest); }
+:asl^fi   dest, B, #D     is I=0b10000 & dest & B & (C=61 | C=63) & fi & D { dest = B << D; if (!fi) goto inst_next; resultflags(dest); }
+:asl^fi   dest, #D, C     is I=0b10000 & dest & (B=61 | B=63) & C & fi & D { dest = D << C; if (!fi) goto inst_next; resultflags(dest); }
+:asl^cc^f dest, B, #Limm  is I=0b10000 & dest & B & C=62 & f & cc ; Limm { dest = B << Limm; if (!f) goto inst_next; resultflags(dest); }
+:asl^cc^f dest, #Limm, C  is I=0b10000 & dest & B=62 & C & f & cc ; Limm { dest = Limm << C; if (!f) goto inst_next; resultflags(dest); }
+:asl^cc^f dest, B, C      is I=0b10000 & dest & B & C & f & cc { dest = B << C; if (!f) goto inst_next; resultflags(dest); }
+
+:asr^fi   dest, #D, #D2   is I=0b10010 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D s>> D2; if (!fi) goto inst_next; resultflags(dest); }
+:asr^fi   dest, B, #D     is I=0b10010 & dest & B & (C=61 | C=63) & fi & D { dest = B s>> D; if (!fi) goto inst_next; resultflags(dest); }
+:asr^fi   dest, #D, C     is I=0b10010 & dest & (B=61 | B=63) & C & fi & D { dest = D s>> C; if (!fi) goto inst_next; resultflags(dest); }
+:asr^cc^f dest, B, #Limm  is I=0b10010 & dest & B & C=62 & f & cc ; Limm { dest = B s>> Limm; if (!f) goto inst_next; resultflags(dest); }
+:asr^cc^f dest, #Limm, C  is I=0b10010 & dest & B=62 & C & f & cc ; Limm { dest = Limm s>> C; if (!f) goto inst_next; resultflags(dest); }
+:asr^cc^f dest, B, C      is I=0b10010 & dest & B & C & f & cc { dest = B s>> C; if (!f) goto inst_next; resultflags(dest); }
+
+:bic^fi   dest, #D, #D2   is I=0b01110 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D & ~D2; if (!fi) goto inst_next; resultflags(dest); }
+:bic^fi   dest, B, #D     is I=0b01110 & dest & B & (C=61 | C=63) & fi & D { dest = B & ~D; if (!fi) goto inst_next; resultflags(dest); }
+:bic^fi   dest, #D, C     is I=0b01110 & dest & (B=61 | B=63) & C & fi & D { dest = D & ~C; if (!fi) goto inst_next; resultflags(dest); }
+:bic^cc^f dest, B, #Limm  is I=0b01110 & dest & B & C=62 & f & cc ; Limm { dest = B & ~Limm; if (!f) goto inst_next; resultflags(dest); }
+:bic^cc^f dest, #Limm, C  is I=0b01110 & dest & B=62 & C & f & cc ; Limm { dest = Limm & ~C; if (!f) goto inst_next; resultflags(dest); }
+:bic^cc^f dest, B, C      is I=0b01110 & dest & B & C & f & cc { dest = B & ~C; if (!f) goto inst_next; resultflags(dest); }
+
+:lsr^fi   dest, #D, #D2   is I=0b10001 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D >> D2; if (!fi) goto inst_next; resultflags(dest); }
+:lsr^fi   dest, B, #D     is I=0b10001 & dest & B & (C=61 | C=63) & fi & D { dest = B >> D; if (!fi) goto inst_next; resultflags(dest); }
+:lsr^fi   dest, #D, C     is I=0b10001 & dest & (B=61 | B=63) & C & fi & D { dest = D >> C; if (!fi) goto inst_next; resultflags(dest); }
+:lsr^cc^f dest, B, #Limm  is I=0b10001 & dest & B & C=62 & f & cc ; Limm { dest = B >> Limm; if (!f) goto inst_next; resultflags(dest); }
+:lsr^cc^f dest, #Limm, C  is I=0b10001 & dest & B=62 & C & f & cc ; Limm { dest = Limm >> C; if (!f) goto inst_next; resultflags(dest); }
+:lsr^cc^f dest, B, C      is I=0b10001 & dest & B & C & f & cc { dest = B >> C; if (!f) goto inst_next; resultflags(dest); }
+
+# TODO: Implement MAX instruction.
+
+# TODO: Implement MIN instruction.
+
+# FIXME: Semantics are guessed--confirm with old GCC sources.
+:mul16^fi   dest, #D, #D2   is I=0b10110 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { mulext(dest, D:2, D2:2); if (!fi) goto inst_next; resultflags(dest); }
+:mul16^fi   dest, B, #D     is I=0b10110 & dest & B & (C=61 | C=63) & fi & D { mulext(dest, B:2, D:2); if (!fi) goto inst_next; resultflags(dest); }
+:mul16^fi   dest, #D, C     is I=0b10110 & dest & (B=61 | B=63) & C & fi & D { mulext(dest, D:2, C:2); if (!fi) goto inst_next; resultflags(dest); }
+:mul16^cc^f dest, B, #Limm  is I=0b10110 & dest & B & C=62 & f & cc ; Limm { mulext(dest, B:2, Limm:2); if (!f) goto inst_next; resultflags(dest); }
+:mul16^cc^f dest, #Limm, C  is I=0b10110 & dest & B=62 & C & f & cc ; Limm { mulext(dest, Limm:2, C:2); if (!f) goto inst_next; resultflags(dest); }
+:mul16^cc^f dest, B, C      is I=0b10110 & dest & B & C & f & cc { mulext(dest, B:2, C:2); if (!f) goto inst_next; resultflags(dest); }
+
+:or^fi   dest, #D, #D2   is I=0b01101 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D | D2; if (!fi) goto inst_next; resultflags(dest); }
+:or^fi   dest, B, #D     is I=0b01101 & dest & B & (C=61 | C=63) & fi & D { dest = B | D; if (!fi) goto inst_next; resultflags(dest); }
+:or^fi   dest, #D, C     is I=0b01101 & dest & (B=61 | B=63) & C & fi & D { dest = D | C; if (!fi) goto inst_next; resultflags(dest); }
+:or^cc^f dest, B, #Limm  is I=0b01101 & dest & B & C=62 & f & cc ; Limm { dest = B | Limm; if (!f) goto inst_next; resultflags(dest); }
+:or^cc^f dest, #Limm, C  is I=0b01101 & dest & B=62 & C & f & cc ; Limm { dest = Limm | C; if (!f) goto inst_next; resultflags(dest); }
+:or^cc^f dest, B, C      is I=0b01101 & dest & B & C & f & cc { dest = B | C; if (!f) goto inst_next; resultflags(dest); }
+
+:ror^fi   dest, #D, #D2   is I=0b10011 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { rormultiple(dest, D:4, D2:4); if (!fi) goto inst_next; resultflags(dest); }
+:ror^fi   dest, B, #D     is I=0b10011 & dest & B & (C=61 | C=63) & fi & D { rormultiple(dest, B, D:4); if (!fi) goto inst_next; resultflags(dest); }
+:ror^fi   dest, #D, C     is I=0b10011 & dest & (B=61 | B=63) & C & fi & D { rormultiple(dest, D:4, C); if (!fi) goto inst_next; resultflags(dest); }
+:ror^cc^f dest, B, #Limm  is I=0b10011 & dest & B & C=62 & f & cc ; Limm { rormultiple(dest, B, Limm:4); if (!f) goto inst_next; resultflags(dest); }
+:ror^cc^f dest, #Limm, C  is I=0b10011 & dest & B=62 & C & f & cc ; Limm { rormultiple(dest, Limm:4, C); if (!f) goto inst_next; resultflags(dest); }
+:ror^cc^f dest, B, C      is I=0b10011 & dest & B & C & f & cc { rormultiple(dest, B, C); if (!f) goto inst_next; resultflags(dest); }
+
+:sbc^fi   dest, #D, #D2   is I=0b01011 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_sbc(dest, D:4, D2:4, fi); }
+:sbc^fi   dest, B, #D     is I=0b01011 & dest & B & (C=61 | C=63) & fi & D { exec_sbc(dest, B, D:4, fi); }
+:sbc^fi   dest, #D, C     is I=0b01011 & dest & (B=61 | B=63) & C & fi & D { exec_sbc(dest, D:4, C, fi); }
+:sbc^cc^f dest, B, #Limm  is I=0b01011 & dest & B & C=62 & f & cc ; Limm { exec_sbc(dest, B, Limm:4, f); }
+:sbc^cc^f dest, #Limm, C  is I=0b01011 & dest & B=62 & C & f & cc ; Limm { exec_sbc(dest, Limm:4, C, f); }
+:sbc^cc^f dest, B, C      is I=0b01011 & dest & B & C & f & cc { exec_sbc(dest, B, C, f); }
+
+:sub^fi   dest, #D, #D2   is I=0b01010 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { exec_sub(dest, D:4, D2:4, fi); }
+:sub^fi   dest, B, #D     is I=0b01010 & dest & B & (C=61 | C=63) & fi & D { exec_sub(dest, B, D:4, fi); }
+:sub^fi   dest, #D, C     is I=0b01010 & dest & (B=61 | B=63) & C & fi & D { exec_sub(dest, D:4, C, fi); }
+:sub^cc^f dest, B, #Limm  is I=0b01010 & dest & B & C=62 & f & cc ; Limm { exec_sub(dest, B, Limm:4, f); }
+:sub^cc^f dest, #Limm, C  is I=0b01010 & dest & B=62 & C & f & cc ; Limm { exec_sub(dest, Limm:4, C, f); }
+:sub^cc^f dest, B, C      is I=0b01010 & dest & B & C & f & cc { exec_sub(dest, B, C, f); }
+
+:xor^fi   dest, #D, #D2   is I=0b01111 & dest & (B=61 | B=63) & (C=61 | C=63) & fi & D & D2 { dest = D ^ D2; if (!fi) goto inst_next; resultflags(dest); }
+:xor^fi   dest, B, #D     is I=0b01111 & dest & B & (C=61 | C=63) & fi & D { dest = B ^ D; if (!fi) goto inst_next; resultflags(dest); }
+:xor^fi   dest, #D, C     is I=0b01111 & dest & (B=61 | B=63) & C & fi & D { dest = D ^ C; if (!fi) goto inst_next; resultflags(dest); }
+:xor^cc^f dest, B, #Limm  is I=0b01111 & dest & B & C=62 & f & cc ; Limm { dest = B ^ Limm; if (!f) goto inst_next; resultflags(dest); }
+:xor^cc^f dest, #Limm, C  is I=0b01111 & dest & B=62 & C & f & cc ; Limm { dest = Limm ^ C; if (!f) goto inst_next; resultflags(dest); }
+:xor^cc^f dest, B, C      is I=0b01111 & dest & B & C & f & cc { dest = B ^ C; if (!f) goto inst_next; resultflags(dest); }
+
+:asr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=1 & fi & D { dest = D s>> 1; if (!fi) goto inst_next; rorflags(dest, D:4); }
+:asr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=1 & f & cc ; Limm { dest = Limm s>> 1; if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:asr^cc^f dest, B      is I=0b00011 & dest & B & C=1 & f & cc { dest = B s>> 1; if (!f) goto inst_next; rorflags(dest, B); }
+
+:extb^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=7 & fi & D { dest = zext(D:1); if (!fi) goto inst_next; resultflags(dest); }
+:extb^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=7 & f & cc ; Limm { dest = zext(Limm:1); if (!f) goto inst_next; resultflags(dest); }
+:extb^cc^f dest, B      is I=0b00011 & dest & B & C=7 & f & cc { dest = zext(B:1); if (!f) goto inst_next; resultflags(dest); }
+:extw^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=8 & fi & D { dest = zext(D:2); if (!fi) goto inst_next; resultflags(dest); }
+:extw^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=8 & f & cc ; Limm { dest = zext(Limm:2); if (!f) goto inst_next; resultflags(dest); }
+:extw^cc^f dest, B      is I=0b00011 & dest & B & C=8 & f & cc { dest = zext(B:2); if (!f) goto inst_next; resultflags(dest); }
+
+:flag    #D     is I=0b00011 & A=61 & B=63 & C=0 & D               { set_flags(D:4); }
+:flag^cc #Limm  is I=0b00011 & A=61 & B=62 & C=0 & F=0 & cc ; Limm { set_flags(Limm:4); }
+:flag^cc B      is I=0b00011 & A=61 & B    & C=0 & F=0 & cc        { set_flags(B); }
+
+:lsr^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=2 & fi & D { dest = D >> 1; if (!fi) goto inst_next; rorflags(dest, D:4); }
+:lsr^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=2 & f & cc ; Limm { dest = Limm >> 1; if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:lsr^cc^f dest, B      is I=0b00011 & dest & B & C=2 & f & cc { dest = B >> 1; if (!f) goto inst_next; rorflags(dest, B); }
+
+# TODO: Implement NORM instruction.
+
+:ror^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=3 & fi & D { roronce(dest, D); if (!fi) goto inst_next; rorflags(dest, D:4); }
+:ror^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=3 & f & cc ; Limm { roronce(dest, Limm); if (!f) goto inst_next; rorflags(dest, Limm:4); }
+:ror^cc^f dest, B      is I=0b00011 & dest & B & C=3 & f & cc { roronce(dest, B); if (!f) goto inst_next; rorflags(dest, B); }
+
+:sexb^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=5 & fi & D { dest = sext(D:1); if (!fi) goto inst_next; resultflags(dest); }
+:sexb^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=5 & f & cc ; Limm { dest = sext(Limm:1); if (!f) goto inst_next; resultflags(dest); }
+:sexb^cc^f dest, B      is I=0b00011 & dest & B & C=5 & f & cc { dest = sext(B:1); if (!f) goto inst_next; resultflags(dest); }
+:sexw^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=6 & fi & D { dest = sext(D:2); if (!fi) goto inst_next; resultflags(dest); }
+:sexw^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=6 & f & cc ; Limm { dest = sext(Limm:2); if (!f) goto inst_next; resultflags(dest); }
+:sexw^cc^f dest, B      is I=0b00011 & dest & B & C=6 & f & cc { dest = sext(B:2); if (!f) goto inst_next; resultflags(dest); }
+
+:swap^fi   dest, #D     is I=0b00011 & dest & (B=61 | B=63) & C=9 & fi & D { swapwords(dest, D); if (!fi) goto inst_next; resultflags(dest); }
+:swap^cc^f dest, #Limm  is I=0b00011 & dest & B=62 & C=9 & f & cc ; Limm { swapwords(dest, Limm); if (!f) goto inst_next; resultflags(dest); }
+:swap^cc^f dest, B      is I=0b00011 & dest & B & C=9 & f & cc { swapwords(dest, B); if (!f) goto inst_next; resultflags(dest); }
+
+:st^st_a^st_di #C_D, [#B_D, #D]   is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B=63 & C=63 & D [ B_D = D + 0; C_D = D + 0; ] { *[ram]:4 (D:4 + D) = D; }
+:st^st_a^st_di #Limm, [#B_D, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B=63 & C=62 & D ; Limm [ B_D = D + 0; ] { *[ram]:4 (D:4 + D) = Limm; }
+:st^st_a^st_di #C_D, [#Limm, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B=62 & C=63 & D ; Limm [ C_D = D + 0; ] { *[ram]:4 (Limm:4 + D) = D; }
+:st^st_a^st_di C, [#B_D, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B=63 & C & D [ B_D = D + 0; ] { *[ram]:4 (D:4 + D) = C; }
+:st^st_a^st_di C, [#Limm, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B=62 & C & D ; Limm { *[ram]:4 (Limm:4 + D) = C; }
+:st^st_a^st_di #C_D, [B, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B & C=63 & D [ C_D = D + 0; ] { *[ram]:4 (B + D) = D; writeback(B, B + D, st_a); }
+:st^st_a^st_di #Limm, [B, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B & C=62 & D ; Limm { *[ram]:4 (B + D) = Limm; writeback(B, B + D, st_a); }
+:st^st_a^st_di C, [B, #D]         is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b00 & st_21=0 & B & C & D { *[ram]:4 (B + D) = C; writeback(B, B + D, st_a); }
+
+:stb^st_a^st_di #C_D, [#B_D, #D]   is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B=63 & C=63 & D [ B_D = D + 0; C_D = D + 0; ] { *[ram]:1 (D:4 + D) = D; }
+:stb^st_a^st_di #Limm, [#B_D, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B=63 & C=62 & D ; Limm [ B_D = D + 0; ] { *[ram]:1 (D:4 + D) = Limm; }
+:stb^st_a^st_di #C_D, [#Limm, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B=62 & C=63 & D ; Limm [ C_D = D + 0; ] { *[ram]:1 (Limm:4 + D) = D; }
+:stb^st_a^st_di C, [#B_D, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B=63 & C & D [ B_D = D + 0; ] { *[ram]:1 (D:4 + D) = C; }
+:stb^st_a^st_di C, [#Limm, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B=62 & C & D ; Limm { *[ram]:1 (Limm:4 + D) = C; }
+:stb^st_a^st_di #C_D, [B, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B & C=63 & D [ C_D = D + 0; ] { *[ram]:1 (B + D) = D; writeback(B, B + D, st_a); }
+:stb^st_a^st_di #Limm, [B, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B & C=62 & D ; Limm { *[ram]:1 (B + D) = Limm; writeback(B, B + D, st_a); }
+:stb^st_a^st_di C, [B, #D]         is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b01 & st_21=0 & B & C & D { *[ram]:1 (B + D) = C; writeback(B, B + D, st_a); }
+
+:stw^st_a^st_di #C_D, [#B_D, #D]   is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B=63 & C=63 & D [ B_D = D + 0; C_D = D + 0; ] { *[ram]:2 (D:4 + D) = D; }
+:stw^st_a^st_di #Limm, [#B_D, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B=63 & C=62 & D ; Limm [ B_D = D + 0; ] { *[ram]:2 (D:4 + D) = Limm; }
+:stw^st_a^st_di #C_D, [#Limm, #D]  is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B=62 & C=63 & D ; Limm [ C_D = D + 0; ] { *[ram]:2 (Limm:4 + D) = D; }
+:stw^st_a^st_di C, [#B_D, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B=63 & C & D [ B_D = D + 0; ] { *[ram]:2 (D:4 + D) = C; }
+:stw^st_a^st_di C, [#Limm, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B=62 & C & D ; Limm { *[ram]:2 (Limm:4 + D) = C; }
+:stw^st_a^st_di #C_D, [B, #D]      is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B & C=63 & D [ C_D = D + 0; ] { *[ram]:2 (B + D) = D; writeback(B, B + D, st_a); }
+:stw^st_a^st_di #Limm, [B, #D]     is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B & C=62 & D ; Limm { *[ram]:2 (B + D) = Limm; writeback(B, B + D, st_a); }
+:stw^st_a^st_di C, [B, #D]         is I=0b00010 & st_di & st_25=0 & st_a & st_Z=0b10 & st_21=0 & B & C & D { *[ram]:2 (B + D) = C; writeback(B, B + D, st_a); }
+
+:sr #Limm, [ar_D]  is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B=63 & C=62 & ar_D ; Limm { ar_D = Limm; }
+:sr D, [#Limm]     is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B=62 & C=63 & D ; Limm { *[ram]:4 (Limm:4) = D; }
+:sr C, [ar_D]      is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B=63 & C & ar_D { ar_D = C; }
+:sr C, [#Limm]     is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B=62 & C ; Limm { *[ram]:4 (Limm:4) = C; }
+:sr D, [B]         is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B & C=63 & D { *[ram]:4 (B) = D; }
+:sr #Limm, [B]     is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B & C=62 ; Limm { *[ram]:4 (B) = Limm; }
+:sr C, [B]         is I=0b00010 & st_Di=0 & st_25=1 & st_A=0 & st_Z=0b00 & st_21=0 & B & C { *[ram]:4 (B) = C; }
+
+:ld^ldg_x^ldg_a^ldg_di  dest, [B, #Limm]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b00 & ldg_x & dest & B & C=62 ; Limm { dest = *[ram]:4 (B + Limm); }
+:ld^ldg_x^ldg_a^ldg_di  dest, [#Limm, C]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b00 & ldg_x & dest & B=62 & C ; Limm { dest = *[ram]:4 (Limm + C); }
+:ld^ldg_x^ldg_a^ldg_di  dest, [B, C]      is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b00 & ldg_x & dest & B & C { local old_B:4 = B; writeback(B, old_B + C, ldg_a); dest = *[ram]:4 (old_B + C); }
+
+:ldb^ldg_x^ldg_a^ldg_di  dest, [B, #Limm]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b01 & ldg_x & dest & B & C=62 ; Limm { ldext(dest, *[ram]:1 (B + Limm), ldg_x); }
+:ldb^ldg_x^ldg_a^ldg_di  dest, [#Limm, C]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b01 & ldg_x & dest & B=62 & C ; Limm { ldext(dest, *[ram]:1 (Limm + C), ldg_x); }
+:ldb^ldg_x^ldg_a^ldg_di  dest, [B, C]      is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b01 & ldg_x & dest & B & C { local old_B:4 = B; writeback(B, old_B + C, ldg_a); ldext(dest, *[ram]:1 (old_B + C), ldg_x); }
+
+:ldw^ldg_x^ldg_a^ldg_di  dest, [B, #Limm]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b10 & ldg_x & dest & B & C=62 ; Limm { ldext(dest, *[ram]:2 (B + Limm), ldg_x); }
+:ldw^ldg_x^ldg_a^ldg_di  dest, [#Limm, C]  is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b10 & ldg_x & dest & B=62 & C ; Limm { ldext(dest, *[ram]:2 (Limm + C), ldg_x); }
+:ldw^ldg_x^ldg_a^ldg_di  dest, [B, C]      is I=0b00000 & ldg_di & ldg_a & ldg_Z=0b10 & ldg_x & dest & B & C { local old_B:4 = B; writeback(B, old_B + C, ldg_a); ldext(dest, *[ram]:2 (old_B + C), ldg_x); }
+
+:ld^lds_x^lds_a^lds_di  dest, [#B_D, #D]   is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b00 & lds_x & dest & B=63 & D [ B_D = D + 0; ] { dest = *[ram]:4 (D:4 + D); }
+:ld^lds_x^lds_a^lds_di  dest, [#Limm, #D]  is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b00 & lds_x & dest & B=62 & D ; Limm { dest = *[ram]:4 (Limm:4 + D); }
+:ld^lds_x^lds_a^lds_di  dest, [B, #D]      is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b00 & lds_x & dest & B & D { local old_B:4 = B; writeback(B, old_B + D, lds_a); dest = *[ram]:4 (old_B + D); }
+
+:ldb^lds_x^lds_a^lds_di  dest, [#B_D, #D]   is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b01 & lds_x & dest & B=63 & D [ B_D = D + 0; ] { ldext(dest, *[ram]:1 (D:4 + D), lds_x); }
+:ldb^lds_x^lds_a^lds_di  dest, [#Limm, #D]  is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b01 & lds_x & dest & B=62 & D ; Limm { ldext(dest, *[ram]:1 (Limm:4 + D), lds_x); }
+:ldb^lds_x^lds_a^lds_di  dest, [B, #D]      is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b01 & lds_x & dest & B & D { local old_B:4 = B; writeback(B, old_B + D, lds_a); ldext(dest, *[ram]:1 (old_B + D), lds_x); }
+
+:ldw^lds_x^lds_a^lds_di  dest, [#B_D, #D]   is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b10 & lds_x & dest & B=63 & D [ B_D = D + 0; ] { ldext(dest, *[ram]:2 (D:4 + D), lds_x); }
+:ldw^lds_x^lds_a^lds_di  dest, [#Limm, #D]  is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b10 & lds_x & dest & B=62 & D ; Limm { ldext(dest, *[ram]:2 (Limm:4 + D), lds_x); }
+:ldw^lds_x^lds_a^lds_di  dest, [B, #D]      is I=0b00001 & lds_di & lds_13=0 & lds_a & lds_Z=0b10 & lds_x & dest & B & D { local old_B:4 = B; writeback(B, old_B + D, lds_a); ldext(dest, *[ram]:2 (old_B + D), lds_x); }
+
+:lr  dest, [ar_D]   is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B=63 & ar_D { dest = ar_D; }
+:lr  dest, [#Limm]  is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B=62 ; Limm { dest = *[auxregs]:4 (Limm:4); }
+:lr  dest, [B]      is I=0b00001 & lds_Di=0 & lds_13=1 & lds_A=0 & lds_Z=0b00 & lds_X=0 & dest & B { dest = *[auxregs]:4 (B); }
+
+
+}
