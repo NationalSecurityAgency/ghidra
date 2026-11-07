@@ -65,8 +65,7 @@ class PyGhidraArgs(argparse.Namespace):
         Run script or enter repl
         """
         if not self.valid:
-            self.parser.print_usage()
-            return
+            self.parser.error("invalid binary or script path")
 
         if self.debug:
             logger.setLevel(logging.DEBUG)
