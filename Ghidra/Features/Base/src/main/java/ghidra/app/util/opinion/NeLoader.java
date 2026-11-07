@@ -32,6 +32,10 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.EnumDataType;
 import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -56,6 +60,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	private static final int SEGMENT_START = 0x1000;
 
 	private ArrayList<Address> entryPointList = new ArrayList<>();
+	private Map<Integer, Integer> constantOrdinals = new HashMap<>();
 	private Comparator<String> comparator = new CallNameComparator();
 
 	public NeLoader() {
@@ -158,6 +163,12 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		}
 		monitor.setMessage("Processing resident name table...");
 		processResidentNameTable(rnt, symbolTable);
+
+		if (monitor.isCancelled()) {
+			return;
+		}
+		monitor.setMessage("Processing constant ordinals...");
+		processConstantOrdinals(prog, rnt, nrnt, log);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -576,8 +587,12 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 					seg = st.getSegments()[segmentIndex].getSegmentID();
 				}
 				else if (bundle.isConstant()) {
-					//todo: how to handle constants...?
-					log.appendMsg("NE - constant entry point...");
+					//a constant bundle holds 16-bit values instead of addresses, so keep the
+					//ordinal aligned but do not create an address, label, or entry point for it
+					int ordinal = entryPointList.size();
+					constantOrdinals.put(ordinal, Short.toUnsignedInt(pt.getOffset()));
+					entryPointList.add(null);
+					continue;
 				}
 				else {
 					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
@@ -597,6 +612,59 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 	private void processResidentNameTable(ResidentNameTable rnt, SymbolTable symbolTable) {
 		createSymbols(rnt.getNames(), symbolTable);
+	}
+
+	/**
+	 * Creates an enum datatype for each constant entry table ordinal, following the same convention
+	 * the C parser uses for defines: a single-member enum named {@code const_<NAME>} under the
+	 * {@code /NE/defines} category.  Constant entries hold a value rather than an address, so this
+	 * preserves the value without creating a bogus address, label, or entry point.
+	 *
+	 * @param program the program being loaded
+	 * @param rnt the resident name table
+	 * @param nrnt the non-resident name table
+	 * @param log the message log
+	 */
+	private void processConstantOrdinals(Program program, ResidentNameTable rnt,
+			NonResidentNameTable nrnt, MessageLog log) {
+		if (constantOrdinals.isEmpty()) {
+			return;
+		}
+
+		Map<Integer, String> names = new HashMap<>();
+		collectNames(rnt.getNames(), names);
+		collectNames(nrnt.getNames(), names);
+
+		DataTypeManager dtm = program.getDataTypeManager();
+		CategoryPath path = new CategoryPath(CategoryPath.ROOT, "NE", "defines");
+
+		List<Integer> ordinals = new ArrayList<>(constantOrdinals.keySet());
+		Collections.sort(ordinals);
+
+		for (int ordinal : ordinals) {
+			long value = constantOrdinals.get(ordinal) & 0xffff;
+			String name = names.get(ordinal);
+			String memberName = (name == null || name.isEmpty())
+					? "ordinal_" + ordinal
+					: SymbolUtilities.replaceInvalidChars(name, true);
+			try {
+				//NE constants are always 16-bit values
+				EnumDataType enumDataType = new EnumDataType(path, "const_" + memberName, 2);
+				enumDataType.add(memberName, value);
+				dtm.addDataType(enumDataType, DataTypeConflictHandler.DEFAULT_HANDLER);
+			}
+			catch (IllegalArgumentException e) {
+				log.appendMsg("NE - Unable to create datatype for constant ordinal " + ordinal +
+					": " + e.getMessage());
+			}
+		}
+	}
+
+	private void collectNames(LengthStringOrdinalSet[] sets, Map<Integer, String> names) {
+		for (LengthStringOrdinalSet set : sets) {
+			int ordinal = Short.toUnsignedInt(set.getOrdinal());
+			names.putIfAbsent(ordinal, set.getString());
+		}
 	}
 
 	private SegmentedAddress getImportSymbolByName(SymbolTable symbolTable, String modname,
@@ -770,6 +838,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	private void initVars() {
 		entryPointList.clear();
 		entryPointList.add(null); //add a null, since ordinals start at 1, not 0...
+		constantOrdinals.clear();
 	}
 
 	/**
