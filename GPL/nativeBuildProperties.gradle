@@ -18,6 +18,23 @@
 apply plugin: 'cpp'
 apply plugin: 'c'
 
+// Append environment flags after each binary's default flags have been configured.
+model {
+	binaries {
+		afterEach { binary ->
+			if (binary.toolChain in Gcc || binary.toolChain in Clang) {
+				def flags = { name ->
+					org.apache.tools.ant.types.Commandline.translateCommandline(
+						providers.environmentVariable(name).getOrElse(''))
+				}
+				binary.cCompiler.args flags('CFLAGS')
+				binary.cppCompiler.args flags('CXXFLAGS')
+				binary.linker.args flags('LDFLAGS')
+			}
+		}
+	}
+}
+
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
  * for all native builds and should be extended by each module as-needed.
