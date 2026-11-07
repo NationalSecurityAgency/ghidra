@@ -5019,7 +5019,10 @@ macro BitReverse_arm(val) {
 :sdiv^COND   RdHi,RnLo,RmHi    is $(AMODE) & ARMcond=1 & COND & c2027=0x71 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
 {
     build COND;
-    local result = RnLo s/ RmHi;
+    local result:4 = 0;
+    if (RmHi == 0) goto <div_by_zero>;
+    result = RnLo s/ RmHi;
+<div_by_zero>
     RdHi = result;
 }
 
@@ -6065,8 +6068,11 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 :udiv^COND   RdHi,RnLo,RmHi    is $(AMODE) & ARMcond=1 & COND & c2027=0x73 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
 {
     build COND;
-    result:8 = zext(RnLo) / zext(RmHi);
-    RdHi = result(0);
+    local result:4 = 0;
+    if (RmHi == 0) goto <div_by_zero>;
+    result = RnLo / RmHi;
+<div_by_zero>
+    RdHi = result;
 }
 
 @endif # VERSION_7
