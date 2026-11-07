@@ -23,6 +23,17 @@
 		apply from: "$rootProject.projectDir/gradle/support/javaTestProject.gradle"
  *****************************************************************************************/
 
+if (!rootProject.ext.has('unitTestFailureCount')) {
+	rootProject.ext.unitTestFailureCount = new java.util.concurrent.atomic.AtomicLong(0)
+	rootProject.unitTestReport.doLast {
+		long failedTestCount = rootProject.ext.unitTestFailureCount.get()
+		if (failedTestCount > 0) {
+			throw new GradleException(
+				"Unit tests failed: ${failedTestCount} failure(s). See ${rootProject.ext.reportDir}/unitTests")
+		}
+	}
+}
+
 test { t ->
 
 	forkEvery = 1
@@ -42,6 +53,12 @@ test { t ->
 	// Do not include suite classes; they trigger the tests in the suite to get run twice
 	// (once by normal jUnit and again when the suite runs).
 	excludes = ['**/*Suite*']
+
+	afterSuite { descriptor, result ->
+		if (descriptor.parent == null) {
+			rootProject.ext.unitTestFailureCount.addAndGet(result.failedTestCount)
+		}
+	}
 
 	doFirst {
 		startTestTimer(t)
