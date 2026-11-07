@@ -18,11 +18,15 @@ package ghidra.app.util.demangler;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import org.junit.*;
 
 import ghidra.app.util.demangler.gnu.GnuDemangler;
 import ghidra.app.util.demangler.microsoft.*;
+import ghidra.app.util.demangler.swift.datatypes.SwiftFunction;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.sourcelanguage.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -372,6 +376,67 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals(className, ns.getName(false));
 		ns = ns.getParentNamespace();
 		assertEquals("E", ns.getName(false));
+	}
+
+	@Test
+	public void testSwiftFunctionThisPointer() throws Exception {
+
+		//
+		// Test a Swift class method. Its calling convention, __swift_thiscall, has a 'this'
+		// pointer, so the namespace must become a class and 'this' must point to the class
+		// structure, as for __thiscall.
+		//
+
+		// The Swift calling conventions exist only for AARCH64 and x86-64 programs that have
+		// the Swift spec extensions
+		program.endTransaction(txID, false);
+		programBuilder.dispose();
+		programBuilder = new ProgramBuilder("swift", ProgramBuilder._AARCH64, this);
+		programBuilder.createMemory(".text", "0x0100", 0x100);
+		program = programBuilder.getProgram();
+		txID = program.startTransaction("Test");
+		MessageLog log = new MessageLog();
+		SourceLanguageService.addSpecExtensions(program, Set.of(SwiftSourceLanguage.SWIFT_ID),
+			log, TaskMonitor.DUMMY);
+		assertFalse(log.toString(), log.hasMessages());
+		assertNotNull(program.getCompilerSpec()
+				.getCallingConvention(SwiftSourceLanguageSpecExtension.SWIFT_THISCALL));
+
+		// this is: Repro.Counter.bump() -> ()
+		String mangled = "$s5Repro7CounterC4bumpyyF";
+		String demangledText = "Repro.Counter.bump() -> ()";
+		Address addr = addr("0x0100");
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		symbolTable.createLabel(addr, mangled, SourceType.IMPORTED);
+
+		// Build the function as SwiftFunctionNode and SwiftClassNode do, since the
+		// SwiftDemangler needs the native Swift demangler, which Ghidra does not ship
+		DemangledDataType classType = new DemangledDataType(mangled, demangledText, "Counter");
+		classType.setNamespace(new DemangledLabel(mangled, demangledText, "Repro"));
+		classType.setClass();
+		classType.incrementPointerLevels();
+		DemangledFunction demangled = new SwiftFunction(mangled, demangledText, "bump",
+			classType, SwiftSourceLanguageSpecExtension.SWIFT_THISCALL);
+		assertTrue(demangled.applyTo(program, addr, new DemanglerOptions(), TaskMonitor.DUMMY));
+
+		Function function = assertFunction("bump", addr);
+		assertNoBookmarkAt(addr);
+		assertEquals(SwiftSourceLanguageSpecExtension.SWIFT_THISCALL,
+			function.getCallingConventionName());
+
+		// Check for the Class 'this' pointer
+		Parameter[] parameters = function.getParameters();
+		assertEquals(1, parameters.length);
+		Parameter p1 = parameters[0];
+		assertEquals("this", p1.getName());
+		assertEquals("Counter *", p1.getDataType().toString());
+
+		Namespace ns = function.getParentNamespace();
+		assertEquals("Counter", ns.getName(false));
+		assertEquals(SymbolType.CLASS, ns.getSymbol().getSymbolType());
+		ns = ns.getParentNamespace();
+		assertEquals("Repro", ns.getName(false));
 	}
 
 	/*

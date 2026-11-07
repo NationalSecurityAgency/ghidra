@@ -18,6 +18,11 @@ package ghidra.app.util.demangler.swift.datatypes;
 import java.util.List;
 
 import ghidra.app.util.demangler.*;
+import ghidra.app.util.sourcelanguage.SwiftSourceLanguageSpecExtension;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
 /**
  * A Swift function
@@ -51,5 +56,15 @@ public class SwiftFunction extends DemangledFunction {
 			}
 			addParameter(param);
 		}
+	}
+
+	@Override
+	protected Structure maybeCreateClassStructure(Program program, Function function,
+			String convention) {
+		// __swift_thiscall has a this pointer, like __thiscall: the namespace must become a class
+		if (SwiftSourceLanguageSpecExtension.SWIFT_THISCALL.equals(convention)) {
+			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
+		}
+		return super.maybeCreateClassStructure(program, function, convention);
 	}
 }
