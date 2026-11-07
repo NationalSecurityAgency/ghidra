@@ -17,6 +17,7 @@ package ghidra.app.util.bin;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * An {@link InputStream} that reads from a {@link ByteProvider}.
@@ -109,9 +110,8 @@ public class ByteProviderInputStream extends InputStream {
 		if (n <= 0) {
 			return 0;
 		}
-		long newPosition = Math.min(provider.length(), currentPosition + n);
-		long skipped = newPosition - currentPosition;
-		currentPosition = newPosition;
+		long skipped = Math.min(n, Math.max(0, provider.length() - currentPosition));
+		currentPosition += skipped;
 		return skipped;
 	}
 
@@ -124,6 +124,10 @@ public class ByteProviderInputStream extends InputStream {
 
 	@Override
 	public int read(byte[] b, int bufferOffset, int len) throws IOException {
+		Objects.checkFromIndexSize(bufferOffset, len, b.length);
+		if (len == 0) {
+			return 0;
+		}
 		long eof = provider.length();
 		if (currentPosition >= eof) {
 			return -1;
