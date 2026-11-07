@@ -8575,18 +8575,37 @@ void RuleModOpt::getOpList(vector<uint4> &oplist) const
 int4 RuleModOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *multop,*addop;
-  Varnode *div,*x,*outvn,*outvn2,*div2;
-  list<PcodeOp *>::const_iterator iter1,iter2;
+  PcodeOp *multop,*addop,*subOp;
+  Varnode *div,*x,*outvn,*outvn2,*div2,*qvn;
+  list<PcodeOp *>::const_iterator iter1,iter2,iter3;
 
   x = op->getIn(0);
   div = op->getIn(1);
   outvn = op->getOut();
   for(iter1=outvn->beginDescend();iter1!=outvn->endDescend();++iter1) {
     multop = *iter1;
-    if (multop->code() != CPUI_INT_MULT) continue;
+    subOp = (PcodeOp *)0;
+    qvn = (Varnode *)0;
+    if (multop->code() == CPUI_SUBPIECE && multop->getIn(0) == outvn && div->isConstant()) {
+      // The quotient may be truncated before the multiply:  subpiece(x/c, i) * -c
+      subOp = multop;
+      multop = (PcodeOp *)0;
+      qvn = subOp->getOut();
+      for(iter3 = qvn->beginDescend(); iter3 != qvn->endDescend(); ++iter3) {
+	if ((*iter3)->code() == CPUI_INT_MULT) {
+	  if (multop != (PcodeOp *)0) {
+	    multop = (PcodeOp *)0;	// Multiple multiplications: ambiguous
+	    break;
+	  }
+	  multop = *iter3;
+	}
+      }
+      if (multop == (PcodeOp *)0) continue;
+    }
+    else if (multop->code() != CPUI_INT_MULT) continue;
+    qvn = (qvn != (Varnode *)0) ? qvn : outvn;
     div2 = multop->getIn(1);
-    if (div2 == outvn)
+    if (div2 == qvn)
       div2 = multop->getIn(0);
     // Check that div is 2's complement of div2
     if (div2->isConstant()) {
@@ -8608,6 +8627,20 @@ int4 RuleModOpt::applyOp(PcodeOp *op,Funcdata &data)
       lvn = addop->getIn(0);
       if (lvn == outvn2)
 	lvn = addop->getIn(1);
+      if (subOp != (PcodeOp *)0) {
+	// The truncation of x must match the truncation of the quotient
+	uintb suboffset = subOp->getIn(1)->getOffset();
+	if (lvn->isWritten() && lvn->getDef()->code() == CPUI_SUBPIECE &&
+	    lvn->getDef()->getIn(0) == x && lvn->getDef()->getIn(1)->constantMatch(suboffset)) {
+	  OpCode remopc = (op->code() == CPUI_INT_DIV) ? CPUI_INT_REM : CPUI_INT_SREM;
+	  PcodeOp *remop = data.newOpBefore(addop, remopc, x, div);
+	  data.opSetOpcode(addop, CPUI_SUBPIECE);
+	  data.opSetInput(addop, remop->getOut(), 0);
+	  data.opSetInput(addop, data.newConstant(4, suboffset), 1);
+	  return 1;
+	}
+	continue;
+      }
       if (lvn != x) continue;
       data.opSetInput(addop,x,0);
       if (div->isConstant())
