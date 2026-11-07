@@ -1582,7 +1582,7 @@ int4 scan_number(char *numtext,SLEIGHSTYPE *lval,int4 radix,bool signednum)
 {
   uintb val;
   try {
-    val = std::stoul(numtext,(size_t *)0,radix);
+    val = std::stoull(numtext,(size_t *)0,radix);
   }
   catch(...) {
     return BADINTEGER;
