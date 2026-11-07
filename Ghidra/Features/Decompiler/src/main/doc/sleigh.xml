@@ -786,6 +786,36 @@ the <emphasis role="bold">wordsize</emphasis> attribute is not
 specified, the size of a memory location defaults to one byte (8
 bits).
 </para>
+<para>
+The <emphasis role="bold">wordsize</emphasis> attribute must be an integer
+between 1 and 8. It is purely a scaling factor between the word-granular
+addresses that appear in a specification and the byte offsets GHIDRA stores
+internally (byte = word * wordsize + sub); it is unrelated to the 8-byte limit
+on the size of a p-code varnode or constant. The only underlying constraint is
+that the largest byte offset in the space still fit in 64 bits, that is,
+ceil(log2(wordsize)) + 8 * size &lt;= 64.
+</para>
+<para>
+A <emphasis role="bold">wordsize</emphasis> greater than one interacts with
+instruction alignment. GHIDRA requires the instruction alignment to be a
+multiple of the <emphasis role="bold">wordsize</emphasis>, and an instruction
+must begin on an aligned boundary. As a result, if the
+<emphasis role="bold">wordsize</emphasis> is as large as a whole instruction,
+only one instruction can begin within each addressable unit. A byte address that
+does not fall on a <emphasis role="bold">wordsize</emphasis> boundary is
+displayed as the word address, a period, and the hexadecimal byte offset within
+the word; for example, with <emphasis role="bold">wordsize</emphasis> four, the
+third byte of word <emphasis role="bold">0x10</emphasis> is shown as
+<emphasis role="bold">0x10.2</emphasis>.
+</para>
+<para>
+A large <emphasis role="bold">wordsize</emphasis> is not the way to model VLIW
+bundles, instruction packets, or horizontal microcode in which several
+sub-instructions share a single architectural address: making the bundle the
+addressable unit collapses it into one instruction. Instead, decode each
+sub-instruction at its own address and track its position within the bundle with
+a context variable, as the Hexagon processor module does.
+</para>
 </sect2>
 <sect2 id="sleigh_naming_registers">
 <title>Naming Registers</title>
