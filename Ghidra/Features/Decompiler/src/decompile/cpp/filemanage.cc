@@ -376,6 +376,8 @@ string FileManage::discoverGhidraRoot(const char *argv0)
   bool isAbs = isAbsolutePath(cur);
 
   for(;;) {
+    if (cur.empty())
+        return "";
     int sizebefore = cur.size();
     splitPath(cur,cur,base);
     if (cur.size() == sizebefore) break;
