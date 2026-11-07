@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Andes processor spec for cores supporting CoDense V0 with PP16
+  (mmsc_cfg.ECD=1 and mmsc_cfg2.{ECDV=0,PP16=1}).
+
+  Otherwise inherits the default RV32 CSR layout from RV32.pspec.
+-->
+<processor_spec>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="MXL" val="1"/>
+      <set name="ecdv" val="0"/>
+      <set name="pp16" val="1"/>
+    </context_set>
+  </context_data>
+
+  <default_memory_blocks>
+    <memory_block name="csr" start_address="csreg:0x0" length="0x4000" initialized="false"/>
+  </default_memory_blocks>
+
+  <default_symbols>
+     <symbol name="ustatus"       address="csreg:0x000"       size="4" description="" />
+     <symbol name="fflags"        address="csreg:0x001"       size="4" description="" />
+     <symbol name="frm"           address="csreg:0x002"       size="4" description="" />
+     <symbol name="fcsr"          address="csreg:0x003"       size="4" description="" />
+     <symbol name="uie"           address="csreg:0x004"       size="4" description="" />
+     <symbol name="utvec"         address="csreg:0x005"       size="4" description="" />
+
+     <symbol name="mstatus"       address="csreg:0x300"       size="4" description="" />
+     <symbol name="misa"                 address="next"       size="4" description="" />
+     <symbol name="medeleg"              address="next"       size="4" description="" />
+     <symbol name="mideleg"              address="next"       size="4" description="" />
+     <symbol name="mie"                  address="next"       size="4" description="" />
+     <symbol name="mtvec"                address="next"       size="4" description="" />
+     <symbol name="mcounteren"           address="next"       size="4" description="" />
+
+     <symbol name="mscratch"      address="csreg:0x340"       size="4" description="" />
+     <symbol name="mepc"          address="csreg:0x341"       size="4" description="" />
+     <symbol name="mcause"        address="csreg:0x342"       size="4" description="" />
+     <symbol name="mtval"         address="csreg:0x343"       size="4" description="" />
+     <symbol name="mip"           address="csreg:0x344"       size="4" description="" />
+
+     <symbol name="mvendorid"     address="csreg:0xf11"       size="4" description="" />
+     <symbol name="marchid"       address="csreg:0xf12"       size="4" description="" />
+     <symbol name="mimpid"        address="csreg:0xf13"       size="4" description="" />
+     <symbol name="mhartid"       address="csreg:0xf14"       size="4" description="" />
+  </default_symbols>
+</processor_spec>
