@@ -95,21 +95,25 @@ public class PrettyPrinter {
 		List<ClangToken> tokens = line.getAllTokens();
 
 		for (ClangToken token : tokens) {
-			boolean isToken2Clean = token instanceof ClangFuncNameToken ||
-				token instanceof ClangVariableToken || token instanceof ClangTypeToken ||
-				token instanceof ClangFieldToken || token instanceof ClangLabelToken;
-
-			//do not clean constant variable tokens
-			if (isToken2Clean && token.getSyntaxType() == ClangToken.CONST_COLOR) {
-				isToken2Clean = false;
-			}
-
-			String tokenText = token.getText();
-			if (isToken2Clean) {
-				tokenText = transformer.simplify(tokenText);
-			}
-			buff.append(tokenText);
+			buff.append(getText(token, transformer));
 		}
+	}
+
+	private static String getText(ClangToken token, NameTransformer transformer) {
+		boolean isToken2Clean = token instanceof ClangFuncNameToken ||
+			token instanceof ClangVariableToken || token instanceof ClangTypeToken ||
+			token instanceof ClangFieldToken || token instanceof ClangLabelToken;
+
+		//do not clean constant variable tokens
+		if (isToken2Clean && token.getSyntaxType() == ClangToken.CONST_COLOR) {
+			isToken2Clean = false;
+		}
+
+		String tokenText = token.getText();
+		if (isToken2Clean) {
+			tokenText = transformer.simplify(tokenText);
+		}
+		return tokenText;
 	}
 
 	/**
@@ -128,7 +132,24 @@ public class PrettyPrinter {
 		for (int i = 0; i < nChildren; ++i) {
 			ClangNode node = tokgroup.Child(i);
 			if (node instanceof ClangFuncProto) {
-				return node.toString() + ";";
+				List<ClangNode> tokens = new ArrayList<>();
+				node.flatten(tokens);
+				StringBuilder buff = new StringBuilder();
+				for (ClangNode tokenNode : tokens) {
+					ClangToken token = (ClangToken) tokenNode;
+					if (token instanceof ClangBreak) {
+						// A line break can replace the space between two words, such as
+						// the calling convention and the function name
+						int len = buff.length();
+						char last = len > 0 ? buff.charAt(len - 1) : ' ';
+						if (Character.isLetterOrDigit(last) || last == '_') {
+							buff.append(' ');
+						}
+						continue;
+					}
+					buff.append(getText(token, transformer));
+				}
+				return buff.toString() + ";";
 			}
 		}
 		return null;
