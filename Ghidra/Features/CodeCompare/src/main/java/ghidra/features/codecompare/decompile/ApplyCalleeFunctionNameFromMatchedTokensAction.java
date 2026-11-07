@@ -26,6 +26,9 @@ import ghidra.util.datastruct.Duo.Side;
 
 /**
  * An action for transferring just the function name and namespace between matched callee tokens.
+ * When transferring between an internal and an external function, the target namespace is retained
+ * because an external library cannot contain an internal function and an external function cannot
+ * belong to an internal namespace.
  */
 public class ApplyCalleeFunctionNameFromMatchedTokensAction
 		extends AbstractMatchedCalleeTokensAction {
@@ -45,6 +48,11 @@ public class ApplyCalleeFunctionNameFromMatchedTokensAction
 	}
 
 	@Override
+	protected boolean allowsExternalCallees() {
+		return true;
+	}
+
+	@Override
 	protected void doCalleeActionPerformed(Function leftFunction, Function rightFunction) {
 
 		Side activeSide = comparisonProvider.getActiveSide();
@@ -56,7 +64,15 @@ public class ApplyCalleeFunctionNameFromMatchedTokensAction
 
 		try {
 			activeProgram.withTransaction("Code Comparison Transfer Callee Function Name",
-				() -> FunctionUtility.applyNameAndNamespace(activeFunction, otherFunction));
+				() -> {
+					if (activeFunction.isExternal() != otherFunction.isExternal()) {
+						activeFunction.setName(otherFunction.getName(),
+							otherFunction.getSymbol().getSource());
+					}
+					else {
+						FunctionUtility.applyNameAndNamespace(activeFunction, otherFunction);
+					}
+				});
 		}
 		catch (Exception e) {
 			Msg.showError(this, tool.getToolFrame(), "Failed to Apply Callee Function Name",

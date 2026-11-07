@@ -92,6 +92,14 @@ public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedT
 	 */
 	protected abstract void doCalleeActionPerformed(Function leftFunction, Function rightFunction);
 
+	/**
+	 * Whether this action can operate on an external function without a decompilable body.
+	 * @return true if external callees are supported
+	 */
+	protected boolean allowsExternalCallees() {
+		return false;
+	}
+
 	private Function getFuncFromToken(ClangFuncNameToken funcToken, Program program) {
 		Address callTarget = funcToken.getPcodeOp().getInput(0).getAddress();
 		Function func = program.getFunctionManager().getFunctionAt(callTarget);
@@ -100,7 +108,7 @@ public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedT
 				"Can't compare callees - null Function for " + funcToken.getText());
 			return null;
 		}
-		if (func.isExternal()) {
+		if (func.isExternal() && !allowsExternalCallees()) {
 			Msg.showWarn(this, null, "Unable to Compare Callees",
 				"Can't compare callees - " + func.getName() + " is external");
 			return null;
@@ -109,7 +117,7 @@ public abstract class AbstractMatchedCalleeTokensAction extends AbstractMatchedT
 			return func;
 		}
 		func = func.getThunkedFunction(true);
-		if (func.isExternal()) {
+		if (func.isExternal() && !allowsExternalCallees()) {
 			Msg.showWarn(this, null, "Unable to Compare",
 				"Can't compare callees - " + func.getName() + " is external");
 			return null;
