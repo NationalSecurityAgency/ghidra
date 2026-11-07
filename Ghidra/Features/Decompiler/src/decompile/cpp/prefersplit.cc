@@ -53,7 +53,7 @@ void PreferSplitManager::SplitInstance::createPieces(Funcdata *data,bool sethi,b
     uintb origval = vn->getOffset();
     
     uintb loval = origval & calc_mask( losize );// Split the constant into two pieces
-    uintb hival = (origval >> 8*losize) & calc_mask( hisize );
+    uintb hival = pcode_right(origval, 8*losize) & calc_mask( hisize );
     if (setlo && (lo == (Varnode *)0))
       lo = data->newConstant(losize,loval);
     if (sethi && (hi == (Varnode *)0))
@@ -214,7 +214,7 @@ void PreferSplitManager::splitZext(SplitInstance &inst,PcodeOp *op)
   if (ininst.vn->isConstant()) {
     uintb origval = ininst.vn->getOffset();
     uintb loval = origval & calc_mask( losize );// Split the constant into two pieces
-    uintb hival = (origval >> 8*losize) & calc_mask( hisize );
+    uintb hival = pcode_right(origval, 8*losize) & calc_mask( hisize );
     ininst.lo = data->newConstant(losize,loval);
     ininst.hi = data->newConstant(hisize,hival);
   }

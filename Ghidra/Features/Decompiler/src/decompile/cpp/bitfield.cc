@@ -1959,6 +1959,7 @@ int4 RulePullAbsorb::absorbAnd(Funcdata &data,PcodeOp *andOp,PcodeOp *pullOp)
   Varnode *vn = pullOp->getOut();
   if (pullOp->code() != CPUI_SPULL) return 0;	// Not signed
   int4 bitsize = (int4)pullOp->getIn(2)->getOffset();
+  if (bitsize <= 0 || bitsize > 8 * (int4)sizeof(uintb)) return 0;
   uintb matchVal = 1;
   matchVal <<= (bitsize-1);			// Mask for sign-bit
   if (matchVal != maskVn->getOffset()) return 0;
@@ -2035,9 +2036,9 @@ int4 RulePullAbsorb::absorbCompare(Funcdata &data,PcodeOp *compOp,PcodeOp *leftO
       return 1;
     }
   }
-  uintb mask = 1;
-  mask = (mask << sa) -1;
-  if (sa > 0 && sa < 8*sizeof(uintb) && inVn == lessVn0 && lessVn1->isConstant()) {
+  if (sa <= 0 || sa >= 8 * (int4)sizeof(uintb)) return 0;
+  uintb mask = ((uintb)1 << sa) - 1;
+  if (inVn == lessVn0 && lessVn1->isConstant()) {
     uintb origVal = lessVn1->getOffset();
     uintb lowBits = mask & origVal;
     if (lowBits == 0 || lowBits == 1) {
@@ -2054,7 +2055,7 @@ int4 RulePullAbsorb::absorbCompare(Funcdata &data,PcodeOp *compOp,PcodeOp *leftO
       return 1;
     }
   }
-  if (sa > 0 && sa < 8*sizeof(uintb) && inVn == lessVn1 && lessVn0->isConstant()) {
+  if (inVn == lessVn1 && lessVn0->isConstant()) {
     uintb origVal = lessVn0->getOffset();
     uintb lowBits = mask & origVal;
     if (lowBits == 0 || lowBits == mask) {
