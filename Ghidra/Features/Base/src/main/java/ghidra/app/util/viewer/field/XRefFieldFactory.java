@@ -601,7 +601,7 @@ public class XRefFieldFactory extends FieldFactory {
 		}
 
 		Color displayColor = XrefColors.DEFAULT;
-		if (reference.getReferenceType().isRead() || reference.getReferenceType().isIndirect()) {
+		if (reference.getReferenceType().isRead()) {
 			displayColor = XrefColors.READ;
 		}
 		else if (reference.getReferenceType().isWrite()) {
@@ -687,7 +687,7 @@ public class XRefFieldFactory extends FieldFactory {
 			return "(T)";
 		}
 		if (refType instanceof DataRefType) {
-			if (refType.isRead() || refType.isIndirect()) {
+			if (refType.isRead()) {
 				return "(R)";
 			}
 			else if (refType.isWrite()) {
