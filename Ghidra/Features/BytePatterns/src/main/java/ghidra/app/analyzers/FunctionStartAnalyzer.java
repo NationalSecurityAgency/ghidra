@@ -205,6 +205,10 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		private boolean isThunk = false;    // true if this function should be turned into a thunk
 		private boolean noreturn = false;   // true to set function non-returning
 		private java.util.regex.Pattern sectionNamePattern = null;  // required section name as a regex pattern
+		private String requiredContextRegister;
+		private BigInteger requiredContextValue;
+		private boolean hasContextRequirement;
+		private boolean validContextRequirement;
 		boolean validFunction = false;      // must be defined at a function
 		private boolean contiguous = true;  // require validcode instructions be contiguous
 
@@ -221,6 +225,24 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		protected boolean checkPreRequisites(Program program, Address addr) {
+			if (hasContextRequirement) {
+				if (!validContextRequirement) {
+					return false;
+				}
+				ProgramContext context = program.getProgramContext();
+				Register register = context.getRegister(requiredContextRegister);
+				if (register == null || !register.isProcessorContext() ||
+					requiredContextValue.signum() < 0 ||
+					requiredContextValue.bitLength() > register.getBitLength()) {
+					return false;
+				}
+				RegisterValue value = context.getRegisterValue(register, addr);
+				if (value == null || !value.hasValue() ||
+					!requiredContextValue.equals(value.getUnsignedValue())) {
+					return false;
+				}
+			}
+
 			// check required section name
 			if (sectionNamePattern != null) {
 				MemoryBlock block = program.getMemory().getBlock(addr);
@@ -562,12 +584,49 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 		protected void restoreXmlAttributes(XmlElement el) {
+			requiredContextRegister = null;
+			requiredContextValue = null;
+			hasContextRequirement = false;
+			validContextRequirement = false;
+			boolean invalidContextRequirement = false;
+			Set<String> contextAttributes = new HashSet<>();
+
 			Map<String, String> attributes = el.getAttributes();
 			Set<String> keySet = attributes.keySet();
 			for (String attrName : keySet) {
 				String attrValue = attributes.get(attrName);
 				attrName = attrName.toLowerCase();
+				if ((attrName.equals("context-register") || attrName.equals("context-value")) &&
+					!contextAttributes.add(attrName)) {
+					invalidContextRequirement = true;
+				}
 				switch (attrName) {
+					case "context-register":
+						hasContextRequirement = true;
+						requiredContextRegister = attrValue;
+						break;
+
+					case "context-value":
+						hasContextRequirement = true;
+						try {
+							// Preserve XML numeric notation without narrowing to a long.
+							if (attrValue.startsWith("0x")) {
+								requiredContextValue = new BigInteger(attrValue.substring(2), 16);
+							}
+							else if (attrValue.startsWith("0") && attrValue.length() > 1) {
+								requiredContextValue = new BigInteger(attrValue.substring(1), 8);
+							}
+							else {
+								requiredContextValue = new BigInteger(attrValue);
+							}
+						}
+						catch (NumberFormatException e) {
+							requiredContextValue = null;
+							invalidContextRequirement = true;
+							Msg.error(this, "Bad funcstart context-value: " + attrValue);
+						}
+						break;
+
 					case "after":
 						afterName = attrValue;
 						if (afterName.startsWith("func")) {
@@ -676,6 +735,8 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 						Msg.error(this, "Unknown Patten option: " + attrName + " = " + attrValue);
 				}
 			}
+			validContextRequirement = !invalidContextRequirement && requiredContextRegister != null &&
+				!requiredContextRegister.isEmpty() && requiredContextValue != null;
 		}
 
 	}

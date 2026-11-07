@@ -87,4 +87,18 @@
       <funcstart thunk="true"/>
   </pattern>
   
+  <!-- VLE return/alignment followed by a negative, word-aligned r1 stack allocation.
+       Require existing VLE context; byte patterns never switch processor mode. -->
+  <patternpairs totalbits="40" postbits="24">
+    <prepatterns>
+      <data>0x0004</data> <!-- se_blr -->
+      <data>0x0004 0x4444</data> <!-- se_blr; se_or r4,r4 alignment -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x182106 1.....00</data> <!-- e_stwu r1,negative word-aligned d8(r1) -->
+      <data>0x0080 0x182106 1.....00</data> <!-- se_mflr r0; e_stwu r1,d8(r1) -->
+      <align mark="0" bits="1"/>
+      <funcstart context-register="vle" context-value="1" validcode="subroutine"/>
+    </postpatterns>
+  </patternpairs>
 </patternlist>
