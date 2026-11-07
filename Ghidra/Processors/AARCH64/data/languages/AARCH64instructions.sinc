@@ -1247,6 +1247,7 @@ define token instrAARCH64 (32) endian = little
 	b_1215 = (12,15)
 	b_1216 = (12,16)
 	b_1217 = (12,17)
+	b_1218 = (12,18)
 	b_1220 = (12,20)
 	b_1223 = (12,23)
 	b_1229 = (12,29)
@@ -1461,6 +1462,11 @@ define token instrAARCH64 (32) endian = little
 	ftype = (22,23)
 	u = (29,29)
 	v = (26,26)
+
+	cflt_reason = (10,11)
+    cflt_imm9hs = (16,20) signed
+    cflt_imm9hu = (16,20)
+    cflt_imm9l = (5,8)
 
 	# SVE tokens
 
@@ -1892,6 +1898,9 @@ attach names [ sve_rot_1011 ] [ "#0" "#90" "#180" "#270" ];
 Rm_GPR32: aa_Wm is aa_Wm { export aa_Wm; }
 Rm_GPR32: wzr is aa_Wm=31 & wzr { tmp:4 = 0; export tmp; }
 
+Rm_GPR32wsp: aa_Wm is aa_Wm { export aa_Wm; }
+Rm_GPR32wsp: wsp is aa_Wm=31 & wsp { export wsp; }
+
 Rd_GPR32: aa_Wd is aa_Wd { export aa_Wd; }
 Rd_GPR32: wzr is aa_Wd=31 & wzr { tmp:4 = 0; export tmp; }
 Rd_GPR32_2: aa_Wd is aa_Wd { export aa_Wd; }
@@ -1919,6 +1928,9 @@ Rn_GPR32wsp: wsp is aa_Wn=31 & wsp { export wsp; }
 
 Rt_GPR32: aa_Wt is aa_Wt { export aa_Wt; }
 Rt_GPR32: wzr is aa_Wt=31 & wzr { tmp:4 = 0; export tmp; }
+
+Rt_GPR32wsp: aa_Wt is aa_Wt { export aa_Wt; }
+Rt_GPR32wsp: wsp is aa_Wt=31 & wsp { export wsp; }
 
 Rm_GPR64: aa_Xm is aa_Xm { export aa_Xm; }
 Rm_GPR64: xzr is aa_Xm=31 & xzr { export 0:8; }
