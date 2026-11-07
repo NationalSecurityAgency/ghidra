@@ -46,6 +46,15 @@
         <constraint primary="40"   processor="ARM"                      size="32" variant="v8LEInstruction"
             secondary= "0b .... .... 1... .... .... .... .... ...."/>  <!-- EF_ARM_BE8 -->
     </constraint>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="softfp">
+      <!--
+        The ElfLoader reports these keys for an image that states the AAPCS base (soft-float)
+        procedure-call standard, in e_flags (EF_ARM_ABI_FLOAT_SOFT) or .ARM.attributes
+        (Tag_ABI_VFP_args).
+      -->
+        <constraint primary="40"   secondary="softfp"     processor="ARM"   size="32" variant="v8"/>
+        <constraint primary="40"   secondary="softfp-be8" processor="ARM"   size="32" variant="v8LEInstruction"/>
+    </constraint>
     
     <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
         <constraint primary="12.0"     processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM all -->

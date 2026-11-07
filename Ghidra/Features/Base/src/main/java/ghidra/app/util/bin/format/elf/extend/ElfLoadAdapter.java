@@ -262,6 +262,16 @@ public class ElfLoadAdapter {
 	}
 
 	/**
+	 * Return the compiler name stated by the specified elf header, which is used to query the
+	 * loader opinions for the compiler specification.
+	 * @param elf elf header, with its section headers parsed
+	 * @return compiler name or null
+	 */
+	public String getCompilerName(ElfHeader elf) {
+		return null;
+	}
+
+	/**
 	 * Perform any required offset adjustment to account for differences between offset 
 	 * values contained within ELF headers and the language modeling of the 
 	 * associated address space.
