@@ -158,7 +158,7 @@ private:
   friend class VarnodeBank;
   friend class Merge;
   friend class Funcdata;
-  friend class CloneBlockOps;
+  friend class CloneOp;
   void updateCover(void) const;	///< Internal function for update coverage information
   void calcCover(void) const;	///< Turn on the Cover object for this Varnode
   void clearCover(void) const; ///< Turn off any coverage information

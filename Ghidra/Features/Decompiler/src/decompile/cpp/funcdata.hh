@@ -124,7 +124,7 @@ class Funcdata {
   JumpTable::RecoveryMode stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
-  BlockBasic *nodeSplitBlockEdge(BlockBasic *b,int4 inedge);
+  BlockBasic *nodeSplitBlockEdge(BlockBasic *b, const vector<int4> &inedge,int4 outedge);
 
   void sortCallSpecs(void);			///< Sort calls using a dominance based order
   void deleteCallSpecs(PcodeOp *op);		///< Remove the specification for a particular call
@@ -565,6 +565,7 @@ public:
   // Block routines
   BlockGraph &getStructure(void) { return sblocks; } 	///< Get the current control-flow structuring hierarchy
   const BlockGraph &getStructure(void) const { return sblocks; }	///< Get the current control-flow structuring hierarchy
+  BlockGraph &getBasicBlocks(void) { return bblocks; }	///< Get the basic blocks container
   const BlockGraph &getBasicBlocks(void) const { return bblocks; }	///< Get the basic blocks container
 
   /// \brief Set the initial ownership range for the given basic block
@@ -580,9 +581,9 @@ public:
   void removeBranch(BlockBasic *bb,int4 num);	///< Remove the indicated branch from a basic block
   BlockBasic *nodeJoinCreateBlock(BlockBasic *block1,BlockBasic *block2,BlockBasic *exita,BlockBasic *exitb,
 				  bool fora_block1ishigh,bool forb_block1ishigh,const Address &addr);
-  void nodeSplit(BlockBasic *b,int4 inedge);
+  BlockBasic *nodeSplit(BlockBasic *b,int4 inedge,int4 outedge);
+  BlockBasic *nodeSplit(BlockBasic *b,const vector<int4> &inedges,int4 outedge);
   bool forceGoto(const Address &pcop,const Address &pcdest);
-  void removeFromFlowSplit(BlockBasic *bl,bool swap);
   void switchEdge(FlowBlock *inblock,BlockBasic *outbefore,FlowBlock *outafter);
   void spliceBlockBasic(BlockBasic *bl);	///< Merge the given basic block with the block it flows into
   void installSwitchDefaults(void);		///< Make sure default switch cases are properly labeled
@@ -642,27 +643,58 @@ public:
   void setFuncdata(Funcdata *f) { fd = f; }	///< Establish the container for \b this emitter
 };
 
-/// \brief Control the cloning of PcodeOps from within a basic block into another block
-///
-/// Used for splitting control-flow at a merge point.  Can duplicate either a whole basic block, or an expression
-/// subset within a basic block.
-class CloneBlockOps {
-  /// \brief Helper class for pairing a p-code op with its clone
-  struct ClonePair {
-    PcodeOp *cloneOp;		///< New cloned op
-    PcodeOp *origOp;		///< Original op that was cloned
-    ClonePair(PcodeOp *c,PcodeOp *o) { cloneOp = c; origOp = o; }	///< Constructor
-  };
+class CloneOp {
   Funcdata &data;		///< Function containing ops to clone
-  vector<ClonePair> cloneList;	///< List of cloned ops
-  map<PcodeOp *,PcodeOp *> origToClone;	///< Map from original p-code op to its clone
-  PcodeOp *buildOpClone(PcodeOp *op);	///< Produce a skeleton copy of the given PcodeOp
-  void buildVarnodeOutput(PcodeOp *origOp,PcodeOp *cloneOp);	///< Clone the output Varnode of the given op onto its clone
-  void patchInputs(int4 inedge);				///< Set the input Varnodes of all cloned ops
+
+  PcodeOp *buildOp(PcodeOp *origOp);
+  void buildOutput(PcodeOp *origOp,PcodeOp *cloneOp);
+  vector<Varnode *> buildInputs(PcodeOp *origOp);
 public:
-  CloneBlockOps(Funcdata &fd) : data(fd) {}	///< Constructor
-  void cloneBlock(BlockBasic *b,BlockBasic *bprime,int4 inedge);	///< Clone all p-code ops from a block into its copy
-  Varnode *cloneExpression(vector<PcodeOp *> &ops,PcodeOp *followOp);	///< Clone p-code ops in an expression
+  CloneOp(Funcdata &fd) : data(fd) {}	///< Constructor
+  PcodeOp *clone(PcodeOp *op);
+
+  static vector<pair<PcodeOp *,PcodeOp *>> cloneBlock(BlockBasic *origbb,BlockBasic *clonebb);
+  static bool canClone(PcodeOp *op);
+};
+
+/// \brief Helper class for adjusting Varnode inputs typically after a block split
+class InputOpCorrector {
+  Funcdata &data;
+  const vector<int4> cloneEdges;
+  const vector<int4> origEdges;
+
+  // When \b set contains numbers from within the range 0..max, return the inverse
+  static const vector<int4> opposite(const vector<int4> &set,int4 max) {
+    vector<int4> opp;
+    for (int4 i=0;i<max;i++) {
+      if (std::find(set.begin(),set.end(),i)==set.end()) {
+        opp.emplace_back(i);
+      }
+    }
+    return opp;
+  }
+  void adjustMultiequal(PcodeOp *meOp,const vector<int4> &edges);
+public:
+  InputOpCorrector(Funcdata &fd,int4 edge) : data(fd),cloneEdges({edge}),origEdges({edge}) {} // Special destructive case
+  InputOpCorrector(Funcdata &fd,const vector<int4> &cloneEdges,int4 inSize) : data(fd),cloneEdges(cloneEdges),origEdges(opposite(cloneEdges,inSize)) {}
+  void correct(PcodeOp *origOp,PcodeOp *cloneOp);
+};
+
+/// \brief Helper class for adjusting Varnode outputs typically after a block split
+class BlockSplitOutputOpCorrector {
+  Funcdata &data;
+
+  BlockBasic *origbb;
+  BlockBasic *clonebb;
+  BlockBasic *combb;
+
+  FlowBlock *getDomBeforeCommon(FlowBlock *bb);
+  Varnode *createMultiequal(BlockBasic *dombb,Varnode *origVn);
+public:
+  BlockSplitOutputOpCorrector(Funcdata &fd,BlockBasic *origbb,BlockBasic *clonebb) : data(fd),origbb(origbb),clonebb(clonebb) {
+    combb = (BlockBasic *)FlowBlock::findCommonBlock(origbb, clonebb);
+  }
+  void correct(PcodeOp *origOp,PcodeOp *cloneOp);
 };
 
 /// \brief Helper class for determining if Varnodes can trace their value from a legitimate source
