@@ -1,0 +1,53 @@
+define pcodeop vbmacor16x16x16_avx512bmm;
+:VBMACOR16X16X16 YmmReg1, evexV5_YmmReg, YmmReg2_m256  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W0) & evexV5_YmmReg; byte=0x80; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	YmmResult = vbmacor16x16x16_avx512bmm( evexV5_YmmReg, YmmReg2_m256 );
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VBMACOR16X16X16 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W0) & evexV5_ZmmReg; byte=0x80; ZmmReg1 ... & ZmmReg2_m512
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	ZmmReg1 = vbmacor16x16x16_avx512bmm( evexV5_ZmmReg, ZmmReg2_m512 );
+}
+
+define pcodeop vbmacxor16x16x16_avx512bmm;
+:VBMACXOR16X16X16 YmmReg1, evexV5_YmmReg, YmmReg2_m256  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W1) & evexV5_YmmReg; byte=0x80; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	YmmResult = vbmacxor16x16x16_avx512bmm( evexV5_YmmReg, YmmReg2_m256 );
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VBMACXOR16X16X16 ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W1) & evexV5_ZmmReg; byte=0x80; ZmmReg1 ... & ZmmReg2_m512
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	ZmmReg1 = vbmacxor16x16x16_avx512bmm( evexV5_ZmmReg, ZmmReg2_m512 );
+}
+
+define pcodeop vbitrev_avx512bmm;
+:VBITREVB XmmReg1^XmmOpMask8, XmmReg2_m128  is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W0) & XmmOpMask8; byte=0x81; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	XmmResult = vbitrev_avx512bmm( XmmReg2_m128 );
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+:VBITREVB YmmReg1^YmmOpMask8, YmmReg2_m256  is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W0) & YmmOpMask8; byte=0x81; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	YmmResult = vbitrev_avx512bmm( YmmReg2_m256 );
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+:VBITREVB ZmmReg1^ZmmOpMask8, ZmmReg2_m512  is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W0) & ZmmOpMask8; byte=0x81; ZmmReg1 ... & ZmmReg2_m512
+[ evexD8Type = 0; evexTType = 0; ] # (TupleType FV)
+{
+	ZmmResult = vbitrev_avx512bmm( ZmmReg2_m512 );
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
