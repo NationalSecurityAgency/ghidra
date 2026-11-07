@@ -113,6 +113,28 @@
         <register name="r30"/>
         <register name="r31"/>
         <register name="r1"/>
+        <!-- TOC / small data base, fixed for the whole image -->
+        <register name="r2"/>
+        <register name="f14"/>
+        <register name="f15"/>
+        <register name="f16"/>
+        <register name="f17"/>
+        <register name="f18"/>
+        <register name="f19"/>
+        <register name="f20"/>
+        <register name="f21"/>
+        <register name="f22"/>
+        <register name="f23"/>
+        <register name="f24"/>
+        <register name="f25"/>
+        <register name="f26"/>
+        <register name="f27"/>
+        <register name="f28"/>
+        <register name="f29"/>
+        <register name="f30"/>
+        <register name="f31"/>
+        <register name="cr2"/>
+        <register name="cr3"/>
         <register name="cr4"/>
       </unaffected>
     </prototype>
