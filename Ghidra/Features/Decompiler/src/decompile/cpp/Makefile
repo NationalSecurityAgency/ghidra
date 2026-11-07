@@ -30,9 +30,22 @@ endif
 
 ifeq ($(OS),Darwin)
   MAKE_STATIC=
-  ARCH_TYPE=-arch x86_64
-  ADDITIONAL_FLAGS=-mmacosx-version-min=10.6 -w
-  OSDIR=mac_x86_64
+  ifndef ARCH
+    ifdef CPU
+      ARCH=$(CPU)
+    else
+      ARCH=$(shell uname -m)
+    endif
+  endif
+  ifeq ($(ARCH),arm64)
+    ARCH_TYPE=-arch arm64
+    ADDITIONAL_FLAGS=-mmacosx-version-min=11.0 -w
+    OSDIR=mac_arm_64
+  else
+    ARCH_TYPE=-arch x86_64
+    ADDITIONAL_FLAGS=-mmacosx-version-min=10.6 -w
+    OSDIR=mac_x86_64
+  endif
 endif
 
 ifeq ($(OS),OpenBSD)
@@ -128,7 +141,8 @@ COMMANDLINE_NAMES=$(CORE) $(DECCORE) $(EXTRA) $(SLEIGH) consolemain
 COMMANDLINE_DEBUG=-DCPUI_DEBUG -D__TERMINAL__
 COMMANDLINE_OPT=-D__TERMINAL__
 
-TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(EXTRA) test
+CLI_NO_BFD=callgraph ifacedecomp ifaceterm inject_sleigh interface libdecomp loadimage_xml raw_arch sleigh_arch testfunction xml_arch
+TEST_NAMES=$(CORE) $(DECCORE) $(SLEIGH) $(CLI_NO_BFD) test
 TEST_DEBUG=-D__TERMINAL__
 
 GHIDRA_NAMES=$(CORE) $(DECCORE) $(GHIDRA)
@@ -237,7 +251,7 @@ decomp_opt:	$(COMMANDLINE_OPT_OBJS)
 
 #decomp_test_dbg:	DBG_CXXFLAGS += -D_GLIBCXX_ASSERTIONS -fsanitize=address,undefined
 decomp_test_dbg:	$(TEST_DEBUG_OBJS)
-	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o decomp_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
+	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o decomp_test_dbg $(TEST_DEBUG_OBJS) $(LNK)
 
 test: decomp_test_dbg
 	./decomp_test_dbg
