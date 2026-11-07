@@ -57,6 +57,9 @@ public:
   LoadTable(const Address &ad,int4 sz) { addr = ad, size = sz; num = 1; }	///< Constructor for a single entry table
   LoadTable(const Address &ad,int4 sz,int4 nm) { addr = ad; size = sz; num = nm; }	///< Construct a full table
   bool operator<(const LoadTable &op2) const { return (addr < op2.addr); }	///< Compare \b this with another table by address
+  const Address &getAddr(void) const { return addr; }	///< Get the starting address of the table
+  int4 getSize(void) const { return size; }		///< Get the size of a table entry
+  int4 getNum(void) const { return num; }		///< Get the number of entries in the table
   void encode(Encoder &encoder) const;				///< Encode a description of \b this as an \<loadtable> element
   void decode(Decoder &decoder);				///< Decode \b this table from a \<loadtable> element
   static void collapseTable(vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
