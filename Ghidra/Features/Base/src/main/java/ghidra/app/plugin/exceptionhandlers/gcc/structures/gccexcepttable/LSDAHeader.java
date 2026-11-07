@@ -48,7 +48,6 @@ public class LSDAHeader extends GccAnalysisClass {
 	private int lpStartEncoding = 0xFF;
 	private Address lpStartAddr;
 
-	private boolean hasTypeTable = false;
 	private int ttypeEncoding = OMITTED_ENCODING_TYPE;
 	private long ttypeOffset;
 	private Address ttypeAddr = Address.NO_ADDRESS;
@@ -60,8 +59,6 @@ public class LSDAHeader extends GccAnalysisClass {
 	private AddressRange tableBounds = null;
 
 	private Address nextAddress;
-
-	private static final int LPSTART_PTR_TYPETABLE_FLAG = 0x01;
 
 	private int curSize = 0;
 	private long callSiteTableHeaderSize;
@@ -109,13 +106,7 @@ public class LSDAHeader extends GccAnalysisClass {
 		DwarfDecodeContext ctx = new DwarfDecodeContext(program, addr, region.getRangeStart());
 
 		long raw = decoder.decode(ctx);
-
-		// the bottom 4 bits are *not* part of the pointer
-		long controls = raw & 0x0F;
-		raw |= 0xF;
 		lpStartAddr = makeAddress(program, raw);
-
-		hasTypeTable = (controls & LPSTART_PTR_TYPETABLE_FLAG) == LPSTART_PTR_TYPETABLE_FLAG;
 
 		int encodedLen = ctx.getEncodedLength();
 
@@ -294,7 +285,7 @@ public class LSDAHeader extends GccAnalysisClass {
 	 * @return true if there is a type table
 	 */
 	public boolean hasTypeTable() {
-		return hasTypeTable && ttypeAddr != Address.NO_ADDRESS;
+		return ttypeAddr != Address.NO_ADDRESS;
 	}
 
 	/**
