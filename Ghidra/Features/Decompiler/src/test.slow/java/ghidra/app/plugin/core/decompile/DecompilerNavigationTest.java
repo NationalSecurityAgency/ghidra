@@ -386,11 +386,6 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		waitForSwing();
 	}
 
-	private void assertListingAddress(Address expected) {
-		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
-			"The Listing is not at the expected address");
-	}
-
 	private void assertExternalNavigationPerformed() {
 		// going to the 'external linkage' means we went to the thunk function and not the
 		// external program
