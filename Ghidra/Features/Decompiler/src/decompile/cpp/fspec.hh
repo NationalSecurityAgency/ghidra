@@ -27,6 +27,7 @@ namespace ghidra {
 class ProtoModel;
 class JoinRecord;
 
+extern AttributeId ATTRIB_ALLOCATION;	///< Marshaling attribute "allocation"
 extern AttributeId ATTRIB_CUSTOM;	///< Marshaling attribute "custom"
 extern AttributeId ATTRIB_DOTDOTDOT;	///< Marshaling attribute "dotdotdot"
 extern AttributeId ATTRIB_EXTENSION;	///< Marshaling attribute "extension"
@@ -97,6 +98,7 @@ public:
     is_grouped = 0x200,		///< This entry is grouped with other entries
     overlapping = 0x400,	///< Overlaps an earlier entry (and doesn't consume additional resource slots)
     first_storage = 0x800,	///< Entry is first in its storage class
+    unbounded_allocation = 0x2000, ///< Explicit allocation can exceed the recognition range
     is_stackspill = 0x1000	///< Is the \e stack entry that parameter assignments spill over into
   };
   enum {
@@ -133,6 +135,7 @@ public:
   int4 getAlign(void) const { return alignment; }	///< Get the alignment of \b this entry
   JoinRecord *getJoinRecord(void) const { return joinrec; }	///< Get record describing joined pieces (or null if only 1 piece)
   type_class getType(void) const { return type; }	///< Get the data-type class associated with \b this
+  bool isUnboundedAllocation(void) const { return (flags & unbounded_allocation)!=0; }
   bool isStackSpill(void) const { return ((flags & is_stackspill)!=0); }	///< Return \b true if \b this is the \e stack entry holding spill
   bool isExclusion(void) const { return (alignment==0); }	///< Return \b true if this holds a single parameter exclusively
   bool isReverseStack(void) const { return ((flags & reverse_stack)!=0); }	///< Return \b true if parameters are allocated in reverse order
@@ -151,6 +154,8 @@ public:
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
   Address getAddrBySlot(int4 &slot, int4 sz, int4 typeAlign, bool justifyRight,const AddrSpaceManager *m) const;
   Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,const AddrSpaceManager *m) const;
+  Address getAllocationAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,bool justifyRight,const AddrSpaceManager *m) const;
+  Address getAllocationAddrBySlot(int4 &slot,int4 sz,int4 typeAlign,const AddrSpaceManager *m) const;
   void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
@@ -273,6 +278,8 @@ public:
   ParamTrial splitLo(int4 sz) const;			///< Create a trial representing the last part of \b this
   bool testShrink(const Address &newaddr,int4 sz) const;	///< Test if \b this trial can be made smaller
   bool operator<(const ParamTrial &b) const;		///< Sort trials in formal parameter order
+  int4 getFixedPosition(void) const { return fixedPosition; } ///< Get the locked varargs position
+  void markFixedUsed(void) { flags &= ~((uint4)defnouse); flags |= (active|checked|used); } ///< Restore a declared fixed parameter
   void setFixedPosition(int4 pos) { fixedPosition = pos; }  ///< Set fixed position
   static bool fixedPositionCompare(const ParamTrial &a, const ParamTrial &b); ///< Sort by fixed position; stable for fixedPosition = -1
 };
@@ -439,6 +446,7 @@ public:
   };
   virtual ~ParamList(void) {}			///< Destructor
   virtual uint4 getType(void) const=0;		///< Get the type of parameter list
+  virtual bool hasUnboundedAllocation(void) const { return false; } ///< Does explicit input allocation exceed recognition?
 
   /// \brief Initialized the resource state for \b this to indicate all resources are available
   ///
@@ -640,6 +648,10 @@ public:
   uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlst,
 		      vector<int4> &status,ParameterPieces &res) const;
   virtual uint4 getType(void) const { return p_standard; }
+  virtual bool hasUnboundedAllocation(void) const {
+    const ParamEntry *stack = getStackEntry();
+    return stack != (const ParamEntry *)0 && stack->isUnboundedAllocation();
+  }
   virtual void allocateStatus(vector<int4> &status) const;
   virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
 			 vector<ParameterPieces> &res) const;
@@ -1516,8 +1528,7 @@ public:
   ///
   /// Trials are sorted and marked as \e used or not.
   /// \param active is the collection of Varnode input trials
-  void deriveInputMap(ParamActive *active) const {
-    model->deriveInputMap(active); }
+  void deriveInputMap(ParamActive *active) const;
 
   /// \brief Given a list of output \e trials, derive the most likely return value for \b this prototype
   ///
