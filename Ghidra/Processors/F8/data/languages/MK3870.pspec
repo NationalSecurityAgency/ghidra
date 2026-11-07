@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Mostek MK3870 / Fairchild F3870 - Processor Specification (single-chip)
+
+    Also applies to: MK3870/10-42, MK3872, MK3875/22-42, MK3876,
+    MK38C70/10-20, MK38P70/02, MK38CP70/02, F3870, F3859.
+
+    Hardware-fixed interrupt vectors (Mostek 1981 Data Book p.III-30, Section 5.7):
+    - Timer interrupt:    $020 ("vector address for a timer interrupt is 020 Hex")
+    - External interrupt: $0A0 ("vector address for external interrupts is 0A0 Hex")
+    Also confirmed by Figure 5-2 (III-28) hardware schematic.
+
+    Interrupt priority (III-30): Timer > External.
+
+    Address registers are 12-bit in hardware (Figure 4-3, III-18) but modeled
+    as 16-bit in SLEIGH (upper bits always zero). This matches MAME.
+
+    I/O ports (III-20, Section 4.8):
+    - Port 0 ($00): 8-bit bidirectional (INS/OUTS)
+    - Port 1 ($01): 8-bit bidirectional (INS/OUTS)
+    - Port 4 ($04): 8-bit bidirectional with STROBE (IN/OUT)
+    - Port 5 ($05): 8-bit bidirectional (IN/OUT)
+    - Port 6 ($06): Interrupt Control Port - ICP (OUT/OUTS)
+    - Port 7 ($07): Binary Timer time constant (IN/OUT)
+-->
+<processor_spec>
+
+    <programcounter register="PC0"/>
+
+    <volatile outputop="OUT" inputop="IN">
+        <range space="io" first="0x0" last="0xFF"/>
+    </volatile>
+
+    <default_symbols>
+        <!-- Reset vector (III-14, III-21) -->
+        <symbol name="RESET" address="ram:0x0000" entry="true"/>
+
+        <!-- Timer interrupt vector (III-30, Figure 5-2) -->
+        <symbol name="TIMER_ISR" address="ram:0x0020" entry="true"/>
+
+        <!-- External interrupt vector (III-30, Figure 5-2) -->
+        <symbol name="EXTERNAL_ISR" address="ram:0x00A0" entry="true"/>
+
+        <!-- I/O port labels -->
+        <symbol name="PORT0" address="io:0x00"/>
+        <symbol name="PORT1" address="io:0x01"/>
+        <symbol name="PORT4" address="io:0x04"/>
+        <symbol name="PORT5" address="io:0x05"/>
+        <symbol name="PORT6_ICP" address="io:0x06"/>
+        <symbol name="PORT7_TIMER" address="io:0x07"/>
+    </default_symbols>
+
+</processor_spec>
