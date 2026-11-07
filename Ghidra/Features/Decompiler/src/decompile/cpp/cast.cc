@@ -79,8 +79,6 @@ bool CastStrategy::markExplicitUnsigned(PcodeOp *op,int4 slot) const
 bool CastStrategy::markExplicitLongSize(PcodeOp *op,int4 slot) const
 
 {
-  if (!op->getOpcode()->isShiftOp()) return false;
-  if (slot != 0) return false;
   Varnode *vn = op->getIn(slot);
   if (!vn->isConstant()) return false;
   if (vn->getSize() <= promoteSize) return false;
