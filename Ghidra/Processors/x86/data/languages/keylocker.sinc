@@ -1,0 +1,76 @@
+define pcodeop loadiwkey;
+:LOADIWKEY XmmReg1, XmmReg2 is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xDC; xmmmod = 3 & XmmReg1 & XmmReg2 { loadiwkey(XmmReg1, XmmReg2, XMM0, EAX); }
+
+define pcodeop kl_key_attributes;
+define pcodeop kl_wrap_key;
+:ENCODEKEY128 Reg32,Rmr32     is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0x38; byte=0xFA; mod=3 & Reg32 & Rmr32 & check_Reg32_dest  {
+    Reg32 = kl_key_attributes();
+    build check_Reg32_dest;
+    local wrapped:48 = kl_wrap_key(XMM0, Rmr32);
+    XMM0 = wrapped[0,128];
+    XMM1 = wrapped[128,128];
+    XMM2 = wrapped[256,128];
+}
+
+:ENCODEKEY256 Reg32,Rmr32     is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0f; byte=0x38; byte=0xFB; mod=3 & Reg32 & Rmr32 & check_Reg32_dest  {
+    Reg32 = kl_key_attributes();
+    build check_Reg32_dest;
+    local wrapped:64 = kl_wrap_key(XMM0, XMM1, Rmr32);
+    XMM0 = wrapped[0,128];
+    XMM1 = wrapped[128,128];
+    XMM2 = wrapped[256,128];
+    XMM3 = wrapped[384,128];
+}
+
+define pcodeop aes_encrypt;
+macro enc_wide(key) {
+    XMM0 = aes_encrypt(XMM0, key);
+    XMM1 = aes_encrypt(XMM1, key);
+    XMM2 = aes_encrypt(XMM2, key);
+    XMM3 = aes_encrypt(XMM3, key);
+    XMM4 = aes_encrypt(XMM4, key);
+    XMM5 = aes_encrypt(XMM5, key);
+    XMM6 = aes_encrypt(XMM6, key);
+    XMM7 = aes_encrypt(XMM7, key);
+}
+
+define pcodeop aes_decrypt;
+macro dec_wide(key) {
+    XMM0 = aes_decrypt(XMM0, key);
+    XMM1 = aes_decrypt(XMM1, key);
+    XMM2 = aes_decrypt(XMM2, key);
+    XMM3 = aes_decrypt(XMM3, key);
+    XMM4 = aes_decrypt(XMM4, key);
+    XMM5 = aes_decrypt(XMM5, key);
+    XMM6 = aes_decrypt(XMM6, key);
+    XMM7 = aes_decrypt(XMM7, key);
+}
+
+:AESENC128KL XmmReg, Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xDC; XmmReg ... & Mem  { XmmReg = aes_encrypt(XmmReg, *:8 Mem); }
+
+:AESDEC128KL XmmReg, Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xDD; XmmReg ... & Mem  { XmmReg = aes_decrypt(XmmReg, *:8 Mem); }
+
+:AESENC256KL XmmReg, Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xDE; XmmReg ... & Mem  { XmmReg = aes_encrypt(XmmReg, *:16 Mem); }
+
+:AESDEC256KL XmmReg, Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xDF; XmmReg ... & Mem  { XmmReg = aes_decrypt(XmmReg, *:16 Mem); }
+
+
+:AESENCWIDE128KL Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xD8; reg_opcode=0 ... & Mem {
+    local key = *:8 Mem;
+    enc_wide(key);
+}
+
+:AESDECWIDE128KL Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xD8; reg_opcode=1 ... & Mem {
+    local key = *:8 Mem;
+    dec_wide(key);
+}
+
+:AESENCWIDE256KL Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xD8; reg_opcode=2 ... & Mem {
+    local key = *:16 Mem;
+    enc_wide(key);
+}
+
+:AESDECWIDE256KL Mem is vexMode=0 & $(PRE_F3) & byte=0x0F; byte=0x38; byte=0xD8; reg_opcode=3 ... & Mem {
+    local key = *:16 Mem;
+    dec_wide(key);
+}
