@@ -315,7 +315,7 @@ define pcodeop SoftwareInterrupt;
 
 :MVI addr16, reg0_2 is opcode3_9=0x0050 & reg0_2 & checkbranch ; addr16 {
 	local ptr:2 = addr16;
-	reg0_2 = *(*:2 ptr);
+	reg0_2 = *:2 ptr;
 	build checkbranch;
 }
 
