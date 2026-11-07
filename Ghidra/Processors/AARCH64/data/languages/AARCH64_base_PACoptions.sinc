@@ -2,24 +2,24 @@ autda__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp & 
 autda__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp & Rd_GPR64 { AuthDA(Rd_GPR64, Rn_GPR64xsp); }
 autda__PACpart: "hide" is ShowPAC=0 { }
 
-autdza__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthDA(Rd_GPR64, xzr); }
-autdza__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthDA(Rd_GPR64, xzr); }
+autdza__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthDA(Rd_GPR64, 0:8); }
+autdza__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthDA(Rd_GPR64, 0:8); }
 autdza__PACpart: "hide" is ShowPAC=0 { }
 
 autdb__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp & Rd_GPR64 { Rd_GPR64 = AuthDB(Rd_GPR64, Rn_GPR64xsp); }
 autdb__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp & Rd_GPR64 { AuthDB(Rd_GPR64, Rn_GPR64xsp); }
 autdb__PACpart: "hide" is ShowPAC=0 { }
 
-autdzb__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthDB(Rd_GPR64, xzr); }
-autdzb__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthDB(Rd_GPR64, xzr); }
+autdzb__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthDB(Rd_GPR64, 0:8); }
+autdzb__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthDB(Rd_GPR64, 0:8); }
 autdzb__PACpart: "hide" is ShowPAC=0 { }
 
 autia__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp & Rd_GPR64 { Rd_GPR64 = AuthIA(Rd_GPR64, Rn_GPR64xsp); }
 autia__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp & Rd_GPR64 { AuthIA(Rd_GPR64, Rn_GPR64xsp); }
 autia__PACpart: "hide" is ShowPAC=0 { }
 
-autiza__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthIA(Rd_GPR64, xzr); }
-autiza__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthIA(Rd_GPR64, xzr); }
+autiza__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthIA(Rd_GPR64, 0:8); }
+autiza__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthIA(Rd_GPR64, 0:8); }
 autiza__PACpart: "hide" is ShowPAC=0 { }
 
 autia1716__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x17 = AuthIA(x17, x16); }
@@ -30,16 +30,16 @@ autiasp__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIA
 autiasp__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIA(x30, sp); }
 autiasp__PACpart: "hide" is ShowPAC=0 { }
 
-autiaz__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIA(x30, xzr); }
-autiaz__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIA(x30, xzr); }
+autiaz__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIA(x30, 0:8); }
+autiaz__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIA(x30, 0:8); }
 autiaz__PACpart: "hide" is ShowPAC=0 { }
 
 autib__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp & Rd_GPR64 { Rd_GPR64 = AuthIB(Rd_GPR64, Rn_GPR64xsp); }
 autib__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp & Rd_GPR64 { AuthIB(Rd_GPR64, Rn_GPR64xsp); }
 autib__PACpart: "hide" is ShowPAC=0 { }
 
-autizb__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthIB(Rd_GPR64, xzr); }
-autizb__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthIB(Rd_GPR64, xzr); }
+autizb__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64 { Rd_GPR64 = AuthIB(Rd_GPR64, 0:8); }
+autizb__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64 { AuthIB(Rd_GPR64, 0:8); }
 autizb__PACpart: "hide" is ShowPAC=0 { }
 
 autib1716__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x17 = AuthIB(x17, x16); }
@@ -50,20 +50,20 @@ autibsp__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIB
 autibsp__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIB(x30, sp); }
 autibsp__PACpart: "hide" is ShowPAC=0 { }
 
-autibz__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIB(x30, xzr); }
-autibz__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIB(x30, xzr); }
+autibz__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { x30 = AuthIB(x30, 0:8); }
+autibz__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIB(x30, 0:8); }
 autibz__PACpart: "hide" is ShowPAC=0 { }
 
-b_blinkop__raaz___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64 { AuthIA(Rn_GPR64, xzr); }
-b_blinkop__raaz___PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64 { AuthIA(Rn_GPR64, xzr); }
+b_blinkop__raaz___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64 { AuthIA(Rn_GPR64, 0:8); }
+b_blinkop__raaz___PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64 { AuthIA(Rn_GPR64, 0:8); }
 b_blinkop__raaz___PACpart: "hide" is ShowPAC=0 { }
 
 b_blinkop__raa___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64xsp & Rn_GPR64 { AuthIA(Rn_GPR64, Rd_GPR64xsp); }
 b_blinkop__raa___PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rd_GPR64xsp & Rn_GPR64 { AuthIA(Rn_GPR64, Rd_GPR64xsp); }
 b_blinkop__raa___PACpart: "hide" is ShowPAC=0 { }
 
-b_blinkop__rabz___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64 { AuthIB(Rn_GPR64, xzr); }
-b_blinkop__rabz___PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64 { AuthIB(Rn_GPR64, xzr); }
+b_blinkop__rabz___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64 { AuthIB(Rn_GPR64, 0:8); }
+b_blinkop__rabz___PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64 { AuthIB(Rn_GPR64, 0:8); }
 b_blinkop__rabz___PACpart: "hide" is ShowPAC=0 { }
 
 b_blinkop__rab___PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rd_GPR64xsp & Rn_GPR64 { AuthIB(Rn_GPR64, Rd_GPR64xsp); }
@@ -78,12 +78,12 @@ eretab__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 { AuthIB(pc, sp
 eretab__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 { AuthIB(pc, sp); }
 eretab__PACpart: "hide" is ShowPAC=0 { }
 
-ldraa__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp { AuthDA(Rn_GPR64xsp, xzr); }
-ldraa__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp { AuthDA(Rn_GPR64xsp, xzr); }
+ldraa__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp { AuthDA(Rn_GPR64xsp, 0:8); }
+ldraa__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp { AuthDA(Rn_GPR64xsp, 0:8); }
 ldraa__PACpart: "hide" is ShowPAC=0 { }
 
-ldrab__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp { AuthDB(Rn_GPR64xsp, xzr); }
-ldrab__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp { AuthDB(Rn_GPR64xsp, xzr); }
+ldrab__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp { AuthDB(Rn_GPR64xsp, 0:8); }
+ldrab__PACpart: "show_noclobber" is ShowPAC=1 & PAC_clobber=0 & Rn_GPR64xsp { AuthDB(Rn_GPR64xsp, 0:8); }
 ldrab__PACpart: "hide" is ShowPAC=0 { }
 
 pacda__PACpart: "show_and_clobber" is ShowPAC=1 & PAC_clobber=1 & Rn_GPR64xsp & Rd_GPR64 { Rd_GPR64 = pacda(Rd_GPR64, Rn_GPR64xsp); }
