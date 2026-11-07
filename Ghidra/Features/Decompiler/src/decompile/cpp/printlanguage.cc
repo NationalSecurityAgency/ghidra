@@ -288,6 +288,8 @@ bool PrintLanguage::parentheses(const OpToken *op2)
   case OpToken::unary_prefix:
     if (topToken->precedence > op2->precedence) return true;
     if (topToken->precedence < op2->precedence) return false;
+    // Double unary prefix - add parentheses so we print -(-x) instead of --x
+    if (topToken == op2) return true;
     //    if (associative && (this == &op2)) return false;
     if ((op2->type==OpToken::unary_prefix)||(op2->type==OpToken::presurround)) return false;
     return true;
