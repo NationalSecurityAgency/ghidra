@@ -25,6 +25,7 @@ public class IntelHexRecordWriter {
 	private final boolean dropExtraBytes;
 
     private Address startAddress = null;
+    private Address nextAddress = null;
     private Long oldSegment = null;
 	private ArrayList<Byte> bytes = new ArrayList<>();
     private Boolean isSegmented = null;
@@ -36,8 +37,8 @@ public class IntelHexRecordWriter {
 	 * Constructor
 	 * 
 	 * @param maxBytesPerLine the maximum number of bytes to write per line in the hex output
-	 * @param dropExtraBytes if true, only lines matching {@link #maxBytesPerLine} will be output; 
-	 * remaining bytes will be left out
+	 * @param dropExtraBytes if true, omit the final incomplete data record when finishing; 
+	 * incomplete records before an address gap or segment change are still output
 	 */
 	public IntelHexRecordWriter(int maxBytesPerLine, boolean dropExtraBytes) {
         if (maxBytesPerLine > IntelHexRecord.MAX_RECORD_LENGTH) {
@@ -96,11 +97,18 @@ public class IntelHexRecordWriter {
             oldSegment = newSegment;
         }
 
+        // A data record describes contiguous bytes starting at its load offset.
+        // Flush before a hole so later bytes retain their actual addresses.
+        if (!bytes.isEmpty() && !address.equals(nextAddress)) {
+            emitData();
+        }
+
         if (startAddress == null) {
             startAddress = address;
         }
 
         bytes.add(b);
+        nextAddress = address.next();
 
         if (bytes.size() >= maxBytesPerLine) {
             emitData();
@@ -123,6 +131,7 @@ public class IntelHexRecordWriter {
             results.add(new IntelHexRecord(length, loadOffset, 0, data));
             bytes.clear();
             startAddress = null;
+            nextAddress = null;
         }
     }
 
