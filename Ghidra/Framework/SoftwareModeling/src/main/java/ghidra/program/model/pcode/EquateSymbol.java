@@ -206,7 +206,16 @@ public class EquateSymbol extends HighSymbol {
 		switch (firstChar) {
 			case '\'':
 			case '"':
-				return FORMAT_CHAR;
+				// Character representations can have raw byte tokens after the quoted section.
+				for (int i = pos; i < nm.length(); i++) {
+					if (nm.charAt(i) == '\\') {
+						i++;
+					}
+					else if (nm.charAt(i) == firstChar) {
+						return FORMAT_CHAR;
+					}
+				}
+				return FORMAT_DEFAULT;
 			case '0':
 				if (nm.length() >= (pos + 1) && nm.charAt(pos) == 'x') {
 					return FORMAT_HEX;
