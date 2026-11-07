@@ -53,7 +53,7 @@ public class ParamListStandardOut extends ParamListStandard {
 			responseCode == AssignAction.HIDDENRET_SPECIALREG ||
 			responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
 			// If the storage is not assigned (because the datatype is too big) create a hidden input parameter
-			int sz = (spacebase == null) ? -1 : spacebase.getPointerSize();
+			int sz = proto.model.getPointerSize(spacebase);
 			DataType pointerType = dtManager.getPointer(proto.outtype, sz);
 			if (responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
 				store.type = VoidDataType.dataType;
