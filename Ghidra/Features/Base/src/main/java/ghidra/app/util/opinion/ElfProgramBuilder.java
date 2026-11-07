@@ -1502,6 +1502,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private Address lastExternalBlockEntryAddress;
 	private Address nextExternalBlockEntryAddress;
 
+	// Names of the symbols in the EXTERNAL block up to externalBlockNameIndexEnd, mapped to the
+	// lowest address which has a symbol with that name (see findExternalBlockSymbol)
+	private Map<String, Address> externalBlockNameIndex = new HashMap<>();
+	private Address externalBlockNameIndexEnd;
+
 	/**
 	 * Allocate the next EXTERNAL block entry location based upon the specified size.
 	 * @param entrySize entry size
@@ -1975,13 +1980,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		if (StringUtils.isBlank(symName)) {
 			return false;
 		}
-		Symbol s = findExternalBlockSymbol(symName, externalBlockLimits.getMinAddress(),
+		Address address = findExternalBlockSymbol(symName, externalBlockLimits.getMinAddress(),
 			lastExternalBlockEntryAddress);
-		if (s != null) {
+		if (address != null) {
 			// NOTE: re-use of other fake external address does not support
 			// data allocation.  It may be necessary to ensure that dynamic 
 			// symbol table is processed last.
-			setElfSymbolAddress(elfSymbol, s.getAddress());
+			setElfSymbolAddress(elfSymbol, address);
 			return true;
 		}
 		return false;
@@ -2023,14 +2028,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		String realName = symName.substring(0, index);
 
 		// Find real symbol (assumes real symbol is always processed first)
-		Symbol s = findExternalBlockSymbol(realName, externalBlockLimits.getMinAddress(),
+		Address address = findExternalBlockSymbol(realName, externalBlockLimits.getMinAddress(),
 			lastExternalBlockEntryAddress);
-		if (s == null) {
+		if (address == null) {
 			return false;
 		}
 
 		// Add versioned symbol as comment only
-		Address address = s.getAddress();
 		String comment = listing.getComment(CommentType.PRE, address);
 		if (comment == null || comment.length() == 0) {
 			comment = symName;
@@ -2044,37 +2048,43 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Find a specific named symbol within the fake EXTERNAL block.
+	 * Find the address of a specific named symbol within the fake EXTERNAL block.
 	 * NOTE: It is assumed that ELF will never produced duplicate names.
 	 * @param name symbol name
 	 * @param extMin EXTERNAL block minimum address
 	 * @param extMax EXTERNAL block maximum address
-	 * @return matching symbol or null if not found
+	 * @return address of matching symbol or null if not found
 	 */
-	private Symbol findExternalBlockSymbol(String name, Address extMin, Address extMax) {
+	private Address findExternalBlockSymbol(String name, Address extMin, Address extMax) {
 
 		// try direct global name lookup first
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator symbols = symbolTable.getSymbols(name);
 		for (Symbol symbol : symbols) {
 			if (isSymbolInRange(symbol, extMin, extMax)) {
-				return symbol;
+				return symbol.getAddress();
 			}
 		}
 
 		// Since we can't do a direct lookup of default thunk names
-		// we must iterate over all symbols in the block to find a match
-		SymbolIterator symbolIter = symbolTable.getSymbolIterator(extMin, true);
-		while (symbolIter.hasNext()) {
-			Symbol s = symbolIter.next();
-			if (!isSymbolInRange(s, extMin, extMax)) {
-				break;
+		// we must check the names of all symbols in the block.  The names are
+		// indexed so that each symbol is only visited once and not once per lookup.
+		// Entries are only added at the end of the block (see allocateExternalSymbol),
+		// so only the symbols after the indexed part need to be added.
+		if (externalBlockNameIndexEnd == null || externalBlockNameIndexEnd.compareTo(extMax) < 0) {
+			Address start =
+				externalBlockNameIndexEnd == null ? extMin : externalBlockNameIndexEnd.next();
+			SymbolIterator symbolIter = symbolTable.getSymbolIterator(start, true);
+			while (symbolIter.hasNext()) {
+				Symbol s = symbolIter.next();
+				if (!isSymbolInRange(s, extMin, extMax)) {
+					break;
+				}
+				externalBlockNameIndex.putIfAbsent(s.getName(), s.getAddress());
 			}
-			if (name.equals(s.getName())) {
-				return s;
-			}
+			externalBlockNameIndexEnd = extMax;
 		}
-		return null;
+		return externalBlockNameIndex.get(name);
 	}
 
 	private boolean isSymbolInRange(Symbol s, Address min, Address max) {
@@ -2091,6 +2101,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				elf.getLoadAdapter().evaluateElfSymbol(this, elfSymbol, address, isFakeExternal);
 		}
 		if (address != null) {
+
+			if (externalBlockNameIndexEnd != null && externalBlockLimits.contains(address) &&
+				address.compareTo(externalBlockNameIndexEnd) <= 0) {
+				// symbol added within indexed part of EXTERNAL block (see findExternalBlockSymbol)
+				externalBlockNameIndex.clear();
+				externalBlockNameIndexEnd = null;
+			}
 
 			// Remember where in memory Elf symbols have been mapped
 			setElfSymbolAddress(elfSymbol, address);
