@@ -435,6 +435,8 @@ public:
     p_standard_out,	///< Standard output (return value) model
     p_register,		///< Unordered parameter passing locations model
     p_register_out,	///< Multiple possible return value locations model
+    p_pascal,		///< Pascal parameter passing locations model
+    p_pascal_out,	///< Multiple possible return value locations model
     p_merged		///< A merged model (multiple models merged together)
   };
   virtual ~ParamList(void) {}			///< Destructor
@@ -641,6 +643,10 @@ public:
 		      vector<int4> &status,ParameterPieces &res) const;
   virtual uint4 getType(void) const { return p_standard; }
   virtual void allocateStatus(vector<int4> &status) const;
+/*
+  virtual void assignMapRtoL(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMapLtoR(const PrototypePieces &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+*/
   virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
 			 vector<ParameterPieces> &res) const;
   virtual void fillinMap(ParamActive *active) const;
@@ -717,6 +723,36 @@ public:
   virtual uint4 getType(void) const { return p_register; }
   virtual void fillinMap(ParamActive *active) const;
   virtual ParamList *clone(void) const;
+};
+
+/// \brief A Pascal model for returning output parameters from a function
+///
+/// This is based solely upon the strategy than its parent class.  It's inclusion is just to mirror it's
+/// partner class ParamListPascal.
+class ParamListPascalOut : public ParamListStandardOut {
+public:
+  ParamListPascalOut(void) : ParamListStandardOut() {}		///< Constructor
+  ParamListPascalOut(const ParamListPascalOut &op2) : ParamListStandardOut(op2) {}	///< Copy constructor
+  virtual uint4 getType(void) const { return p_pascal_out; }
+  virtual ParamList *clone(void) const;
+};
+
+/// \brief A Pascal (left-to-right parameter stacking) model for passing input parameters to a function.
+///
+/// This is the \b Pascal model, meaning the storage is assigned in reverse so the last parameter is
+/// assigned 1st etc.  This is nearly identical to ParamListStandard, except that storage is allocated
+/// in reverse.  It also allocates storage for any \e hidden return pointer and ensures the correct
+/// order when using \e this pointers that may come before or after the \e hidden return pinter.
+class ParamListPascal : public ParamListStandard {
+public:
+  ParamListPascal(void) : ParamListStandard() {}	///< Constructor for use with decode()
+  ParamListPascal(const ParamListPascal &op2) : ParamListStandard(op2) {}	///< Copy constructor
+  virtual uint4 getType(void) const { return p_pascal; }
+  virtual void assignMap(const PrototypePieces &proto,TypeFactory &typefactory,vector<int4> &status,
+			 vector<ParameterPieces> &res) const;
+  bool allocateHiddenReturn(const PrototypePieces &proto, TypeFactory& typefactory, vector<int> &status,
+			    bool hiddenParam, ParameterPieces& hiddenPtr) const;
+  virtual ParamList* clone(void) const;
 };
 
 /// \brief A union of other input parameter passing models
@@ -821,6 +857,11 @@ public:
     output->fillinMap(active); }
 
   void assignParameterStorage(const PrototypePieces &proto,vector<ParameterPieces> &res,bool ignoreOutputError);
+
+  /// \brief Get pointer size based upon current address model or proto model name
+  /// \param space is the AddrSpace to get the default pointer (aka address) size
+  /// \return \b pointersize (or -1 if null \e space or no specific) for \b this model
+  int getPointerSize(const AddrSpace *space) const;
 
   /// \brief Check if the given two input storage locations can represent a single logical parameter
   ///
