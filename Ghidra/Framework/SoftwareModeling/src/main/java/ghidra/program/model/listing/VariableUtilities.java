@@ -366,7 +366,8 @@ public class VariableUtilities {
 	 * @param curStorage current variable storage
 	 * @param dataType variable datatype
 	 * @param alignStack if false no attempt is made to align stack usage for big-endian
-	 * @param function function which corresponds to resized variable storage
+	 * @param function function which corresponds to resized variable storage, or null if none.
+	 * Stack alignment is not performed when no function is specified.
 	 * @return resize storage
 	 * @throws InvalidInputException if unable to resize storage to specified size.
 	 */
@@ -404,7 +405,8 @@ public class VariableUtilities {
 
 	private static VariableStorage shrinkStorage(VariableStorage curStorage, int newSize,
 			DataType dataType, boolean alignStack, Function function) throws InvalidInputException {
-		Program program = function.getProgram();
+		ProgramArchitecture program =
+			function != null ? function.getProgram() : curStorage.getProgramArchitecture();
 		List<Varnode> newList = new ArrayList<>();
 		int size = 0;
 		for (Varnode vn : curStorage.getVarnodes()) {
@@ -421,7 +423,8 @@ public class VariableUtilities {
 
 	private static VariableStorage expandStorage(VariableStorage curStorage, int newSize,
 			DataType dataType, boolean alignStack, Function function) throws InvalidInputException {
-		Program program = function.getProgram();
+		ProgramArchitecture program =
+			function != null ? function.getProgram() : curStorage.getProgramArchitecture();
 		Varnode[] varnodes = curStorage.getVarnodes();
 		int lastIndex = varnodes.length - 1;
 		varnodes[lastIndex] = expandVarnode(varnodes[lastIndex], newSize - curStorage.size(),
@@ -437,8 +440,11 @@ public class VariableUtilities {
 			return resizeStackVarnode(varnode, varnode.getSize() - sizeReduction, curStorage,
 				newSize, dataType, alignStack, function);
 		}
-		boolean isRegister = function.getProgram().getRegister(varnode) != null;
-		boolean bigEndian = function.getProgram().getMemory().isBigEndian();
+		Language language = curStorage.getProgramArchitecture().getLanguage();
+		Program program = function != null ? function.getProgram() : null;
+		boolean isRegister = (program != null ? program.getRegister(varnode)
+				: language.getRegister(addr, varnode.getSize())) != null;
+		boolean bigEndian = language.isBigEndian();
 		boolean complexDt = (dataType instanceof Composite) || (dataType instanceof Array);
 		if (bigEndian && (isRegister || !complexDt)) {
 			return new Varnode(varnode.getAddress().add(sizeReduction),
@@ -466,8 +472,11 @@ public class VariableUtilities {
 				newSize, dataType, alignStack, function);
 		}
 		int size = varnode.getSize() + sizeIncrease;
-		boolean bigEndian = function.getProgram().getMemory().isBigEndian();
-		Register reg = function.getProgram().getRegister(varnode);
+		Language language = curStorage.getProgramArchitecture().getLanguage();
+		Program program = function != null ? function.getProgram() : null;
+		boolean bigEndian = language.isBigEndian();
+		Register reg = program != null ? program.getRegister(varnode)
+				: language.getRegister(addr, varnode.getSize());
 		Address vnAddr = varnode.getAddress();
 		if (reg != null) {
 			// Register expansion
@@ -499,7 +508,8 @@ public class VariableUtilities {
 
 		boolean complexDt = (dataType instanceof Composite) || (dataType instanceof Array);
 
-		StackAttributes stackAttributes = getStackAttributes(function);
+		StackAttributes stackAttributes =
+			function != null ? getStackAttributes(function) : new StackAttributes(1, 0, false);
 
 		Address curAddr = varnode.getAddress();
 		int stackOffset = (int) curAddr.getOffset();
