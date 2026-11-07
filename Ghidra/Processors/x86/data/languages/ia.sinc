@@ -3245,14 +3245,13 @@ define pcodeop cpuid_brand_part3_info;
                            resultflags(AL); }
 :DAS            is vexMode=0 & bit64=0 & byte=0x2f       { local oldAL = AL;
                            local oldCF = CF;
-                           CF = 0;
                            local car = ((AL & 0xf) > 9) | AF;
-                           CF = oldCF | (AL < 6); # borrow from AL - 6
+                           local lowBorrow = car & (AL < 6); # borrow from AL - 6, before AL changes
                            AL = AL - 6 * car;
                            AF = car;
                            car = (oldAL > 0x99) | oldCF;
                            AL = AL - 0x60 * car;
-                           CF = car;
+                           CF = car | lowBorrow;
                            resultflags(AL); }
 
 # See 'lockable.sinc' for memory destination, lockable variants
