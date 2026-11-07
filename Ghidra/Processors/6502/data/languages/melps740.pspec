@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+  
+  <default_symbols>
+    <!-- Special function registers -->
+    <symbol name="SFR_P0"      address="E0"/>
+    <symbol name="SFR_P0DDR"   address="E1"/>
+    <symbol name="SFR_P1"      address="E2"/>
+    <symbol name="SFR_P1DDR"   address="E3"/>
+    <symbol name="SFR_P2"      address="E4"/>
+    <symbol name="SFR_P2DDR"   address="E5"/>
+    <symbol name="SFR_P3"      address="E8"/>
+    <symbol name="SFR_P3DDR"   address="E9"/>
+    <symbol name="SFR_P4"      address="EA"/>
+    <symbol name="SFR_P4DDR"   address="EB"/>
+    <symbol name="SFR_P5"      address="EC"/>
+    <symbol name="SFR_P6"      address="EE"/>
+    <symbol name="SFR_SIOMODE" address="F6"/>
+    <symbol name="SFR_SIOREG"  address="F7"/>
+    <symbol name="SFR_T1T2PRE" address="F9"/>
+    <symbol name="SFR_TMR1"    address="FA"/>
+    <symbol name="SFR_TMR2"    address="FB"/>
+    <symbol name="SFR_TXPRE"   address="FC"/>
+    <symbol name="SFR_TMRX"    address="FD"/>
+    <symbol name="SFR_INTCON"  address="FE"/>
+    <symbol name="SFR_TMRCON"  address="FF"/>
+
+    <!-- Interrupt vectors -->
+    <symbol name="V_INT2" address="FFF4" entry="true" type="code_ptr"/>
+    <symbol name="V_SIO_TIMER2" address="FFF6" entry="true" type="code_ptr"/>
+    <symbol name="V_TIMER1" address="FFF8" entry="true" type="code_ptr"/>
+    <symbol name="V_TIMERX" address="FFFA" entry="true" type="code_ptr"/>
+    <symbol name="V_INT1" address="FFFC" entry="true" type="code_ptr"/>
+    <symbol name="V_RESET" address="FFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+
+  <default_memory_blocks>
+    <memory_block name="ZERO_PAGE" start_address="0x0000" length="0x00E0" initialized="false"/>
+    <memory_block name="SFR" start_address="0x00E0" length="0x020" initialized="false"/>
+    <memory_block name="STACK" start_address="0x0100" length="0x0100" initialized="false"/>
+  </default_memory_blocks>
+</processor_spec>
