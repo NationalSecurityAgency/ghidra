@@ -3418,15 +3418,11 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :qasx^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfaa & Rn0003; op12=0xf & Rd0811 & thc0407=0x1 & Rm0003
 {
   build ItCond;
-  local lRn = Rn0003 & 0xffff;
-  local lRm = Rm0003 & 0xffff;
-  local uRn = (Rn0003 >> 16) & 0xffff;
-  local uRm = (Rm0003 >> 16) & 0xffff;
-  sum1:2 = lRn:2 - lRm:2;
-  sum1 = SignedSaturate(sum1,16:2);
-  sum2:2 = uRn:2 + uRm:2;
-  sum2 = SignedSaturate(sum2,16:2);
-  Rd0811 = (zext(sum2) << 16) | zext(sum1);
+  local lo:4 = sext(Rn0003[ 0,16]) - sext(Rm0003[16,16]);
+  local hi:4 = sext(Rn0003[16,16]) + sext(Rm0003[ 0,16]);
+  local satlo:4 = SignedSaturate(lo, 16:2);
+  local sathi:4 = SignedSaturate(hi, 16:2);
+  Rd0811 = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
 }
 
 @endif # VERSION_6
@@ -3465,15 +3461,11 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 :qsax^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfae & Rn0003; op12=0xf & Rd0811 & thc0407=0x1 & Rm0003
 {
   build ItCond;
-  local lRn = Rn0003 & 0xffff;
-  local lRm = Rm0003 & 0xffff;
-  local uRn = (Rn0003 >> 16) & 0xffff;
-  local uRm = (Rm0003 >> 16) & 0xffff;
-  sum1:2 = lRn:2 + lRm:2;
-  sum1 = SignedSaturate(sum1,16:2);
-  sum2:2 = uRn:2 - uRm:2;
-  sum2 = SignedSaturate(sum2,16:2);
-  Rd0811 = (zext(sum2) << 16) | zext(sum1);
+  local lo:4 = sext(Rn0003[ 0,16]) + sext(Rm0003[16,16]);
+  local hi:4 = sext(Rn0003[16,16]) - sext(Rm0003[ 0,16]);
+  local satlo:4 = SignedSaturate(lo, 16:2);
+  local sathi:4 = SignedSaturate(hi, 16:2);
+  Rd0811 = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
 }
 
 @endif # VERSION_6
