@@ -31,7 +31,7 @@ define register offset=0x180 size=4 [tbr];
 
 # Writable SR bits. SH-1/SH-2: T, S, I3-I0, Q, M (SH-1/SH-2 Programming Manual, LDC and RTE).
 @if SH_VERSION == "2A"
-@define SR_LDC_MASK "0x0FFF0FFF"
+@define SR_LDC_MASK "0x000063F3"
 @define SR_RTE_MASK "0x000063F3"
 @else
 @define SR_LDC_MASK "0x000003F3"
