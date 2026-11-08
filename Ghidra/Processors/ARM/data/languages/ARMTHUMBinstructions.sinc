@@ -3664,9 +3664,9 @@ macro BitReverse(val) {
 {
   # register list is always: pc, cpsr
   ptr:4 = part2Rd0003 - 4;
-  cpsr = *ptr;
-  ptr = ptr - 4;
   dest:4 = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
@@ -3675,10 +3675,10 @@ macro BitReverse(val) {
 {
   # register list is always: pc, cpsr
   ptr:4 = part2Rd0003 - 4;
-  cpsr = *ptr;
-  ptr = ptr - 4;
   dest:4 = *ptr;
-  part2Rd0003 = ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
+  part2Rd0003 = ptr - 8;
   BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
@@ -3687,9 +3687,9 @@ macro BitReverse(val) {
 {
   # register list is always: pc, cpsr
   ptr:4 = part2Rd0003;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   dest:4 = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
 }
@@ -3698,9 +3698,9 @@ macro BitReverse(val) {
 {
   # register list is always: pc, cpsr
   ptr:4 = part2Rd0003;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   dest:4 = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   part2Rd0003 = ptr + 4;
   BranchWritePC(dest & 0xfffffffe); # Simple branch, mask off the last bit
   return [pc];
