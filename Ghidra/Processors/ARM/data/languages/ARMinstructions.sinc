@@ -5721,7 +5721,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build SBIT_CZNO;
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=0 & rn & Rd=15 & c2627=0 & shift1
+{
+  build COND;
+  build rn;
+  build shift1;
+  subflags(rn,shift1);
+  dest:4 = rn-shift1;
+  resultflags(dest);
+  build SBIT_CZNO;
+  ALUWritePC(dest);
+  goto [pc];
+}
+
+# SUBS PC (S=1) is the exception return: restores CPSR from SPSR
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=1 & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5736,7 +5750,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   goto [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & Rn=14 & I25=1 & immed=0 & rotate=0 & c2627=0 & shift1
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & Rn=14 & I25=1 & S20=0 & immed=0 & rotate=0 & c2627=0 & shift1
+{
+  build COND;
+  build rn;
+  build shift1;
+  subflags(rn,shift1);
+  dest:4 = rn-shift1;
+  resultflags(dest);
+  build SBIT_CZNO;
+  ALUWritePC(dest);
+  return [pc];
+}
+
+# SUBS PC (S=1) is the exception return: restores CPSR from SPSR
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & Rn=14 & I25=1 & S20=1 & immed=0 & rotate=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5750,7 +5778,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   return [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:sub^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=0 & rn & Rd=15 & c2627=0 & shift2
+{
+  build COND;
+  build rn;
+  build shift2;
+  subflags(rn,shift2);
+  dest:4 = rn-shift2;
+  resultflags(dest);
+  build SBIT_CZNO;
+  ALUWritePC(dest);
+  goto [pc];
+}
+
+# SUBS PC (S=1) is the exception return: restores CPSR from SPSR
+:sub^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=1 & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5765,7 +5807,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   goto [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:sub^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=0 & rn & Rd=15 & c2627=0 & shift3
+{
+  build COND;
+  build rn;
+  build shift3;
+  subflags(rn,shift3);
+  dest:4 = rn-shift3;
+  resultflags(dest);
+  build SBIT_CZNO;
+  ALUWritePC(dest);
+  goto [pc];
+}
+
+# SUBS PC (S=1) is the exception return: restores CPSR from SPSR
+:sub^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & S20=1 & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
