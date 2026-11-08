@@ -1829,10 +1829,10 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 :rfeda rn 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
-  ptr:4 = rn - 8;
-  pc = *ptr;
-  ptr = ptr + 4;
+  ptr:4 = rn;
   cpsr = *ptr;
+  ptr = ptr - 4;
+  pc = *ptr;
   return [pc];
 }
 
@@ -1840,9 +1840,9 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = rn - 4;
-  pc = *ptr;
-  ptr = ptr + 4;
   cpsr = *ptr;
+  ptr = ptr - 4;
+  pc = *ptr;
   return [pc];
 }
 
@@ -1871,10 +1871,10 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 :rfeda Rn! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
-  ptr:4 = Rn - 8;
-  pc = *ptr;
-  ptr = ptr + 4;
+  ptr:4 = Rn;
   cpsr = *ptr;
+  ptr = ptr - 4;
+  pc = *ptr;
   Rn = ptr - 4;
   return [pc];
 }
@@ -1883,10 +1883,10 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn - 4;
-  pc = *ptr;
-  ptr = ptr + 4;
   cpsr = *ptr;
-  Rn = ptr - 8;
+  ptr = ptr - 4;
+  pc = *ptr;
+  Rn = ptr;
   return [pc];
 }
 
