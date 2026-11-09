@@ -266,12 +266,14 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		RunManager runManager = new RunManager(listener);
 		ExceptionRunnable runnable = new ExceptionRunnable();
 
+		setErrorsExpected(true);
 		runManager.runNow(runnable, "Test Runnable");
 
 		waitForRunManagerToStart(runManager, runnable);
 
 		waitForRunManagerToFinish(runManager);
 
+		setErrorsExpected(false);
 		assertEquals(0, listener.taskCompleted);
 		assertEquals(0, listener.taskCancelled);
 		assertNotNull(listener.failedThrowable);
@@ -416,10 +418,11 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void waitForRunManagerToFinish(RunManager runManager) {
 		runManager.waitForNotBusy(MAX_WAIT_TIME);
+		waitForSwing();
 	}
 
 	private void trace(String message) {
-		Msg.debug(this, message);
+		Msg.trace(this, message);
 	}
 
 //==================================================================================================
