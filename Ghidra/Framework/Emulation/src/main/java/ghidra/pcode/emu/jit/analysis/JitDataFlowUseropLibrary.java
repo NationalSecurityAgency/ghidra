@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.jit.JitBytesPcodeExecutorState;
 import ghidra.pcode.emu.jit.decode.DecoderUseropLibrary;
 import ghidra.pcode.emu.jit.op.*;
@@ -291,6 +292,7 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 	private final JitDataFlowModel dfm;
 
 	private final Map<String, PcodeUseropDefinition<JitVal>> userops;
+	private final SymbolsCache symbolsCache = new SymbolsCache(this);
 
 	/**
 	 * Construct a wrapper library
@@ -317,5 +319,10 @@ public class JitDataFlowUseropLibrary implements PcodeUseropLibrary<JitVal> {
 	@Override
 	public Map<String, PcodeUseropDefinition<JitVal>> getUserops() {
 		return userops;
+	}
+
+	@Override
+	public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+		return symbolsCache.getSymbols(language);
 	}
 }

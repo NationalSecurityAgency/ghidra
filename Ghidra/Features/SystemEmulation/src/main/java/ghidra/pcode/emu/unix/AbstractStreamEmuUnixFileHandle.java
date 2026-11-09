@@ -19,6 +19,7 @@ import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.sys.EmuIOException;
 import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.lang.CompilerSpec;
 
 /**
@@ -65,6 +66,12 @@ public abstract class AbstractStreamEmuUnixFileHandle<T> implements EmuUnixFileD
 	@Override
 	public T readAbstract(T buf) throws EmuIOException {
 		return arithmetic.fromConst(read(buf), offsetBytes);
+	}
+
+	@Override
+	public T pread(T buf, T offset) throws EmuIOException {
+		return arithmetic.fromConst(pread(buf, arithmetic.toLong(offset, Purpose.OTHER)),
+			offsetBytes);
 	}
 
 	@Override

@@ -71,8 +71,7 @@ import ghidra.util.Swing;
 	servicesRequired = {
 		DebuggerControlService.class,
 		DebuggerTraceManagerService.class,
-	}
-)
+	})
 public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		implements DockingContextListener {
 
@@ -157,7 +156,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected Set<DockingAction> getActionSet(ControlMode mode) {
-		return switch(mode) {
+		return switch (mode) {
 			case TargetControlMode _ -> actionsTargetAll;
 			case TraceControlMode _ -> actionsTrace;
 			case EmulatorControlMode _ -> actionsEmulate;
@@ -302,8 +301,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			actionsTargetStepExt.add(TargetStepExtAction.builder(entry.display(), this)
 					.description(entry.details())
 					.toolBarIcon(entry.icon())
-					.enabledWhen(ctx -> entry.isEnabled())
-					.onAction(ctx -> TargetActionTask.runAction(tool, entry.display(), entry))
+					.enabledWhen(_ -> entry.isEnabled())
+					.onAction(_ -> TargetActionTask.runAction(tool, entry.display(), entry))
 					.build());
 		}
 	}
@@ -349,13 +348,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		ControlMode mode = state.getUserData();
 		controlService.setCurrentMode(current.getTrace(), mode, mode.isEditable());
 		if (mode instanceof EmulatorControlMode emode) {
-			// Post GP-3090, this can be replaced
-			Collection<EmulatorFactory> emulatorFactories = emulationService.getEmulatorFactories();
-			for (EmulatorFactory factory : emulatorFactories) {
-				if (emode.name.equals(factory.getTitle())) {
-					emulationService.setEmulatorFactory(factory);
-				}
-			}
+			emulationService.setEmulatorFactory(emode.name);
 		}
 		actionControlMode.setToolBarData(
 			new ToolBarData(mode.icon, DebuggerResources.GROUP_CONTROL, ""));

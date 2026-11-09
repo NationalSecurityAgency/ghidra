@@ -16,6 +16,8 @@
 package ghidra.pcode.emu.unix;
 
 import ghidra.pcode.emu.sys.EmuFileContents;
+import ghidra.pcode.emu.sys.EmuIOException;
+import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary.Errno;
 import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.util.MathUtilities;
@@ -45,10 +47,15 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	 * @param mode the mode of the file
 	 */
 	public AbstractEmuUnixFile(String pathname, int mode) {
+		this.contents = createDefaultContents();
 		this.pathname = pathname;
 		this.stat = createStat();
 		this.stat.st_mode = mode;
-		this.contents = createDefaultContents();
+	}
+
+	@Override
+	public String toString() {
+		return "%s[pathname=%s]".formatted(getClass().getSimpleName(), pathname);
 	}
 
 	/**
@@ -73,13 +80,23 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	}
 
 	@Override
+	public EmuFileContents<T> getContents() {
+		return contents;
+	}
+
+	@Override
 	public EmuUnixFileStat getStat() {
 		return stat;
 	}
 
 	@Override
 	public int read(long offset, T buf) {
-		return contents.read(offset, buf, stat.st_size);
+		try {
+			return contents.read(offset, buf, stat.st_size);
+		}
+		catch (EmuIOException e) {
+			throw new EmuUnixException("Cannot read: %s".formatted(e.getMessage()), Errno.EIO, e);
+		}
 	}
 
 	@Override
@@ -91,7 +108,13 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 
 	@Override
 	public int write(long offset, T buf) {
-		int len = contents.write(offset, buf, stat.st_size);
+		int len;
+		try {
+			len = contents.write(offset, buf, stat.st_size);
+		}
+		catch (EmuIOException e) {
+			throw new EmuUnixException("Cannot write: %s".formatted(e.getMessage()), Errno.EIO, e);
+		}
 		if (len > 0) {
 			stat.st_size = MathUtilities.unsignedMax(stat.st_size, offset + len);
 		}
@@ -107,7 +130,12 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 
 	@Override
 	public synchronized void truncate() {
-		stat.st_size = 0;
-		contents.truncate();
+		try {
+			contents.truncate();
+			stat.st_size = 0;
+		}
+		catch (EmuIOException e) {
+			throw new EmuUnixException("Cannot write: %s".formatted(e.getMessage()), Errno.EIO, e);
+		}
 	}
 }

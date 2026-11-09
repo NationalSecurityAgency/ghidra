@@ -179,6 +179,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 		}
 
 		Map<String, PcodeUseropDefinition<T>> userops;
+		private final SymbolsCache symbolsCache = new SymbolsCache(this);
 
 		private Map<String, PcodeUseropDefinition<T>> computeUserops() {
 			if (modifier == null) {
@@ -198,6 +199,11 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 				userops = computeUserops();
 			}
 			return userops;
+		}
+
+		@Override
+		public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+			return symbolsCache.getSymbols(language);
 		}
 	}
 

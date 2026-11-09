@@ -101,9 +101,10 @@ public class BytesPcodeExecutorStateSpace {
 	 * @param size the number of bytes to read (the size of the value)
 	 * @return the bytes read
 	 */
-	protected byte[] readBytes(long offset, int size, Reason reason) {
+	protected byte[] readBytes(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		byte[] data = new byte[size];
 		bytes.getData(offset, data);
+		cb.dataRead(piece, space.getAddress(offset), size, data, reason);
 		return data;
 	}
 
@@ -199,9 +200,8 @@ public class BytesPcodeExecutorStateSpace {
 	 * Read a value from the space at the given offset
 	 * 
 	 * <p>
-	 * If this space is not acting as a cache, this simply delegates to
-	 * {@link #readBytes(long, int, Reason)}. Otherwise, it will first ensure the cache covers the
-	 * requested value.
+	 * If this space is not acting as a cache, this simply delegates to {@link #readBytes}.
+	 * Otherwise, it will first ensure the cache covers the requested value.
 	 * 
 	 * @param offset the offset
 	 * @param size the number of bytes to read (the size of the value)
@@ -212,11 +212,11 @@ public class BytesPcodeExecutorStateSpace {
 	public byte[] read(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		AddressSetView uninitialized = computeUninitialized(offset, size);
 		if (uninitialized.isEmpty()) {
-			return readBytes(offset, size, reason);
+			return readBytes(offset, size, reason, cb);
 		}
 		uninitialized = cb.readUninitialized(piece, uninitialized, reason);
 		if (uninitialized.isEmpty()) {
-			return readBytes(offset, size, reason);
+			return readBytes(offset, size, reason, cb);
 		}
 
 		/**
@@ -229,7 +229,7 @@ public class BytesPcodeExecutorStateSpace {
 			init.delete(uninitialized);
 			if (!init.isEmpty()) {
 				if (init.getMinAddress().equals(min)) {
-					return readBytes(offset, (int) init.getFirstRange().getLength(), reason);
+					return readBytes(offset, (int) init.getFirstRange().getLength(), reason, cb);
 				}
 			}
 		}
@@ -246,7 +246,7 @@ public class BytesPcodeExecutorStateSpace {
 			 */
 			return EMPTY;
 		}
-		return readBytes(offset, size, reason);
+		return readBytes(offset, size, reason, cb);
 	}
 
 	public Map<Register, byte[]> getRegisterValues(List<Register> registers) {

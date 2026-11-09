@@ -91,8 +91,7 @@ import ghidra.util.xml.XmlUtilities;
 	},
 	servicesProvided = {
 		DebuggerEmulationService.class
-	}
-)
+	})
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final String KEY_DBGEMU = "DBGEMU";
 	protected static final String PREFIX_DBGEMU = "DBGEMU";
@@ -511,7 +510,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			tracePrefix != null ? tracePrefix.getKey() : time.getSnap(), time.getSnap());
 		Writer writer = DebuggerEmulationIntegration.bytesDelayedWriteTrace(from);
 
-		PcodeMachine<?> emu = emulatorFactory.create(from, writer);
+		PcodeMachine<?> emu = emulatorFactory.create(tool, from, writer);
 		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu, writer))) {
 			if (taintService != null) {
 				taintService.injectTaint(be.ce.emulator());
@@ -547,11 +546,11 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
-	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
+	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce, String description) {
 		TraceSnapshot destSnap;
 		try (Transaction _ = key.trace.openTransaction("Emulate")) {
 			destSnap = key.trace.getTimeManager().findScratchSnapshot(key.time);
-			destSnap.setDescription("Emulated");
+			destSnap.setDescription(description);
 			try {
 				PcodeTraceAccess into = new DefaultPcodeTraceAccess(key.platform, destSnap.getKey(),
 					key.time.getSnap());
@@ -573,7 +572,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
 		try (BusyEmu be = doEmulateFromCached(key, monitor)) {
-			TraceSnapshot destSnap = writeToScratch(key, be.ce);
+			TraceSnapshot destSnap = writeToScratch(key, be.ce, "Emulated");
 			cacheEmulator(key, be.ce);
 			return destSnap.getKey();
 		}
@@ -592,7 +591,9 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				key = new CacheKey(key.platform, key.time.advanced(result.schedule()));
 			}
 			Msg.info(this, "Stopped emulation at " + key.time);
-			TraceSnapshot destSnap = writeToScratch(key, be.ce);
+			String description = result.error() == null ? "Emu: Stopped"
+					: "Emu: %s".formatted(result.error().getMessage());
+			TraceSnapshot destSnap = writeToScratch(key, be.ce, description);
 			cacheEmulator(key, be.ce);
 			return new RecordEmulationResult(key.time, destSnap.getKey(), result.error());
 		}

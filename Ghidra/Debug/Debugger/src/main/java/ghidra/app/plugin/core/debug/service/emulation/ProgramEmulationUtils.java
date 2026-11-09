@@ -143,6 +143,7 @@ public class ProgramEmulationUtils {
 		EMU_SESSION_SCHEMA = EMU_CTX.getSchema(new SchemaName("EmuSession"));
 	}
 
+	public static final long DEFAULT_STACK_SIZE = 0x4000;
 	public static final String BLOCK_NAME_STACK = EmulatorUtilities.BLOCK_NAME_STACK;
 
 	/**
@@ -207,8 +208,7 @@ public class ProgramEmulationUtils {
 	}
 
 	/**
-	 * Create regions for each block in a program, without relocation, and map the program in
-	 * 
+	 * Create regions for each block in a program, with optional relocation, and map the program in
 	 * <p>
 	 * This creates a region for each loaded, block in the program. Typically, only non-overlay
 	 * blocks are included. To activate an overlay space, include it in the set of
@@ -217,15 +217,15 @@ public class ProgramEmulationUtils {
 	 * physical (non-overlay) portions. Permissions/flags are assigned accordingly. Note that no
 	 * bytes are copied in, as that could be prohibitive for large programs. Instead, the emulator
 	 * should load them, based on the static mapping, as needed.
-	 * 
 	 * <p>
 	 * A transaction must already be started on the destination trace.
 	 * 
 	 * @param snapshot the destination snapshot, usually 0
 	 * @param program the program to load
+	 * @param dynBase the dynamic base to map the program's minimum virtual address
 	 * @param activeOverlays which overlay spaces to use
 	 */
-	public static void loadExecutable(TraceSnapshot snapshot, Program program,
+	public static void loadExecutable(TraceSnapshot snapshot, Program program, Address dynBase,
 			List<AddressSpace> activeOverlays) {
 		Trace trace = snapshot.getTrace();
 		PathPattern patRegion = computePatternRegion(trace);
@@ -237,9 +237,21 @@ public class ProgramEmulationUtils {
 					continue;
 				}
 				AddressRange range = new AddressRangeImpl(block.getStart(), block.getEnd());
-				extremaBySpace.computeIfAbsent(range.getAddressSpace(), s -> new Extrema())
+				extremaBySpace.computeIfAbsent(range.getAddressSpace(), _ -> new Extrema())
 						.consider(range);
+			}
+			// LATER: How do specify shift with Harvard architectures?
+			Address base =
+				extremaBySpace.get(program.getAddressFactory().getDefaultAddressSpace()).getMin();
+
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
+				if (!DebuggerStaticMappingUtils.isReal(block)) {
+					continue;
+				}
 				String modName = getModuleName(program);
+				AddressRange dynRange = new AddressRangeImpl(
+					rebase(block.getStart(), base, dynBase),
+					rebase(block.getEnd(), base, dynBase));
 
 				// NB. No need to populate as module.
 				// UI will sync from mapping, so it's obvious where the cursor is.
@@ -248,11 +260,12 @@ public class ProgramEmulationUtils {
 						.getSingletonPath()
 						.toString();
 				trace.getMemoryManager()
-						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
+						.createRegion(path, snapshot.getKey(), dynRange, getRegionFlags(block));
 			}
-			AddressSet identical = new AddressSet();
+
+			AddressSet physical = new AddressSet();
 			for (Extrema extrema : extremaBySpace.values()) {
-				identical.add(extrema.getMin(), extrema.getMax());
+				physical.add(extrema.getMin(), extrema.getMax());
 			}
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (!block.isOverlay() ||
@@ -261,14 +274,15 @@ public class ProgramEmulationUtils {
 				}
 				Address phys = block.getStart().getPhysicalAddress();
 				DebuggerStaticMappingUtils.addMapping(
-					new DefaultTraceLocation(trace, null, nowOn, phys),
+					new DefaultTraceLocation(trace, null, nowOn, rebase(phys, base, dynBase)),
 					new ProgramLocation(program, block.getStart()),
 					block.getSize(), false);
-				identical.delete(phys, block.getEnd().getPhysicalAddress());
+				physical.delete(phys, block.getEnd().getPhysicalAddress());
 			}
-			for (AddressRange range : identical) {
+			for (AddressRange range : physical) {
 				DebuggerStaticMappingUtils.addMapping(
-					new DefaultTraceLocation(trace, null, nowOn, range.getMinAddress()),
+					new DefaultTraceLocation(trace, null, nowOn,
+						rebase(range.getMinAddress(), base, dynBase)),
 					new ProgramLocation(program, range.getMinAddress()),
 					range.getLength(), false);
 			}
@@ -278,6 +292,32 @@ public class ProgramEmulationUtils {
 			throw new AssertionError(e);
 		}
 		// N.B. Bytes will be loaded lazily
+	}
+
+	private static Address rebase(Address address, Address from, Address to) {
+		if (to == null) {
+			return address;
+		}
+		if (address.getAddressSpace() != from.getAddressSpace()) {
+			Msg.warn(ProgramEmulationUtils.class,
+				"Neglecting to rebase where from addr.space != from.space");
+			return address;
+		}
+		long offset = address.subtract(from);
+		return to.add(offset);
+	}
+
+	/**
+	 * Create regions for each block in a program, without relocation, and map the program in
+	 * 
+	 * @see #loadExecutable(TraceSnapshot, Program, Address, List)
+	 * @param snapshot the destination snapshot, usually 0
+	 * @param program the program to load
+	 * @param activeOverlays which overlay spaces to use
+	 */
+	public static void loadExecutable(TraceSnapshot snapshot, Program program,
+			List<AddressSpace> activeOverlays) {
+		loadExecutable(snapshot, program, null, activeOverlays);
 	}
 
 	public static PathPattern computePattern(TraceObjectSchema root, Trace trace,
@@ -393,7 +433,6 @@ public class ProgramEmulationUtils {
 
 	/**
 	 * Attempt allocation of the stack using the program context and the initial PC.
-	 * 
 	 * <p>
 	 * This examines the program context for a stack pointer value at the thread's initial program
 	 * counter. If it has a value, this computes a range, based on the expected stack growth
@@ -624,17 +663,18 @@ public class ProgramEmulationUtils {
 	 * 
 	 * @param program the program to emulate
 	 * @param pc the initial program counter for the new single thread
+	 * @param stackSize the desired size of the thread's stack region
 	 * @param consumer the consumer of the new trace
 	 * @return the new trace
 	 * @throws IOException if the trace cannot be created
 	 */
-	public static Trace launchEmulationTrace(Program program, Address pc, Object consumer)
-			throws IOException {
+	public static Trace launchEmulationTrace(Program program, Address pc, long stackSize,
+			Object consumer) throws IOException {
 		Trace trace = null;
 		boolean success = false;
 		try {
 			trace = new DBTrace(getTraceName(program), program.getCompilerSpec(), consumer);
-			try (Transaction tx = trace.openTransaction("Emulate")) {
+			try (Transaction _ = trace.openTransaction("Emulate")) {
 				createObjects(trace);
 
 				TraceSnapshot initial =
@@ -644,7 +684,8 @@ public class ProgramEmulationUtils {
 					pc.getAddressSpace().isOverlaySpace() ? List.of(pc.getAddressSpace())
 							: List.of();
 				loadExecutable(initial, program, overlays);
-				TraceThread thread = doLaunchEmulationThread(trace, snap, program, pc, pc);
+				TraceThread thread =
+					doLaunchEmulationThread(trace, snap, program, pc, stackSize, pc);
 				initial.setEventThread(thread);
 			}
 			trace.clearUndo();
@@ -662,21 +703,36 @@ public class ProgramEmulationUtils {
 	}
 
 	/**
+	 * Create a new trace with a single thread, ready for emulation of the given program
+	 * 
+	 * @param program the program to emulate
+	 * @param pc the initial program counter for the new single thread
+	 * @param consumer the consumer of the new trace
+	 * @return the new trace
+	 * @throws IOException if the trace cannot be created
+	 */
+	public static Trace launchEmulationTrace(Program program, Address pc, Object consumer)
+			throws IOException {
+		return launchEmulationTrace(program, pc, DEFAULT_STACK_SIZE, consumer);
+	}
+
+	/**
 	 * Create a new emulated thread within an existing trace
 	 * 
 	 * @param trace the trace to contain the new thread
 	 * @param snap the creation snap for the new thread
 	 * @param program the program whose context to use for initial register values
 	 * @param tracePc the program counter in the trace's memory map
+	 * @param stackSize the desired size of the thread's stack region
 	 * @param programPc the program counter in the program's memory map
 	 * @return the new thread
 	 */
 	public static TraceThread doLaunchEmulationThread(Trace trace, long snap, Program program,
-			Address tracePc, Address programPc) {
+			Address tracePc, long stackSize, Address programPc) {
 		TraceThread thread = spawnThread(trace, snap);
 		AddressRange stack;
 		try {
-			stack = allocateStack(trace, snap, thread, program, 0x4000, programPc);
+			stack = allocateStack(trace, snap, thread, program, stackSize, programPc);
 		}
 		catch (EmulatorOutOfMemoryException e) {
 			Msg.warn(ProgramEmulationUtils.class,
@@ -688,8 +744,43 @@ public class ProgramEmulationUtils {
 	}
 
 	/**
-	 * Same as {@link #doLaunchEmulationThread(Trace, long, Program, Address, Address)}, but within
-	 * a transaction
+	 * Create a new emulated thread within an existing trace
+	 * 
+	 * @param trace the trace to contain the new thread
+	 * @param snap the creation snap for the new thread
+	 * @param program the program whose context to use for initial register values
+	 * @param tracePc the program counter in the trace's memory map
+	 * @param programPc the program counter in the program's memory map
+	 * @return the new thread
+	 */
+	public static TraceThread doLaunchEmulationThread(Trace trace, long snap, Program program,
+			Address tracePc, Address programPc) {
+		return doLaunchEmulationThread(trace, snap, program, tracePc, DEFAULT_STACK_SIZE,
+			programPc);
+	}
+
+	/**
+	 * Same as {@link #doLaunchEmulationThread}, but within a transaction
+	 * 
+	 * @param trace the trace to contain the new thread
+	 * @param snap the creation snap for the new thread
+	 * @param program the program whose context to use for initial register values
+	 * @param tracePc the program counter in the trace's memory map
+	 * @param stackSize the desired size of the thread's stack region
+	 * @param programPc the program counter in the program's memory map
+	 * @return the new thread
+	 */
+	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
+			Address tracePc, long stackSize, Address programPc) {
+		try (Transaction _ = trace.openTransaction("Emulate new Thread")) {
+			TraceThread thread =
+				doLaunchEmulationThread(trace, snap, program, tracePc, stackSize, programPc);
+			return thread;
+		}
+	}
+
+	/**
+	 * Same as {@link #doLaunchEmulationThread}, but within a transaction
 	 * 
 	 * @param trace the trace to contain the new thread
 	 * @param snap the creation snap for the new thread
@@ -700,10 +791,7 @@ public class ProgramEmulationUtils {
 	 */
 	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
 			Address tracePc, Address programPc) {
-		try (Transaction tx = trace.openTransaction("Emulate new Thread")) {
-			TraceThread thread = doLaunchEmulationThread(trace, snap, program, tracePc, programPc);
-			return thread;
-		}
+		return launchEmulationThread(trace, snap, program, tracePc, DEFAULT_STACK_SIZE, programPc);
 	}
 
 	/**

@@ -107,7 +107,6 @@ public class TaintSpace {
 
 	/**
 	 * Retrieve the taint sets for the variable at the given offset
-	 * 
 	 * <p>
 	 * This works the same as {@link #getInto(long, TaintVec, Reason, PcodeStateCallbacks)}, but
 	 * creates a new vector of the given size, reads the taint sets, and returns the vector.
@@ -121,6 +120,7 @@ public class TaintSpace {
 	public TaintVec get(long offset, int size, Reason reason, PcodeStateCallbacks cb) {
 		TaintVec vec = new TaintVec(size);
 		getInto(offset, vec, reason, cb);
+		cb.dataRead(piece, space.getAddress(offset), size, vec, reason);
 		return vec;
 	}
 

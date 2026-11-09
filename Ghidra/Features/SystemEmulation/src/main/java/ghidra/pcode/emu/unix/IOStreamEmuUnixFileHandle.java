@@ -19,6 +19,7 @@ import java.io.*;
 
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.sys.EmuIOException;
+import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary.Errno;
 import ghidra.program.model.lang.CompilerSpec;
 
 /**
@@ -94,6 +95,11 @@ public class IOStreamEmuUnixFileHandle extends AbstractStreamEmuUnixFileHandle<b
 		catch (IOException e) {
 			throw new EmuIOException("Could not read host input stream", e);
 		}
+	}
+
+	@Override
+	public int pread(byte[] buf, long offset) throws EmuIOException {
+		throw new EmuUnixException("File is a pipe", Errno.ESPIPE);
 	}
 
 	@Override

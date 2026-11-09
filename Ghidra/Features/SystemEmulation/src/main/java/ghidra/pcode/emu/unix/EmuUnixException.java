@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,25 +15,25 @@
  */
 package ghidra.pcode.emu.unix;
 
+import java.util.Objects;
+
 import ghidra.pcode.emu.sys.EmuSystemException;
+import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary.Errno;
 
 /**
  * An exception for errors within UNIX sytem call libraries
  */
 public class EmuUnixException extends EmuSystemException {
 
-	private final Integer errno;
+	private final Errno errno;
 
-	public EmuUnixException(String message) {
-		this(message, null, null);
-	}
-
-	public EmuUnixException(String message, Throwable e) {
-		this(message, null, e);
-	}
-
-	public EmuUnixException(String message, Integer errno) {
+	public EmuUnixException(String message, Errno errno) {
 		this(message, errno, null);
+	}
+
+	@Override
+	public String toString() {
+		return "UnixErr [%s] %s".formatted(errno, getMessage());
 	}
 
 	/**
@@ -49,17 +49,17 @@ public class EmuUnixException extends EmuSystemException {
 	 * @param errno the errno, or {@code null}
 	 * @param e the cause of this exception, or {@code null}
 	 */
-	public EmuUnixException(String message, Integer errno, Throwable e) {
+	public EmuUnixException(String message, Errno errno, Throwable e) {
 		super(message, null, e);
-		this.errno = errno;
+		this.errno = Objects.requireNonNull(errno);
 	}
 
 	/**
 	 * Get the errno associated with this exception
 	 * 
-	 * @return the errno, or {@code null}
+	 * @return the errno
 	 */
-	public Integer getErrno() {
+	public Errno getErrno() {
 		return errno;
 	}
 }

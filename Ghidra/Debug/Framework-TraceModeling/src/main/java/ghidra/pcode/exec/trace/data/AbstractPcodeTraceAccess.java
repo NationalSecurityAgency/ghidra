@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,8 @@ import ghidra.trace.model.thread.TraceThread;
  * @param <S> the type of shared data-access shims provided
  * @param <L> the type of thread-local data-access shims provided
  */
-public abstract class AbstractPcodeTraceAccess<S extends PcodeTraceMemoryAccess, L extends PcodeTraceRegistersAccess>
+public abstract class AbstractPcodeTraceAccess<S extends PcodeTraceMemoryAccess,
+	L extends PcodeTraceRegistersAccess>
 		implements PcodeTraceAccess {
 
 	protected final TracePlatform platform;
@@ -72,6 +73,21 @@ public abstract class AbstractPcodeTraceAccess<S extends PcodeTraceMemoryAccess,
 		this(platform, snap, snap);
 	}
 
+	@Override
+	public TracePlatform getPlatform() {
+		return platform;
+	}
+
+	@Override
+	public long getSnap() {
+		return snap;
+	}
+
+	@Override
+	public long getThreadsSnap() {
+		return threadsSnap;
+	}
+
 	/**
 	 * Get the associated trace
 	 * 
@@ -83,7 +99,6 @@ public abstract class AbstractPcodeTraceAccess<S extends PcodeTraceMemoryAccess,
 
 	/**
 	 * Get the trace thread conventionally associated with the given p-code thread
-	 * 
 	 * <p>
 	 * A p-code thread is conventionally associated with the trace thread whose path matches the
 	 * p-code thread's name.
