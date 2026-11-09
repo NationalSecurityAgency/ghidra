@@ -771,6 +771,10 @@ public abstract class LocalFileSystem implements FileSystem {
 				name + " starts with a reserved prefix '" + HIDDEN_ITEM_PREFIX + "'");
 		}
 
+		if (".".equals(name) || "..".equals(name)) {
+			throw new InvalidNameException("'" + name + "' is a disallowed path element name");
+		}
+
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
 			if (!isValidNameCharacter(c)) {

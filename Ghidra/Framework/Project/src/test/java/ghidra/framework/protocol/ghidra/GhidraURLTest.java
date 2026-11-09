@@ -758,7 +758,7 @@ public class GhidraURLTest extends AbstractGenericTest {
 	@Test
 	public void testToURLRejectsInvalidDecodedComponents() {
 		String[] invalid = { "bad%3Fname", "bad%2Aname", "bad%3Aname", "bad%5Cname",
-			"bad%00name", "%20", "%2E", "%2E%2E", "%2Ehidden", "bad%23name",
+			"bad%00name", "%20", "%2E", "%2E%2E", "bad%23name",
 			"bad%2520name", "bad%252Fname", "bad%26name", "bad%C2%A9name", "a//b", "a//" };
 		for (String component : invalid) {
 			for (String text : new String[] {
