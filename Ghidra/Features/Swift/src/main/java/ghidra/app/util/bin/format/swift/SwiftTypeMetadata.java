@@ -453,6 +453,10 @@ public class SwiftTypeMetadata {
 				TargetTypeContextDescriptor descriptor = new TargetTypeContextDescriptor(reader);
 				reader.setPointerIndex(origIndex);
 				ContextDescriptorKind kind = descriptor.getFlags().getKind();
+				if (kind == null) {
+					log("Unrecognized type descriptor kind at index: 0x%x".formatted(origIndex));
+					continue;
+				}
 				descriptor = switch (kind) {
 					case Class:
 						yield new TargetClassDescriptor(reader);
