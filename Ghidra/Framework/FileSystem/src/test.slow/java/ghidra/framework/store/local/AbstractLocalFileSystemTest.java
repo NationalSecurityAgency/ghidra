@@ -164,6 +164,41 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		assertEquals(4, events.size());
 		checkEvent("Folder Created", "/", "a1", null, null, events.get(0));
 		checkEvent("Folder Created", "/a1/a2/a3", "a4", null, null, events.get(3));
+
+		// check failure cases
+
+		try {
+			fs.createFolder("/a1/../a1", "a4");
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
+
+		try {
+			fs.createFolder("/a1/a2/a3", "..");
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
+
+		try {
+			fs.createFolder("/a1/./a2", "a4");
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
+
+		try {
+			fs.createFolder("/a1/a2/a3", ".");
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
+
 	}
 
 	private void checkEvent(String op, String path, String name, String newPath, String newName,
@@ -301,6 +336,17 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		assertEquals(2, events.size());
 		checkEvent("Item Created", "/abc", "fred", null, null, events.get(1));
 
+		// check failure cases which should be blocked
+
+		try {
+			fs.createDataFile("/abc/../", "bob", new ByteArrayInputStream(dataBytes),
+				null, "Data", null);
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
+
 	}
 
 	@Test
@@ -315,6 +361,16 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		flushFileSystemEvents();
 		assertEquals(2, events.size());
 		checkEvent("Item Created", "/abc", "fred", null, null, events.get(1));
+
+		// check failure cases which should be blocked
+
+		try {
+			fs.createTextDataItem("/abc/../", "bob", "MyID", "Text", data, null, null);
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
 	}
 
 	@Test
@@ -547,6 +603,16 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		flushFileSystemEvents();
 		assertEquals(1, events.size());
 		checkEvent("Item Renamed", "/abc", "fred", null, "wilma", events.get(0));
+
+		// check failure cases which should be blocked
+
+		try {
+			fs.createDatabase("/abc/../", "bob", null, "Database", 1024, "test", null);
+			fail("expected InvalidNameException");
+		}
+		catch (InvalidNameException e) {
+			// expected
+		}
 
 	}
 

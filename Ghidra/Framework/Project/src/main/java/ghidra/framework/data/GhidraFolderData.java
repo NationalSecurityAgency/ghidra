@@ -860,13 +860,14 @@ class GhidraFolderData {
 		GhidraFolderData folderData = folderDataCache.get(folderName);
 		if (folderData == null) {
 			try {
+				NamingUtilities.checkName(folderName, "Folder name");
 				folderData = new GhidraFolderData(this, folderName);
 				folderDataCache.put(folderName, folderData);
 				if (folderData.mustVisit()) {
 					folderData.refresh(false, true, TaskMonitor.DUMMY);
 				}
 			}
-			catch (IOException e) {
+			catch (IllegalArgumentException | IOException e) {
 				// ignore
 			}
 		}
@@ -1119,6 +1120,8 @@ class GhidraFolderData {
 			if (fileSystem.isReadOnly()) {
 				throw new AssertException("createFile permitted within writeable project only");
 			}
+
+			NamingUtilities.checkName(folderName, "Folder name");
 
 			checkFolderLinkConflict(folderName);
 

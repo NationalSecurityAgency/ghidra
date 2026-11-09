@@ -85,8 +85,8 @@ public final class NamingUtilities {
 	 * Restrictions include:
 	 * <ul>
 	 * <li>Path element may not be blank (i.e., no characters or all space characters).</li>
-	 * <li>Path element may not start with a '.' which may result in path traversal or hidden 
-	 *     file/folder use.</li>
+	 * <li>Path element may not be "." or ".." which may result in path traversal or invalid 
+	 *     filename.</li>
 	 * <li>Path element may only contain the letters, numbers, or the following characters:
 	 *     '.', '-', '=', '@', ' ', '_', '(', ')', '[', ']', '~' </li>
 	 * </ul>
@@ -104,8 +104,9 @@ public final class NamingUtilities {
 		if (StringUtils.isBlank(pathElement)) {
 			throw new IllegalArgumentException("A blank " + type + " is not allowed");
 		}
-		if (pathElement.startsWith(".")) { // also prevents '.' and '..' path elements
-			throw new IllegalArgumentException(type + " starting with '.' is not permitted");
+		String trimmedPathElement = pathElement.trim();
+		if (".".equals(trimmedPathElement) || "..".equals(trimmedPathElement)) {
+			throw new IllegalArgumentException(type + " \"" + pathElement + "\" is not allowed");
 		}
 		String invalidChar = findInvalidChar(pathElement);
 		if (invalidChar != null) {
