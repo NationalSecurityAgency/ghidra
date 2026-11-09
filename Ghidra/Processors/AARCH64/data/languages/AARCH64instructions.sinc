@@ -2739,6 +2739,8 @@ Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=1 & b_2121 & b_1111 
 Re_VPR128Lo.H.sel: Re_VPR128Lo, val is Re_VPR128Lo & b_2223=0 & b_2121 & b_1111 & b_2020 [ val = 0x501e + 32*Re_VPR128Lo - (b_1111*4 + b_2121*2 + b_2020)*2; ] { export *[register]:2 val; }
 @endif
 Re_VPR128Lo.H.vIndexHLM: Re_VPR128Lo.H^"["^vIndexHLM^"]" is Re_VPR128Lo.H & vIndexHLM & Re_VPR128Lo.H.sel { export Re_VPR128Lo.H.sel; }
+Re_VPR128Lo.2B.vIndexHLM: vRe_VPR128Lo^".2B["^vIndexHLM^"]" is Re_VPR128Lo & vRe_VPR128Lo & vIndexHLM & Re_VPR128Lo.H.sel { export Re_VPR128Lo.H.sel; }
+Re_VPR128.4B.vIndex: vRe_VPR128^".4B["^vIndex^"]" is Re_VPR128 & vRe_VPR128 & vIndex & Re_VPR128.S.sel { export Re_VPR128.S.sel; }
 
 FBitsOp: "#"^fbits is Scale [ fbits = 64 - Scale; ] { export *[const]:2 fbits; }
 
@@ -2825,6 +2827,7 @@ Zd.B_2: Zd^".B" is Zd { export Zd; }
 Zd.H: Zd^".H" is Zd { export Zd; }
 Zd.S: Zd^".S" is Zd { export Zd; }
 Zd.D: Zd^".D" is Zd { export Zd; }
+Zd.Q: Zd^".Q" is Zd { export Zd; }
 
 Zt.B: sve_zt_0004^".B" is sve_zt_0004 { export sve_zt_0004; }
 Ztt.B: sve_ztt_0004^".B" is sve_ztt_0004 { export sve_ztt_0004; }
@@ -2857,6 +2860,7 @@ Zn.B: sve_zn_0509^".B" is sve_zn_0509 { export sve_zn_0509; }
 Zn.H: sve_zn_0509^".H" is sve_zn_0509 { export sve_zn_0509; }
 Zn.S: sve_zn_0509^".S" is sve_zn_0509 { export sve_zn_0509; }
 Zn.D: sve_zn_0509^".D" is sve_zn_0509 { export sve_zn_0509; }
+Zn.Q: sve_zn_0509^".Q" is sve_zn_0509 { export sve_zn_0509; }
 
 Zm.T: sve_zm_1620^"."^T is sve_zm_1620 & T { export sve_zm_1620; }
 Zm.T_sz: sve_zm_1620^"."^T_sz is sve_zm_1620 & T_sz { export sve_zm_1620; }
@@ -2870,6 +2874,7 @@ Zm.Tb_sz: sve_zm_1620^".H" is sve_zm_1620 & sve_sz_22=1 { export sve_zm_1620; }
 # Zm.H: sve_zm_1620^".H" is sve_zm_1620 { export sve_zm_1620; }
 Zm.S: sve_zm_1620^".S" is sve_zm_1620 { export sve_zm_1620; }
 Zm.D: sve_zm_1620^".D" is sve_zm_1620 { export sve_zm_1620; }
+Zm.Q: sve_zm_1620^".Q" is sve_zm_1620 { export sve_zm_1620; }
 
 Zm3.B: sve_zm_1618^".B" is sve_zm_1618 { export sve_zm_1618; }
 Zm3.H: sve_zm_1618^".H" is sve_zm_1618 { export sve_zm_1618; }
@@ -2923,6 +2928,9 @@ sve_imm4_1_1to16: tmp is sve_imm4_1619 [ tmp = sve_imm4_1619 + 1; ] { export *[c
 sve_imm4_1_m128to112: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 16; ] { export *[const]:1 tmp; }
 sve_opt4_1_m128to112: "" is sve_imm4s_1619=0 { export 0:1; }
 sve_opt4_1_m128to112: ", #"^sve_imm4_1_m128to112 is sve_imm4_1_m128to112 { export sve_imm4_1_m128to112; }
+sve_imm4_1_m256to224: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 32; ] { export *[const]:1 tmp; }
+sve_opt4_1_m256to224: "" is sve_imm4s_1619=0 { export 0:1; }
+sve_opt4_1_m256to224: ", #"^sve_imm4_1_m256to224 is sve_imm4_1_m256to224 { export sve_imm4_1_m256to224; }
 sve_imm4_1_m16to14: tmp is sve_imm4s_1619 [ tmp = sve_imm4s_1619 * 2; ] { export *[const]:1 tmp; }
 sve_mul4_1_m16to14: "" is sve_imm4s_1619=0 { export 0:1; }
 sve_mul4_1_m16to14: ", #"^sve_imm4_1_m16to14^", mul vl" is sve_imm4_1_m16to14 { export *[const]:1 sve_imm4_1_m16to14; }
@@ -3425,6 +3433,8 @@ define pcodeop NEON_usdot;
 define pcodeop NEON_ushl;
 define pcodeop NEON_usmmla;
 define pcodeop NEON_usqadd;
+define pcodeop NEON_fdot;
+define pcodeop NEON_fmmla;
 
 # These pseudo ops are automatically generated
 
@@ -3566,6 +3576,10 @@ define pcodeop SVE_ld1h;
 define pcodeop SVE_ld1rb;
 define pcodeop SVE_ld1rd;
 define pcodeop SVE_ld1rh;
+define pcodeop SVE_ld1rob;
+define pcodeop SVE_ld1rod;
+define pcodeop SVE_ld1roh;
+define pcodeop SVE_ld1row;
 define pcodeop SVE_ld1rqb;
 define pcodeop SVE_ld1rqd;
 define pcodeop SVE_ld1rqh;
@@ -3743,6 +3757,7 @@ define pcodeop SVE_whilelt;
 define pcodeop SVE_wrffr;
 define pcodeop SVE_zip1;
 define pcodeop SVE_zip2;
+define pcodeop SVE_fmmla;
 
 # SECTION macros
 
