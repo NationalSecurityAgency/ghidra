@@ -114,10 +114,11 @@ public class CodeUnitFormatOptions {
 	 * the operand using the =&gt; separator if necessary
 	 * @param includeScalarReferenceAdjustment if true scalar adjustment of certain reference offsets
 	 * will be included to maintain replaced scalar value
-	 * @param showLibraryInNamespace if true any referenced external symbols will include 
+	 * @param showLibrary if true any referenced external symbols will include 
 	 * library name
 	 * @param followReferencedPointers if true referenced pointers (read or indirect) will
 	 * follow the pointer and display the indirect symbol with -&gt; instead of pointer label.
+	 * @param templateSimplifier The {@link TemplateSimplifier}
 	 */
 	public CodeUnitFormatOptions(ShowBlockName showBlockName, ShowNamespace showNamespace,
 			String localPrefixOverride, boolean doRegVariableMarkup, boolean doStackVariableMarkup,

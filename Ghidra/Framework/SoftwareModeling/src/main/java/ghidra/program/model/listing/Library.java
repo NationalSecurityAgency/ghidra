@@ -20,40 +20,37 @@ import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Interface for a Library dependency and namespace.
+ * Interface for a library dependency
  */
 public interface Library {
 
 	public static final String UNKNOWN = "<EXTERNAL>";
 
 	/**
-	 * {@return the simple namespace name (without parent path)}
-	 * <p>
-	 * See {@link #getName(boolean)} for the namespace-qualified variant.
+	 * {@return the simple library name}
 	 */
 	public String getName();
 
 	/**
-	 * Return the library id
-	 * @return the library id
+	 * {@return the library id}
 	 */
 	public long getID();
 
 	/**
-	 * Get the symbol for this namespace.
-	 * @return the symbol for this namespace.
+	 * {@return the symbol for this Library}
 	 */
 	public Symbol getSymbol();
 
 	/**
-	 * @return the associated program file pathname within the project which corresponds to this library.
+	 * {@return the associated program file pathname within the project which corresponds to this 
+	 * library}
 	 */
 	public String getAssociatedProgramPath();
 
 	/**
 	 * Sets the program file pathname within the project which corresponds to this library.
 	 * <p>
-	 * NOTE: Assigning a path to {@link Library#UNKNOWN} Library will be ignored.
+	 * NOTE: Assigning a path to {@link Library#UNKNOWN} library will be ignored.
 	 *
 	 * @param programPath a program file pathname  or null to clear the stored path.
 	 * @throws InvalidInputException on invalid programPath is specified
@@ -61,9 +58,10 @@ public interface Library {
 	public void setAssociatedProgramPath(String programPath) throws InvalidInputException;
 
 	/**
-	 * Get the Library which contains the specified external symbol.
+	 * {@return the library which contains the specified external symbol, or null if the symbol
+	 * is null or not external}
+	 * 
 	 * @param symbol external symbol
-	 * @return null if symbol is null or not external
 	 */
 	public static Library getContainingLibrary(Symbol symbol) {
 		if (symbol == null) {
