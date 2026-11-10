@@ -93,7 +93,7 @@ DECCORE=capability architecture options graph cover block cast typeop database c
 	variable varmap jumptable emulate emulateutil flow userop expression multiprecision \
 	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
-	transform constseq bitfield coreaction condexe override dynamic crc32 prettyprint \
+	transform constseq bitfield coreaction condexe override valuedomain dynamic crc32 prettyprint \
 	printlanguage printc printjava memstate opbehavior paramid signature $(COREEXT_NAMES)
 # Files used for any project that use the sleigh decoder
 SLEIGH=	sleigh pcodeparse pcodecompile sleighbase slghsymbol \

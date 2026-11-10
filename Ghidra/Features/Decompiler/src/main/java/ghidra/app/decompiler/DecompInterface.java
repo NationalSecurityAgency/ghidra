@@ -21,6 +21,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.signature.DebugSignature;
@@ -768,6 +769,30 @@ public class DecompInterface {
 	 */
 	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
 			TaskMonitor monitor) {
+		return decompileFunction(func, timeoutSecs, monitor, List.of());
+	}
+
+	/**
+	 * Decompile in an explicit valid-value context. These contracts apply only to this request;
+	 * they do not change the program or establish a declaration for other callers. The producer
+	 * must prove each type-to-LOAD binding and any payload edge before supplying a contract.
+	 * Native analysis independently matches the value and its use before narrowing a range.
+	 *
+	 * @param func function to decompile
+	 * @param timeoutSecs maximum time in seconds
+	 * @param monitor optional cancellation monitor
+	 * @param constraints proven constraints for this function and invocation context
+	 * @return the decompilation result
+	 */
+	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
+			TaskMonitor monitor, List<ValueDomainConstraint> constraints) {
+
+		List<ValueDomainConstraint> domains = List.copyOf(constraints);
+		for (ValueDomainConstraint domain : domains) {
+			if (!domain.getOwnerEntry().equals(func.getEntryPoint())) {
+				throw new IllegalArgumentException("Value-domain owner differs from requested function");
+			}
+		}
 
 		dtmanage.clearTemporaryIds();
 		errorMessage = "";
@@ -775,6 +800,10 @@ public class DecompInterface {
 		if (program == null || (monitor != null && monitor.isCancelled())) {
 			return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage,
 				errorMessage, null, DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
+		}
+		if (!domains.isEmpty()) {
+			// A prior symbol query may have cached an unconstrained description of this function.
+			flushCache();
 		}
 
 		if (monitor != null) {
@@ -787,7 +816,7 @@ public class DecompInterface {
 			if (debug != null) {
 				debug.setFunction(func);
 			}
-			decompCallback.setFunction(func, funcEntry, debug);
+			decompCallback.setFunction(func, funcEntry, debug, domains);
 			EncodeDecodeSet activeSet = setupEncodeDecode(funcEntry);
 			decoder = activeSet.mainResponse;
 			verifyProcess();
@@ -797,11 +826,14 @@ public class DecompInterface {
 			errorMessage = decompCallback.getErrorMessage();
 		}
 		catch (Exception ex) {
-			decoder.clear(); 	// Clear any partial result
+			if (decoder != null) {
+				decoder.clear(); // Clear any partial result
+			}
 			errorMessage = "Exception while decompiling " + func.getEntryPoint() + ": " +
 				ex.getMessage() + '\n';
 		}
 		finally {
+			decompCallback.clearValueDomainConstraints();
 			if (monitor != null) {
 				monitor.removeCancelledListener(monitorListener);
 			}

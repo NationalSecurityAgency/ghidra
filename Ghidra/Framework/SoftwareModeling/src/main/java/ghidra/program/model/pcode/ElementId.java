@@ -462,5 +462,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_EXTRA_STACK = new ElementId("extra_stack", 287);
 	public static final ElementId ELEM_CONSUME_REMAINING = new ElementId("consume_remaining", 288);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 292);
+	public static final ElementId ELEM_VALUEDOMAIN = new ElementId("valuedomain", 292);
+
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 293);
 }
