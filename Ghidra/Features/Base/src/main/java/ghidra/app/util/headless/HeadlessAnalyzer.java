@@ -429,7 +429,8 @@ public class HeadlessAnalyzer {
 			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
 
 			File dir = new File(projectLocation);
-			ProjectLocator locator = new ProjectLocator(dir.getAbsolutePath(), projectName);
+			String location = dir.toPath().toAbsolutePath().normalize().toString();
+			ProjectLocator locator = new ProjectLocator(location, projectName);
 
 			if (locator.getProjectDir().exists()) {
 				project = openProject(locator);
