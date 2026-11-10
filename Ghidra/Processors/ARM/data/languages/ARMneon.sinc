@@ -2665,6 +2665,7 @@ define pcodeop VectorRoundHalvingAdd;
 define pcodeop VectorRoundAddAndNarrow;
 define pcodeop VectorDotProduct;
 define pcodeop vectorFusedMultiplyAccumulate;
+define pcodeop vectorFusedMultiplySubtract;
 define pcodeop BfloatMultiplyAccumulate;
 define pcodeop VectorMultiplyAddLongVector;
 define pcodeop VectorMultiplyAddLongScalar;
@@ -2865,6 +2866,18 @@ extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
                                 ($(TMODE_E) &     thv_c2327=0x1e & thv_c2121=0 & thv_c0811=0xc & thv_c0606=1  & thv_c0404=1) ) & fesize2020 & Qd & Qn & Qm
 {
 	Qd = vectorFusedMultiplyAccumulate(Qn, Qm, fesize2020);
+}
+
+:vfms.f^fesize2020 Dd,Dn,Dm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=4 &     c2121=1 &     c0811=0xc &     c0606=0  &     c0404=1 ) |
+                                ($(TMODE_E) &     thv_c2327=0x1e & thv_c2121=1 & thv_c0811=0xc & thv_c0606=0  & thv_c0404=1) ) & fesize2020 & Dd & Dn & Dm
+{
+	Dd = vectorFusedMultiplySubtract(Dn, Dm, fesize2020);
+}
+
+:vfms.f^fesize2020 Qd,Qn,Qm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=4 &     c2121=1 &     c0811=0xc &     c0606=1  &     c0404=1 ) |
+                                ($(TMODE_E) &     thv_c2327=0x1e & thv_c2121=1 & thv_c0811=0xc & thv_c0606=1  & thv_c0404=1) ) & fesize2020 & Qd & Qn & Qm
+{
+	Qd = vectorFusedMultiplySubtract(Qn, Qm, fesize2020);
 }
 
 
