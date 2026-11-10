@@ -6986,13 +6986,17 @@ define pcodeop VectorTranspose;
 :vtrn^"."^esize1819 Dd,Dm    is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 &        c2021=3 &     c1617=2 &     c0811=0 &     c0707=1 &     Q6=0 &     c0404=0) |
                                              ($(TMODE_F)  & thv_c2327=0x1f & thv_c2021=3 & thv_c1617=2 & thv_c0811=0 & thv_c0707=1 & thv_Q6=0 & thv_c0404=0)) & esize1819 & Dd & Dm
 {
+	tmp:8 = Dd;
 	Dd = VectorTranspose(Dm,esize1819);
+	Dm = VectorTranspose(tmp,esize1819);
 }
 
 :vtrn^"."^esize1819 Qd,Qm    is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 &        c2021=3 &     c1617=2 &    c0811=0 &     c0707=1  &     Q6=1 &     c0404=0) |
                                    ($(TMODE_F)  & thv_c2327=0x1f & thv_c2021=3 & thv_c1617=2 & thv_c0811=0 & thv_c0707=1 &  thv_Q6=1 & thv_c0404=0) ) & esize1819 & Qm & Qd
 {
+	tmp:16 = Qd;
 	Qd = VectorTranspose(Qm,esize1819);
+	Qm = VectorTranspose(tmp,esize1819);
 }
 
 #####
@@ -7095,13 +7099,17 @@ define pcodeop VectorUnzip;
 :vuzp^esize1819 Dd,Dm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1819<3 &     c1617=2 &     c0711=2 &        Q6=0 &     c0404=0 ) |
                           ( $(TMODE_F) &    thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=2 & thv_c0711=2 & thv_c0606=0 & thv_c0404=0 ) ) & Dd & Dm & esize1819
 {
+	tmp:8 = Dd;
 	Dd = VectorUnzip(Dm,esize1819);
+	Dm = VectorUnzip(tmp,esize1819);
 }
 
 :vuzp^esize1819 Qd,Qm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1819<3 &     c1617=2 &     c0711=2 &        Q6=1 &     c0404=0 ) |
                           ( $(TMODE_F) &    thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=2 & thv_c0711=2 & thv_c0606=1 & thv_c0404=0 ) ) & Qd & Qm & esize1819
 {
+	tmp:16 = Qd;
 	Qd = VectorUnzip(Qm,esize1819);
+	Qm = VectorUnzip(tmp,esize1819);
 }
 
 
@@ -7114,13 +7122,17 @@ define pcodeop VectorZip;
 :vzip^esize1819 Dd,Dm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1819<3 &     c1617=2 &     c0711=3 &        Q6=0 &     c0404=0 ) |
                           ($(TMODE_F)  &    thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=2 & thv_c0711=3 & thv_c0606=0 & thv_c0404=0 ) ) & Dd & Dm & esize1819
 {
+	tmp:8 = Dd;
 	Dd = VectorZip(Dm,esize1819);
+	Dm = VectorZip(tmp,esize1819);
 }
 
 :vzip^esize1819 Qd,Qm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1819<3 &     c1617=2 &     c0711=3 &        Q6=1 &     c0404=0 ) |
                            ($(TMODE_F)  &   thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=2 & thv_c0711=3 & thv_c0606=1 & thv_c0404=0 ) ) & Qd & Qm & esize1819
 {
+	tmp:16 = Qd;
 	Qd = VectorZip(Qm,esize1819);
+	Qm = VectorZip(tmp,esize1819);
 }
 
 
