@@ -5752,13 +5752,13 @@ ShiftImmLLI: "#"^shift_amt is TMode=1 &               thv_L7=1 & thv_c1621  [ sh
 	Dd = VectorShiftLeft(Dm,ShiftImmLLI,ShiftSize,udt);
 }
 
-:vqshlu.^udt^ShiftSize Qd, Qm, ShiftImmLLI is ( ($(AMODE) & ARMcond=0 & cond=15 &    c2527=1 &  c2323=1  &  c1621 & c0811=6 &  c0606=1     & c0404=1) |
+:vqshlu.s^ShiftSize Qd, Qm, ShiftImmLLI is ( ($(AMODE) & ARMcond=0 & cond=15 &    c2527=1 &  c2323=1  &  c1621 & c0811=6 &  c0606=1     & c0404=1) |
                                        ($(TMODE_EorF) &   thv_c2828=1 & thv_c2327=0x1f & thv_c1621 &  thv_c0811=6 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Qd & Qm
 {
 	Qd = VectorShiftLeft(Qm,ShiftImmLLI,ShiftSize,udt);
 }
 
-:vqshlu.^udt^ShiftSize Dd, Dm, ShiftImmLLI is ( ($(AMODE) & ARMcond=0 & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=6 &      c0606=0     & c0404=1) |
+:vqshlu.s^ShiftSize Dd, Dm, ShiftImmLLI is ( ($(AMODE) & ARMcond=0 & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=6 &      c0606=0     & c0404=1) |
                                        ($(TMODE_EorF) &  thv_c2828=1 & thv_c2327=0x1f & thv_c1621 & thv_c0811=6 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Dd & Dm
 {
 	Dd = VectorShiftLeft(Dm,ShiftImmLLI,ShiftSize,udt);
