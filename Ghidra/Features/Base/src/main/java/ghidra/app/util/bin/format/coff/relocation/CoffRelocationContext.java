@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 
 /**
- * <code>CoffRelocationContext</code> provide COFF relocation context data to be used by 
- * {@link CoffRelocationHandler} during processing of relocations.
+ * Provides COFF relocation context data to be used by {@link CoffRelocationHandler} during 
+ * processing of relocations
  */
 public class CoffRelocationContext {
 
@@ -40,6 +40,7 @@ public class CoffRelocationContext {
 
 	/**
 	 * Construct COFF relocation context
+	 * 
 	 * @param program program to which relocations are applied
 	 * @param header COFF file header
 	 * @param symbolsMap symbol lookup map
@@ -53,6 +54,7 @@ public class CoffRelocationContext {
 
 	/**
 	 * Reset context at start of COFF section relocation processing
+	 * 
 	 * @param coffSection COFF section
 	 */
 	public void resetContext(CoffSectionHeader coffSection) {
@@ -61,26 +63,33 @@ public class CoffRelocationContext {
 	}
 
 	/**
-	 * Get program to which relocations are being applied
-	 * @return program
+	 * {@return the program to which relocations are being applied}
 	 */
 	public Program getProgram() {
 		return program;
 	}
 
 	/**
-	 * Get COFF section to which relocations are being applied
-	 * @return COFF section
+	 * {@return the COFF section to which relocations are being applied}
 	 */
 	public CoffSectionHeader getSection() {
 		return section;
 	}
 
 	/**
-	 * Get symbol required to process a relocation.  Method should only be invoked
-	 * when a symbol is required since some relocations may not require a symbol.
+	 * {@return the COFF file header to which relocations are being applied}
+	 */
+	public CoffFileHeader getHeader() {
+		return header;
+	}
+
+	/**
+	 * {@return the symbol required to process a relocation} 
+	 * <p>
+	 * This method should only be invoked when a symbol is required since some relocations may not 
+	 * require a symbol.
+	 * 
 	 * @param relocation relocation whose related symbol should be returned
-	 * @return relocation symbol
 	 * @throws RelocationException if symbol not found
 	 */
 	public Symbol getSymbol(CoffRelocation relocation) throws RelocationException {
@@ -93,10 +102,12 @@ public class CoffRelocationContext {
 	}
 
 	/**
-	 * Get address of symbol required to process a relocation.  Method should only be invoked
-	 * when a symbol is required since some relocations may not require a symbol.
+	 * {@return the address of symbol required to process a relocation}
+	 * <p>
+	 * This method should only be invoked when a symbol is required since some relocations may not 
+	 * require a symbol
+	 * 
 	 * @param relocation relocation whose related symbol should be returned
-	 * @return relocation symbol
 	 * @throws RelocationException if symbol not found
 	 */
 	public Address getSymbolAddress(CoffRelocation relocation) throws RelocationException {
@@ -105,6 +116,7 @@ public class CoffRelocationContext {
 
 	/**
 	 * Get and optionally compute context value for specified key
+	 * 
 	 * @param key extension-specific context key
 	 * @param mappingFunction function used to compute value if absent
 	 * @return context value
@@ -116,6 +128,7 @@ public class CoffRelocationContext {
 
 	/**
 	 * Store context value for specified key
+	 * 
 	 * @param key extension-specific context key
 	 * @param value context value
 	 */
@@ -124,9 +137,9 @@ public class CoffRelocationContext {
 	}
 
 	/**
-	 * Get context value for specified key
+	 * {@return the context value for specified key (could be null if absent)}
+	 * 
 	 * @param key extension-specific key
-	 * @return context value or null if absent
 	 */
 	public Object getContextValue(String key) {
 		return contextMap.get(key);

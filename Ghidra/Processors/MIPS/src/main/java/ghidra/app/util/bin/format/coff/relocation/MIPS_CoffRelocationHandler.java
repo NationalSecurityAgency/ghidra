@@ -16,10 +16,7 @@
 package ghidra.app.util.bin.format.coff.relocation;
 
 import ghidra.app.util.bin.format.RelocationException;
-import ghidra.app.util.bin.format.coff.CoffFileHeader;
-import ghidra.app.util.bin.format.coff.CoffMachineType;
-import ghidra.app.util.bin.format.coff.CoffRelocation;
-import ghidra.app.util.bin.format.coff.CoffSectionHeader;
+import ghidra.app.util.bin.format.coff.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -30,25 +27,17 @@ import ghidra.util.Msg;
 
 public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 
-	/*
-	 * REFHI consumes the following PAIR relocation in mips.c.  Ghidra calls
-	 * relocate() once per relocation, so retain the REFHI state until PAIR.
-	 */
+	// REFHI consumes the following PAIR relocation in mips.c.  Ghidra calls
+	// relocate() once per relocation, so retain the REFHI state until PAIR.
 	private Address pendingRefHiAddress;
 	private long pendingRefHiTarget;
 
-	private CoffFileHeader _header;
-	private record SymbolResolution(
-		boolean Found,
-		int target
-	) {}
+	private record SymbolResolution(boolean found, int target) {}
 
 	@Override
 	public boolean canRelocate(CoffFileHeader fileHeader) {
-		boolean can = fileHeader.getMachine() == CoffMachineType.IMAGE_FILE_MACHINE_R3000 ||
+		return fileHeader.getMachine() == CoffMachineType.IMAGE_FILE_MACHINE_R3000 ||
 			fileHeader.getMachine() == CoffMachineType.IMAGE_FILE_MACHINE_R4000;
-		if (can) _header = fileHeader;
-		return can;
 	}
 
 	@Override
@@ -68,30 +57,40 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 			case IMAGE_REL_MIPS_REFHALF: {
 				// mips.c: *(SHORT UNALIGNED *)pb += (SHORT)(rvaBase >> 16);
 				short value = mem.getShort(address);
-				SymbolResolution result = resolveSymbol(address.getOffset(), relocation, relocationContext, reloct, value);
-				if (!result.Found) return RelocationResult.FAILURE;
+				SymbolResolution result = resolveSymbol(address.getOffset(), relocation,
+					relocationContext, reloct, value);
+				if (!result.found) {
+					return RelocationResult.FAILURE;
+				}
 				value = (short) (value + (short) (result.target >> 16));
 				mem.setShort(address, value);
-				return applied(2);
+				return new RelocationResult(Status.APPLIED, 2);
 			}
 
 			case IMAGE_REL_MIPS_REFWORD: {
 				// mips.c: *(LONG UNALIGNED *)pb += rvaBase;
 				int value = mem.getInt(address);
-				SymbolResolution result = resolveSymbol(address.getOffset(), relocation, relocationContext, reloct, value);
-				if (!result.Found) return RelocationResult.FAILURE;
+				SymbolResolution result = resolveSymbol(address.getOffset(), relocation,
+					relocationContext, reloct, value);
+				if (!result.found) {
+					return RelocationResult.FAILURE;
+				}
 				value += result.target;
 				mem.setInt(address, value);
-				return applied(4);
+				return new RelocationResult(Status.APPLIED, 4);
 			}
 
 			case IMAGE_REL_MIPS_REFWORDNB: { // TODO: check if resolveSymbol is appropiated here
 				Address symbolAddress;
 				try {
 					symbolAddress = relocationContext.getSymbolAddress(relocation);
-				} catch (RelocationException e) {
+				}
+				catch (RelocationException e) {
 					symbolAddress = null;
-					Msg.debug(this, getRelocationTypeName(reloct)+ " @ " + Long.toHexString(address.getOffset()) +" Symbol not found for index " + relocation.getSymbolIndex());
+					Msg.debug(this,
+						"%s @ 0x%x Symbol not found for index 0x%x".formatted(
+							getRelocationTypeName(reloct), address.getOffset(),
+							relocation.getSymbolIndex()));
 				}
 				if (symbolAddress == null) {
 					return RelocationResult.SKIPPED;
@@ -101,22 +100,25 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				 * mips.c adds the symbol RVA, not its VA.  Ghidra's symbol
 				 * address is the relocated VA, so remove the program image base.
 				 */
-				long rva = symbolAddress.getOffset() -
-					program.getImageBase().getOffset();
+				long rva = symbolAddress.getOffset() - program.getImageBase().getOffset();
 
 				int value = mem.getInt(address);
 				value += (int) rva;
 				mem.setInt(address, value);
-				return applied(4);
+				return new RelocationResult(Status.APPLIED, 4);
 			}
 
 			case IMAGE_REL_MIPS_SECREL: { // TODO: check if resolveSymbol is appropiated here
 				Address symbolAddress;
 				try {
 					symbolAddress = relocationContext.getSymbolAddress(relocation);
-				} catch (RelocationException e) {
+				}
+				catch (RelocationException e) {
 					symbolAddress = null;
-					Msg.debug(this, getRelocationTypeName(reloct)+ " @ " + Long.toHexString(address.getOffset()) +" Symbol not found for index " + relocation.getSymbolIndex());
+					Msg.debug(this,
+						"%s @ 0x%x Symbol not found for index 0x%x".formatted(
+							getRelocationTypeName(reloct), address.getOffset(),
+							relocation.getSymbolIndex()));
 				}
 				if (symbolAddress == null) {
 					return RelocationResult.SKIPPED;
@@ -141,7 +143,7 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				int value = mem.getInt(address);
 				value += (int) sectionOffset;
 				mem.setInt(address, value);
-				return applied(4);
+				return new RelocationResult(Status.APPLIED, 4);
 			}
 
 			case IMAGE_REL_MIPS_REFHI: {
@@ -160,10 +162,13 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				 * PAIR is processed.
 				 */
 				pendingRefHiAddress = address;
-				SymbolResolution result = resolveSymbol(address.getOffset(), relocation, relocationContext, reloct, mem.getShort(address));
-				if (!result.Found) return RelocationResult.FAILURE;
+				SymbolResolution result = resolveSymbol(address.getOffset(), relocation,
+					relocationContext, reloct, mem.getShort(address));
+				if (!result.found) {
+					return RelocationResult.FAILURE;
+				}
 				pendingRefHiTarget = result.target;
-				return applied(2);
+				return new RelocationResult(Status.APPLIED, 2);
 			}
 
 			case IMAGE_REL_MIPS_PAIR: {
@@ -191,17 +196,20 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				pendingRefHiTarget = 0;
 
 				// PAIR has no data bytes of its own.
-				return applied(0);
+				return new RelocationResult(Status.APPLIED, 0);
 			}
 
 			case IMAGE_REL_MIPS_REFLO: {
 				// mips.c: *(SHORT UNALIGNED *)pb += (SHORT)rvaBase;
 				short value = mem.getShort(address);
-				SymbolResolution result = resolveSymbol(address.getOffset(), relocation, relocationContext, reloct, value);
-				if (!result.Found) return RelocationResult.FAILURE;
+				SymbolResolution result = resolveSymbol(address.getOffset(), relocation,
+					relocationContext, reloct, value);
+				if (!result.found) {
+					return RelocationResult.FAILURE;
+				}
 				value = (short) (value + ((short) result.target));
 				mem.setShort(address, value);
-				return applied(2);
+				return new RelocationResult(Status.APPLIED, 2);
 			}
 
 			case IMAGE_REL_MIPS_JMPADDR: {
@@ -213,11 +221,15 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				 *   value |= original & 0xfc000000;
 				 */
 				int current = mem.getInt(address);
-				SymbolResolution result = resolveSymbol(address.getOffset(), relocation, relocationContext, reloct,(current & 0x03ffffff)<<2);
-				if (!result.Found) return RelocationResult.FAILURE;
-				int value = (current & 0xfc000000) | (((current & 0x03ffffff) + (result.target >> 2) & 0x03ffffff) & 0x03ffffff);
+				SymbolResolution result = resolveSymbol(address.getOffset(), relocation,
+					relocationContext, reloct, (current & 0x03ffffff) << 2);
+				if (!result.found) {
+					return RelocationResult.FAILURE;
+				}
+				int value = (current & 0xfc000000) |
+					(((current & 0x03ffffff) + (result.target >> 2) & 0x03ffffff) & 0x03ffffff);
 				mem.setInt(address, value);
-				return applied(4);
+				return new RelocationResult(Status.APPLIED, 4);
 			}
 
 			case IMAGE_REL_MIPS_SECTION:
@@ -238,21 +250,17 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 				 * the linker GP symbol, so these cannot be implemented
 				 * correctly as ordinary low-16 relocations.
 				 */
-				//return RelocationResult.UNSUPPORTED; // Let it fall
-
 			default:
 				return RelocationResult.UNSUPPORTED;
 		}
 	}
 
-	private static RelocationResult applied(int byteLength) {
-		return new RelocationResult(Status.APPLIED, byteLength);
-	}
-
 	/*
 	 * Symbol resolution with fail safe to handle sections as symbols
 	 */
-	private SymbolResolution resolveSymbol(long addressOffset, CoffRelocation relocation, CoffRelocationContext relocationContext, short reloct, long inMemory) {
+	private SymbolResolution resolveSymbol(long addressOffset, CoffRelocation relocation,
+			CoffRelocationContext relocationContext, short reloct, long inMemory) {
+		CoffFileHeader header = relocationContext.getHeader();
 		int target = 0;
 		try {
 			Address symbolAddress;
@@ -261,81 +269,62 @@ public class MIPS_CoffRelocationHandler implements CoffRelocationHandler {
 		}
 		catch (RelocationException e) {
 			long idx = relocation.getSymbolIndex();
-			String Symbol_Name = _header.getSymbolAtIndex(idx).getName();
-			CoffSectionHeader section = _header.getSections().stream()
-				.filter(c -> c.getName().equals(Symbol_Name))
-				.findFirst()
-				.orElse(null);
+			String symbolName = header.getSymbolAtIndex(idx).getName();
+			CoffSectionHeader section = header.getSections()
+					.stream()
+					.filter(c -> c.getName().equals(symbolName))
+					.findFirst()
+					.orElse(null);
 			if (section != null) {
 				int va = section.getPhysicalAddress(); // In the Object file, physical address is used. If this ends up beguin and executable then ????
 				target = va;
-				Msg.info(this,
-					getRelocationTypeName(reloct) +
-					" @ " + Long.toHexString(addressOffset) +
-					" Symbol " + Symbol_Name + " using " + Long.toHexString(va) +
-					" to " + Long.toHexString(inMemory)
-				);
+				//Msg.info(this, "%s @ 0x%x Symbol %s using 0x%x to 0x%x".formatted(
+				//	getRelocationTypeName(reloct), addressOffset, symbolName, va, inMemory));
 
 			}
 			else {
-				Msg.debug(this, 
-					getRelocationTypeName(reloct) + 
-					" @ " + Long.toHexString(addressOffset) +
-					" Symbol " + Symbol_Name + 
-					" not found for index " + idx);
+				Msg.debug(this, "%s @ 0x%x Symbol %s not found for index 0x%x"
+						.formatted(getRelocationTypeName(reloct), addressOffset, symbolName, idx));
 				return new SymbolResolution(false, 0);
 			}
-		}			
+		}
 		return new SymbolResolution(true, target);
 	}
 
 	/**
-	 * Human-readable names matching SzMipsRelocationType() in mips.c.
+	 * {@return a human-readable names matching SzMipsRelocationType() in mips.c}
 	 */
 	private String getRelocationTypeName(short relocType) {
-		switch (relocType) {
-			case IMAGE_REL_MIPS_ABSOLUTE:
-				return "ABS";
-			case IMAGE_REL_MIPS_PAIR:
-				return "PAIR";
-			case IMAGE_REL_MIPS_REFHALF:
-				return "REFHALF";
-			case IMAGE_REL_MIPS_REFWORD:
-				return "REFWORD";
-			case IMAGE_REL_MIPS_REFWORDNB:
-				return "REFWORDNB";
-			case IMAGE_REL_MIPS_JMPADDR:
-				return "JMPADDR";
-			case IMAGE_REL_MIPS_REFHI:
-				return "REFHI";
-			case IMAGE_REL_MIPS_REFLO:
-				return "REFLO";
-			case IMAGE_REL_MIPS_GPREL:
-				return "GPREL";
-			case IMAGE_REL_MIPS_LITERAL:
-				return "LITERAL";
-			case IMAGE_REL_MIPS_SECTION:
-				return "SECTION";
-			case IMAGE_REL_MIPS_SECREL:
-				return "SECREL";
-			default:
-				return null;
-		}
+		return switch (relocType) {
+			case IMAGE_REL_MIPS_ABSOLUTE -> "ABS";
+			case IMAGE_REL_MIPS_PAIR -> "PAIR";
+			case IMAGE_REL_MIPS_REFHALF -> "REFHALF";
+			case IMAGE_REL_MIPS_REFWORD -> "REFWORD";
+			case IMAGE_REL_MIPS_REFWORDNB -> "REFWORDNB";
+			case IMAGE_REL_MIPS_JMPADDR -> "JMPADDR";
+			case IMAGE_REL_MIPS_REFHI -> "REFHI";
+			case IMAGE_REL_MIPS_REFLO -> "REFLO";
+			case IMAGE_REL_MIPS_GPREL -> "GPREL";
+			case IMAGE_REL_MIPS_LITERAL -> "LITERAL";
+			case IMAGE_REL_MIPS_SECTION -> "SECTION";
+			case IMAGE_REL_MIPS_SECREL -> "SECREL";
+			default -> "<UNKNOWN>";
+		};
 	}
 
-	public static final short IMAGE_REL_MIPS_ABSOLUTE	= 0x0000;
-	public static final short IMAGE_REL_MIPS_REFHALF	= 0x0001;
-	public static final short IMAGE_REL_MIPS_REFWORD	= 0x0002;
-	public static final short IMAGE_REL_MIPS_JMPADDR	= 0x0003;
-	public static final short IMAGE_REL_MIPS_REFHI		= 0x0004;
-	public static final short IMAGE_REL_MIPS_REFLO		= 0x0005;
-	public static final short IMAGE_REL_MIPS_GPREL		= 0x0006;
-	public static final short IMAGE_REL_MIPS_LITERAL	= 0x0007;
-	public static final short IMAGE_REL_MIPS_SECTION	= 0x000A;
-	public static final short IMAGE_REL_MIPS_SECREL		= 0x000B;
-	public static final short IMAGE_REL_MIPS_SECRELLO	= 0x000C;
-	public static final short IMAGE_REL_MIPS_SECRELHI	= 0x000D;
-	public static final short IMAGE_REL_MIPS_JMPADDR16	= 0x0010;
-	public static final short IMAGE_REL_MIPS_REFWORDNB	= 0x0022;
-	public static final short IMAGE_REL_MIPS_PAIR		= 0x0025;
+	public static final short IMAGE_REL_MIPS_ABSOLUTE = 0x0000;
+	public static final short IMAGE_REL_MIPS_REFHALF = 0x0001;
+	public static final short IMAGE_REL_MIPS_REFWORD = 0x0002;
+	public static final short IMAGE_REL_MIPS_JMPADDR = 0x0003;
+	public static final short IMAGE_REL_MIPS_REFHI = 0x0004;
+	public static final short IMAGE_REL_MIPS_REFLO = 0x0005;
+	public static final short IMAGE_REL_MIPS_GPREL = 0x0006;
+	public static final short IMAGE_REL_MIPS_LITERAL = 0x0007;
+	public static final short IMAGE_REL_MIPS_SECTION = 0x000A;
+	public static final short IMAGE_REL_MIPS_SECREL = 0x000B;
+	public static final short IMAGE_REL_MIPS_SECRELLO = 0x000C;
+	public static final short IMAGE_REL_MIPS_SECRELHI = 0x000D;
+	public static final short IMAGE_REL_MIPS_JMPADDR16 = 0x0010;
+	public static final short IMAGE_REL_MIPS_REFWORDNB = 0x0022;
+	public static final short IMAGE_REL_MIPS_PAIR = 0x0025;
 }
