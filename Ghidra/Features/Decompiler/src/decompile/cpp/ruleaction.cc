@@ -6840,12 +6840,17 @@ void RulePtrsubUndo::getOpList(vector<uint4> &oplist) const
 /// \brief Recursively search for additive constants and multiplicative constants
 ///
 /// Walking backward from the given Varnode, search for constants being added in and return
-/// the sum of all the constants. Additionally pass back the biggest constant coefficient, for any term
-/// formed with INT_MULT.
+/// the sum of the additive constants, excluding those below shared Varnodes. Additionally pass
+/// back the biggest constant coefficient, for any term formed with INT_MULT.
+///
+/// Constants below a shared Varnode (one with more than one descendant) are excluded, because
+/// removeLocalAddRecurse() cannot remove them. Counting them can make RulePtrsubUndo undo a PTRSUB
+/// without changing its offset, allowing RulePtrArith to recreate it indefinitely. Multipliers are
+/// still collected from such terms.
 /// \param vn is the given root Varnode of the additive tree
 /// \param multiplier will hold the biggest constant multiplier or 0, if no multiplier is present
 /// \param termCount holds the number of Varnodes traversed (for the entire expression)
-/// \return the sum of all constants in the additive expression
+/// \return the sum of the additive constants, excluding those below shared Varnodes
 int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 &termCount)
 
 {
@@ -6858,6 +6863,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 &termC
   termCount += 1;
   if (termCount > MAX_TERMS)	// Stop recursing if term count exceeded
     return 0;
+  bool foldable = (vn->loneDescend() != (PcodeOp *)0);
   PcodeOp *op = vn->getDef();
   OpCode opc = op->code();
   int8 retval = 0;
@@ -6877,7 +6883,7 @@ int8 RulePtrsubUndo::getConstOffsetBack(Varnode *vn,int8 &multiplier,int4 &termC
     if (submultiplier > 0)
       multiplier *= submultiplier;		// Only contribute to the multiplier
   }
-  return retval;
+  return foldable ? retval : 0;
 }
 
 /// \brief Collect constants and the biggest multiplier in the given PTRSUB expression.
