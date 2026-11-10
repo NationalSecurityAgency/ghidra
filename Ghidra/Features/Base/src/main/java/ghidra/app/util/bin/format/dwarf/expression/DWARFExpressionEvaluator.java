@@ -373,8 +373,9 @@ public class DWARFExpressionEvaluator {
 		}
 		else if (DWARFExpressionOpCode.isInRange(instr.opcode, DW_OP_reg0, DW_OP_reg31)) {
 			Register register = getReg(instr.opcode.getRelativeOpCodeOffset(DW_OP_reg0));
-			Object regVal = valReader.getValue(newRegisterVarnode(register));
-			push(regVal);
+			// A terminal DW_OP_regN describes storage, not the register's live value.
+			push(instrIndex == expr.getInstructionCount() - 1 ? newRegisterVarnode(register)
+					: valReader.getValue(newRegisterVarnode(register)));
 		}
 		else {
 			switch (instr.opcode) {
@@ -406,7 +407,18 @@ public class DWARFExpressionEvaluator {
 							"Frame base has not been set, DW_OP_fbreg can not be evaluated");
 					}
 					long fbOffset = instr.getOperandValue(0);
-					push(new Varnode(frameBaseVal.getAddress().add(fbOffset), 0));
+					Object base = frameBaseVal.isRegister()
+							? valReader.getValue(frameBaseVal) : frameBaseVal;
+					if (base instanceof Varnode vn && !vn.isRegister()) {
+						push(new Varnode(vn.getAddress().add(fbOffset), 0));
+					}
+					else if (base instanceof Scalar scalar) {
+						push(newAddrVarnode(scalar.getUnsignedValue() + fbOffset));
+					}
+					else {
+						throw new DWARFExpressionException("Unable to resolve frame base " + base);
+					}
+					break;
 				}
 				// Stack Operations
 				case DW_OP_dup:
