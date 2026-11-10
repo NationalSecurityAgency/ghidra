@@ -7403,3 +7403,103 @@ is sve_b_2431=0b00000101 & sve_size_2223 & sve_b_21=1 & sve_zm_1620 & sve_b_1315
 {
 	Zd.T = SVE_zip1(Zd.T, Zn.T, Zm.T);
 }
+
+# FEAT_F32MM
+
+:fmmla Zd.S, Zn.S, Zm.S
+is sve_b_2431=0b01100100 & sve_b_23=1 & sve_b_22=0 & sve_b_21=1 & sve_zm_1619 & sve_b_1015=0b111001 & sve_zn_0509 & sve_zda_0004 & Zd.S & Zn.S & Zm.S
+{
+	Zd.S = SVE_fmmla(Zd.S, Zn.S, Zm.S);
+}
+
+# FEAT_F64MM
+
+:fmmla Zd.D, Zn.D, Zm.D
+is sve_b_2431=0b01100100 & sve_b_23=1 & sve_b_22=1 & sve_b_21=1 & sve_zm_1619 & sve_b_1015=0b111001 & sve_zn_0509 & sve_zda_0004 & Zd.D & Zn.D & Zm.D
+{
+	Zd.D = SVE_fmmla(Zd.D, Zn.D, Zm.D);
+}
+
+:trn1 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b11 & sve_b_10=0 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_trn1(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:trn2 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b11 & sve_b_10=1 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_trn2(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:uzp1 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b01 & sve_b_10=0 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_uzp1(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:uzp2 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b01 & sve_b_10=1 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_uzp2(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:zip1 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b00 & sve_b_10=0 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_zip1(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:zip2 Zd.Q, Zn.Q, Zm.Q
+is sve_b_2431=0b00000101 & sve_size_2223=0b10 & sve_b_21=1 & sve_zm_1620 & sve_b_1315=0b000 & sve_b_1112=0b00 & sve_b_10=1 & sve_zn_0509 & sve_zd_0004 & Zm.Q & Zd.Q & Zn.Q
+{
+	Zd.Q = SVE_zip2(Zd.Q, Zn.Q, Zm.Q);
+}
+
+:ld1rob "{"^Zd.B^"}", Pg3_z, [Rn_GPR64xsp^sve_opt4_1_m256to224]
+is sve_b_2531=0b1010010 & sve_b_24=0 & sve_b_23=0 & sve_b_2122=0b01 & sve_b_20=0 & sve_imm4_1619 & sve_b_1315=0b001 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.B & sve_opt4_1_m256to224
+{
+	Zd.B = SVE_ld1rob(Zd.B, Pg3_z, Rn_GPR64xsp, sve_opt4_1_m256to224);
+}
+
+:ld1roh "{"^Zd.H^"}", Pg3_z, [Rn_GPR64xsp^sve_opt4_1_m256to224]
+is sve_b_2531=0b1010010 & sve_b_24=0 & sve_b_23=1 & sve_b_2122=0b01 & sve_b_20=0 & sve_imm4_1619 & sve_b_1315=0b001 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.H & sve_opt4_1_m256to224
+{
+	Zd.H = SVE_ld1roh(Zd.H, Pg3_z, Rn_GPR64xsp, sve_opt4_1_m256to224);
+}
+
+:ld1row "{"^Zd.S^"}", Pg3_z, [Rn_GPR64xsp^sve_opt4_1_m256to224]
+is sve_b_2531=0b1010010 & sve_b_24=1 & sve_b_23=0 & sve_b_2122=0b01 & sve_b_20=0 & sve_imm4_1619 & sve_b_1315=0b001 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.S & sve_opt4_1_m256to224
+{
+	Zd.S = SVE_ld1row(Zd.S, Pg3_z, Rn_GPR64xsp, sve_opt4_1_m256to224);
+}
+
+:ld1rod "{"^Zd.D^"}", Pg3_z, [Rn_GPR64xsp^sve_opt4_1_m256to224]
+is sve_b_2531=0b1010010 & sve_b_24=1 & sve_b_23=1 & sve_b_2122=0b01 & sve_b_20=0 & sve_imm4_1619 & sve_b_1315=0b001 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.D & sve_opt4_1_m256to224
+{
+	Zd.D = SVE_ld1rod(Zd.D, Pg3_z, Rn_GPR64xsp, sve_opt4_1_m256to224);
+}
+
+:ld1rob "{"^Zd.B^"}", Pg3_z, [Rn_GPR64xsp, Rm_GPR64]
+is sve_b_2531=0b1010010 & sve_b_24=0 & sve_b_23=0 & sve_b_2122=0b01 & sve_rm_1620 & sve_b_1315=0b000 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.B & Rm_GPR64
+{
+	Zd.B = SVE_ld1rob(Zd.B, Pg3_z, Rn_GPR64xsp, Rm_GPR64);
+}
+
+:ld1roh "{"^Zd.H^"}", Pg3_z, [Rn_GPR64xsp, Rm_GPR64, "lsl #1"]
+is sve_b_2531=0b1010010 & sve_b_24=0 & sve_b_23=1 & sve_b_2122=0b01 & sve_rm_1620 & sve_b_1315=0b000 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.H & Rm_GPR64
+{
+	Zd.H = SVE_ld1roh(Zd.H, Pg3_z, Rn_GPR64xsp, Rm_GPR64);
+}
+
+:ld1row "{"^Zd.S^"}", Pg3_z, [Rn_GPR64xsp, Rm_GPR64, "lsl #2"]
+is sve_b_2531=0b1010010 & sve_b_24=1 & sve_b_23=0 & sve_b_2122=0b01 & sve_rm_1620 & sve_b_1315=0b000 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.S & Rm_GPR64
+{
+	Zd.S = SVE_ld1row(Zd.S, Pg3_z, Rn_GPR64xsp, Rm_GPR64);
+}
+
+:ld1rod "{"^Zd.D^"}", Pg3_z, [Rn_GPR64xsp, Rm_GPR64, "lsl #3"]
+is sve_b_2531=0b1010010 & sve_b_24=1 & sve_b_23=1 & sve_b_2122=0b01 & sve_rm_1620 & sve_b_1315=0b000 & sve_pg_1012 & sve_rn_0509 & sve_zt_0004 & Rn_GPR64xsp & Pg3_z & Zd.D & Rm_GPR64
+{
+	Zd.D = SVE_ld1rod(Zd.D, Pg3_z, Rn_GPR64xsp, Rm_GPR64);
+}
