@@ -4525,15 +4525,11 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :qasx^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=3 & Rn & Rd & Rm
 {
   build COND;
-  local lRn = Rn & 0xffff;
-  local lRm = Rm & 0xffff;
-  local uRn = (Rn >> 16) & 0xffff;
-  local uRm = (Rm >> 16) & 0xffff;
-  sum1:2 = lRn:2 - lRm:2;
-  sum1 = SignedSaturate(sum1,16:2);
-  sum2:2 = uRn:2 + uRm:2;
-  sum2 = SignedSaturate(sum2,16:2);
-  Rd = (zext(sum2) << 16) | zext(sum1);
+  local lo:4 = sext(Rn[ 0,16]) - sext(Rm[16,16]);
+  local hi:4 = sext(Rn[16,16]) + sext(Rm[ 0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6
@@ -4572,15 +4568,11 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 :qsax^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=5 & Rn & Rd & Rm
 {
   build COND;
-  local lRn = Rn & 0xffff;
-  local lRm = Rm & 0xffff;
-  local uRn = (Rn >> 16) & 0xffff;
-  local uRm = (Rm >> 16) & 0xffff;
-  sum1:2 = lRn:2 + lRm:2;
-  sum1 = SignedSaturate(sum1,16:2);
-  sum2:2 = uRn:2 - uRm:2;
-  sum2 = SignedSaturate(sum2,16:2);
-  Rd = (zext(sum2) << 16) | zext(sum1);
+  local lo:4 = sext(Rn[ 0,16]) + sext(Rm[16,16]);
+  local hi:4 = sext(Rn[16,16]) - sext(Rm[ 0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6
