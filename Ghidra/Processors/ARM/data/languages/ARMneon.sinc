@@ -2663,6 +2663,7 @@ define pcodeop VectorHalvingAdd;
 define pcodeop VectorHalvingSubtract;
 define pcodeop VectorRoundHalvingAdd;
 define pcodeop VectorRoundAddAndNarrow;
+define pcodeop VectorRoundSubAndNarrow;
 define pcodeop VectorDotProduct;
 define pcodeop vectorFusedMultiplyAccumulate;
 define pcodeop BfloatMultiplyAccumulate;
@@ -2942,6 +2943,12 @@ vmfSm: Sm_3^"["^c0303^"]"		is TMode=1 & thv_c0404=1 & Sm_3 & thv_M5 & c0303	{ el
 	                                   ($(TMODE_F) & thv_c2327=0x1f & thv_c2021<3  & thv_c0811=4 & thv_Q6=0 & thv_c0404=0) ) & Qm & esize2021x2 & Qn & Dd
 {
 	Dd = VectorRoundAddAndNarrow(Qn,Qm,esize2021x2);
+}
+
+:vrsubhn.i^esize2021x2 Dd,Qn,Qm    is (($(AMODE) & ARMcond=0 & cond=15 & c2327=7 & c2021<3  & c0811=6 & Q6=0 & c0404=0) |
+	                                   ($(TMODE_F) & thv_c2327=0x1f & thv_c2021<3  & thv_c0811=6 & thv_Q6=0 & thv_c0404=0) ) & Qm & esize2021x2 & Qn & Dd
+{
+	Dd = VectorRoundSubAndNarrow(Qn,Qm,esize2021x2);
 }
 
 :vrhadd.^udt^esize2021 Dd,Dn,Dm    is (($(AMODE) & ARMcond=0 & cond=15 & c2527=1 & c2323=0 & c2021<3  & c0811=1 & Q6=0 & c0404=0) |
