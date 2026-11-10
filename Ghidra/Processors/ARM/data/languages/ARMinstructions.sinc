@@ -4477,7 +4477,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   local sum1 = Rm + Rn;
   sum1 = SignedSaturate(sum1,32:2);
-  Q = SignedDoesSaturate(sum1,32:2);
+  Q = Q | SignedDoesSaturate(sum1,32:2);
   Rd = sum1;
 }
 
@@ -4545,7 +4545,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   tmp:4 = Rn * 2;
   tmp = SignedSaturate(tmp,32:2);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   tmp = tmp + Rm;
   tmp = SignedSaturate(tmp,32:2);
   Q = Q | SignedDoesSaturate(tmp,32:2);
@@ -4557,7 +4557,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   tmp:4 = Rn * 2;
   tmp = SignedSaturate(tmp);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   tmp = Rm - tmp;
   tmp = SignedSaturate(tmp,32:2);
   Q = Q | SignedDoesSaturate(tmp,32:2);
@@ -4592,7 +4592,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   tmp:4 = Rm - Rn;
   tmp = SignedSaturate(tmp,32:2);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   Rd = tmp;
 }
 
@@ -5459,7 +5459,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build COND;  
   build shift4;
   tmp:4 = SignedSaturate(shift4, sSatImm5);
-  Q = SignedDoesSaturate(shift4, sSatImm5);
+  Q = Q | SignedDoesSaturate(shift4, sSatImm5);
   Rd = tmp;
 }
 
@@ -5471,7 +5471,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   tmpl = SignedSaturate(tmpl, sSatImm4);
   local tmpu = Rm >> 16;
   tmpu = SignedSaturate(tmpu, sSatImm4);
-  Q = SignedDoesSaturate(tmpl,sSatImm4) | SignedDoesSaturate(tmpu,sSatImm4);
+  Q = Q | SignedDoesSaturate(tmpl,sSatImm4) | SignedDoesSaturate(tmpu,sSatImm4);
   Rd = ((tmpu & 0xffff) << 16) | (tmpl & 0xffff);
 }
 
@@ -6367,7 +6367,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build uSatImm5;
   build shift4;
   tmp:4 = UnsignedSaturate(shift4, uSatImm5);
-  Q = UnsignedDoesSaturate(shift4, uSatImm5);
+  Q = Q | UnsignedDoesSaturate(shift4, uSatImm5);
   Rd = tmp;
 }
 
@@ -6379,7 +6379,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   tmpl = UnsignedSaturate(tmpl, uSatImm4);
   local tmpu = Rm >> 16;
   tmpu = UnsignedSaturate(tmpu, uSatImm4);
-  Q = UnsignedDoesSaturate(tmpl,uSatImm4) | UnsignedDoesSaturate(tmpu,uSatImm4);
+  Q = Q | UnsignedDoesSaturate(tmpl,uSatImm4) | UnsignedDoesSaturate(tmpu,uSatImm4);
   Rd = ((tmpu & 0xffff) << 16) | (tmpl & 0xffff);
 }
 

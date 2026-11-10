@@ -3370,7 +3370,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   local sum1 = Rm0003 + Rn0003;
   sum1 = SignedSaturate(sum1,32:2);
-  Q = SignedDoesSaturate(sum1,32:2);
+  Q = Q | SignedDoesSaturate(sum1,32:2);
   Rd0811 = sum1;
 }
 
@@ -3438,7 +3438,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   tmp:4 = Rn0003 * 2;
   tmp = SignedSaturate(tmp,32:2);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   tmp = tmp + Rm0003;
   tmp = SignedSaturate(tmp,32:2);
   Q = Q | SignedDoesSaturate(tmp,32:2);
@@ -3450,7 +3450,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   tmp:4 = Rn0003 * 2;
   tmp = SignedSaturate(tmp);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   tmp = Rm0003 - tmp;
   tmp = SignedSaturate(tmp,32:2);
   Q = Q | SignedDoesSaturate(tmp,32:2);
@@ -3485,7 +3485,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   tmp:4 = Rm0003 - Rn0003;
   tmp = SignedSaturate(tmp,32:2);
-  Q = SignedDoesSaturate(tmp,32:2);
+  Q = Q | SignedDoesSaturate(tmp,32:2);
   Rd0811 = tmp;
 }
 
@@ -4251,7 +4251,7 @@ th2_shift1: ",asr #32" is imm3_shft=0x0 & imm2_shft=0x0 { }
         # Shift bit is 0
         tmpRn:4 = part2Rd0003 << thLsbImm;
         tmp:4 = SignedSaturate(tmpRn, thMsbImm);
-        Q = SignedDoesSaturate(tmpRn, thMsbImm);
+        Q = Q | SignedDoesSaturate(tmpRn, thMsbImm);
         Rt0811 = tmp;
 }
 
@@ -4262,7 +4262,7 @@ th2_shift1: ",asr #32" is imm3_shft=0x0 & imm2_shft=0x0 { }
         # Shift bit is 1
         tmpRn:4 = part2Rd0003 s>> thLsbImm;
         tmp:4 = SignedSaturate(tmpRn, thMsbImm);
-        Q = SignedDoesSaturate(tmpRn, thMsbImm);
+        Q = Q | SignedDoesSaturate(tmpRn, thMsbImm);
         Rt0811 = tmp;
 }
 
@@ -4271,7 +4271,7 @@ th2_shift1: ",asr #32" is imm3_shft=0x0 & imm2_shft=0x0 { }
         op12=0x0 & Rt0811 & thc0407=0x0 & Immed4
 {
         tmp:4 = SignedSaturate(part2Rd0003, Immed4);
-        Q = SignedDoesSaturate(part2Rd0003, Immed4);
+        Q = Q | SignedDoesSaturate(part2Rd0003, Immed4);
         Rt0811 = tmp;
 }
 
@@ -5212,7 +5212,7 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
         # Shift bit is 0
 	tmpRn:4 = part2Rd0003 << thLsbImm;
         tmp:4 = UnsignedSaturate(tmpRn, thMsbImm);
-        Q = UnsignedDoesSaturate(tmpRn, thMsbImm);
+        Q = Q | UnsignedDoesSaturate(tmpRn, thMsbImm);
         Rt0811 = tmp;
 }
 
@@ -5223,7 +5223,7 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
         # Shift bit is 1
         tmpRn:4 = part2Rd0003 s>> thLsbImm;
         tmp:4 = UnsignedSaturate(tmpRn, thMsbImm);
-        Q = UnsignedDoesSaturate(tmpRn, thMsbImm);
+        Q = Q | UnsignedDoesSaturate(tmpRn, thMsbImm);
         Rt0811 = tmp;
 }
 
@@ -5232,7 +5232,7 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
         op12=0x0 & Rt0811 & thc0407=0x0 & Immed4
 {
         tmp:4 = UnsignedSaturate(part2Rd0003, Immed4);
-        Q = UnsignedDoesSaturate(part2Rd0003, Immed4);
+        Q = Q | UnsignedDoesSaturate(part2Rd0003, Immed4);
         Rt0811 = tmp;
 }
 
