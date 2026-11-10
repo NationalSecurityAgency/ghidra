@@ -1127,6 +1127,8 @@ uint4 MultiMemberAssign::assignAddress(Datatype *dt,const PrototypePieces &proto
       const PrimitiveExtractor::Primitive &primitive(primitives.get(i));
       if (resource->assignAddress(primitive.dt, proto, pos, tlist, tmpStatus,param) == fail)
 	return fail;
+      if (param.addr.isInvalid())	// No storage for member
+	return fail;
       if (!consumeFromStack && stackEntry != (const ParamEntry *)0) {
 	if (before != tmpStatus[stackEntry->getGroup()])
 	  return fail;
