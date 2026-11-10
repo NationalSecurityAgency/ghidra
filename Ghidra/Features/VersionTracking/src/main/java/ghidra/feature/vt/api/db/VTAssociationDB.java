@@ -165,6 +165,9 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 		if (status == VTAssociationStatus.REJECTED) {
 			return;
 		}
+		if (status == VTAssociationStatus.BLOCKED) {
+			throw new VTAssociationStatusException("Can't reject an already blocked association");
+		}
 		if (status == VTAssociationStatus.ACCEPTED) {
 			throw new VTAssociationStatusException("Can't reject an already accepted association");
 		}
