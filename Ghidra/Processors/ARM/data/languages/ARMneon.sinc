@@ -5158,6 +5158,7 @@ vmlDmA: Dm_4^"["^thv_M5^"]"	is TMode=1 & thv_c2021=2 & Dm_4 & thv_M5											{
 }
 
 define pcodeop FloatVectorNeg;
+define pcodeop VectorNeg;
 
 
 :vneg.s^esize1819 Dd,Dm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1819<3 &     c1617=1 &     c0711=7 &        Q6=0 &     c0404=0 ) |
@@ -5412,18 +5413,40 @@ vpopSd64List: "{"^buildVpopSd64List^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c
 define pcodeop SatQ;
 define pcodeop SignedSatQ;
 
-:vqabs^".s"^esize1819 Dd,Dn,Dm  is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1617=0 &     c0811=7 &     Q6=0 &     c0404=0) |
-                               ($(TMODE_F) &                    thv_c2327=0x1f & thv_c2021=3 & thv_c1617=0 & thv_c0811=7 & thv_Q6=0 & thv_c0404=0)) & esize1819 & Dn & Dd & Dm
+:vqabs^".s"^esize1819 Dd,Dm is (
+    ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 & c2021=3 & c1819<3 & c1617=0 & c0811=7 & c0707=0 & Q6=0 & c0404=0) |
+    ($(TMODE_F) & thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=0 & thv_c0811=7 & thv_c0707=0 & thv_Q6=0 & thv_c0404=0)
+) & esize1819 & Dd & Dm
 {
-	Dd = VectorAbs(Dn,Dm,esize1819);
-	Dd = SatQ(Dd, esize1819, 0:1);
+    Dd = VectorAbs(Dm,esize1819);
+    Dd = SatQ(Dd,esize1819,0:1);
 }
 
-:vqabs^".s"^esize1819 Qd,Qn,Qm  is ( ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 &     c2021=3 &     c1617=0 &     c0811=7 &     Q6=1 &     c0404=0) |
-                               ($(TMODE_F) &                    thv_c2327=0x1f & thv_c2021=3 & thv_c1617=0 & thv_c0811=7 & thv_Q6=1 & thv_c0404=0) ) & esize1819 & Qm & Qn & Qd
+:vqabs^".s"^esize1819 Qd,Qm is (
+    ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 & c2021=3 & c1819<3 & c1617=0 & c0811=7 & c0707=0 & Q6=1 & c0404=0) |
+    ($(TMODE_F) & thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=0 & thv_c0811=7 & thv_c0707=0 & thv_Q6=1 & thv_c0404=0)
+) & esize1819 & Qd & Qm
 {
-	Qd = VectorAbs(Qn,Qm,esize1819);
-	Qd = SatQ(Qd, esize1819, 0:1);
+    Qd = VectorAbs(Qm,esize1819);
+    Qd = SatQ(Qd,esize1819,0:1);
+}
+
+:vqneg^".s"^esize1819 Dd,Dm is (
+    ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 & c2021=3 & c1819<3 & c1617=0 & c0811=7 & c0707=1 & Q6=0 & c0404=0) |
+    ($(TMODE_F) & thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=0 & thv_c0811=7 & thv_c0707=1 & thv_Q6=0 & thv_c0404=0)
+) & esize1819 & Dd & Dm
+{
+    Dd = VectorNeg(Dm,1:1,esize1819);
+    Dd = SatQ(Dd,esize1819,0:1);
+}
+
+:vqneg^".s"^esize1819 Qd,Qm is (
+    ($(AMODE) & ARMcond=0 & cond=15 & c2327=7 & c2021=3 & c1819<3 & c1617=0 & c0811=7 & c0707=1 & Q6=1 & c0404=0) |
+    ($(TMODE_F) & thv_c2327=0x1f & thv_c2021=3 & thv_c1819<3 & thv_c1617=0 & thv_c0811=7 & thv_c0707=1 & thv_Q6=1 & thv_c0404=0)
+) & esize1819 & Qd & Qm
+{
+    Qd = VectorNeg(Qm,1:1,esize1819);
+    Qd = SatQ(Qd,esize1819,0:1);
 }
 
 :vqadd.^udt^esize2021 Dd,Dn,Dm  is ( ($(AMODE) & ARMcond=0 & cond=15 & c2527=1 &     c2323=0 &     c0811=0 &     Q6=0 &     c0404=1) |
