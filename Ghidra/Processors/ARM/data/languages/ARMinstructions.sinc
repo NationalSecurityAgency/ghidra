@@ -1912,19 +1912,18 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 :srsda SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
-  ptr:4 = sp;
+  ptr:4 = sp - 4;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
-  ptr = ptr - 4;
 }
 
 :srsdb SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
-  ptr:4 = sp - 4;
+  ptr:4 = sp - 8;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
 }
 
@@ -1952,23 +1951,21 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 :srsda SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
-  ptr:4 = sp;
+  ptr:4 = sp - 4;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
-  ptr = ptr - 4;
-  sp = ptr;
+  sp = ptr - 8;
 }
 
 :srsdb SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
-  ptr:4 = sp;
-  ptr = ptr - 4;
+  ptr:4 = sp - 8;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
-  sp = ptr;
+  sp = ptr - 4;
 }
 
 @endif # VERSION_6
