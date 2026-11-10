@@ -114,13 +114,13 @@
 }
 
 # BALL - Branch if All Bits Set (RRI8), pg. 264.
-:ball ri8_srel, as, at is ri8_srel & ar = 0b0100 & as & at & op0 = 0b0111 {
+:ball as, at, ri8_srel is ri8_srel & ar = 0b0100 & as & at & op0 = 0b0111 {
 	local test:4 = ~as & at;
 	if (test == 0)	goto ri8_srel;
 }
 
 # BANY - Branch if Any Bit Set (RRI8), pg. 265.
-:bany ri8_srel, as, at, is ri8_srel & ar = 0b1000 & as & at & op0 = 0b0111 {
+:bany as, at, ri8_srel is ri8_srel & ar = 0b1000 & as & at & op0 = 0b0111 {
 	local test:4 = as & at;
 	if (test != 0)	goto ri8_srel;
 }
@@ -260,7 +260,7 @@ macro extract_bit(bit, result) {
 }
 
 # BNALL - Branch if Not-All Bits Set (RRI8), pg. 287.
-:bnall ri8_srel, as, at is ri8_srel & ar = 0b1100 & as & at & op0 = 0b0111 {
+:bnall as, at, ri8_srel is ri8_srel & ar = 0b1100 & as & at & op0 = 0b0111 {
     if ((~as & at) != 0)
         goto ri8_srel;
 }
@@ -290,7 +290,7 @@ macro extract_bit(bit, result) {
 }
 
 # BNONE - Branch if No Bit Set (RRI8), pg. 292.
-:bnone ri8_srel, as, at, is ri8_srel & ar = 0 & as & at & op0 = 0b0111 {
+:bnone as, at, ri8_srel is ri8_srel & ar = 0 & as & at & op0 = 0b0111 {
     if ((as & at) == 0)
         goto ri8_srel;
 }
