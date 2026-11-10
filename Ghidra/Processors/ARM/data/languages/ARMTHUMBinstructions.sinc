@@ -3882,7 +3882,10 @@ macro th_set_carry_for_ror(result, count) {
 :sdiv^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfb9 & Rn0003; op12=0xf & Rd0811 & thc0407=0xf & Rm0003
 {
     build ItCond;
-    local result = Rn0003 s/ Rm0003;
+    local result:4 = 0;
+    if (Rm0003 == 0) goto <div_by_zero>;
+    result = Rn0003 s/ Rm0003;
+<div_by_zero>
     Rd0811 = result;
 }
 
@@ -5296,8 +5299,11 @@ Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
 :udiv^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfbb & Rn0003; op12=0xf & Rd0811 & thc0407=0xf & Rm0003
 {
    build ItCond;
-    result:8 = zext(Rn0003) / zext(Rm0003);
-    Rd0811 = result(0);
+    local result:4 = 0;
+    if (Rm0003 == 0) goto <div_by_zero>;
+    result = Rn0003 / Rm0003;
+<div_by_zero>
+    Rd0811 = result;
 }
 
 :uxtab^ItCond Rd0811,Rn0003,Rm0003,ByteRotate 	is TMode=1 & ItCond & op4=0xfa5 & Rn0003; op12=15 & Rd0811 & thc0707=1 & ByteRotate & Rm0003
