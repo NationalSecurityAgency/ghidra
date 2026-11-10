@@ -4196,20 +4196,20 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 {
   build ItCond;
   # register list is always: r14, spsr
-  ptr:4 = sp - 4;
+  ptr:4 = sp - 8;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
-  sp = ptr;
+  sp = ptr - 4;
 }
 
 :srsdb^ItCond sp,thSRSMode 		is TMode=1 & ItCond & op6=0x3a0 & sp & thc0505=0 & thc0004=0xd; op8=0xc0 & sop0507=0 & thSRSMode
 {
   build ItCond;
   # register list is always: r14, spsr
-  ptr:4 = sp - 4;
+  ptr:4 = sp - 8;
   *ptr = lr;
-  ptr = ptr - 4;
+  ptr = ptr + 4;
   *ptr = spsr;
 }
 
