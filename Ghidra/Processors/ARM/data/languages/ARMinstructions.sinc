@@ -1810,9 +1810,9 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = rn;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   pc = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   return [pc];
 }
 
@@ -1820,9 +1820,9 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = rn + 4;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   pc = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   return [pc];
 }
 
@@ -1850,9 +1850,9 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   pc = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   Rn = ptr + 4;
   return [pc];
 }
@@ -1861,9 +1861,9 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn + 4;
-  cpsr = *ptr;
-  ptr = ptr + 4;
   pc = *ptr;
+  ptr = ptr + 4;
+  cpsr = *ptr;
   Rn = ptr;
   return [pc];
 }
