@@ -4527,9 +4527,9 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   local lo:4 = sext(Rn[ 0,16]) - sext(Rm[16,16]);
   local hi:4 = sext(Rn[16,16]) + sext(Rm[ 0,16]);
-  local satlo:4 = SignedSaturate(lo, 16:2);
-  local sathi:4 = SignedSaturate(hi, 16:2);
-  Rd = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6
@@ -4570,9 +4570,9 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   local lo:4 = sext(Rn[ 0,16]) + sext(Rm[16,16]);
   local hi:4 = sext(Rn[16,16]) - sext(Rm[ 0,16]);
-  local satlo:4 = SignedSaturate(lo, 16:2);
-  local sathi:4 = SignedSaturate(hi, 16:2);
-  Rd = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6

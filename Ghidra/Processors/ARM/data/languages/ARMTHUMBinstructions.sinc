@@ -3420,9 +3420,9 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   local lo:4 = sext(Rn0003[ 0,16]) - sext(Rm0003[16,16]);
   local hi:4 = sext(Rn0003[16,16]) + sext(Rm0003[ 0,16]);
-  local satlo:4 = SignedSaturate(lo, 16:2);
-  local sathi:4 = SignedSaturate(hi, 16:2);
-  Rd0811 = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd0811 = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6
@@ -3463,9 +3463,9 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   build ItCond;
   local lo:4 = sext(Rn0003[ 0,16]) + sext(Rm0003[16,16]);
   local hi:4 = sext(Rn0003[16,16]) - sext(Rm0003[ 0,16]);
-  local satlo:4 = SignedSaturate(lo, 16:2);
-  local sathi:4 = SignedSaturate(hi, 16:2);
-  Rd0811 = (zext(sathi[0,16]) << 16) | zext(satlo[0,16]);
+  local satlo:2 = SignedSaturate(lo, 16:2);
+  local sathi:2 = SignedSaturate(hi, 16:2);
+  Rd0811 = (zext(sathi) << 16) | zext(satlo);
 }
 
 @endif # VERSION_6
