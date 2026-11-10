@@ -1,0 +1,21 @@
+# aes64ds - AES final round decryption instruction for RV64
+define pcodeop aes64ds;
+:aes64ds rd, rs1, rs2 is op2531=0x1d & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=aes64ds(rs1,rs2);}
+
+# aes64dsm - AES middle round decryption instruction for RV64
+define pcodeop aes64dsm;
+:aes64dsm rd, rs1, rs2 is op2531=0x1f & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=aes64dsm(rs1,rs2);}
+
+# aes64im - This instruction accelerates the inverse MixColumns step of the AES Block Cipher,
+#           and is used to aid creation of the decryption KeySchedule
+define pcodeop aes64im;
+:aes64im rd, rs1 is op2531=0x18 & op2024=0x0 & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=aes64im(rs1);}
+
+# aes64ks1i - This instruction implements part of the KeySchedule operation for the AES Block cipher
+#             involving the SBox operation.
+define pcodeop aes64ks1i;
+:aes64ks1i rd, rs1, succ is op2531=0x18 & op2424=1 & succ & rs1 & op1214=0x1 & rd & op0006=0x13 {rd=aes64ks1i(rs1,succ:4);}
+
+# aes64ks2 - This instruction implements part of the KeySchedule operation for the AES Block cipher
+define pcodeop aes64ks2;
+:aes64ks2 rd, rs1, rs2 is op2531=0x3f & rs2 & rs1 & op1214=0x0 & rd & op0006=0x33 {rd=aes64ks2(rs1,rs2);}
