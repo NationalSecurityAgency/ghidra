@@ -1902,7 +1902,7 @@ rfi_eps: ptr is op_s	[ ptr = $(EPS_BASE) + (4 * op_s); ] { export *[register]:4 
 LoopOffset8: loc is ri8_i8 [ loc = inst_start + ri8_i8 + 4; ] { export *:4 loc; }
 
 # LOOP - Loop (BRI8), pg. 392.
-:loop as, LoopOffset8 is LoopOffset8 & ar = 8 & as & at = 0b0111 & op0 = 6
+:loop as, LoopOffset8 is LoopOffset8 & ar = 8 & as & bri8_n = 0b11 & bri8_m = 0b01 & op0 = 6
 	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
 	LCOUNT = as - 1;
 	LBEG = inst_next;
@@ -1910,7 +1910,7 @@ LoopOffset8: loc is ri8_i8 [ loc = inst_start + ri8_i8 + 4; ] { export *:4 loc; 
 }
 
 # LOOPGTZ - Loop if Greater Than Zero (BRI8), pg. 394.
-:loopgtz as, LoopOffset8 is LoopOffset8 & ar = 0b1010 & as & at = 0b0111 & op0 = 0b0110
+:loopgtz as, LoopOffset8 is LoopOffset8 & ar = 0b1010 & as & bri8_n = 0b11 & bri8_m = 0b01 & op0 = 0b0110
 	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
 	LCOUNT = as - 1;
 	LBEG = inst_next;
@@ -1919,7 +1919,7 @@ LoopOffset8: loc is ri8_i8 [ loc = inst_start + ri8_i8 + 4; ] { export *:4 loc; 
 }
 
 # LOOPNEZ - Loop if Not Equal Zero (BRI8), pg. 396.
-:loopnez as, LoopOffset8 is LoopOffset8 & ar = 0b1001 & as & at = 0b0111 & op0 = 0b0110
+:loopnez as, LoopOffset8 is LoopOffset8 & ar = 0b1001 & as & bri8_n = 0b11 & bri8_m = 0b01 & op0 = 0b0110
 	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
 	LCOUNT = as - 1;
 	LBEG = inst_next;
