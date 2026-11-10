@@ -1043,17 +1043,17 @@ Before you can do anything else, you must first create a project. Projects are u
   <ul>
     <li>XRef Field</li>
   </ul>
-  <li>For code:</li>
+  <li>For code or function:</li>
   <ul>
-    <li>(c) Call, (j) - Jump</li>
+    <li>(c) Call, (j) - Jump, (T) - fuction-thunked-by</li>
   </ul>
   <li>For data:</li>
   <ul>
-    <li>(*) Pointer, (W) Write, (R) Read</li>
+    <li>(*) Pointer, (W) Write, (R) Read, (RW) Read/Write</li>
   </ul>
   <li>Show references to </li>
   <ul>
-    <li>Code</li>
+    <li>Code or Function</li>
     <li>Data</li>
   </ul>
   <li>Can edit and create references anywhere</li>
@@ -1062,10 +1062,10 @@ Before you can do anything else, you must first create a project. Projects are u
   <p>
   <b><u>Notes:</u></b>
   <ul>    
-    <li><b>XRef Field</b> This Listing field contains a list of all addresses that reference the current address/item. Each item in the XREF field has a type indicator next to it. </li>
-    <li><b>XREF Header</b> This is located above the XRef Field and shows how many references there are to the current address/item. You can double click the XREF Header to bring up a table of all of them.</li>    
+    <li><b>XRef Field</b> This Listing field contains a list of all addresses that reference the current address/item. Each item in the XREF field has a type indicator next to it.  NOTE: All <I>Indirect</I> references appear as a (R) reference to reflect the reading of a pointer from the current location.</li>
+	<li><b>XREF Header</b> This is located above the XRef Field and shows how many references there are to the current address/item. You can double click the XREF Header to bring up a table of all of them.</li>    
     <li><b>References->Show References To</b> Another way to bring up a table of references is to click on the item and choose <b>References->Show References To</b>. </li>
-        <li><b>Edit/Create References</b> To edit/create references, right-click on an operand or instruction and choose <b>References->Add/Edit</b>. Use the green + to add a reference. Choose the type of reference you wish to create: memory, external, stack, or register. Fill in the appropriate text boxes with address, offset, and external location. The text boxes may vary depending on the type of reference you pick.</li>
+    <li><b>Edit/Create References</b> To edit/create references, right-click on an operand or instruction and choose <b>References->Add/Edit</b>. Use the green + to add a reference. Choose the type of reference you wish to create: memory, external, stack, or register. Fill in the appropriate text boxes with address, offset, and external location. The text boxes may vary depending on the type of reference you pick.</li>
  </ul>
   </p>
 </div>
