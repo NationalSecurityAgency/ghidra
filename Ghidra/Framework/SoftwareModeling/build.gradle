@@ -94,6 +94,15 @@ generateGrammarSource {
 			include "*.java"
 		}.each { File src ->
 			def lines = src.readLines()
+
+			// Set dummy DATE/TIME for reproducable builds
+			lines = lines.collect { line ->
+				if (line.trim().startsWith("// \$ANTLR")) {
+					return line.replaceAll(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/, "")
+				}
+				return line
+			}
+
 			if (lines.get(0) != 'package ghidra.sleigh.grammar;') {
 				src.withWriter { wr ->
 					wr.println('package ghidra.sleigh.grammar;');
@@ -102,6 +111,92 @@ generateGrammarSource {
 					}
 				}
 			}
+		}
+
+		// Fix antlr sorting issues in SleighParser.java for reproducable builds
+		File parserFile = file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighParser.java")
+		if (parserFile.exists()) {
+
+			def lines = parserFile.readLines()
+			def newLines = []
+			boolean inRrs = false
+			def rrsLines = []
+			boolean inDelegatedSection = false
+			boolean hasDelegated = false
+			def delegatedMethods = []
+
+			for (int i = 0; i < lines.size(); i++) {
+				def line = lines[i]
+				def trimmed = line.trim()
+
+				if (!hasDelegated && trimmed == "// Delegated rules") {
+					newLines.add(line)
+					hasDelegated = true
+					inDelegatedSection = true
+					continue
+				}
+
+				if (trimmed ==~ /^\/\/\s*[a-zA-Z ]+:\s*.+/) {
+					def parts = line.split(": ", 2)
+					if (parts.length == 2 && parts[1].contains(",")) {
+						def indent = line.substring(0, line.indexOf("//"))
+						def prefix = indent + parts[0].trim() + ":"
+						def items = parts[1].split(",").collect { it.trim() }.findAll { !it.isEmpty() }
+						items.sort()
+						line = prefix + " " + items.join(", ")
+					}
+				}
+
+				if (trimmed ==~ /^RewriteRule[a-zA-Z]+Stream\s+.+/) {
+					inRrs = true
+					rrsLines.add(line)
+					continue
+				} else if (inRrs) {
+					inRrs = false
+					rrsLines.sort()
+					newLines.addAll(rrsLines)
+					rrsLines.clear()
+				}
+
+				if (inDelegatedSection) {
+					if (trimmed.startsWith("public SleighParser_")) {
+						delegatedMethods.add(line)
+						continue
+					} else if (trimmed.isEmpty()) {
+						continue
+					}
+					if (!delegatedMethods.isEmpty()) {
+						delegatedMethods.sort()
+						delegatedMethods.each { m ->
+							newLines.add(m)
+							newLines.add("")
+						}
+						delegatedMethods.clear()
+					}
+					inDelegatedSection = false
+				}
+
+				newLines.add(line)
+			}
+
+			if (!rrsLines.isEmpty()) {
+				rrsLines.sort()
+				newLines.addAll(rrsLines)
+			}
+
+			if (!delegatedMethods.isEmpty()) {
+				delegatedMethods.sort()
+				delegatedMethods.each { m ->
+					newLines.add(m)
+					newLines.add("")
+				}
+			}
+
+			while (!newLines.isEmpty() && newLines.last().trim().isEmpty()) {
+				newLines.remove(newLines.size() - 1)
+			}
+
+			parserFile.text = newLines.join("\n") + "\n"
 		}
 	}
 }
