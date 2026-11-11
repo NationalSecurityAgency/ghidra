@@ -317,10 +317,8 @@ iyMem8: (IY-val)    is IY & simm8 & sign8=1	[ val = -simm8; ] {
 }
 
 @else # if Z180_SEGMENTED
-@if defined(Z180)
 
 hlMem8: (HL)  is HL      { ptr:$(PTRSIZE) = HL; export *:1 ptr; }
-@endif
 
 ixMem8: (IX+simm8)  is IX & simm8                                 { ptr:$(PTRSIZE) = IX + simm8; export *:1 ptr; }
 ixMem8: (IX-val)    is IX & simm8 & sign8=1	[ val = -simm8; ]      { ptr:$(PTRSIZE) = IX + simm8; export *:1 ptr; }
@@ -389,8 +387,8 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	reg3_3 = imm8;
 }
 
-:LD reg3_3,(HL)     is op6_2=0x1 & reg3_3 & bits0_3=0x6 & HL {
-	MemRead(reg3_3,HL);
+:LD reg3_3,hlMem8   is op6_2=0x1 & reg3_3 & bits0_3=0x6 & hlMem8 {
+	reg3_3 = hlMem8;
 }
 
 :LD reg3_3,ixMem8   is op0_8=0xdd; op6_2=0x1 & reg3_3 & bits3_3!=0x6 & bits0_3=0x6; ixMem8  {
@@ -401,8 +399,8 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	reg3_3 = iyMem8; 
 }
 
-:LD (HL),reg0_3     is op6_2=0x1 & bits3_3=0x6 & reg0_3 & HL {
-	MemStore(HL,reg0_3);
+:LD hlMem8,reg0_3   is op6_2=0x1 & bits3_3=0x6 & reg0_3 & hlMem8 {
+	hlMem8 = reg0_3;
 }
 
 :LD ixMem8,reg0_3   is op0_8=0xdd; op6_2=0x1 & bits3_3=0x6 & reg0_3 & bits0_3!=0x6; ixMem8  {
@@ -413,9 +411,8 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	iyMem8 = reg0_3;
 }
 
-:LD (HL),imm8       is op0_8=0x36 & HL; imm8 {
-	tmp:1 = imm8;
-	MemStore(HL,tmp);
+:LD hlMem8,imm8     is op0_8=0x36 & hlMem8; imm8 {
+	hlMem8 = imm8;
 }
 
 :LD ixMem8,imm8     is op0_8=0xdd; op6_2=0x0 & bits3_3=0x6 & bits0_3=0x6; ixMem8; imm8  {
