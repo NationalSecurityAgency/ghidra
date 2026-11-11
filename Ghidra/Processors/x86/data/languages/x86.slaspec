@@ -19,5 +19,6 @@ with : lockprefx=0 {
 @include "smx.sinc"
 @include "cet.sinc"
 @include "rdrand.sinc"
+@include "xop.sinc"
 @include "rao.sinc"
 }
