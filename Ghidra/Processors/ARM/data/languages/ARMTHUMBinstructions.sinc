@@ -4728,6 +4728,16 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   build thSBIT_CZNO;
 }
 
+# Outside Hyp mode, same as subs pc,lr,#0
+:eret^ItCond	 		is TMode=1 & ItCond & op0=0xf3de; op0=0x8f00
+{
+  build ItCond;
+  cpsr=spsr;
+  SetThumbMode( ((cpsr >> 5) & 1) != 0 );
+  pc = lr;
+  return [pc];
+}
+
 :sub^ItCond	pc,lr,Immed8 		is TMode=1 & ItCond & op4=0xf3d & pc & sop0003=0xe; op8=0x8f & lr & Immed8
 {
   build ItCond;
