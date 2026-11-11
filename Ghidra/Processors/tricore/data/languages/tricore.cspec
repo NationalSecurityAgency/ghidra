@@ -124,6 +124,85 @@
          the correct return storage location when there are multiple return location types
     -->
     
+    <!-- The same as __stdcall, but with a different stackshift to support FCALL / FRET opcodes -->
+    <prototype name="__fastcall" extrapop="4" stackshift="4">
+      <input>
+          <pentry minsize="4" maxsize="4" storage="hiddenret">
+              <register name="a4"/>
+          </pentry>
+          <pentry minsize="4" maxsize="4" metatype="ptr">   <!-- This is the first pointer -->
+              <register name="a4"/>
+          </pentry>
+          <pentry minsize="4" maxsize="4" metatype="ptr">
+              <register name="a5"/>
+          </pentry>
+          <pentry minsize="4" maxsize="4" metatype="ptr">
+              <register name="a6"/>
+          </pentry>
+          <pentry minsize="4" maxsize="4" metatype="ptr">
+              <register name="a7"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4" extension="inttype">   <!-- This is the first non pointer -->
+              <register name="d4"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4" extension="inttype">
+              <register name="d5"/>
+          </pentry>
+          <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
+              <register name="e4"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4" extension="inttype">
+              <register name="d6"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4" extension="inttype">
+              <register name="d7"/>
+          </pentry>
+          <pentry minsize="5" maxsize="8">
+              <register name="e6"/>
+          </pentry>
+          <pentry minsize="1" maxsize="500" align="4">
+              <addr offset="0" space="stack"/>
+          </pentry>
+          <rule>
+             <datatype name="struct" minsize="17"/>
+             <convert_to_ptr/>
+          </rule>
+      </input>
+
+      <output>
+        <pentry minsize="4" maxsize="4" metatype="ptr">
+          <register name="a2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="d2"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8">
+          <register name="e2"/>
+        </pentry>
+      </output>
+      <unaffected>
+		<register name="d8"/>
+		<register name="d9"/>
+		<register name="d10"/>
+		<register name="d11"/>
+		<register name="d12"/>
+		<register name="d13"/>
+		<register name="d14"/>
+		<register name="d15"/>
+		<register name="a0"/>
+		<register name="a1"/>
+		<register name="a8"/>
+		<register name="a9"/>
+		<register name="a10"/>
+		<register name="a11"/>
+		<register name="a12"/>
+		<register name="a13"/>
+		<register name="a14"/>
+		<register name="a15"/>
+      </unaffected>
+    </prototype>
+
+
   <callotherfixup targetop="saveCallerState">
      <pcode>
       <input name="fcx"/>
