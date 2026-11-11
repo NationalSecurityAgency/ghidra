@@ -110,7 +110,7 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 			}
 			int val = -1;
 			if (size == 2) {
-				val = buf.getShort(0);
+				val = buf.getUnsignedShort(0);
 			}
 			if (size == 4) {
 				val = buf.getInt(0);
