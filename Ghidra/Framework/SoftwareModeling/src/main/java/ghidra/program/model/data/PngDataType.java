@@ -52,7 +52,7 @@ public class PngDataType extends BuiltIn implements Dynamic, Resource {
 			Msg.error(this, "PNG error: " + e.getMessage());
 		}
 		catch (InvalidDataTypeException e) {
-			Msg.error(this, "Invalid PNG data at " + buf.getAddress());
+			Msg.debug(this, "Invalid PNG data at " + buf.getAddress());
 		}
 		return -1;
 	}
