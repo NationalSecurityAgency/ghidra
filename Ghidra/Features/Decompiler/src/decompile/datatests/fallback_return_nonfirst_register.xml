@@ -1,0 +1,30 @@
+<decompilertest>
+  <!--The cspec.xml documentation states:
+    "In the inverse case, the decompiler examines all (possible) output varnodes that have
+    a corresponding pentry tag in the resource list. The varnode whose corresponding
+    tag occurs the earliest in the list becomes the formal return value for the function.
+    If an output varnode matches no pentry, then it is rejected as a formal return value."
+
+    Bytes are `clang -O2 -msse` output.
+    // https://godbolt.org/z/xW5hEz91T
+
+    The decompiler sees only XMM1 written.
+    The engine should not reject XMM1 as a non-first in class float (XMM0 is first) and emits
+    `void test_function(void)`.
+
+-->
+  <binaryimage arch="x86:LE:64:default:gcc">
+    <bytechunk space="ram" offset="0x100000" readonly="true">
+      f20f104c2408c3
+</bytechunk>
+    <symbol space="ram" offset="0x100000" name="test_function" />
+  </binaryimage>
+  <script>
+  <com>lo fu test_function</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+  <stringmatch name="matching pentry becomes return" min="1" max="1">return in_stack</stringmatch>
+  <stringmatch name="test_function is not void" min="0" max="0">void test_function</stringmatch>
+</decompilertest>
