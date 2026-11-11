@@ -575,8 +575,6 @@ public class DWARFFunctionImporter {
 					module = rootModule.createModule(fileName);
 				}
 				catch (DuplicateNameException e) {
-					Msg.error(this, "Error while moving fragment %s (%s)".formatted(name, addrs),
-						e);
 					return;
 				}
 			}
