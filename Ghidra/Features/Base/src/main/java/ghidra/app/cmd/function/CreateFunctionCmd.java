@@ -185,6 +185,7 @@ public class CreateFunctionCmd extends BackgroundCommand<Program> {
 						monitor.setMessage("Function " + funcName);
 						extFunc.setName(funcName, source);
 					}
+					functionsCreated++;
 				}
 				else {
 					Namespace nameSpace = globalNameSpace;
@@ -315,7 +316,11 @@ public class CreateFunctionCmd extends BackgroundCommand<Program> {
 					// don't care about overlapping functions
 				}
 			}
-			if (fixupFunctionBody(program, program.getListing().getInstructionAt(entry), monitor)) {
+			Instruction instruction = program.getListing().getInstructionAt(entry);
+			if (instruction == null && functionMgr.getFunctionAt(entry) == null) {
+				return false;
+			}
+			if (fixupFunctionBody(program, instruction, monitor)) {
 				return true;
 			}
 		}
