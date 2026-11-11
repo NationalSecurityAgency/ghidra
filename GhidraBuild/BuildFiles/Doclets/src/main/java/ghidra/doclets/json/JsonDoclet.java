@@ -213,7 +213,14 @@ public class JsonDoclet implements Doclet {
 		JsonArray fieldArray = new JsonArray();
 		JsonArray methodArray = new JsonArray();
 
-		for (Element el : classElement.getEnclosedElements()) {
+		// Sort elements for reproducable builds
+		List<Element> enclosedElements = new ArrayList<>(classElement.getEnclosedElements());
+		enclosedElements.sort(Comparator
+			.comparing((Element el) -> el.getKind().name())
+			.thenComparing(el -> el.getSimpleName().toString())
+			.thenComparing(el -> el.asType().toString()));
+
+		for (Element el : enclosedElements) {
 
 			JsonObject obj = new JsonObject();
 			obj.addProperty("name", el.getSimpleName().toString());
