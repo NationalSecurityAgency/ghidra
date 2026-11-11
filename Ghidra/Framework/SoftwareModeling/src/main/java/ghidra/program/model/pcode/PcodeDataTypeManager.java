@@ -87,6 +87,7 @@ public class PcodeDataTypeManager {
 
 	private Program program;
 	private DataTypeManager progDataTypes;		// DataTypes from a particular program
+	private AddressSpace pendingSpacebase;
 	private DataTypeManager builtInDataTypes = BuiltInDataTypeManager.getDataTypeManager();
 	private DataOrganization dataOrganization;
 	private NameTransformer nameTransformer;
@@ -238,10 +239,19 @@ public class PcodeDataTypeManager {
 		if (meta == TYPE_PTR) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			if (decoder.peekElement() != 0) {
+				pendingSpacebase = null;
 				DataType dt = decodeDataType(decoder);
+				AddressSpace spacebase = pendingSpacebase;
+				pendingSpacebase = null;
 				boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
 					size > PointerDataType.MAX_POINTER_SIZE_BYTES);
-				restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
+				if (spacebase != null) {
+					restype = new PointerTypedef(null, dt, useDefaultSize ? -1 : size,
+						progDataTypes, spacebase);
+				}
+				else {
+					restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
+				}
 			}
 		}
 		else if (meta == TYPE_ARRAY) {
@@ -255,6 +265,7 @@ public class PcodeDataTypeManager {
 			}
 		}
 		else if (meta == TYPE_SPACEBASE) {		// Typically the type of "the whole stack"
+			pendingSpacebase = decoder.readSpace(ATTRIB_SPACE);	// picked up by an enclosing TYPE_PTR
 			decoder.closeElementSkipping(el);  		// get rid of unused "addr" element
 			return voidDt;
 		}
