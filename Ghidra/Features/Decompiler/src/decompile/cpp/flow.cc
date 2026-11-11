@@ -1102,6 +1102,8 @@ void FlowInfo::inlineClone(const FlowInfo &inlineflow,const Address &retaddr)
 /// Individual PcodeOps from the Funcdata being in-lined are cloned into
 /// the Funcdata for \b this flow but are reassigned a new fixed address,
 /// and the RETURN op is eliminated.
+/// A BRANCHIND op is replaced with a CALLIND op to handle function calls performed
+/// by the in-lined function.
 /// \param inlineflow is the given in-line flow to clone
 /// \param calladdr is the fixed address assigned to the cloned PcodeOps
 void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
@@ -1112,7 +1114,12 @@ void FlowInfo::inlineEZClone(const FlowInfo &inlineflow,const Address &calladdr)
     PcodeOp *op = *iter;
     if (op->code() == CPUI_RETURN) break;
     SeqNum myseq(calladdr,op->getSeqNum().getTime());
-    data.cloneOp(op,myseq);
+    PcodeOp *cloneop = data.cloneOp(op,myseq);
+    if (op->code() == CPUI_BRANCHIND) {
+      data.opSetOpcode(cloneop,CPUI_CALLIND);
+    }
+    if (cloneop->isCallOrBranch())
+      xrefInlinedBranch(cloneop);
   }
   // Because we are processing only straightline code and it is all getting assigned to one
   // address, we don't touch unprocessed, addrlist, or visited
@@ -1152,6 +1159,7 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
 }
 
 /// A function is in the EZ model if it is a straight-line leaf function.
+/// For a leaf function the last op can also be a BRANCHIND.
 /// \return \b true if this flow contains no CALL or BRANCH ops
 bool FlowInfo::checkEZModel(void) const
 
@@ -1159,6 +1167,9 @@ bool FlowInfo::checkEZModel(void) const
   list<PcodeOp *>::const_iterator iter = obank.beginDead();
   while(iter != obank.endDead()) {
     PcodeOp *op = *iter;
+    if (std::next(iter) == obank.endDead()) {
+      if (op->code() == CPUI_BRANCHIND) return true;
+    }
     if (op->isCallOrBranch()) return false;
     ++iter;
   }
