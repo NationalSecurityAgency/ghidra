@@ -392,8 +392,6 @@ define pcodeop fsgldiv;
 define pcodeop ftentox;
 define pcodeop ftwotox;
 
-define pcodeop bcdAdjust;
-
 define pcodeop sin;
 define pcodeop cos;
 define pcodeop tan;
@@ -784,7 +782,36 @@ macro clearflags_fp() {
 
 macro bcdflags(result) {
  XF = CF;
- ZF = (result == 0) * ZF + (result != 0);
+ ZF = (result == 0) && (ZF == 1);
+}
+
+# Packed BCD add/sub (QEMU m68k bcd_add/bcd_sub). Dest is the low 8 bits;
+# C is bit 8 of the 16-bit result, not (res >> 8) != 0.
+macro bcdAdd(dst, src) {
+	local t0:2 = zext(src) + 0x66;
+	local t1:2 = t0 + zext(dst);
+	t1 = t1 + zext(XF);
+	local carries:2 = (t0 ^ zext(dst)) ^ t1;
+	local corr:2 = ~(carries >> 3);
+	corr = corr & 0x22;
+	corr = corr + corr + corr;
+	local res:2 = t1 - corr;
+	dst = res:1;
+	CF = (res & 0x100) != 0;
+}
+
+macro bcdSub(dst, src) {
+	local t0:2 = 0x1ff - zext(src);
+	local t1:2 = t0 + zext(dst);
+	t1 = t1 + 1;
+	t1 = t1 - zext(XF);
+	local carries:2 = (t0 ^ zext(dst)) ^ t1;
+	local corr:2 = ~(carries >> 3);
+	corr = corr & 0x22;
+	corr = corr + corr + corr;
+	local res:2 = t1 - corr;
+	dst = res:1;
+	CF = (res & 0x100) != 0;
 }
 
 macro getbit(res,in,bitnum) {
@@ -923,9 +950,7 @@ macro rotateRightExtended(count, register, width) {
 with : extGUARD=1 {
 
 :abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb {
-	CF = carry(Txb,carry(Tyb,XF));
-	Txb = Txb + Tyb + XF;
-	XF = bcdAdjust(Txb);
+	bcdAdd(Txb, Tyb);
 	bcdflags(Txb);
 }
 
@@ -2030,10 +2055,9 @@ submul: regdr-regdq		is regdq & divsgn=0 & divsz=1 & regdr	{
 :mul^mulsize e2l,submul		is opbig=0x4c & op67=0 & $(DAT_ALTER_ADDR_MODES); submul & mulsize; e2l [ savmod2=savmod1; regtsan=regtfan; ] { glbdenom=e2l; build submul; }
 
 :nbcd eab	is (opbig=0x48 & op67=0 & $(DAT_ALTER_ADDR_MODES))... & eab {
-	local tmp = eab;
-	CF = (tmp != 0) || (XF == 1);
-	tmp = 0 - tmp - XF;
-	eab = bcdAdjust(tmp);
+	local tmp:1 = 0;
+	bcdSub(tmp, eab);
+	eab = tmp;
 	bcdflags(tmp);
 }
 
@@ -2276,9 +2300,7 @@ define pcodeop rtm;
 :rts				is opbig=0x4e & op37=14 & op02=5		{ PC = *SP; SP = SP+4; return [PC]; }
 
 :sbcd Tyb,Txb		is op=8 & op48=16 & Txb & Tyb {
-	CF = (Txb < Tyb) || ( (XF == 1) && (Txb == Tyb) );
-	Txb = Txb - Tyb - XF;
-	Txb = bcdAdjust(Txb);
+	bcdSub(Txb, Tyb);
 	bcdflags(Txb);
 }
 
