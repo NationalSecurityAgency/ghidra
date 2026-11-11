@@ -702,7 +702,10 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		int value = -1;
 		switch (reloc.getType()) {
 			case SegmentRelocation.TYPE_LO_BYTE: {
-				value = memory.getByte(address) & 0xff;
+				byte[] link = new byte[2];
+				if (memory.getBytes(address, link) == link.length) {
+					value = Byte.toUnsignedInt(link[0]) | Byte.toUnsignedInt(link[1]) << 8;
+				}
 
 				memory.setByte(address, (byte) relocAddr.getSegmentOffset());
 				break;
