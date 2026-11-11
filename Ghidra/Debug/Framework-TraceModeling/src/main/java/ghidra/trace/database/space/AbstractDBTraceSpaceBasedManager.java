@@ -137,7 +137,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 	protected M getForSpace(AddressSpace space, boolean createIfAbsent) {
 		trace.assertValidSpace(Objects.requireNonNull(space));
-		if (!space.isMemorySpace() && !space.isRegisterSpace() &&
+		if (!space.isMemorySpace() && !space.isRegisterSpace() && !space.isStackSpace() &&
 			space != Address.NO_ADDRESS.getAddressSpace()) {
 			throw new IllegalArgumentException(
 				"Space must be a memory, register, or NO_ADDRESS space. Got %s".formatted(space));
