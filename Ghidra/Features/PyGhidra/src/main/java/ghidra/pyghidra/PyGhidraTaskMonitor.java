@@ -138,16 +138,24 @@ public class PyGhidraTaskMonitor implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCancelled() {
+	public synchronized void clearCancelled() {
 		isCancelled = false;
 	}
 
 	@Override
 	public void cancel() {
-		if (timer != null) {
-			timer.cancel(); // Terminate the timer thread
+		synchronized (this) {
+			if (isCancelled) {
+				return;
+			}
+			if (timer != null) {
+				timer.cancel(); // Terminate the timer thread
+			}
+			isCancelled = true;
 		}
-		isCancelled = true;
+		for (CancelledListener listener : listeners) {
+			listener.cancelled();
+		}
 	}
 
 	@Override
