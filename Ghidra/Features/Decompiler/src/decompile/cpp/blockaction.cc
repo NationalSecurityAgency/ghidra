@@ -2322,7 +2322,18 @@ int4 ActionReturnSplit::apply(Funcdata &data)
   }
 
   for(int4 i=0;i<splitedge.size();++i) {
-    data.nodeSplit(retnode[i],splitedge[i]);
+    BlockBasic *retbb = retnode[i];
+    int4 in = retbb->sizeIn();
+    BlockBasic *newbb = data.nodeSplit(retbb,splitedge[i],-1);
+    vector<pair<PcodeOp *,PcodeOp *>> ops = CloneOp::cloneBlock(retbb, newbb);
+
+    // Rework control-flow
+    InputOpCorrector icorr(data,{splitedge[i]},in);
+    BlockSplitOutputOpCorrector ocorr(data,retbb,newbb);
+    for(vector<pair<PcodeOp *,PcodeOp *>>::const_iterator iter=ops.begin();iter!=ops.end();++iter) {
+      icorr.correct(iter->first,iter->second);
+      ocorr.correct(iter->first,iter->second);
+    }
     count += 1;
 #ifdef BLOCKCONSISTENT_DEBUG
     if (!data.getBasicBlocks().isConsistent())
