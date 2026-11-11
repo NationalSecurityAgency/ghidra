@@ -26,6 +26,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
@@ -51,8 +52,7 @@ public class DecompilerSwitchAnalyzerTest extends AbstractGenericTest {
 		program.endTransaction(txId, true);
 	}
 	
-	@Test
-	public void testDefaultSwitchLabelAndFlow() throws Exception {
+	private void buildSwitchProgram(boolean defineFunction) throws Exception {
 
 		builder = new ProgramBuilder("SwitchDefaultTest", "x86:LE:64:default", "gcc", null);
 
@@ -125,8 +125,16 @@ public class DecompilerSwitchAnalyzerTest extends AbstractGenericTest {
 			"d6f1ffffe7f1fffff8f1ffff011b033b");
 
 		builder.disassemble("0x101169", 64);
-		
-		builder.createFunction("0x101169");
+
+		if (defineFunction) {
+			builder.createFunction("0x101169");
+		}
+	}
+
+	@Test
+	public void testDefaultSwitchLabelAndFlow() throws Exception {
+
+		buildSwitchProgram(true);
 
 		analyzer = new DecompilerSwitchAnalyzer();
 
@@ -165,6 +173,44 @@ public class DecompilerSwitchAnalyzerTest extends AbstractGenericTest {
 		
 	}
 	
+	/**
+	 * A computed jump outside any defined function is decompiled through an
+	 * UndefinedFunction, which has no symbol and so cannot parent the switch
+	 * namespace. The switch must still be recovered, under the global namespace.
+	 */
+	@Test
+	public void testSwitchOutsideDefinedFunction() throws Exception {
+
+		buildSwitchProgram(false);
+
+		analyzer = new DecompilerSwitchAnalyzer();
+
+		program = builder.getProgram();
+		program.startTransaction("Test");
+
+		Address codeStart = addr("0x101169");
+		Listing listing = program.getListing();
+		assertNotNull("Bad instruction disassembly", listing.getInstructionAt(codeStart));
+		assertNull("Switch must not be inside a defined function",
+			program.getFunctionManager().getFunctionContaining(addr("0x001011a7")));
+
+		AddressSet addressSet = new AddressSet(codeStart, codeStart.add(0x200));
+		analyze(addressSet);
+
+		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(addr("0x0010124c"));
+		assertNotNull("Case label set", primarySymbol);
+		assertEquals("Case label set", "caseD_9", primarySymbol.getName());
+		Namespace switchSpace = primarySymbol.getParentNamespace();
+		assertEquals("Switch space set", "switchD_001011a7", switchSpace.getName());
+		assertTrue("Switch space is global", switchSpace.getParentNamespace().isGlobal());
+
+		Instruction instr = listing.getInstructionAt(addr("0x001011a7"));
+		assertNumMnemonicReferences(instr, 10);
+		assertMnemonicReferenceTo(instr, addr("0x001011aa"));
+		assertMnemonicReferenceTo(instr, addr("0x0010124c"));
+		assertNotNull("Case target disassembled", listing.getInstructionAt(addr("0x0010124c")));
+	}
+
 	private void assertNoOperandReference(int opIndex, Instruction instr) {
 		Reference[] refs = instr.getOperandReferences(opIndex);
 		assertEquals("No reference on operand " + opIndex, 0, refs.length);
