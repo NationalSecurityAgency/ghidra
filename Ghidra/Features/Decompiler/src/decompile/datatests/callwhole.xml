@@ -1,0 +1,30 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+#include <tmmintrin.h>
+/* a vector scaled lane by lane, stored, and handed whole to a byte shuffle (an op the decompiler keeps opaque); the
+   lanes must still be divided for the stores, the shuffle takes the value reassembled */
+void scaleshuffle(float *out, const float *in, float s) {
+  __m128 v = _mm_mul_ps(_mm_loadu_ps(in), _mm_set1_ps(s));
+  __m128i r = _mm_shuffle_epi8(_mm_castps_si128(v), _mm_set1_epi8(3));
+  _mm_storeu_ps(out, v);
+  _mm_storeu_si128((__m128i *)(out + 4), r);
+}
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e50f100e0fc6c0000f59c10f1107660f38000500000000f30f7f47105dc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="scaleshuffle"/>
+</binaryimage>
+<script>
+  <com>parse line extern void scaleshuffle(float4 *out, float4 *in, float4 s);</com>
+  <com>lo fu scaleshuffle</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="CallWhole #1" min="1" max="1">\*out = s \* fVar1;</stringmatch>
+<stringmatch name="CallWhole #2" min="1" max="1">out\[3\] = s \* fVar4;</stringmatch>
+<stringmatch name="CallWhole #3" min="1" max="1">= pshufb\(</stringmatch>
+<stringmatch name="CallWhole #4" min="0" max="0">\[16\]\)out = </stringmatch>
+<stringmatch name="CallWhole #5" min="0" max="0">= s \* \*in;</stringmatch>
+</decompilertest>
