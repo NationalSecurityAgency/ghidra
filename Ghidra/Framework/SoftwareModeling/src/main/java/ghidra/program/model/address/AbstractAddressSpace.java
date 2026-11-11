@@ -119,7 +119,8 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	private int bitsConsumedByUnitSize() {
 		if (unitSize < 1 || unitSize > 8) {
-			throw new IllegalArgumentException("Unsupported unit size: " + unitSize);
+			throw new IllegalArgumentException("Unsupported unit size: " + unitSize +
+				" -- unit size (bytes per addressable unit) must be between 1 and 8");
 		}
 		int cnt = 0;
 		for (int test = unitSize - 1; test != 0; test >>= 1) {
