@@ -1,0 +1,415 @@
+#####################################################
+#####		 	Macros			#####
+#####################################################
+
+
+##### CARRY-Flag #####
+
+macro set_CY_pos(var1, var2)
+{
+	$(CY) = carry(var1, var2);
+}
+
+macro set_CY_pos2(var1, var2, var3)
+{
+	local var12 = var1 + var2;
+	$(CY) = carry(var1, var2) || carry(var12, var3);
+}
+
+macro set_CY_neg(var1, var2)
+{
+	$(CY) = var1 < var2;
+}
+
+macro set_CY_neg_f(var1, var2)
+{
+	$(CY) = var1 f< var2;
+}
+
+macro set_CY_neg2(var1, var2, var3)
+{
+	local var23 = var2 + var3;
+	$(CY) = (var1 < var23);
+}
+
+
+
+##### Overflow-Flag #####
+
+macro set_OV_pos(var1, var2)
+{
+	$(OV) = scarry(var1, var2);
+}
+
+macro set_OV_pos2(var1, var2, var3)
+{
+	local var12 = var1 + var2;
+	$(OV) = scarry(var1, var2) || scarry(var12, var3);
+}
+
+macro set_OV_neg(var1, var2)
+{	
+	local A:4 = var1;
+	local B:4 = var2;
+	local R = A - B;
+
+	local A1 = A[31,1];
+	local B1 = B[31,1];
+	local R1 = R[31,1];
+
+	$(OV) = (A1 != B1) && (B1 == R1);
+
+	#OV = 1 if:
+	#pos - neg = neg
+	#neg - pos = pos
+}
+
+
+macro set_OV_neg2(var1, var2, var3)
+{
+	local A:4 = var1;
+	local B:4 = var2;
+	local C:4 = var3;
+	local R = A - B - C;
+
+	local A1 = A[31,1];
+	local B1 = B[31,1];
+	local R1 = R[31,1];
+
+	$(OV) = (A1 != B1) && (B1 == R1);
+}
+
+
+
+##### S/Z-Flags #####
+
+macro set_S(flag)
+{
+	$(S) = flag s< 0;
+}
+
+macro set_S_f(flag)
+{
+	$(S) = flag f< 0;
+}
+
+macro set_Z(var)
+{
+	$(Z) = var == 0;
+}
+
+macro set_Z_f(var)
+{
+	$(Z) = var f== 0;
+}
+
+@if defined(V810)
+##### FRO/FPR-Flags #####
+
+macro set_FRO(var)
+{
+	$(FRO) = nan(var);
+}
+
+macro set_FPR(var1)
+{
+	$(FPR) = ((var1 f- floor(var1)) != 0);
+}
+
+macro set_FPR2(var1, var2)
+{
+	$(FPR) = ((var1 - var2) != 0);
+}
+@endif
+
+##### General-Flag-Macros #####
+
+macro set_general_flags_pos(var1, var2)
+{
+	local res = var1 + var2;
+	set_CY_pos(var1, var2);
+	set_OV_pos(var1, var2);
+	set_S(res);
+	set_Z(res);
+}
+
+macro set_general_flags_neg(var1, var2)
+{
+	local res = var1 - var2;
+	set_CY_neg(var1, var2);
+	set_OV_neg(var1, var2);
+	set_S(res);
+	set_Z(res);
+}
+@if defined(V810)
+macro set_general_flags_neg_f(var1, var2)
+{
+	local res = var1 f- var2;
+	set_CY_neg_f(var1, var2);
+	$(OV) = 0;
+	set_S_f(res);
+	set_Z_f(res);
+	set_FRO(var1);
+}
+@endif
+
+macro set_OV0_S_Z(var)
+{
+	$(OV) = 0;
+	set_S(var);
+	set_Z(var);
+}
+
+
+
+##### General-Macros #####
+
+# if condition is != 0
+macro either_or(res, cond, true, false)	
+{
+	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
+}
+
+# if condition is == 1
+macro either_or1(res, cond, true, false)
+{
+	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
+}
+
+macro shift_right_logic(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (shift - 1));
+	res = var >> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_right_arith(res, var, shift_)
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (shift - 1));
+	res = var s>> shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_left_logic(res, var, shift_) 
+{
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * var) & (1 << (32 - shift));
+	res = var << shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+macro shift_left_logic_d(res, var, shift_) 
+{
+	local shift = shift_ & 0x3f;
+	local mask = (zext(shift != 0) * var) & (1 << (64 - shift));
+	res = var << shift;
+	set_OV0_S_Z(res);
+	$(CY) = ((mask != 0) && (shift != 0));
+}
+
+
+##### Prep/Disp Macros #####
+
+macro push(reg)
+{
+	sp = sp - 4;
+	*:4 sp = reg;
+}
+
+macro pop(reg)
+{
+	reg = *:4 sp;
+	sp = sp + 4;
+}
+
+
+
+##### Search Macros #####
+
+macro SearchRight(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ & 0x1) == char)
+		goto <end>;
+
+	var_ = var_ >> 1;
+	res = res + 1;
+
+	if (res < 32)
+		goto <loop>;
+	
+	res = 0;
+
+	<end>
+}
+
+macro SearchLeft(res, var, char)
+{
+	local var_:4 = var;
+	res = 0;
+
+	<loop>
+	if ((var_ >> 31) == char) 
+		goto <end>;
+
+	var_ = var_ << 1;
+	res = res + 1;
+
+	if (res < 32) 
+		goto <loop>;
+
+	res = 0;
+
+	<end>
+}
+
+macro saturate(var) 
+{
+ 	if (var s> 0x7FFFFFFF) 
+         	goto <pos_sat>;
+    
+ 	if (var s< -0x80000000) 
+         	goto <neg_sat>;
+
+ 	goto <end>;
+
+ 	<pos_sat> 
+     var =  0x7FFFFFFF; 
+     goto <end>;
+
+ 	<neg_sat> 
+     var = -0x80000000; 
+     goto <end>;
+	
+     <end>
+ }
+
+
+##### Float-Macros #####
+
+macro compare_float(res, fcond, reg1, reg2)
+{
+	local un = ((fcond & 1) == 1)	&    (nan(reg2) || nan(reg1));
+	local eq = ((fcond & 2) == 2)   &  (!(nan(reg2) || nan(reg1)))  &  (reg2 f== reg1);
+	local le = ((fcond & 4) == 4)	&  (!(nan(reg2) || nan(reg1)))  &  (reg2 f<  reg1);
+	#local ex = (fcond & 8)		&   ((nan(reg2) || nan(reg1)));
+	
+	res = zext(un|eq|le);
+}
+
+macro float2int(var1, var2)
+{
+	local exp = zext(var2[23,8]);
+	local sign = 1 - 2*zext((var2[31,1] == 1));
+	local fraction = zext(var2[0, 23]) | 0x800000;
+	local power = 1 << exp;
+	local res = power*fraction/(0x800000);
+	res = sign * res;
+	var1 = res;
+}
+
+@if defined(V810)
+##### Bit string Operation Macros #####
+
+macro bitsop(select, dmask)
+{
+	r27 = r27 & 0x1f;
+	r26 = r26 & 0x1f;
+	local counter:4 = 0;
+	local swo:4 = 0;
+	local dwo:4 = 0;
+	local sbo = r27;
+	local dbo = r26;
+	local sword = *:4 (r30 + swo);
+	local dword = *:4 (r29 + dwo);
+	local resword:4 = 0;
+	local unaff:4 = 0;
+	<setbitsandinc>
+	if (counter >= r28)
+		goto <end>;
+	local smasked:4 = (sword & (1 << sbo)) >> sbo;
+	local dmasked:4 = dword & (dmask >> (31 - dbo));
+	if (select == 0xb)
+		goto <mov>;
+	if (select == 0xe)
+		goto <not>;
+	if (select == 0x9)
+		goto <and>;
+	if (select == 0xd)
+		goto <andn>;
+	if (select == 0x8)
+		goto <or>;
+	if (select == 0xc)
+		goto <orn>;
+	if (select == 0xa)
+		goto <xor>;
+	if (select == 0xe)
+		goto <xorn>;
+	<ret3>
+	counter = counter + 1;
+	sbo = sbo + 1;
+	dbo = dbo + 1;
+	if (sbo > 0x1f)
+		goto <incsword>;
+	<ret1>
+	if (dbo > 0x1f)
+		goto <incdword>;
+	<ret2>
+	goto <setbitsandinc>;
+
+	<incsword>
+	sbo = 0;
+	swo = swo + 4;
+	sword = *:4 (r30 + swo);
+	goto <ret1>;
+
+	<incdword>
+	dbo = 0;
+	dwo = dwo + 4;
+	*:4 (r29 + dwo) = resword;
+	dword = *:4 (r29 + dwo);
+	goto <ret2>;
+
+	<end>
+	*:4 (r29 + dwo) = resword;
+	call [PC];
+
+	<mov>
+	resword = resword | (dmasked | (smasked << dbo));
+	goto <ret3>;
+	<not>
+	resword = resword | (dmasked | (~smasked << dbo));
+	goto <ret3>;
+	<and>
+	unaff = dmasked;
+	resword = resword | dmasked | (((dmasked & (smasked << dbo)) >> dbo) << dbo);
+	goto <ret3>;
+	<andn>
+	unaff = dmasked;
+	resword = resword | dmasked | (((dmasked & (~smasked << dbo)) >> dbo) << dbo);
+	goto <ret3>;
+	<or>
+	resword = resword | (dmasked | (smasked << dbo));
+	goto <ret3>;
+	<orn>
+	resword = resword | (dmasked | (~smasked << dbo));
+	goto <ret3>;
+	<xor>
+	unaff = dmasked;
+	resword = resword | dmasked | (((dmasked ^ (smasked << dbo)) >> dbo) << dbo);
+	goto <ret3>;
+	<xorn>
+	unaff = dmasked;
+	resword = resword | dmasked | (((dmasked ^ (~smasked << dbo)) >> dbo) << dbo);
+	goto <ret3>;
+
+}
+@endif

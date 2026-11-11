@@ -1,0 +1,79 @@
+# V810 Family:
+# (8) Float instructions
+
+
+
+#####################################################
+#####		 	Float Instructions				#####
+#####################################################
+
+
+# CMPF.S reg1, reg2 - 111110rrrrrRRRRR|000000xxxxxxxxxx
+:cmpf.s R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x0
+{
+	set_general_flags_neg_f(R0509, R0004);
+}
+
+
+# CVT.WS reg1, reg2 - 111110rrrrrRRRRR|000010xxxxxxxxxx
+:cvt.ws R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x2
+{
+	R0509 = int2float(R0004);
+	set_general_flags_neg_f(R0509, 0);
+	set_FPR(R0509);
+}
+
+
+# CVT.SW reg1, reg2 - 111110rrrrrRRRRR|000011xxxxxxxxxx
+:cvt.sw R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x3
+{
+	# set_FRO(R0004);
+	float2int(R0509, R0004);
+	set_general_flags_neg_f(R0509, 0);
+	set_FPR2(R0509, R0004);
+}
+
+
+# ADDF.S reg1, reg2 - 111110rrrrrRRRRR|000100xxxxxxxxxx
+:addf.s R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x4
+{
+	R0509 = R0509 f+ R0004;
+	set_general_flags_neg_f(R0509, 0);
+}
+
+
+# SUBF.S reg1, reg2 - 111110rrrrrRRRRR|000101xxxxxxxxxx
+:subf.s R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x5
+{
+	R0509 = R0509 f- R0004;
+	set_general_flags_neg_f(R0509, 0);
+}
+
+# MULF.S reg1, reg2 - 111110rrrrrRRRRR|000110xxxxxxxxxx
+:mulf.s R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x6
+{
+	R0509 = R0509 f* R0004;
+	set_general_flags_neg_f(R0509, 0);
+}
+
+
+# DIVF.S reg1, reg2 - 111110rrrrrRRRRR|000111xxxxxxxxxx
+:divf.s R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0x7
+{
+	R0509 = R0509 f/ R0004;
+	set_general_flags_neg_f(R0509, 0);
+}
+
+define pcodeop __truncate;
+# TRNC.SW reg1, reg2 - 111110rrrrrRRRRR|001011xxxxxxxxxx
+:trnc.sw R0004, R0509 is op1015=0x3e & R0004 & R0509; op2631=0xb
+{
+	set_FRO(R0004);
+	__truncate(R0004);
+	float2int(R0509, R0004);
+	set_general_flags_neg_f(R0509, 0);
+	set_FPR2(R0509, R0004);
+}
+
+
+
