@@ -464,6 +464,19 @@ rel7dst: byteOffset  is op3to9signed & rel7addr [ byteOffset = (op3to9signed + i
   export rel7addr;
 }
 
+@ifdef SMALLFLASH
+# wrap RJMP/RCALL at 4 KiW
+
+rel12addr: rel  is oplow12signed [ rel = (oplow12signed + inst_start + 1) & 0x0FFF; ] {
+  export *[code]:2 rel;
+}
+
+rel12dst: byteOffset  is oplow12signed & rel12addr [ byteOffset = ((oplow12signed + inst_start + 1) & 0x0FFF) << 1; ] {
+  export rel12addr;
+}
+
+@else
+
 rel12addr: rel  is oplow12signed [ rel = oplow12signed + inst_start + 1; ] { 
   export *[code]:2 rel;
 }
@@ -471,6 +484,8 @@ rel12addr: rel  is oplow12signed [ rel = oplow12signed + inst_start + 1; ] {
 rel12dst: byteOffset  is oplow12signed & rel12addr [ byteOffset = (oplow12signed + inst_start + 1) << 1; ] { 
   export rel12addr;
 }
+
+@endif
 
 abs22addr: loc  is op4to8 & opbit0; next16 [ loc = (op4to8 << 17) | (opbit0 << 16) | next16; ] { 
  export *[code]:2 loc;
