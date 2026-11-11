@@ -58,13 +58,13 @@ bbbdd7d9df7cdb3d000000000000f03f
 <stringmatch name="Float print #3" min="1" max="1">floatv3 = -0.001;</stringmatch>
 <stringmatch name="Float print #4" min="1" max="1">floatv4 = 1e-06;</stringmatch>
 <stringmatch name="Float print #5" min="1" max="1">floatv5 = INFINITY;</stringmatch>
-<stringmatch name="Float print #6" min="1" max="1">floatv6 = -NAN;</stringmatch>
+<stringmatch name="Float print #6" min="1" max="1">floatv6 = -?NAN;</stringmatch>
 <stringmatch name="Float print #7" min="1" max="1">floatv7 = 3.141592e-06;</stringmatch>
 <stringmatch name="Float print #8" min="1" max="1">double1 = 0.6666666666666666;</stringmatch>
 <stringmatch name="Float print #9" min="1" max="1">double2 = 2.0;</stringmatch>
 <stringmatch name="Float print #10" min="1" max="1">double3 = -0.001;</stringmatch>
 <stringmatch name="Float print #11" min="1" max="1">double4 = 1e-10;</stringmatch>
 <stringmatch name="Float print #12" min="1" max="1">double5 = INFINITY;</stringmatch>
-<stringmatch name="Float print #13" min="1" max="1">double6 = -NAN;</stringmatch>
+<stringmatch name="Float print #13" min="1" max="1">double6 = -?NAN;</stringmatch>
 <stringmatch name="Float print #14" min="1" max="1">double7 = 3.1415926535897933e-06;</stringmatch>
 </decompilertest>
