@@ -3184,7 +3184,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  coproc_moveto_Data_Fault_Status(Rd);
+  coproc_moveto_Instruction_Fault_Status(Rd);
 }
 
 
@@ -3193,7 +3193,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  coproc_moveto_Instruction_Fault(Rd);
+  coproc_moveto_Data_Fault_Status(Rd);
 }
 
 
@@ -3211,7 +3211,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  coproc_moveto_Instruction_Fault(Rd);
+  coproc_moveto_Instruction_Fault_Address(Rd);
 }
 
 
