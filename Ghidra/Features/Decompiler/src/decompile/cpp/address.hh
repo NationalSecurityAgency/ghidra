@@ -554,7 +554,11 @@ inline uintb calc_int_max(int4 size) { return calc_mask(size) >> 1; }
 
 /// \param size of the integer in bytes
 /// \return smallest signed integer value for given size
-inline uintb calc_int_min(int4 size) { return (uintb)1 << (size * 8 - 1); }
+inline uintb calc_int_min(int4 size) {
+  if (size <= 0) return 0;
+  int4 shift = (size < (int4)sizeof(uintb) ? size : (int4)sizeof(uintb)) * 8 - 1;
+  return (uintb)1 << shift;
+}
 
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift
@@ -601,8 +605,10 @@ inline uintb minimalmask(uintb val)
 inline intb sign_extend(intb val,int4 bit)
 
 {
-  int4 sa = 8*sizeof(intb) - (bit+1);
-  val = (val << sa) >> sa;
+  if (bit < 0) return 0;
+  if (bit >= 8*(int4)sizeof(intb) - 1) return val;
+  int4 sa = 8*(int4)sizeof(intb) - (bit+1);
+  val = ((intb)((uintb)val << sa)) >> sa;
   return val;
 }
 
@@ -615,7 +621,9 @@ inline intb sign_extend(intb val,int4 bit)
 inline intb zero_extend(intb val,int4 bit)
 
 {
-  int4 sa = sizeof(intb)*8 - (bit+1);
+  if (bit < 0) return 0;
+  if (bit >= (int4)sizeof(intb)*8 - 1) return val;
+  int4 sa = (int4)sizeof(intb)*8 - (bit+1);
   return (intb)(((uintb)val << sa) >> sa);
 }
 

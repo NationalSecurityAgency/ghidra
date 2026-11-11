@@ -906,8 +906,10 @@ void BitRange::extendBytes(int4 num)
 uintb BitRange::getMask(void) const
 
 {
+  if (numBits <= 0 || leastSigBit < 0 || leastSigBit >= (int4)(sizeof(uintb)*8))
+    return 0;
   uintb res;
-  if (numBits >= sizeof(uintb)*8)
+  if (numBits >= (int4)(sizeof(uintb)*8))
     res = 0;
   else {
     res = 1;
@@ -971,6 +973,10 @@ uintb uintbmasks[9] = { 0, 0xff, 0xffff, 0xffffff, 0xffffffff, 0xffffffffffLL,
 bool signbit_negative(uintb val,int4 size)
 
 {				// Return true if signbit is set (negative)
+  if (size <= 0)
+    return false;
+  if (size > (int4)sizeof(uintb))
+    size = (int4)sizeof(uintb);
   uintb mask = 0x80;
   mask <<= 8*(size-1);
   return ((val&mask) != 0);
@@ -996,10 +1002,13 @@ uintb uintb_negate(uintb in,int4 size)
 uintb sign_extend(uintb in,int4 sizein,int4 sizeout)
 
 {
-  sizein = (sizein < sizeof(uintb)) ? sizein : sizeof(uintb);
-  sizeout = (sizeout < sizeof(uintb)) ? sizeout : sizeof(uintb);
-  intb sval = in;
-  sval <<= (sizeof(intb) - sizein) * 8;
+  if (sizein <= 0 || sizeout <= 0)
+    return 0;
+  sizein = (sizein < (int4)sizeof(uintb)) ? sizein : (int4)sizeof(uintb);
+  sizeout = (sizeout < (int4)sizeof(uintb)) ? sizeout : (int4)sizeof(uintb);
+  intb sval = (intb)(in << ((sizeof(uintb) - sizein) * 8));
+  if (sizeout <= sizein)
+    return ((uintb)sval >> ((sizeof(uintb) - sizein) * 8)) & calc_mask(sizeout);
   uintb res = (uintb)(sval >> (sizeout - sizein) * 8);
   res >>= (sizeof(uintb) - sizeout)*8;
   return res;
