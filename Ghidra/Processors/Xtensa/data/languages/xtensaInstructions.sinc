@@ -388,7 +388,7 @@ macro extract_bit(bit, result) {
 # CEIL.S - Ceiling Single to Fixed (RRR), pg. 311.
 :ceil.s ar, fs, op_t is op2 = 0b1011 & op1 = 0b1010 & ar & fs & op_t & op0 = 0 {
 	local scale:4 = 1 << op_t;
-	ar = ceil(fs f* int2float(scale));
+	ar = trunc(ceil(fs f* int2float(scale)));
 }
 
 # CLAMPS - Signed Clamp (RRR), pg. 312.
@@ -511,7 +511,7 @@ macro extract_bit(bit, result) {
 # FLOOR.S - Floor Single to Fixed (RRR), pg. 347.
 :floor.s ar, fs, op_t is op2 = 0b1010 & op1 = 0b1010 & ar & fs & op_t & op0 = 0 {
 	local scale:4 = 1 << op_t;
-	ar = floor(fs f* int2float(scale));
+	ar = trunc(floor(fs f* int2float(scale)));
 }
 
 # IDTLB - Invalidate Data TLB Entry (RRR), pg. 348.
