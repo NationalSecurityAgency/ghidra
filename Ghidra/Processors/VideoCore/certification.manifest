@@ -1,0 +1,7 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+build.gradle||GHIDRA||||END|
+data/languages/vc4.ldefs||GHIDRA||||END|
+data/languages/vc4.cspec||GHIDRA||||END|
+data/languages/vc4.pspec||GHIDRA||||END|
+data/languages/vc4.slaspec||GHIDRA||||END|
