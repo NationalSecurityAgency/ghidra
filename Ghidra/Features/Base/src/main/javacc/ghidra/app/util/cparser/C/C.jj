@@ -2492,7 +2492,7 @@ Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT)
 
             // if this is a single void parameter, empty the parameter variable list
             //
-            if (variables.length == 1 && varDT instanceof VoidDataType) {
+            if (variables.length == 1 && VoidDataType.isVoidDataType(varDT)) {
                 variables = new ParameterDefinition[0];
                 break;
             }
