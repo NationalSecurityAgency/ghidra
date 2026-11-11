@@ -18,7 +18,7 @@
 
 namespace ghidra {
 
-OpToken PrintJava::instanceof = { "instanceof", "", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintJava::instanceof = { "instanceof", "", 2, 60, OpToken::ltr, OpToken::binary, 1, 0, (OpToken *)0 };
 
 // Constructing this registers the capability
 PrintJavaCapability PrintJavaCapability::printJavaCapability;
