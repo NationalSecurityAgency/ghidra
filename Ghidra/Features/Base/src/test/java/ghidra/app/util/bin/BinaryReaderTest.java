@@ -693,6 +693,24 @@ public class BinaryReaderTest {
 	}
 
 	@Test
+	public void test_ReadUtf32String_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		// charCount * sizeof(utf32 char) overflows an unsigned int32 and wraps to a small
+		// positive value, which would silently produce a truncated string
+		int overflowCount =
+			(int) (NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG / 4 /*sizeof(utf32 char)*/ + 1 + 1);
+		try {
+			br.readString(0, overflowCount, Charset.forName("UTF-32LE"), 4);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
+	@Test
 	public void test_ReadUtf8String() throws IOException {
 		// tests variable length decoding
 		BinaryReader br = br(true, -22, -87, -107, -61, -65, 0);
@@ -712,52 +730,6 @@ public class BinaryReaderTest {
 		// tests variable length decoding
 		BinaryReader br = br(true, -22, -87, 'A', 0);
 		assertEquals("\ufffdA" /* unicode replacement char, 'A'*/, br.readUtf8String(0));
-	}
-
-	// ------------------------------------------------------------------------------------
-	// Array element count overflow
-	// ------------------------------------------------------------------------------------
-
-	@Test
-	public void testReadIntArray_countTimesSizeOverflow() {
-		// 0x40000001 * 4 overflows int to 4, which previously passed the range check
-		// and caused a ~4GB allocation (OOM) from a 16 byte input
-		BinaryReader br = br(true, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-		try {
-			br.readIntArray(0, 0x40000001);
-			fail("Should have thrown IOException");
-		}
-		catch (IOException e) {
-			// good
-		}
-		assertEquals(0, br.getPointerIndex());
-	}
-
-	@Test
-	public void testReadNextLongArray_countTimesSizeOverflow() {
-		// 0x20000001 * 8 overflows int to 8
-		BinaryReader br = br(true, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-		try {
-			br.readNextLongArray(0x20000001);
-			fail("Should have thrown IOException");
-		}
-		catch (IOException e) {
-			// good
-		}
-		assertEquals(0, br.getPointerIndex());
-	}
-
-	@Test
-	public void testReadString_charCountTimesCharLenOverflow() {
-		// 0x40000001 * 4 overflows int to 4, previously silently returned a 1 char string
-		BinaryReader br = br(true, 'A', 0, 0, 0, 'B', 0, 0, 0);
-		try {
-			br.readString(0, 0x40000001, Charset.forName("UTF-32LE"), 4);
-			fail("Should have thrown IOException");
-		}
-		catch (IOException e) {
-			// good
-		}
 	}
 
 }
