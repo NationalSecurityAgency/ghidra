@@ -22,7 +22,7 @@ PcodeCacher::PcodeCacher(void)
 
 {
   // We aim to allocate this array only once
-  expandPool(PAGE_SIZE);
+  expandPool(POOL_PAGE_SIZE);
 }
 
 PcodeCacher::~PcodeCacher(void)
@@ -37,12 +37,12 @@ PcodeCacher::~PcodeCacher(void)
 void PcodeCacher::expandPool(uint4 size)
 
 {
-  if (size > PAGE_SIZE) {
+  if (size > POOL_PAGE_SIZE) {
     if (size > MAX_ALLOCATION)
       throw LowlevelError("Maximum parameters exceeded for a single p-code op");
   }
   else
-    size = PAGE_SIZE;
+    size = POOL_PAGE_SIZE;
   VarnodeData *poolstart = new VarnodeData[ size ];
   pools.push_back(poolstart);
   endpool = poolstart + size;
@@ -84,7 +84,7 @@ void PcodeCacher::clear(void)
     iter = pools.erase(iter);
   }
   curpool = pools.front();
-  endpool = curpool + PAGE_SIZE;
+  endpool = curpool + POOL_PAGE_SIZE;
   issued.clear();
   label_refs.clear();
   labels.clear();
