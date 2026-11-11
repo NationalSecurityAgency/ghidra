@@ -1,0 +1,38 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+  Two small functions compiled from C with SSE (clang -O1), each sliding float lanes up with a PSLLDQ:
+    void shiftlane(float *out, const float *in, float s) {
+      __m128 v = _mm_loadu_ps(in); asm("pslldq $4, %0" : "+x"(v));
+      _mm_storeu_ps(out, _mm_mul_ps(v, _mm_set1_ps(s)));
+    }
+    void storeshifted(float *out, const float *in) {
+      __m128 v = _mm_loadu_ps(in); asm("pslldq $8, %0" : "+x"(v)); _mm_storeu_ps(out, v);
+    }
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+554889e50f100e660f73f9040fc6c0000f59c10f11075dc30f1f840000000000
+554889e50f1006660f73f8080f11075dc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="shiftlane"/>
+<symbol space="ram" offset="0x100020" name="storeshifted"/>
+</binaryimage>
+<script>
+  <com>parse line extern void shiftlane(float4 *out, float4 *in, float4 s);</com>
+  <com>parse line extern void storeshifted(float4 *out, float4 *in);</com>
+  <com>lo fu shiftlane</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu storeshifted</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="PSLLDQ #1" min="1" max="1">fVar1 = \*in;</stringmatch>
+<stringmatch name="PSLLDQ #2" min="1" max="1">out\[1\] = s \* fVar1;</stringmatch>
+<stringmatch name="PSLLDQ #3" min="1" max="1">out\[2\] = s \* fVar2;</stringmatch>
+<stringmatch name="PSLLDQ #4" min="1" max="1">out\[3\] = s \* fVar3;</stringmatch>
+<stringmatch name="PSLLDQ #5" min="0" max="0">>> 0x20</stringmatch>
+<stringmatch name="PSLLDQ #6" min="0" max="0">\(uint8\)</stringmatch>
+<stringmatch name="PSLLDQ #7" min="1" max="1">out\[0\] = 0.0;</stringmatch>
+<stringmatch name="PSLLDQ #8" min="1" max="1">out\[1\] = 0.0;</stringmatch>
+</decompilertest>
