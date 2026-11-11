@@ -987,6 +987,16 @@ cas_var: "al" is b_22=1 & b_15=1 { }
 cas_var: "" is b_22=0 & b_15=0 { }
 cas_var: "l" is b_22=0 & b_15=1 { }
 
+cas_loa: "a" is b_22=1 & b_15=0 { LOAcquire(); }
+cas_loa: "al" is b_22=1 & b_15=1 { LOAcquire(); }
+cas_loa: "" is b_22=0 & b_15=0 { }
+cas_loa: "l" is b_22=0 & b_15=1 { }
+
+cas_lor: "a" is b_22=1 & b_15=0 { }
+cas_lor: "al" is b_22=1 & b_15=1 { LORelease(); }
+cas_lor: "" is b_22=0 & b_15=0 { }
+cas_lor: "l" is b_22=0 & b_15=1 { LORelease(); }
+
 # C6.2.42 CASB, CASAB, CASALB, CASLB page C6-1216 line 71570 MATCH x08a07c00/mask=xffa07c00
 # CONSTRUCT x08a07c00/mask=xffa07c00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst x08a07c00/mask=xffa07c00 --status nomem
@@ -994,13 +1004,15 @@ cas_var: "l" is b_22=0 & b_15=1 { }
 # CAS{,A,AL,L}B size=0b10 (b_3031)
 
 :cas^cas_var^"b" aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b00 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws
+is b_3031=0b00 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws & cas_loa & cas_lor
 {
 	comparevalue:1 = aa_Ws:1;
 	newvalue:1 = aa_Wt:1;
+	build cas_loa;
 	data:1 = *:1 Rn_GPR64xsp;
 	if (data != comparevalue) goto <skip>;
 	*:1 Rn_GPR64xsp = newvalue;
+	build cas_lor;
 <skip>
 	aa_Ws = zext(data);
 }
@@ -1012,13 +1024,15 @@ is b_3031=0b00 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & 
 # CAS{,A,AL,L}H size=0b10 (b_3031)
 
 :cas^cas_var^"h" aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b01 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws
+is b_3031=0b01 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws & cas_loa & cas_lor
 {
 	comparevalue:2 = aa_Ws:2;
 	newvalue:2 = aa_Wt:2;
+	build cas_loa;
 	data:2 = *:2 Rn_GPR64xsp;
 	if (data != comparevalue) goto <skip>;
 	*:2 Rn_GPR64xsp = newvalue;
+	build cas_lor;
 <skip>
 	aa_Ws = zext(data);
 }
@@ -1030,7 +1044,7 @@ is b_3031=0b01 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & 
 # CASP{,A,AL,L} size=0b00 (b_3031)
 
 :casp^cas_var aa_Ws, aa_Wss, aa_Wt, aa_Wtt, [Rn_GPR64xsp]
-is b_3031=0b00 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & cas_var & aa_Ws & aa_Wss & aa_Wt & aa_Wtt & Rn_GPR64xsp
+is b_3031=0b00 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & cas_var & aa_Ws & aa_Wss & aa_Wt & aa_Wtt & Rn_GPR64xsp & cas_loa & cas_lor
 {
 @if DATA_ENDIAN == "big"
 	comparevalue:8 = (zext(aa_Ws) << 32) | zext(aa_Wss);
@@ -1039,9 +1053,11 @@ is b_3031=0b00 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 	comparevalue:8 = (zext(aa_Wss) << 32) | zext(aa_Ws);
 	newvalue:8 = (zext(aa_Wtt) << 32) | zext(aa_Wt);
 @endif
+	build cas_loa;
 	data:8 = *:8 Rn_GPR64xsp;
 	if (data != comparevalue) goto <skip>;
 	*:8 Rn_GPR64xsp = newvalue;
+	build cas_lor;
 <skip>
 @if DATA_ENDIAN == "big"
 	aa_Ws = data(4);
@@ -1059,7 +1075,7 @@ is b_3031=0b00 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 # CASP{,A,AL,L} size=0b01 (b_3031)
 
 :casp^cas_var aa_Xs, aa_Xss, aa_Xt, aa_Xtt, [Rn_GPR64xsp]
-is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & cas_var & aa_Xs & aa_Xss & aa_Xt & aa_Xtt & Rn_GPR64xsp
+is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & cas_var & aa_Xs & aa_Xss & aa_Xt & aa_Xtt & Rn_GPR64xsp & cas_loa & cas_lor
 {
 	local tmp_s:8 = aa_Xs;
 	local tmp_ss:8 = aa_Xss;
@@ -1074,6 +1090,7 @@ is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 	tmp_tt = aa_Xt;
 @endif
 
+	build cas_loa;
 	local tmp_addr:8 = Rn_GPR64xsp;
 	local tmp_d:8 = *:8 tmp_addr;
 	tmp_addr = tmp_addr + 8;
@@ -1086,6 +1103,7 @@ is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 	*:8 tmp_addr = tmp_t;
 	tmp_addr = tmp_addr + 8;
 	*:8 tmp_addr = tmp_tt;
+	build cas_lor;
 <skip>
 	aa_Xs = tmp_d;
 	aa_Xss = tmp_dd;
@@ -1097,13 +1115,15 @@ is b_3031=0b01 & b_2329=0b0010000 & b_21=1 & b_1014=0b11111 & b_16=0 & b_00=0 & 
 # CAS{,A,AL,L} size=0b10 (b_3031)
 
 :cas^cas_var aa_Ws, aa_Wt, [Rn_GPR64xsp]
-is b_3031=0b10 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws
+is b_3031=0b10 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & Rn_GPR64xsp & aa_Ws & cas_loa & cas_lor
 {
 	comparevalue:4 = aa_Ws;
 	newvalue:4 = aa_Wt;
+	build cas_loa;
 	data:4 = *:4 Rn_GPR64xsp;
 	if (data != comparevalue) goto <skip>;
 	*:4 Rn_GPR64xsp = newvalue;
+	build cas_lor;
 <skip>
 	aa_Ws = data;
 }
@@ -1115,13 +1135,15 @@ is b_3031=0b10 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Wt & 
 # CAS{,A,AL,L} size=0b11 (b_3031)
 
 :cas^cas_var aa_Xs, aa_Xt, [Rn_GPR64xsp]
-is b_3031=0b11 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Xt & Rn_GPR64xsp & aa_Xs
+is b_3031=0b11 & b_2329=0b0010001 & b_21=1 & b_1014=0b11111 & cas_var & aa_Xt & Rn_GPR64xsp & aa_Xs & cas_loa & cas_lor
 {
 	comparevalue:8 = aa_Xs;
 	newvalue:8 = aa_Xt;
+	build cas_loa;
 	data:8 = *:8 Rn_GPR64xsp;
 	if (data != comparevalue) goto <skip>;
 	*:8 Rn_GPR64xsp = newvalue;
+	build cas_lor;
 <skip>
 	aa_Xs = data;
 }
