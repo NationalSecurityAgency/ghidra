@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
@@ -235,6 +236,27 @@ public class BinaryReaderTest {
 		catch (IOException e) {
 			// good
 		}
+
+		// byte size still fits in an int32, but is larger than the max sane array byte size
+		int maxInt32ByteSizeCount = Integer.MAX_VALUE / 2 /*sizeof(int16)*/;
+		try {
+			br.readNextShortArray(maxInt32ByteSizeCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+
+		// count * sizeof(int16) overflows a signed int32
+		int overflowCount = Integer.MAX_VALUE / 2 /*sizeof(int16)*/ + 1 + 1;
+		try {
+			br.readNextShortArray(overflowCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+		assertEquals(0, br.getPointerIndex());
 	}
 
 	// ------------------------------------------------------------------------------------
@@ -342,6 +364,68 @@ public class BinaryReaderTest {
 		catch (IOException e) {
 			// good
 		}
+
+		// byte size still fits in an int32, but is larger than the max sane array byte size
+		int maxInt32ByteSizeCount = Integer.MAX_VALUE / 4 /*sizeof(int32)*/;
+		try {
+			br.readNextIntArray(maxInt32ByteSizeCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+
+		// count * sizeof(int32) overflows an unsigned int32 and wraps to a small positive value
+		int overflowCount =
+			(int) (NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG / 4 /*sizeof(int32)*/ + 1 + 1);
+		try {
+			br.readNextIntArray(overflowCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+		assertEquals(0, br.getPointerIndex());
+	}
+
+	// ------------------------------------------------------------------------------------
+	// Longs
+	// ------------------------------------------------------------------------------------
+
+	@Test
+	public void testReadLongArray_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextLongArray(Integer.MAX_VALUE - 10);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+
+		// byte size still fits in an int32, but is larger than the max sane array byte size
+		int maxInt32ByteSizeCount = Integer.MAX_VALUE / 8 /*sizeof(int64)*/;
+		try {
+			br.readNextLongArray(maxInt32ByteSizeCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+
+		// count * sizeof(int64) overflows an unsigned int32 and wraps to a small positive value
+		int overflowCount =
+			(int) (NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG / 8 /*sizeof(int64)*/ + 1 + 1);
+		try {
+			br.readNextLongArray(overflowCount);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+		assertEquals(0, br.getPointerIndex());
 	}
 
 	// ------------------------------------------------------------------------------------
@@ -601,6 +685,24 @@ public class BinaryReaderTest {
 			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
 		try {
 			br.readString(0, Integer.MAX_VALUE - 10, StandardCharsets.US_ASCII, 1);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void test_ReadUtf32String_oversize() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		// charCount * sizeof(utf32 char) overflows an unsigned int32 and wraps to a small
+		// positive value, which would silently produce a truncated string
+		int overflowCount =
+			(int) (NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG / 4 /*sizeof(utf32 char)*/ + 1 + 1);
+		try {
+			br.readString(0, overflowCount, Charset.forName("UTF-32LE"), 4);
 			fail();
 		}
 		catch (IOException e) {

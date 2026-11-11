@@ -82,10 +82,9 @@ public class InputStreamByteProvider implements ByteProvider {
 			throw new IOException("Attempted to read byte that was already read.");
 		}
 		else if (index > currentIndex) {
-			currentIndex += inputStream.skip(index - currentIndex);
-			if (currentIndex != index) {
-				throw new IOException("Not enough bytes were skipped.");
-			}
+			// skip() may legally skip fewer bytes than requested, skipNBytes() loops until done
+			inputStream.skipNBytes(index - currentIndex);
+			currentIndex = index;
 		}
 
 		int value = inputStream.read();
@@ -102,15 +101,17 @@ public class InputStreamByteProvider implements ByteProvider {
 			throw new IOException("Attempted to read bytes that were already read.");
 		}
 		else if (index > currentIndex) {
-			currentIndex += inputStream.skip(index - currentIndex);
-			if (currentIndex != index) {
-				throw new IOException("Not enough bytes were skipped.");
-			}
+			// skip() may legally skip fewer bytes than requested, skipNBytes() loops until done
+			inputStream.skipNBytes(index - currentIndex);
+			currentIndex = index;
 		}
 
-		byte[] values = new byte[(int) len];
-		int nRead = inputStream.read(values);
-		if (nRead != len) {
+		if (len < 0 || len > Integer.MAX_VALUE) {
+			throw new IOException("Invalid length: " + len);
+		}
+		// read() may legally return fewer bytes than requested, readNBytes() loops until done
+		byte[] values = inputStream.readNBytes((int) len);
+		if (values.length != len) {
 			throw new EOFException();
 		}
 		currentIndex += len;
