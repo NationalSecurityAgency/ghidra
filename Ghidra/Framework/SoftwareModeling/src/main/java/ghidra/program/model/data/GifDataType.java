@@ -50,13 +50,13 @@ public class GifDataType extends BuiltIn implements Dynamic, Resource {
 				return gif.getLength();
 			}
 			catch (InvalidDataTypeException e) {
-				Msg.error(this, "Invalid GIF data at " + buf.getAddress());
+				Msg.debug(this, "Invalid GIF data at " + buf.getAddress());
 			}
 			return -1;
 
 		}
 		catch (Exception e) {
-			Msg.error(this, "Invalid GIF data at " + buf.getAddress());
+			Msg.debug(this, "Invalid GIF data at " + buf.getAddress());
 		}
 		return -1;
 	}
