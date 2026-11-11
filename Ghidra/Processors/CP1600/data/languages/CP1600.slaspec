@@ -375,10 +375,10 @@ define pcodeop SoftwareInterrupt;
 }
 
 :RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 {
-	C = (reg0_2 & 0b00001000) != 0;
-	O = (reg0_2 & 0b00010000) != 0;
-	Z = (reg0_2 & 0b00100000) != 0;
-	S = (reg0_2 & 0b01000000) != 0;
+	C = (reg0_2 & 0b00010000) != 0;
+	O = (reg0_2 & 0b00100000) != 0;
+	Z = (reg0_2 & 0b01000000) != 0;
+	S = (reg0_2 & 0b10000000) != 0;
 }
 
 :SDBD is opcode0_9=0x0001 [ doublebyte=1; globalset(inst_next, doublebyte); ] {
