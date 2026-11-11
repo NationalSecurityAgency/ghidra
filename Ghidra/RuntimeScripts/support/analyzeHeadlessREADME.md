@@ -226,7 +226,7 @@ following paths for the specified script(s):
 Specifies path(s) that contain _.properties_ files used by scripts or secondary/subscripts. A path 
 may start with `$GHIDRA_HOME`, which corresponds to the Ghidra installation directory, or 
 `$USER_HOME`, which corresponds to the user's home directory. On Unix systems these home variables 
-must be escaped with a `;` character.
+must be escaped using a `\` (backslash) character.
 
 More information on the use of _.properties_ files to pass parameters during Headless Analysis can 
 be found [here](#passing-parameters-using-askxxx-methods).
@@ -340,7 +340,7 @@ analysis is interrupted and processing continues as scheduled (i.e., to the
 [`-postScript`][postscript] stage, if specified). Results from individual analyzers that have 
 completed processing prior to timeout will still be saved with the program. Post-scripts can be used
 to detect that analysis has timed out (in Headless processing ONLY) by calling the 
-`getHeadlessAnalysisTimeoutStatus()` method. 
+`analysisTimeoutOccurred()` method.
 
 ### `-allowAllAccess`
 When using Ghidra URLs to access a GhidraServer and this option has been omitted, and if server
@@ -701,7 +701,7 @@ public class Script1 extends GhidraScript {
 
         byte[] userBytes = askBytes("Asking for bytes", "Put some bytes here --");
         StringBuilder byteStr = new StringBuilder();
-        for (byte aByte : askedBytes) {
+        for (byte aByte : userBytes) {
             byteStr.append(String.format("%02X ", aByte));
         }
         println("Bytes: " + byteStr.toString().trim());
