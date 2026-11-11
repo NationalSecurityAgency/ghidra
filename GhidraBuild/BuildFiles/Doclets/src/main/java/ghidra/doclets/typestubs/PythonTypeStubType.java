@@ -620,8 +620,37 @@ class PythonTypeStubType extends PythonTypeStubElement<TypeElement> {
 			return true;
 		}
 		if (protectedScope) {
-			return isProtected(child);
+			return isProtected(child) &&
+				// I think only fields can be explicitly exposed via @ExposedFields.
+				child.getKind() == ElementKind.FIELD &&
+				isExplicitlyExposedField((VariableElement) child);
 		}
+		return false;
+	}
+
+	/**
+	 * Checks if a field is explicitly exposed through @ExposedFields annotation.
+	 *
+	 * @param field the field to check
+	 * @return true if this field is explicitly exposed
+	 */
+	private boolean isExplicitlyExposedField(VariableElement field) {
+		Name fieldName = field.getSimpleName();
+
+		// Hardcoded list of exposed fields from PyGhidraScriptProvider
+		String[] exposedFields = {
+			"currentAddress", "currentLocation", "currentSelection",
+			"currentHighlight", "currentProgram", "monitor",
+			"potentialPropertiesFileLocs", "propertiesFileParams",
+			"sourceFile", "state", "writer", "errorWriter"
+		};
+
+		for (String exposedField : exposedFields) {
+			if (fieldName.contentEquals(exposedField)) {
+				return true;
+			}
+		}
+
 		return false;
 	}
 
