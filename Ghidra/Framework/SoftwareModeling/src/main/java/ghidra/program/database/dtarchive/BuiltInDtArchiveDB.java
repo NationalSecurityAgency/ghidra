@@ -113,7 +113,7 @@ public class BuiltInDtArchiveDB extends DataTypeArchiveDB {
 			}
 			if (!list.isEmpty()) {
 				DataType resolvedDt = list.get(0);
-				if (!resolvedDt.isEquivalent(resolvedDt)) {
+				if (!resolvedDt.isEquivalent(datatype)) {
 					Msg.error(this,
 						"Found duplicate built-in datatype with name " + datatype.getName());
 					hadNameCollisions = true;
