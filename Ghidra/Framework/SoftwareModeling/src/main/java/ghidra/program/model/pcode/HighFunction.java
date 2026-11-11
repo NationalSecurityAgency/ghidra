@@ -25,6 +25,8 @@ import java.util.List;
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -413,6 +415,21 @@ public class HighFunction extends PcodeSyntaxTree {
 		catch (InvalidInputException e) {
 			throw new DecoderException("Bad storage node", e);
 		}
+	}
+
+	/**
+	 * Produce a HighSymbol for a unique HighOther
+	 * @param type is the data type of the new symbol
+	 * @param represent is the Varnode for the new symbol
+	 * @return a HighSymbol for the HighOther
+	 */
+	public HighSymbol highOtherSymbol(HighOther other) throws PcodeException {
+		if (other.getSymbol() != null) {
+			throw new PcodeException(
+					"Variable " + other.getSymbol().getName() + " is not unique and already has symbol");
+		}
+		DynamicHash hash = new DynamicHash(other.getRepresentative(), this);
+		return localSymbols.newDynamicSymbol(0, "", other.getDataType(), hash.getHash(), hash.getAddress());
 	}
 
 	/**
