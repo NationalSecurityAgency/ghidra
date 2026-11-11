@@ -25,6 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.listing.Function;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -128,7 +129,29 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 			CallingConvention callingConvention, Pointer thisPointer) {
 		String convention;
 		if (thisPointer != null) {
-			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
+			switch (callingConvention) {
+				case NEAR_STD:
+				case FAR_STD:
+					convention = CompilerSpec.CALLING_CONVENTION_stdcall;
+					break;
+				case NEAR_FAST:
+				case FAR_FAST:
+					convention = CompilerSpec.CALLING_CONVENTION_fastcall;
+					break;
+				case NEAR_C:
+					// 32-bit x86 uses NEAR_C for __cdecl (e.g., variadic) member functions, but
+					//  x64, ARM and ARM64 use NEAR_C for all member functions
+					if (isTargetX86_32()) {
+						convention = CompilerSpec.CALLING_CONVENTION_cdecl;
+					}
+					else {
+						convention = CompilerSpec.CALLING_CONVENTION_thiscall;
+					}
+					break;
+				default:
+					convention = CompilerSpec.CALLING_CONVENTION_thiscall;
+					break;
+			}
 		}
 		else {
 			// Since we are a member function, we will always assume a _thiscall...
@@ -158,12 +181,39 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		}
 	}
 
+	/**
+	 * Returns true if the PDB target processor is 32-bit x86, the only target for which member
+	 *  function records distinguish THISCALL from NEAR_C
+	 * @return true if the target processor is 32-bit x86; false if not or unknown
+	 */
+	private boolean isTargetX86_32() {
+		switch (applicator.getPdb().getTargetProcessor()) {
+			case I8086:
+			case I80286:
+			case I80386:
+			case I80486:
+			case PENTIUM:
+			case PENTIUMPRO_PENTIUMII:
+			case PENTIUMIII:
+				return true;
+			default:
+				return false;
+		}
+	}
+
 	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type,
-			CallingConvention convention) throws CancelledException, PdbException {
+			CallingConvention convention, Pointer thisPointer)
+			throws CancelledException, PdbException {
 
 		List<RecordNumber> args = getArgsRecordNumbers(type);
 
 		List<ParameterDefinition> parameterDefinitionList = new ArrayList<>();
+		if (thisPointer != null) {
+			// The "this" parameter is not part of the arguments list.  It must be explicit,
+			//  both for __thiscall and for member functions with other calling conventions.
+			parameterDefinitionList
+					.add(new ParameterDefinitionImpl(Function.THIS_PARAM_NAME, thisPointer, null));
+		}
 		int parameterCount = 0;
 		for (RecordNumber arg : args) {
 			applicator.checkCancelled();
@@ -249,7 +299,7 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 		CallingConvention convention = getCallingConvention(type);
 		setCallingConvention(functionDefinition, convention, thisPointer);
 		setReturnType(functionDefinition, type);
-		setArguments(functionDefinition, type, convention);
+		setArguments(functionDefinition, type, convention, thisPointer);
 
 		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
 		DataType dataType = functionDefinition;
