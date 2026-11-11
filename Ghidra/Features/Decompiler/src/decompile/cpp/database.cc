@@ -2684,20 +2684,19 @@ string ScopeInternal::buildVariableName(const Address &addr,
       s << "var";
   }
   else {			// Some sort of local variable
+    // Default names are numbered independently for each name base (uVar1, uVar2, ... iVar1, iVar2, ...)
+    // rather than from a single counter shared across all data-types.  Adding or removing a variable
+    // of one data-type then does not renumber variables of other data-types, which keeps the default
+    // names stable when comparing output across related functions (i.e. diffing two versions of a binary).
     if (ct != (Datatype *)0)
       ct->printNameBase(s);
-    s << "Var" << dec << index++;
-    if (findFirstByName(s.str()) != nametree.end()) {	// If the name already exists
-      for(int4 i=0;i<10;++i) {	// Try bumping up the index a few times before calling makeNameUnique
-	ostringstream s2;
-	if (ct != (Datatype *)0)
-	  ct->printNameBase(s2);
-	s2 << "Var" << dec << index++;
-	if (findFirstByName(s2.str()) == nametree.end()) {
-	  return s2.str();
-	}
-      }
-    }
+    s << "Var";
+    string prefix = s.str();
+    int4 i = 1;
+    string nm = prefix + to_string(i);
+    while(findFirstByName(nm) != nametree.end())	// Use the smallest index not already taken for this name base
+      nm = prefix + to_string(++i);
+    return nm;
   }
   return makeNameUnique(s.str());
 }

@@ -67,16 +67,16 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		
 			{
 			  undefined4 uVar1;
-			  int iVar2;
-			  undefined4 *puVar3;
-			  bool bVar4;
-			  undefined *puVar5;
+			  int iVar1;
+			  undefined4 *puVar1;
+			  bool bVar1;
+			  undefined *puVar2;
 			  undefined2 local_210;
 			  undefined4 local_20e [129];
 			  int local_8;
 			  
 			  local_210 = 0;
-			  puVar3 = local_20e;
+			  puVar1 = local_20e;
 			  ...
 			  ...
 			  ...
@@ -127,16 +127,16 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		
 			{
 			  undefined4 uVar1;
-			  int iVar2;
+			  int iVar1;
 			  undefined4 *pu1111Var;
-			  bool bVar4;
-			  undefined *puVar5;
+			  bool bVar1;
+			  undefined *puVar2;
 			  undefined2 local_210;
 			  undefined4 local_20e [129];
 			  int local_8;
 			  
 			  local_210 = 0;
-			  puVar3 = local_20e;
+			  puVar1 = local_20e;
 			  ...
 			  ...
 			  ...
@@ -192,22 +192,22 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		
 			{
 			  undefined4 uVar1;
-			  int iVar2;
-			  undefined4 *puVar3;
-			  bool bVar4;
-			  undefined *puVar5;
+			  int iVar1;
+			  undefined4 *puVar1;
+			  bool bVar1;
+			  undefined *puVar2;
 			  undefined2 local_210;
 			  undefined4 local_20e [129];
 			  int local_8;
 			  
 			  local_210 = 0;
-			  puVar3 = local_20e;
+			  puVar1 = local_20e;
 			  
 			  local_210 = 0;
-			  puVar3 = local_20e;
-			  for (iVar2 = 0x81; iVar2 != 0; iVar2 = iVar2 + -1) {
-			    *puVar3 = 0;
-			    puVar3 = puVar3 + 1;
+			  puVar1 = local_20e;
+			  for (iVar1 = 0x81; iVar1 != 0; iVar1 = iVar1 + -1) {
+			    *puVar1 = 0;
+			    puVar1 = puVar1 + 1;
 			  }
 			  
 			  ...
@@ -220,24 +220,24 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		// skip past some search hits for test brevity
 		setDecompilerLocation(18, 0);
 
-		String text = "puVar3";
+		String text = "puVar1";
 		showFind(text);
 		next();
 
 		int length = text.length();
 		int line = 19;
 		int column = 1;
-		assertSearchHit(line, column, length); // *|puVar3 = 0;
+		assertSearchHit(line, column, length); // *|puVar1 = 0;
 
 		line = 20;
 		column = 0;
 		next();
-		assertSearchHit(line, column, length); // |puVar3 = puVar3 + 1;
+		assertSearchHit(line, column, length); // |puVar1 = puVar1 + 1;
 
 		line = 20;
 		column = 9;
 		next();
-		assertSearchHit(line, column, length); // puVar3 = |puVar3 + 1;
+		assertSearchHit(line, column, length); // puVar1 = |puVar1 + 1;
 
 		line = 20;
 		column = 0;
@@ -259,16 +259,16 @@ public class DecompilerFindDialogTest extends AbstractDecompilerTest {
 		
 			{
 			  undefined4 uVar1;
-			  int iVar2;
-			  undefined4 *puVar3;
-			  bool bVar4;
-			  undefined *puVar5;
+			  int iVar1;
+			  undefined4 *puVar1;
+			  bool bVar1;
+			  undefined *puVar2;
 			  undefined2 local_210;
 			  undefined4 local_20e [129];
 			  int local_8;
 			  
 			  local_210 = 0;
-			  puVar3 = local_20e;
+			  puVar1 = local_20e;
 			  ...
 			  ...
 			  ...
