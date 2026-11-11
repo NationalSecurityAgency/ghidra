@@ -6662,7 +6662,7 @@ vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & ((TMode=0 & c1011=0
 	*:1 mult_addr = *[register]:1 ptr;
 }
 
-vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & TMode=0 & ((TMode=0 & c1011=1) | (TMode=1 & thv_c1011=1))
+vst4DdElement2: Dreg^"["^vst4Index^"]"	is Dreg & vst4Index & ((TMode=0 & c1011=1) | (TMode=1 & thv_c1011=1))
 {
 	ptr:4 = &Dreg + vst4Index;
 	*:2 mult_addr = *[register]:2 ptr;
