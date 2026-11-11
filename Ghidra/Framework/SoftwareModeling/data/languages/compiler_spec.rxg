@@ -287,6 +287,7 @@
   </start>
 
   <define name="pentry_type">
+    <optional> <attribute name="allocation"><choice><value>bounded</value><value>unbounded</value></choice></attribute> </optional>
     <optional> <attribute name="maxsize"/> </optional>
     <optional> <attribute name="minsize"/> </optional>
     <optional> <attribute name="align"/> </optional>

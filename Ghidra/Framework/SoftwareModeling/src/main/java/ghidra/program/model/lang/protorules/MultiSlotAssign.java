@@ -230,8 +230,8 @@ public class MultiSlotAssign extends AssignAction {
 			}
 			int grp = stackEntry.getGroup();
 			tmpStatus[grp] =
-				stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);	// Consume all the space we need	
-			if (param.address == null) {
+				stackEntry.getAllocationAddrBySlot(tmpStatus[grp], sizeLeft, align, param, justifyRight);	// Consume all the space we need	
+			if ((stackEntry.isUnboundedAllocation() && tmpStatus[grp] < 0) || param.address == null) {
 				return FAIL;
 			}
 			Varnode vn = new Varnode(param.address, sizeLeft);

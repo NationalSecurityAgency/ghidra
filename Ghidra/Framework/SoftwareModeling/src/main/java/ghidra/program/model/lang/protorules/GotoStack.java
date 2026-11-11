@@ -74,6 +74,17 @@ public class GotoStack extends AssignAction {
 	public int assignAddress(DataType dt, PrototypePieces proto, int pos, DataTypeManager dtManager,
 			int[] status, ParameterPieces res) {
 		int grp = stackEntry.getGroup();
+		if (stackEntry.isUnboundedAllocation()) {
+			ParameterPieces allocated = new ParameterPieces();
+			int next = stackEntry.getAllocationAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), allocated);
+			if (next < 0) {
+				return FAIL;
+			}
+			status[grp] = next;
+			res.address = allocated.address;
+			res.type = dt;
+			return SUCCESS;
+		}
 		res.type = dt;
 		status[grp] = stackEntry.getAddrBySlot(status[grp], dt.getLength(), dt.getAlignment(), res);
 		return SUCCESS;

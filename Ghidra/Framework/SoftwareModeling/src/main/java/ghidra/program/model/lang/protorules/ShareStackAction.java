@@ -57,7 +57,10 @@ public class ShareStackAction extends SharedAction {
 		}
 		// Treat output consumed stack as input consumed stack
 		int slotnum = outputStatus[outputStackEntry.getGroup()];
-		if (extraAlign > inputStackEntry.getAlign()) {
+		if (inputStackEntry.isUnboundedAllocation()) {
+			slotnum = checkedSlot(slotnum);
+		}
+		else if (extraAlign > inputStackEntry.getAlign()) {
 			int tmp = (slotnum * inputStackEntry.getAlign()) % extraAlign;
 			if (tmp != 0) {
 				slotnum += (extraAlign - tmp) / inputStackEntry.getAlign();
@@ -81,14 +84,45 @@ public class ShareStackAction extends SharedAction {
 			return;
 		}
 		int slotnum = inputStatus[inputStackEntry.getGroup()];
-		if (extraAlign > inputStackEntry.getAlign()) {
+		if (inputStackEntry.isUnboundedAllocation()) {
+			slotnum = checkedSlot(slotnum);
+		}
+		else if (extraAlign > inputStackEntry.getAlign()) {
 			int tmp = (slotnum * inputStackEntry.getAlign()) % extraAlign;
 			if (tmp != 0) {
 				slotnum += (extraAlign - tmp) / inputStackEntry.getAlign();
 			}
 		}
-		inputStackEntry.getAddrBySlot(slotnum, outEntry.type.getLength(),
-			outEntry.type.getAlignment(), outEntry);
+		if (inputStackEntry.isUnboundedAllocation()) {
+			ParameterPieces allocated = new ParameterPieces();
+			if (inputStackEntry.getAllocationAddrBySlot(slotnum, outEntry.type.getLength(),
+				outEntry.type.getAlignment(), allocated) < 0) {
+				throw new IllegalArgumentException("Cannot assign shared stack storage");
+			}
+			outEntry.address = allocated.address;
+		}
+		else {
+			inputStackEntry.getAddrBySlot(slotnum, outEntry.type.getLength(),
+				outEntry.type.getAlignment(), outEntry);
+		}
+	}
+
+	private int checkedSlot(int slotnum) {
+		int align = inputStackEntry.getAlign();
+		if (slotnum < 0 || extraAlign < 0 ||
+			(extraAlign > align && extraAlign % align != 0)) {
+			throw new IllegalArgumentException("Cannot align shared stack storage");
+		}
+		long bytes = (long) slotnum * align;
+		if (extraAlign > align && bytes % extraAlign != 0) {
+			bytes += extraAlign - bytes % extraAlign;
+		}
+		long slot = bytes / align;
+		if (slot > Integer.MAX_VALUE || bytes > inputStackEntry.getSpace().getMaxAddress().getOffset() -
+			inputStackEntry.getAddressBase()) {
+			throw new IllegalArgumentException("Cannot align shared stack storage");
+		}
+		return (int) slot;
 	}
 
 	@Override
