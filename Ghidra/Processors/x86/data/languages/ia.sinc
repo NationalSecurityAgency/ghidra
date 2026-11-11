@@ -2211,12 +2211,12 @@ macro sarflags(op1,result,count) {
 
 macro shrflags(op1,result,count) {
  conditionalAssign(CF, count==0, CF, ( (op1 >> (count - 1)) & 1 ) != 0 );
- conditionalAssign(OF, count==1, 0, (op1 s< 0)); 
+ conditionalAssign(OF, count==1, (op1 s< 0), OF);
 }
 
 macro shrdflags(op1,result,count) {
  conditionalAssign(CF, count==0, CF, ( (op1 >> (count - 1)) & 1 ) != 0 );
- conditionalAssign(OF, count==1, 0, ((op1 s< 0) ^ (result s< 0))); 
+ conditionalAssign(OF, count==1, ((op1 s< 0) ^ (result s< 0)), OF);
 }
 
 macro fdec() {
