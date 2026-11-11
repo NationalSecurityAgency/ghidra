@@ -2677,29 +2677,33 @@ is b_3031=0b10 & b_2429=0b111000 & b_21=1 & b_1515=0 & b_1011=0b00 & ls_opc4 & l
 is b_3031=0b11 & b_2429=0b111000 & b_21=1 & b_1515=0 & b_1011=0b00 & ls_opc8 & ls_loa & ls_lor & aa_Xt & aa_Xs & Rn_GPR64xsp
 { build ls_loa; build ls_opc8; aa_Xt = tmp_ldXn; build ls_lor; }
 
+define pcodeop LOAcquireRCpc;
+
 # C6.2.136 LDAPR page C6-1496 line 88965 MATCH xb8a0c000/mask=xbfe0fc00
 # CONSTRUCT xb8a0c000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xb8a0c000/mask=xffe0fc00 --status nomem
-# TODO unsure of load/release semantics for this instruction
 # To enforce SHOULD BE ONE fields add: b_1620=0b11111
 # size == 10 32-bit variant
 
 :ldapr aa_Wt, [Rn_GPR64xsp]
 is b_3031=0b10 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls_data4
 {
+	LOAcquireRCpc(Rn_GPR64xsp, 4:8);
+	build ls_data4;
 	aa_Wt = tmp_ldWn;
 }
 
 # C6.2.136 LDAPR page C6-1496 line 88965 MATCH xb8a0c000/mask=xbfe0fc00
 # CONSTRUCT xf8a0c000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xf8a0c000/mask=xffe0fc00 --status nomem
-# TODO unsure of load/release semantics for this instruction
 # To enforce SHOULD BE ONE fields add: b_1620=0b11111
 # size == 11 64-bit variant
 
 :ldapr aa_Xt, [Rn_GPR64xsp]
 is b_3031=0b11 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Xt & ls_data8
 {
+	LOAcquireRCpc(Rn_GPR64xsp, 8:8);
+	build ls_data8;
 	aa_Xt = tmp_ldXn;
 }
 
@@ -2707,11 +2711,12 @@ is b_3031=0b11 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Xt & ls
 # CONSTRUCT x38a0c000/mask=xffe0fc00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst x38a0c000/mask=xffe0fc00 --status nomem
 # To enforce SHOULD BE ONE fields add: b_1620=0b11111
-# TODO unsure of load/release semantics for this instruction
 
 :ldaprb aa_Wt, [Rn_GPR64xsp]
 is b_3031=0b00 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls_data1
 {
+	LOAcquireRCpc(Rn_GPR64xsp, 1:8);
+	build ls_data1;
 	aa_Wt = tmp_ldWn;
 }
 
@@ -2723,6 +2728,8 @@ is b_3031=0b00 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls
 :ldaprh aa_Wt, [Rn_GPR64xsp]
 is b_3031=0b01 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls_data2
 {
+	LOAcquireRCpc(Rn_GPR64xsp, 2:8);
+	build ls_data2;
 	aa_Wt = tmp_ldWn;
 }
 
@@ -2737,6 +2744,7 @@ is b_3031=0b01 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls
 :ldapur aa_Wt, addr_SIMM9
 is b_3031=0b10 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 4:8);
 	aa_Xt = zext(*:4 addr_SIMM9);
 }
 
@@ -2746,6 +2754,7 @@ is b_3031=0b10 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 :ldapur aa_Xt, addr_SIMM9
 is b_3031=0b11 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 8:8);
 	aa_Xt = *addr_SIMM9;
 }
 
@@ -2756,6 +2765,7 @@ is b_3031=0b11 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 :ldapurb aa_Wt, addr_SIMM9
 is b_3031=0b00 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 1:8);
 	aa_Xt = zext(*:1 addr_SIMM9);
 }
 
@@ -2766,6 +2776,7 @@ is b_3031=0b00 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 :ldapurh aa_Wt, addr_SIMM9
 is b_3031=0b01 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 2:8);
 	aa_Xt = zext(*:2 addr_SIMM9);
 }
 
@@ -2777,6 +2788,7 @@ is b_3031=0b01 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 :ldapursb aa_Wt, addr_SIMM9
 is b_3031=0b00 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 1:8);
 	aa_Xt = 0;
 	aa_Wt = sext(*:1 addr_SIMM9);
 }
@@ -2787,6 +2799,7 @@ is b_3031=0b00 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIM
 :ldapursb aa_Xt, addr_SIMM9
 is b_3031=0b00 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 1:8);
 	aa_Xt = sext(*:1 addr_SIMM9);
 }
 
@@ -2797,6 +2810,7 @@ is b_3031=0b00 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIM
 :ldapursh aa_Wt, addr_SIMM9
 is b_3031=0b01 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 2:8);
 	aa_Xt = 0;
 	aa_Wt = sext(*:2 addr_SIMM9);
 }
@@ -2807,6 +2821,7 @@ is b_3031=0b01 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIM
 :ldapursh aa_Xt, addr_SIMM9
 is b_3031=0b01 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 2:8);
 	aa_Xt = sext(*:2 addr_SIMM9);
 }
 
@@ -2817,6 +2832,7 @@ is b_3031=0b01 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIM
 :ldapursw aa_Xt, addr_SIMM9
 is b_3031=0b10 & b_2129=0b011001100 & b_1011=0b00 & addr_SIMM9 & aa_Xt
 {
+	LOAcquireRCpc(addr_SIMM9, 4:8);
 	aa_Xt = sext(*:4 addr_SIMM9);
 }
 
