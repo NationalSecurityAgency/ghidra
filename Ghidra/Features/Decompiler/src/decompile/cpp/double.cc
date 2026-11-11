@@ -713,6 +713,15 @@ bool SplitVarnode::exceedsConstPrecision(void) const
 bool SplitVarnode::adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1)
 
 {
+  if (vn1->isWritten() && vn2->isWritten()) {
+    PcodeOp *seg1 = vn1->getDef();
+    PcodeOp *seg2 = vn2->getDef();
+    if (seg1->code() == CPUI_SEGMENTOP && seg2->code() == CPUI_SEGMENTOP) {
+      if (seg1->getIn(0)->getOffset() != seg2->getIn(0)->getOffset()) return false;
+      if (seg1->getIn(1) != seg2->getIn(1)) return false;
+      return adjacentOffsets(seg1->getIn(2),seg2->getIn(2),size1);
+    }
+  }
   if (vn1->isConstant()) {
     if (!vn2->isConstant()) return false;
     return ((vn1->getOffset() + size1) == vn2->getOffset());
