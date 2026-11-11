@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.listing;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.Strings;
@@ -307,7 +306,7 @@ abstract class VariableImpl implements Variable {
 		type =
 			VariableUtilities.checkDataType(type, isVoidAllowed(), dataType.getLength(), program);
 		variableStorage = VoidDataType.isVoidDataType(type) ? VariableStorage.VOID_STORAGE
-				: resizeStorage(variableStorage, type);
+				: VariableUtilities.resizeStorage(variableStorage, type, false, null);
 		dataType = type;
 	}
 
@@ -530,128 +529,6 @@ abstract class VariableImpl implements Variable {
 			return false;
 		}
 		return true;
-	}
-
-	///// STORAGE RESIZE /////
-
-	/**
-	 * Perform resize variable storage to desired newSize.  This method has limited ability to grow
-	 * storage if current storage does not have a stack component or if other space constraints
-	 * are exceeded.
-	 * @param curStorage
-	 * @param newSize
-	 * @param type
-	 * @param function
-	 * @return resize storage
-	 * @throws InvalidInputException if unable to resize storage to specified size.
-	 */
-	private VariableStorage resizeStorage(VariableStorage curStorage, DataType type)
-			throws InvalidInputException {
-		int newSize = type.getLength();
-		int curSize = curStorage.size();
-		if (curSize == newSize) {
-			return curStorage;
-		}
-		if (curSize == 0 || curStorage.isUniqueStorage() || curStorage.isHashStorage()) {
-			throw new InvalidInputException(
-				"Current storage can't be resized: " + curStorage.toString());
-		}
-		if (newSize > curSize) {
-			return expandStorage(curStorage, newSize, type);
-		}
-		return shrinkStorage(curStorage, newSize, type);
-	}
-
-	private VariableStorage shrinkStorage(VariableStorage curStorage, int newSize, DataType type)
-			throws InvalidInputException {
-		List<Varnode> newList = new ArrayList<>();
-		int size = 0;
-		for (Varnode vn : curStorage.getVarnodes()) {
-			size += vn.getSize();
-			if (size >= newSize) {
-				newList.add(shrinkVarnode(vn, size - newSize, curStorage, newSize, type));
-				break;
-			}
-			newList.add(vn);
-		}
-		return new VariableStorage(program, newList);
-	}
-
-	private VariableStorage expandStorage(VariableStorage curStorage, int newSize, DataType type)
-			throws InvalidInputException {
-		List<Varnode> newList = new ArrayList<>();
-		Varnode[] varnodes = curStorage.getVarnodes();
-		int lastIndex = varnodes.length - 1;
-		varnodes[lastIndex] = expandVarnode(varnodes[lastIndex], newSize - curStorage.size(),
-			curStorage, newSize, type);
-		return new VariableStorage(program, newList);
-	}
-
-	private Varnode shrinkVarnode(Varnode varnode, int sizeReduction, VariableStorage curStorage,
-			int newSize, DataType type) throws InvalidInputException {
-		Address addr = varnode.getAddress();
-		if (addr.isStackAddress()) {
-			return resizeStackVarnode(varnode, varnode.getSize() - sizeReduction, curStorage,
-				newSize, type);
-		}
-		boolean isRegister = program.getRegister(varnode) != null;
-		boolean bigEndian = program.getMemory().isBigEndian();
-		boolean complexDt = (type instanceof Composite) || (type instanceof Array);
-		if (bigEndian && (isRegister || !complexDt)) {
-			return new Varnode(varnode.getAddress().add(sizeReduction),
-				varnode.getSize() - sizeReduction);
-		}
-		return new Varnode(varnode.getAddress(), varnode.getSize() - sizeReduction);
-	}
-
-	private Varnode expandVarnode(Varnode varnode, int sizeIncrease, VariableStorage curStorage,
-			int newSize, DataType type) throws InvalidInputException {
-
-		Address addr = varnode.getAddress();
-		if (addr.isStackAddress()) {
-			return resizeStackVarnode(varnode, varnode.getSize() + sizeIncrease, curStorage,
-				newSize, type);
-		}
-		int size = varnode.getSize() + sizeIncrease;
-		boolean bigEndian = program.getMemory().isBigEndian();
-		Register reg = program.getRegister(varnode);
-		Address vnAddr = varnode.getAddress();
-		if (reg != null) {
-			// Register expansion
-			Register newReg = reg;
-			while ((newReg.getMinimumByteSize() < size)) {
-				newReg = newReg.getParentRegister();
-				if (newReg == null) {
-					throw new InvalidInputException("Current storage can't be expanded to " +
-						newSize + " bytes: " + curStorage.toString());
-				}
-			}
-			if (bigEndian) {
-				vnAddr = vnAddr.add(newReg.getMinimumByteSize() - size);
-				return new Varnode(vnAddr, size);
-			}
-		}
-		boolean complexDt = (type instanceof Composite) || (type instanceof Array);
-		if (bigEndian && !complexDt) {
-			return new Varnode(vnAddr.subtract(sizeIncrease), size);
-		}
-		return new Varnode(vnAddr, size);
-	}
-
-	private Varnode resizeStackVarnode(Varnode varnode, int newVarnodeSize,
-			VariableStorage curStorage, int newSize, DataType type) throws InvalidInputException {
-
-		Address curAddr = varnode.getAddress();
-		int stackOffset = (int) curAddr.getOffset();
-		int newStackOffset = stackOffset;
-
-		int newEndStackOffset = newStackOffset + newVarnodeSize - 1;
-		if (newStackOffset < 0 && newEndStackOffset >= 0) {
-			throw new InvalidInputException(
-				"Data type does not fit within variable stack constraints");
-		}
-
-		return new Varnode(curAddr.getNewAddress(newStackOffset), newVarnodeSize);
 	}
 
 }
