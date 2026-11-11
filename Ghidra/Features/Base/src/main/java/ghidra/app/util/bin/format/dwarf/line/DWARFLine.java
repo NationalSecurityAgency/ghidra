@@ -18,7 +18,9 @@ package ghidra.app.util.bin.format.dwarf.line;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf.*;
@@ -280,12 +282,21 @@ public class DWARFLine {
 
 	public List<SourceFileAddr> getAllSourceFileAddrInfo(DWARFCompilationUnit cu)
 			throws IOException {
+		List<SourceFileAddr> results = new ArrayList<>();
+		addSourceFileAddrInfo(cu, results);
+		return results;
+	}
+
+	/** Adds source rows directly to a caller-owned list without retaining decoded line states. */
+	public void addSourceFileAddrInfo(DWARFCompilationUnit cu, List<SourceFileAddr> results)
+			throws IOException {
 		if (cu.getDIEContainer().getDebugLineReader() == null) {
-			return List.of();
+			return;
 		}
 		try (DWARFLineProgramExecutor lpe = getLineProgramExecutor(cu)) {
-			List<SourceFileAddr> results = new ArrayList<>();
-			for (DWARFLineProgramState row : lpe.allRows()) {
+			Map<DWARFFile, String> filePaths = new IdentityHashMap<>();
+			DWARFLineProgramState row;
+			while ((row = lpe.nextRow()) != null) {
 				if (row.tombstone) {
 					// skips elements that were based on tombstoned/dead code that wasn't included
 					// in final binary
@@ -294,15 +305,14 @@ public class DWARFLine {
 				}
 				try {
 					DWARFFile file = getFile(row.file);
-					results.add(new SourceFileAddr(row.address, file.getPathName(this),
+					String path = filePaths.computeIfAbsent(file, f -> f.getPathName(this));
+					results.add(new SourceFileAddr(row.address, path,
 						file.getMD5(), row.line, row.isEndSequence));
 				}
 				catch (IOException e) {
 					cu.getProgram().getImportSummary().badSourceFileCount++;
 				}
 			}
-
-			return results;
 		}
 	}
 

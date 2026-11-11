@@ -129,6 +129,12 @@ public class DWARFDataTypeImporter {
 		if (diea == null) {
 			return defaultValue;
 		}
+		if (diea.getBool(DW_AT_declaration, false) && diea.hasAttribute(DW_AT_signature)) {
+			DIEAggregate definition = diea.getRef(DW_AT_signature);
+			if (definition != null) {
+				return getDataType(definition, defaultValue);
+			}
+		}
 
 		// First try to find a datatype that has already been constructed for this DIEA and return
 		// that if available.
