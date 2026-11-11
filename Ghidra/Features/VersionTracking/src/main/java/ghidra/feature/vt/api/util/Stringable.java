@@ -156,7 +156,8 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	/**
 	 * Encodes a comment string that may contain tabs, carriage returns, and linefeeds so that it 
 	 * can be saved as part of a Stringable. Tabs, carriage returns, and linefeeds are typically 
-	 * used as delimiters for separating tokens within the Stringable.
+	 * used as delimiters for separating tokens within the Stringable. Backslashes are escaped as
+	 * well, since the decoder uses backslash as its escape character.
 	 * @param unencodedComment the actual comment text containing tabs, etc.
 	 * @return the encoded comment to be saved as part of the stringable.
 	 */
@@ -183,6 +184,10 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 				case '\f':
 					startIndex = saveSubStringAndEscapedCharacter(unencodedComment, buffer,
 						startIndex, i, 'f');
+					break;
+				case '\\':
+					startIndex = saveSubStringAndEscapedCharacter(unencodedComment, buffer,
+						startIndex, i, '\\');
 					break;
 				default:
 					break;
@@ -219,6 +224,13 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 		int index = encodedComment.indexOf('\\', startIndex);
 		while (index != -1) {
 			buffer.append(encodedComment.substring(startIndex, index));
+			if (index + 1 == encodedComment.length()) {
+				// A trailing backslash is not a valid escape sequence, but preserve it rather
+				// than throwing an exception on data written by an older version.
+				buffer.append('\\');
+				startIndex = encodedComment.length();
+				break;
+			}
 			char charAt = encodedComment.charAt(++index);
 			switch (charAt) {
 				case 't':
@@ -233,9 +245,12 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 				case 'f':
 					buffer.append('\f');
 					break;
+				case '\\':
+					buffer.append('\\');
+					break;
 				default:
 					// TODO What should we do here? Got an unexpected escaped character.
-					buffer.append('\\' + charAt);
+					buffer.append('\\').append(charAt);
 					break;
 			}
 			startIndex = ++index;
