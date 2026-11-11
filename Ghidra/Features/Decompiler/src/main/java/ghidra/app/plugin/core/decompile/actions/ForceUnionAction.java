@@ -133,6 +133,9 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		DataType innerType = dt;
 		if (innerType instanceof Pointer) {
 			innerType = ((Pointer) innerType).getDataType();
+			if (innerType instanceof TypeDef) {
+				innerType = ((TypeDef) innerType).getBaseDataType();
+			}
 		}
 		else if (innerType instanceof PartialUnion) {
 			innerType = ((PartialUnion) innerType).getParent();
