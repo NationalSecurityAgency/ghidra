@@ -493,6 +493,8 @@ bool PrintLanguage::unicodeNeedsEscape(int4 codepoint)
 /// \brief Emit a byte buffer to the stream as unicode characters.
 ///
 /// Characters are emitted until we reach a terminator character or \b count bytes is consumed.
+/// The characters are assumed to be emitted inside a double-quoted string literal, so a single
+/// quote character is emitted without an escape.
 /// \param s is the output stream
 /// \param buf is the byte buffer
 /// \param count is the maximum number of bytes to consume
@@ -508,7 +510,10 @@ bool PrintLanguage::escapeCharacterData(ostream &s,const uint1 *buf,int4 count,i
   while(i<count) {
     codepoint = StringManager::getCodepoint(buf+i,count-i,charsize,bigend,skip);
     if (codepoint == 0 || codepoint == -1) break;
-    printUnicode(s,codepoint);
+    if (codepoint == '\'')
+      s << '\'';		// No escape needed inside a double-quoted string
+    else
+      printUnicode(s,codepoint);
     i += skip;
   }
   return (codepoint == 0);
