@@ -5783,12 +5783,42 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 /// \class RuleEqual2Zero
 /// \brief Simplify INT_EQUAL applied to 0: `0 == V + W * -1  =>  V == W  or  0 == V + c  =>  V == -c`
 ///
+/// If V is itself a sum containing W, the common term is canceled: `0 == (U + W) + W * -1  =>  U == 0`.
 /// The Rule also applies to INT_NOTEQUAL comparisons.
 void RuleEqual2Zero::getOpList(vector<uint4> &oplist) const
 
 {
   uint4 list[] = { CPUI_INT_EQUAL, CPUI_INT_NOTEQUAL };
   oplist.insert(oplist.end(),list,list+2);
+}
+
+/// \brief Is the result of the given comparison combined with a less-than comparison of the same two Varnodes
+///
+/// RuleLessEqual and RuleLessNotEqual merge such pairs, `V < W || V == W` and `V <= W && V != W`, so the
+/// comparison should keep V and W as its inputs.
+/// \param op is the INT_EQUAL or INT_NOTEQUAL comparison
+/// \param vn1 is one of the Varnodes being compared
+/// \param vn2 is the other Varnode being compared
+/// \return \b true if a BOOL_AND or BOOL_OR combines the comparison with a less-than comparison of the Varnodes
+bool RuleEqual2Zero::isPairedWithLess(PcodeOp *op,Varnode *vn1,Varnode *vn2)
+
+{
+  Varnode *outvn = op->getOut();
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=outvn->beginDescend();iter!=outvn->endDescend();++iter) {
+    PcodeOp *boolop = *iter;
+    OpCode opc = boolop->code();
+    if (opc != CPUI_BOOL_AND && opc != CPUI_BOOL_OR) continue;
+    Varnode *othervn = boolop->getIn(1 - boolop->getSlot(outvn));
+    if (!othervn->isWritten()) continue;
+    PcodeOp *lessop = othervn->getDef();
+    opc = lessop->code();
+    if (opc != CPUI_INT_LESS && opc != CPUI_INT_SLESS && opc != CPUI_INT_LESSEQUAL && opc != CPUI_INT_SLESSEQUAL)
+      continue;
+    if ((lessop->getIn(0) == vn1 && lessop->getIn(1) == vn2) || (lessop->getIn(0) == vn2 && lessop->getIn(1) == vn1))
+      return true;
+  }
+  return false;
 }
 
 int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
@@ -5838,6 +5868,21 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
   }
   if (!posvn->isHeritageKnown()) return 0;
   if (!unnegvn->isHeritageKnown()) return 0;
+  if (unnegvn->isWritten() && posvn->isWritten() && posvn->getDef()->code() == CPUI_INT_ADD &&
+      !isPairedWithLess(op,posvn,unnegvn)) {
+    // Cancel a term common to both sides:  (U + W) + W * -1 == 0  =>  U == 0
+    // (e.g. the sign correction of a signed division)
+    PcodeOp *sumop = posvn->getDef();
+    for(int4 i=0;i<2;++i) {
+      if (functionalEquality(sumop->getIn(i),unnegvn)) {
+	Varnode *othervn = sumop->getIn(1-i);
+	if (!othervn->isHeritageKnown()) break;
+	data.opSetInput(op,othervn,0);
+	data.opSetInput(op,data.newConstant(othervn->getSize(),0),1);
+	return 1;
+      }
+    }
+  }
 
   data.opSetInput(op,posvn,0);
   data.opSetInput(op,unnegvn,1);
