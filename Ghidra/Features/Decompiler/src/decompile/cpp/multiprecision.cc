@@ -44,7 +44,8 @@ static void leftshift(int4 num,uint8 *in,uint8 *out,int4 sa)
     for(;inIndex>0;--inIndex) {
       out[outIndex--] = (in[inIndex] << sa) | (in[inIndex-1] >> (64-sa));
     }
-    out[outIndex--] = in[0] << sa;
+    if (inIndex == 0)
+      out[outIndex--] = in[0] << sa;
     for(;outIndex>=0;--outIndex) {
       out[outIndex] = 0;
     }
@@ -288,6 +289,8 @@ static void knuth_algorithm_d(int4 m,int4 n,uint4 *u,uint4 *v,uint4 *q)
 void udiv128(uint8 *numer,uint8 *denom,uint8 *quotient_res,uint8 *remainder_res)
 
 {
+  if (denom[0] == 0 && denom[1] == 0)
+    throw LowlevelError("divide by 0");
   if (numer[1] == 0 && denom[1] == 0) {
     quotient_res[0] = numer[0] / denom[0];
     quotient_res[1] = 0;
