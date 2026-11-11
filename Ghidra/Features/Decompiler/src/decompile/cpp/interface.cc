@@ -424,7 +424,9 @@ static bool maxmatch(string &res,const string &op1,const string &op2)
 /// \brief Expand tokens from the given input stream to a full command
 ///
 /// A range of possible commands is returned. Processing of the stream
-/// stops as soon as at least one complete command is recognized.
+/// stops once a command is recognized. Longer command matches take precedence
+/// over a complete prefix. If a later token does not extend any command, it is
+/// left in the stream as an argument to the longest complete prefix.
 /// Tokens partially matching a command are expanded to the full command
 /// and passed back.
 /// \param expand will hold the list of expanded tokens
@@ -440,6 +442,9 @@ int4 IfaceStatus::expandCom(vector<string> &expand,istream &s,
   int4 pos;			// Which word are we currently expanding
   string tok;
   bool res;
+  vector<IfaceCommand *>::const_iterator complete = comlist.end();
+  int4 completeWords = 0;
+  std::streampos argumentPosition;
 
   expand.clear();		// Make sure command list is empty
   res = true;
@@ -447,6 +452,11 @@ int4 IfaceStatus::expandCom(vector<string> &expand,istream &s,
     return 0;
   for(pos=0;;++pos) {
     s >> ws;			// Skip whitespace
+    if (res && !s.eof() && (*first)->numWords() == pos) {
+      complete = first;
+      completeWords = pos;
+      argumentPosition = s.tellg();
+    }
     if (first == (last-1)) {	// If subrange is unique
       if (s.eof())		// If no more input
 	for(;pos<(*first)->numWords();++pos) // Automatically provide missing words
@@ -467,8 +477,18 @@ int4 IfaceStatus::expandCom(vector<string> &expand,istream &s,
     s >> tok;			// Get next token
     expand.push_back(tok);
     restrictCom(first,last,expand);
-    if (first == last)		// If subrange is empty, return 0
-      return 0;
+    if (first == last) {		// A token may instead be an argument to a complete command
+      if (complete == comlist.end())
+	return 0;
+      s.clear();
+      s.seekg(argumentPosition);
+      if (!s)
+	return 0;
+      first = complete;
+      last = first + 1;
+      expand.resize(completeWords);
+      return 1;
+    }
     res = maxmatch(tok, (*first)->getCommandWord(pos), (*(last-1))->getCommandWord(pos));
     expand.back() = tok;
   }
