@@ -82,6 +82,23 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 	}
 
 	@Override
+	protected BigInteger castValueToEncode(Object value) throws DataTypeEncodeException {
+		if (value instanceof Boolean) {
+			return (Boolean) value ? BigInteger.ONE : BigInteger.ZERO;
+		}
+		return super.castValueToEncode(value);
+	}
+
+	@Override
+	public byte[] encodeRepresentation(String repr, MemBuffer buf, Settings settings, int length)
+			throws DataTypeEncodeException {
+		if ("TRUE".equals(repr) || "FALSE".equals(repr)) {
+			return encodeValue("TRUE".equals(repr), buf, settings, length);
+		}
+		return super.encodeRepresentation(repr, buf, settings, length);
+	}
+
+	@Override
 	public Class<?> getValueClass(Settings settings) {
 		return Boolean.class;
 	}
