@@ -40,16 +40,26 @@ public class IsfConnectionHandler extends Thread {
 			InputStream inputStream = socket.getInputStream();
 			while (!socket.isClosed()) {
 				RootMessage root = RootMessage.parseDelimitedFrom(inputStream);
-				if (root != null) {
-					AbstractMessage msg = handler.processMessage(root);
-					OutputStream out = socket.getOutputStream();
-					msg.writeDelimitedTo(out);
-					out.flush();
+				if (root == null) {
+					// EOF - the client closed the connection
+					break;
 				}
+				AbstractMessage msg = handler.processMessage(root);
+				OutputStream out = socket.getOutputStream();
+				msg.writeDelimitedTo(out);
+				out.flush();
 			}
 		}
 		catch (IOException e) {
 			Msg.error(this, e);
+		}
+		finally {
+			try {
+				socket.close();
+			}
+			catch (IOException e) {
+				// ignore
+			}
 		}
 	}
 }
