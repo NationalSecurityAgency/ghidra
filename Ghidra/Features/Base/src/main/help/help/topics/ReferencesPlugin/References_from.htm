@@ -553,34 +553,6 @@ c<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
           </TR>
 
           <TR>
-            <TD valign="top"><FONT color="#999999">STACK_READ (<I>Note 1</I>)<BR>
-            </FONT></TD>
-
-            <TD align="center" valign="top"><FONT color="#999999">S<BR>
-            </FONT></TD>
-
-            <TD align="center" valign="top"><FONT color="#999999">Data<BR>
-            </FONT></TD>
-
-            <TD valign="top" width="100%">Direct stack read reference<BR>
-            </TD>
-          </TR>
-
-          <TR>
-            <TD valign="top"><FONT color="#999999">STACK_WRITE (<I>Note 1</I>)<BR>
-            </FONT></TD>
-
-            <TD align="center" valign="top"><FONT color="#999999">S<BR>
-            </FONT></TD>
-
-            <TD align="center" valign="top"><FONT color="#999999">Data<BR>
-            </FONT></TD>
-
-            <TD valign="top" width="100%">Direct stack write reference<BR>
-            </TD>
-          </TR>
-
-          <TR>
             <TD valign="top"><FONT color="#999999">EXTERNAL_REF <I>(Note 2)</I><BR>
             </FONT></TD>
 
@@ -779,8 +751,13 @@ c<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
     <P>NOTES:</P>
 
     <OL>
-      <LI>The use of STACK_READ and STACK_WRITE Ref-Types will likely be replaced with READ and
-      WRITE Ref-Types in a future release of Ghidra.</LI>
+      <LI>When back-references are displayed as XRef's within the Listing display, all Indirect 
+      references types are conveyed as a READ (R) to the referenced location which is assumed 
+      to hold the pointer which is read during an indirect operation.  In general, Indirect 
+      references are rarely applied and are not applied as default reference-type during 
+      disassembly.</LI>
+      
+      <LI>A Stack reference type may be specified as DATA, READ, WRITE or READ_WRITE.</LI>
 
       <LI>The EXTERNAL_REF is a general purpose Ref-Type used for all External references. &nbsp;At
       this time, the type of flow or data access for an external reference is unspecified.</LI>
