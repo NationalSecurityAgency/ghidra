@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 import org.antlr.runtime.RecognitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jdom2.JDOMException;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
@@ -65,7 +64,7 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 	@Test
 	public void testExternal() throws Exception {
 
-		StringBuffer summary = new StringBuffer();
+		StringBuilder summary = new StringBuilder();
 
 		List<ResourceFile> inputs = getSlaspecFiles();
 		Iterator<ResourceFile> ii = inputs.iterator();
@@ -154,19 +153,20 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 			String line = null;
 			try {
 				while ((line = shellOutput.readLine()) != null) {
-					System.out.println(line);
+					// This duplicates the output from the Java compiler. If we decide we care about
+					// the output, then we should write it to a buffer or file and then dump the
+					// results upon failure.
+					// Msg.debug(SleighCompile.class, line);
 				}
 			}
 			catch (Exception e) {
-				// DO NOT USE LOGGING HERE (class loader)
-				System.err.println("Unexpected Exception: " + e.getMessage());
-				e.printStackTrace(System.err);
+				failWithException("Failed running native Sleigh compiler", e);
 			}
 		}
 	}
 
 	private int runActualCompiler(File inputFile, File actualFile)
-			throws JDOMException, IOException, RecognitionException {
+			throws IOException, RecognitionException {
 		return SleighCompileLauncher.runMain(new String[] { "-DBaseDir=../../../../../../",
 			"-DMIPS=ghidra/Ghidra/Processors/MIPS", "-D8051=ghidra/Ghidra/Processors/8051", "-y",
 			inputFile.getAbsolutePath(), actualFile.getAbsolutePath() });

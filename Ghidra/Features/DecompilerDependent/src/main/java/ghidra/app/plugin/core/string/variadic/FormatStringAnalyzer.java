@@ -165,8 +165,6 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 		DecompilerCallback<Void> callback = initDecompilerCallback(program, stringsByAddress,
 			variadicFunctionNames, namesToParameters, namesToReturn);
 		if (toDecompile.isEmpty()) {
-			Msg.info(this, "No functions detected that make variadic function calls with " +
-				"format strings containing format specifiers");
 			return;
 		}
 		try {

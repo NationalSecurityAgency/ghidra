@@ -94,12 +94,12 @@ public class DynamicStaticSynchronizationPluginTest
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (Transaction tx = program.openTransaction("Add block")) {
+		try (Transaction _ = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
@@ -154,13 +154,13 @@ public class DynamicStaticSynchronizationPluginTest
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (Transaction tx = program.openTransaction("Add block")) {
+		try (Transaction _ = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
 		TraceThread thread;
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject(new ToySchemaBuilder()
 					.noRegisterGroups()
 					.useRegistersPerFrame()
@@ -204,10 +204,12 @@ public class DynamicStaticSynchronizationPluginTest
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		listingProvider.getListingPanel()
-				.setCursorPosition(
-					new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
-					EventTrigger.GUI_ACTION);
+		runSwing(() -> {
+			listingProvider.getListingPanel()
+					.setCursorPosition(
+						new ProgramLocation(tb.trace.getProgramView(), tb.addr(0x00401234)),
+						EventTrigger.GUI_ACTION);
+		});
 		waitForSwing();
 
 		ProgramLocation loc = codePlugin.getCurrentLocation();
@@ -315,9 +317,11 @@ public class DynamicStaticSynchronizationPluginTest
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		listingProvider.getListingPanel()
-				.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))),
-					EventTrigger.GUI_ACTION);
+		runSwing(() -> {
+			listingProvider.getListingPanel()
+					.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))),
+						EventTrigger.GUI_ACTION);
+		});
 		assertTrue(codePlugin.getCurrentSelection().isEmpty());
 
 		performAction(syncPlugin.actionTransferSelectionDynamicToStatic, true);
@@ -348,12 +352,12 @@ public class DynamicStaticSynchronizationPluginTest
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (Transaction tx = program.openTransaction("Add block")) {
+		try (Transaction _ = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject("Target");
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("Memory[exe:.text]", Lifespan.nowOn(0),
@@ -421,7 +425,7 @@ public class DynamicStaticSynchronizationPluginTest
 
 			@Override
 			public DomainObject getDomainObject(Object consumer, boolean okToUpgrade,
-					boolean okToRecover, TaskMonitor monitor)
+					boolean okToRecover, TaskMonitor tm)
 					throws VersionException, IOException, CancelledException {
 				throw new VersionException();
 			}
@@ -443,7 +447,7 @@ public class DynamicStaticSynchronizationPluginTest
 		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
 					.addRegion("Memory[bash:.text]", Lifespan.nowOn(0),
@@ -479,7 +483,7 @@ public class DynamicStaticSynchronizationPluginTest
 		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
-		try (Transaction tx = tb.startTransaction()) {
+		try (Transaction _ = tb.startTransaction()) {
 			tb.createRootObject("Target");
 			tb.trace.getMemoryManager()
 					.addRegion("Memory[bash:.text]", Lifespan.nowOn(0),

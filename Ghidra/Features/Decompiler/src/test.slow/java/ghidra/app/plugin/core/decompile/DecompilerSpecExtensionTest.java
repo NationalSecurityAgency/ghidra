@@ -92,7 +92,7 @@ public class DecompilerSpecExtensionTest extends AbstractDecompilerTest {
 			errMessage = e.getMessage();
 			subError = e.getCause().getMessage();
 		}
-		setErrorsExpected(true);
+		setErrorsExpected(false);
 		assertTrue(errMessage.contains("Invalid compiler specification"));
 		assertTrue(subError.contains("must be terminated by the matching"));
 

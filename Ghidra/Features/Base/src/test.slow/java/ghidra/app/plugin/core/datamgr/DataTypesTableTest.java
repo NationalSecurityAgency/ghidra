@@ -21,8 +21,7 @@ import java.util.*;
 
 import javax.swing.tree.TreePath;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.widgets.table.GTable;
@@ -68,6 +67,11 @@ public class DataTypesTableTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTable();
 
 		removeDistractingPlugins();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		env.dispose();
 	}
 
 	private void removeDistractingPlugins() {

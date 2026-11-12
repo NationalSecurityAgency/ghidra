@@ -42,7 +42,6 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.task.AbstractSwingUpdateManager;
 import ghidra.util.task.SwingUpdateManager;
 import junit.framework.AssertionFailedError;
-import sun.awt.AppContext;
 import utility.function.ExceptionalCallback;
 
 /**
@@ -68,9 +67,11 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	 * @return all windows
 	 */
 	public static Set<Window> getAllWindows() {
+		if (SystemUtilities.isInHeadlessMode()) {
+			return Set.of();
+		}
 		Set<Window> set = new HashSet<>();
-		Frame sharedOwnerFrame = (Frame) AppContext.getAppContext()
-				.get(new StringBuffer("SwingUtilities.sharedOwnerFrame"));
+		Frame sharedOwnerFrame = JOptionPane.getRootFrame();
 		if (sharedOwnerFrame != null) {
 			set.addAll(getAllWindows(sharedOwnerFrame));
 		}

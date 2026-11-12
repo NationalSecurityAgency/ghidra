@@ -206,13 +206,16 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private static void setFieldWidth(CodeBrowserPlugin browser, String name, int width) {
 		FieldFormatModel model =
 			browser.getFormatManager().getModel(FieldFormatModel.INSTRUCTION_OR_DATA);
-		int cnt = model.getNumRows();
-		for (int r = 0; r < cnt; r++) {
+		int n = model.getNumRows();
+		for (int r = 0; r < n; r++) {
 			FieldFactory[] factories = model.getFactorys(r);
 			for (FieldFactory f : factories) {
 				if (name.equals(f.getFieldName())) {
-					f.setWidth(width);
-					model.modelChanged();
+
+					runSwing(() -> {
+						f.setWidth(width);
+						model.modelChanged();
+					});
 					return;
 				}
 			}

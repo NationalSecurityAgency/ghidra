@@ -328,7 +328,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (is == null) {
 			throw new IOException("Could not find resource: " + name);
 		}
-		Msg.debug(AbstractGenericTest.class, "Loading classpath resource: " + name);
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		List<String> text = readText(br);
 		br.close();
@@ -350,7 +349,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	public static List<String> loadTextResource(String name) throws IOException {
 		File file = getTestDataFile(name);
-		Msg.debug(AbstractGenericTest.class, "Loading text file: " + file);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		List<String> text = readText(reader);
 		reader.close();
@@ -370,7 +368,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static File getTestDataFile(String path) throws FileNotFoundException {
 		ResourceFile resourceFile = Application.getModuleDataFile("TestResources", path);
-		Msg.debug(AbstractGenericTest.class, "Loading test data file: " + resourceFile);
 		return resourceFile.getFile(false);
 	}
 

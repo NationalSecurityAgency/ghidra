@@ -1178,7 +1178,9 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 		if (service == null) {
 			Assert.fail("Couldn't get listing for tool: " + subTool.getName());
 		}
-		service.getListingPanel().setSelection(new ProgramSelection(sourceSelection));
+		runSwing(() -> {
+			service.getListingPanel().setSelection(new ProgramSelection(sourceSelection));
+		});
 	}
 
 	private Address sourceAddress(String addressString) {
