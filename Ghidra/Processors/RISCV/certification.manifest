@@ -38,6 +38,7 @@ data/languages/riscv.rvc.sinc||GHIDRA||||END|
 data/languages/riscv.rvv.sinc||GHIDRA||||END|
 data/languages/riscv.table.sinc||GHIDRA||||END|
 data/languages/riscv.zi.sinc||GHIDRA||||END|
+data/languages/riscv.zicond.sinc||GHIDRA||||END|
 data/languages/riscv32-fp.cspec||GHIDRA||||END|
 data/languages/riscv32.cspec||GHIDRA||||END|
 data/languages/riscv32.dwarf||GHIDRA||||END|
