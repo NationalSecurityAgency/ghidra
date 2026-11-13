@@ -190,6 +190,9 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 		if (parent == null) {
 			return;
 		}
+		if (!confirmFunctionRename(symbolName, parent)) {
+			return;
+		}
 
 		boolean isCurrentlyEntryPoint = false;
 		boolean isCurrentlyPinned = false;
@@ -228,6 +231,27 @@ public class AddEditDialog extends ReusableDialogComponentProvider {
 
 		program = null;
 		close();
+	}
+
+	private boolean confirmFunctionRename(String name, Namespace namespace) {
+		if (symbol == null || symbol.getSymbolType() != SymbolType.FUNCTION) {
+			return true;
+		}
+		if (name.equals(symbol.getName()) && namespace.equals(symbol.getParentNamespace())) {
+			return true;
+		}
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		for (Symbol other : symbolTable.getSymbols(name, namespace)) {
+			if (other.getSymbolType() == SymbolType.FUNCTION && !other.equals(symbol)) {
+				String message = "A function named \"%s\" already exists in namespace \"%s\".\n" +
+					"Use this name anyway?";
+				int choice = OptionDialog.showYesNoDialogWithNoAsDefaultButton(getComponent(),
+					"Duplicate Function Name", message.formatted(name, namespace.getName(true)));
+				return choice == OptionDialog.YES_OPTION;
+			}
+		}
+		return true;
 	}
 
 	private void checkForRemoveLabel() {
