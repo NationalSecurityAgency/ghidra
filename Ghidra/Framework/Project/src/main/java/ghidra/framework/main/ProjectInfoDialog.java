@@ -373,7 +373,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			return;
 		}
 
-		if (!checkToolsClose()) {
+		FrontEndTool tool = plugin.getFrontEndTool();
+		if (!checkProjectClose()) {
 			return;
 		}
 		RepositoryAdapter currentRepository = project.getRepository();
@@ -412,15 +413,11 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 	}
 
-	private boolean checkToolsClose() {
-		PluginTool[] runningTools = project.getToolManager().getRunningTools();
-		for (PluginTool runningTool : runningTools) {
-			if (!PluginToolAccessUtils.canClose(runningTool)) {
-				return false;
-			}
-			runningTool.close();
-		}
-		return true;
+	private boolean checkProjectClose() {
+		FrontEndTool frontEndTool = plugin.getFrontEndTool();
+		Project activeProject = plugin.getActiveProject();
+		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
+		return PluginToolAccessUtils.canClose(frontEndTool, List.of(runningTools));
 	}
 
 	private void convertToIndexedFilesystem() {
@@ -434,7 +431,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			return;
 		}
 
-		if (!checkToolsClose()) {
+		if (!checkProjectClose()) {
 			return;
 		}
 
@@ -478,7 +475,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			return;
 		}
 
-		if (!checkToolsClose()) {
+		if (!checkProjectClose()) {
 			return;
 		}
 		ProjectChooseRepositoryWizardModel model =

@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.cparser;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -32,8 +31,7 @@ import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.BuiltInDataTypeManager;
@@ -59,7 +57,7 @@ public class CParserPlugin extends ProgramPlugin {
 	final static String USER_PROFILES_DIR =
 		Application.getUserSettingsDirectory().getAbsolutePath() + File.separatorChar +
 			"parserprofiles";
-	
+
 	private ParseDialog parseDialog;
 	private File userProfileDir;
 
@@ -113,11 +111,19 @@ public class CParserPlugin extends ProgramPlugin {
 	}
 
 	@Override
-	protected boolean canClose() {
+	protected boolean hasUnsaveData() {
 		if (parseDialog != null) {
-			parseDialog.closeProfile();
+			parseDialog.hasChanges();
 		}
-		return true;
+		return false;
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
+		if (parseDialog != null) {
+			return List.of(new CParserSaveable());
+		}
+		return List.of();
 	}
 
 	private void createActions() {
@@ -149,19 +155,18 @@ public class CParserPlugin extends ProgramPlugin {
 	 * Parse into a saved data type data base file
 	 */
 	protected void parse(String[] filenames, String includePaths[], String options,
-		String languageIDString, String compilerSpecID, String dataFilename) {
-		
+			String languageIDString, String compilerSpecID, String dataFilename) {
+
 		CParserTask parseTask = new CParserTask(this, dataFilename)
 				.setFileNames(filenames)
 				.setIncludePaths(includePaths)
 				.setOptions(options)
 				.setLanguageID(languageIDString)
 				.setCompilerID(compilerSpecID);
-		
+
 		this.getTool().execute(parseTask, 500);
 	}
 
-	
 	/*
 	 * Parse C-source into a data type manager
 	 */
@@ -171,19 +176,20 @@ public class CParserPlugin extends ProgramPlugin {
 			ghidra.app.util.cparser.CPP.ParseException {
 
 		results = null;
-		
+
 		String[] args = parseOptions(options);
 
 		DataTypeManager openDTmanagers[] = null;
 		try {
 			openDTmanagers = getOpenDTMgrs();
-		} catch (CancelledException exc) {
+		}
+		catch (CancelledException exc) {
 			return null; // parse canceled
 		}
 
 		results = CParserUtils.parseHeaderFiles(openDTmanagers, filenames, includePaths,
 			args, dtMgr, monitor);
-		
+
 		return results;
 	}
 
@@ -210,12 +216,12 @@ public class CParserPlugin extends ProgramPlugin {
 	 */
 	private DataTypeManager[] getOpenDTMgrs() throws CancelledException {
 		DataTypeManager[] openDTmanagers = null;
-		
+
 		DataTypeManagerService dtService = tool.getService(DataTypeManagerService.class);
 		if (dtService == null) {
 			return openDTmanagers;
 		}
-		
+
 		openDTmanagers = dtService.getDataTypeManagers();
 
 		ArrayList<DataTypeManager> list = new ArrayList<>();
@@ -233,28 +239,28 @@ public class CParserPlugin extends ProgramPlugin {
 		openDTmanagers = list.toArray(new DataTypeManager[0]);
 
 		if (openDTmanagers.length > 1) {
-		    int result = OptionDialog.showOptionDialog(
-			this.parseDialog.getComponent(), "Use Open Archives?",
-			"<html>The following archives are currently open: " + "<ul>" + htmlNamesList +
-				"</ul>" + "<p><b>The new archive will become dependent on these archives<br>" +
-				"for any datatypes already defined in them </b>(only unique <br>" +
-				"data types will be added to the new archive).",
-			"Use Open Archives", "Don't Use Open Archives", OptionDialog.QUESTION_MESSAGE);
-		    if (result == OptionDialog.CANCEL_OPTION) {
-		    	throw new CancelledException("User Cancelled");
-		    }
-		    if (result == OptionDialog.OPTION_TWO) {
-		    	return null;
-		    }
+			int result = OptionDialog.showOptionDialog(
+				this.parseDialog.getComponent(), "Use Open Archives?",
+				"<html>The following archives are currently open: " + "<ul>" + htmlNamesList +
+					"</ul>" + "<p><b>The new archive will become dependent on these archives<br>" +
+					"for any datatypes already defined in them </b>(only unique <br>" +
+					"data types will be added to the new archive).",
+				"Use Open Archives", "Don't Use Open Archives", OptionDialog.QUESTION_MESSAGE);
+			if (result == OptionDialog.CANCEL_OPTION) {
+				throw new CancelledException("User Cancelled");
+			}
+			if (result == OptionDialog.OPTION_TWO) {
+				return null;
+			}
 		}
 
 		return openDTmanagers;
 	}
-	
+
 	public CParseResults getParseResults() {
 		return results;
 	}
-	
+
 	public String getParseMessage() {
 		return (results != null ? results.cParseMessages() : "");
 	}
@@ -268,9 +274,10 @@ public class CParserPlugin extends ProgramPlugin {
 		}
 
 		String msg = (results == null ? null : results.cParseMessages());
-		
+
 		if (msg != null && msg.length() != 0) {
-			message += "<b>CParser Messages:</b><br>\n" + HTMLUtilities.toHTML(msg) + "<br>\n<br>\n";
+			message +=
+				"<b>CParser Messages:</b><br>\n" + HTMLUtilities.toHTML(msg) + "<br>\n<br>\n";
 		}
 
 		msg = (results == null ? null : results.cppParseMessages());
@@ -295,13 +302,15 @@ public class CParserPlugin extends ProgramPlugin {
 		/*
 		 * always use the processor/compiler for the program when parsing to program
 		 */
-		LanguageCompilerSpecPair languageCompilerSpecPair = currentProgram.getLanguageCompilerSpecPair();
+		LanguageCompilerSpecPair languageCompilerSpecPair =
+			currentProgram.getLanguageCompilerSpecPair();
 		String procID = languageCompilerSpecPair.languageID.getIdAsString();
 		String compilerID = languageCompilerSpecPair.compilerSpecID.getIdAsString();
-		
+
 		int result = OptionDialog.showOptionDialog(parseDialog.getComponent(), "Confirm",
 			"Parse C source to \"" + currentProgram.getDomainFile().getName() + "\"?" + "\n\n" +
-		    "Using program architecture: " + procID + " / " + compilerID, "Continue");
+				"Using program architecture: " + procID + " / " + compilerID,
+			"Continue");
 
 		if (result == OptionDialog.CANCEL_OPTION) {
 			return;
@@ -355,5 +364,23 @@ public class CParserPlugin extends ProgramPlugin {
 		}
 
 		return list.toArray(new String[list.size()]);
+	}
+
+	private class CParserSaveable extends PluginSaveable {
+
+		@Override
+		public String getType() {
+			return "C Parser";
+		}
+
+		@Override
+		public String getDescription() {
+			return "C Parser Profile";
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			return parseDialog.saveChanges();
+		}
 	}
 }

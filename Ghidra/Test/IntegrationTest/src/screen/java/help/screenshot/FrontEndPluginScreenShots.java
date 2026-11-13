@@ -42,8 +42,8 @@ import ghidra.framework.main.*;
 import ghidra.framework.main.wizard.project.*;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.project.extensions.ExtensionTablePanel;
 import ghidra.framework.project.extensions.ExtensionTableDialog;
+import ghidra.framework.project.extensions.ExtensionTablePanel;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramContentHandler;
@@ -469,28 +469,6 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 			textField = (JTextField) getInstanceField("projectNameField", restoreDialog);
 			textField.setText("Demo");
 			tool.showDialog(restoreDialog);
-		}, false);
-
-		captureDialog();
-	}
-
-	@Test
-	public void testSaveFiles() throws InvalidNameException, CancelledException, IOException {
-		program = env.getProgram("WinHelloCPP.exe");
-
-		Project project = env.getProject();
-		ProjectData projectData = project.getProjectData();
-		projectData.getRootFolder().createFile("WinHelloCpp.exe", program, TaskMonitor.DUMMY);
-
-		int tx = program.startTransaction("Test");
-		program.setName("Bob");
-		program.setName("WinHelloCPP.exe");
-		program.endTransaction(tx, true);
-
-		runSwing(() -> {
-			SaveDataDialog dialog = new SaveDataDialog(tool);
-
-			dialog.showDialog(Arrays.asList(new DomainFile[] { program.getDomainFile() }));
 		}, false);
 
 		captureDialog();

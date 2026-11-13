@@ -95,8 +95,8 @@ import ghidra.util.task.*;
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 
-	private static final AutoConfigState.ClassHandler<
-		DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER = AutoConfigState
+	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
+		AutoConfigState
 				.wireHandler(DebuggerTraceManagerServicePlugin.class, MethodHandles.lookup());
 
 	private static final String KEY_TRACE_COUNT = "NUM_TRACES";
@@ -176,6 +176,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		@Override
 		public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
+			// stub
 		}
 
 		@Override
@@ -188,10 +189,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		@Override
 		public void undoStackChanged(DomainObjectAdapterDB domainObj) {
+			// stub
 		}
 
 		@Override
 		public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
+			// stub
 		}
 
 		public synchronized CompletableFuture<Void> waitTxEnd() {
@@ -1137,7 +1140,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	/**
-	 * Gets the most recent coordinates among those traces still open
+	 * {@return the most recent coordinates among those traces still open}
 	 */
 	protected DebuggerCoordinates getMostRecentCoordinates() {
 		synchronized (listenersByTrace) {
@@ -1305,16 +1308,34 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public boolean canClose() {
+	protected boolean hasUnsaveData() {
+
 		if (isSaveTracesByDefault()) {
 			for (Trace trace : tracesView) {
 				ProjectLocator loc = trace.getDomainFile().getProjectLocator();
 				if (loc == null || loc.isTransient()) {
-					saveTrace(trace);
+					return true;
 				}
 			}
 		}
-		return true;
+
+		return false;
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
+
+		List<PluginSaveable> results = new ArrayList<>();
+		if (isSaveTracesByDefault()) {
+			for (Trace trace : tracesView) {
+				ProjectLocator loc = trace.getDomainFile().getProjectLocator();
+				if (loc == null || loc.isTransient()) {
+					results.add(new TraceSaveable(trace));
+				}
+			}
+		}
+
+		return results;
 	}
 
 	@Override
@@ -1380,4 +1401,58 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		activate(DebuggerCoordinates.readDataState(tool, saveState, KEY_CURRENT_COORDS),
 			ActivationCause.RESTORE_STATE);
 	}
+
+	private class TraceSaveable extends PluginSaveable {
+
+		private Trace trace;
+
+		TraceSaveable(Trace trace) {
+			this.trace = trace;
+		}
+
+		@Override
+		public DomainObject getDomainObject() {
+			return trace;
+		}
+
+		@Override
+		public String getType() {
+			return "Trace";
+		}
+
+		@Override
+		public String getDescription() {
+			return trace.getName();
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			saveTrace(trace, false, false);
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + Objects.hash(trace);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			TraceSaveable other = (TraceSaveable) obj;
+			return Objects.equals(trace, other.trace);
+		}
+	}
+
 }

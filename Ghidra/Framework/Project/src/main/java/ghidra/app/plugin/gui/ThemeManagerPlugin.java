@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.gui;
+
+import java.util.List;
 
 import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeEditorDialog;
@@ -26,6 +28,8 @@ import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 //@formatter:off
 @PluginInfo(
@@ -119,10 +123,34 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 	}
 
 	@Override
-	protected boolean canClose() {
+	protected boolean hasUnsaveData() {
+		return themeManager.hasThemeChanges();
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
 		if (themeManager.hasThemeChanges()) {
-			return ThemeUtils.askToSaveThemeChanges(themeManager);
+			return List.of(new ThemeSaveable());
 		}
-		return true;
+		return List.of();
+	}
+
+	private class ThemeSaveable extends PluginSaveable {
+
+		@Override
+		public String getType() {
+			return "Theme";
+		}
+
+		@Override
+		public String getDescription() {
+			return "Theme";
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			return ThemeUtils.saveThemeChanges(themeManager);
+		}
+
 	}
 }

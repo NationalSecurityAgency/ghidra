@@ -106,7 +106,7 @@ public class SleighLanguage implements Language {
 	SleighLanguage(SleighLanguageDescription description) throws SleighException {
 		this(description, TaskMonitor.DUMMY);
 	}
-	
+
 	SleighLanguage(SleighLanguageDescription description, TaskMonitor monitor)
 			throws SleighException {
 		this.description = description;
@@ -141,7 +141,7 @@ public class SleighLanguage implements Language {
 		// Should addressFactory and registers initialization be done at construction time?
 		// For now we'll assume yes.
 		contextcache = new ContextCache();
-		
+
 		SleighLanguageFile langFile = description.getLanguageFile();
 		if (!langFile.getSlaSpecFile().exists()) {
 			throw new SleighFileException("Missing slaspec: " + langFile.getSlaSpecFile());
@@ -175,7 +175,7 @@ public class SleighLanguage implements Language {
 					"Error locking Sleigh language file %s".formatted(langFile.getSlaFile()), e);
 			}
 		}
-		
+
 		// Read in the sleigh specification
 		try (PackedDecode decoder = SlaFormat.buildDecoder(langFile.getSlaFile())) {
 			decode(decoder);
@@ -201,7 +201,7 @@ public class SleighLanguage implements Language {
 		}
 
 		long initElapsed = System.currentTimeMillis() - startTS;
-		Msg.debug(this, "Took %dms (%dms inside lock) to initialize language %s"
+		Msg.debug(this, "Initialize Language %dms (%dms in lock): %s"
 				.formatted(initElapsed, lockElapsed.get(), langFile));
 	}
 
@@ -840,7 +840,7 @@ public class SleighLanguage implements Language {
 			throw new SleighException(
 				"Error reading remaining spec - language probably did not compile properly", e);
 		}
-		
+
 	}
 
 	private void decode(Decoder decoder) throws DecoderException {

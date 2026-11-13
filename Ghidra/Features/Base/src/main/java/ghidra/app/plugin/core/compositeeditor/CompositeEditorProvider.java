@@ -27,8 +27,10 @@ import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.EmptyCompositeException;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.program.database.data.TransientDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -59,6 +61,17 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 
 	protected DataTypeManagerService dtmService;
 	protected CompositeEditorActionManager actionMgr;
+
+	private enum SaveResult {
+		CANCELLED,
+		SAVED,
+		NOT_SAVED,
+		ERRORS;
+
+		boolean isSuccessful() {
+			return this == SAVED || this == NOT_SAVED;
+		}
+	}
 
 	/**
 	 * Construct a new stack editor provider.
@@ -176,7 +189,14 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		if (editorModel != null && editorModel.editingField) {
 			editorModel.endFieldEditing();
 		}
-		if (force || saveChanges(true) != 0) {
+
+		if (force) {
+			super.closeComponent();
+			dispose();
+		}
+
+		SaveResult result = saveChanges(true);
+		if (result.isSuccessful()) {
 			super.closeComponent();
 			dispose();
 		}
@@ -213,7 +233,7 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 			}
 			return new ProgramActionContext(this, program);
 		}
-		else if (componentAt != null && (originalDTM instanceof StandAloneDataTypeManager)) {
+		else if (componentAt != null && (originalDTM instanceof TransientDataTypeManager)) {
 			return new ComponentStandAloneActionContext(this, componentAt);
 		}
 		return new DefaultActionContext(this, null);
@@ -245,7 +265,13 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 
 	@Override
 	public boolean checkForSave(boolean allowCancel) {
-		return saveChanges(allowCancel) != 0;
+		SaveResult result = saveChanges(allowCancel);
+		if (!result.isSuccessful()) {
+			if (allowCancel) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -257,6 +283,12 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		actionMgr.dispose();
 		editorPanel.dispose();
 		editorModel.dispose();
+	}
+
+	@Override
+	public DomainObject getDomainObject() {
+		DataTypeManager dtm = editorModel.getOriginalDataTypeManager();
+		return dtm.getDataStore();
 	}
 
 	@Override
@@ -292,7 +324,7 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		return new CompositeEditorTableAction[0];
 	}
 
-	protected boolean applyChanges() {
+	private boolean applyChanges() {
 		try {
 			return editorModel.apply();
 		}
@@ -309,32 +341,58 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
 	 * @param allowCancel true if allowed to cancel
-	 * @return 0 if the user canceled; 1 if the user saved changes;
-	 * 2 if the user did not to save changes; 3 if there was an error when
-	 * the changes were applied.
+	 * @return 
+	 * 	CANCELLED if the user canceled; <BR>
+	 *  SAVED if the user saved changes; <BR>
+	 *  NOT_SAVED if no changes were saved;  <BR>
+	 *  ERRORS if there was an error when the changes were applied.
 	 */
-	protected int saveChanges(boolean allowCancel) {
-		// Check for changes and prompt user to check if saving them.
-		if (editorModel.isValidName() && editorModel.hasChanges()) {
-			String question = "The " + editorModel.getTypeName() + " Editor is closing.\n" +
-				"Save the changes to " + getDisplayName() + "?";
-			String title = "Save " + editorModel.getTypeName() + " Editor Changes?";
-			int response;
-			if (allowCancel) {
-				response = OptionDialog.showYesNoCancelDialog(editorPanel, title, question);
-			}
-			else {
-				response = OptionDialog.showYesNoDialog(editorPanel, title, question);
-			}
-			if (response == 1) {
-				// YES selected.
-				if (!applyChanges()) {
-					return 3;
-				}
-			}
-			return response;
+	private SaveResult saveChanges(boolean allowCancel) {
+
+		if (!editorModel.hasChanges()) {
+			return SaveResult.NOT_SAVED;
 		}
-		return 2;
+
+		if (!editorModel.isValidName()) {
+			return SaveResult.NOT_SAVED; // cannot save an invalid name
+		}
+
+		String question = "The " + editorModel.getTypeName() + " Editor is closing.\n" +
+			"Save the changes to " + getDisplayName() + "?";
+		String title = "Save " + editorModel.getTypeName() + " Editor Changes?";
+		int choice;
+		if (allowCancel) {
+			choice = OptionDialog.showYesNoCancelDialog(editorPanel, title, question);
+		}
+		else {
+			choice = OptionDialog.showYesNoDialog(editorPanel, title, question);
+		}
+
+		if (choice == OptionDialog.CANCEL_OPTION) {
+			return SaveResult.CANCELLED;
+		}
+
+		if (choice == OptionDialog.NO_OPTION) {
+			return SaveResult.NOT_SAVED;
+		}
+
+		if (applyChanges()) {
+			return SaveResult.SAVED;
+		}
+		return SaveResult.ERRORS;
+	}
+
+	@Override
+	public boolean save() {
+		if (!editorModel.hasChanges()) {
+			return true;
+		}
+
+		if (!editorModel.isValidName()) {
+			return false; // cannot save an invalid name
+		}
+
+		return applyChanges();
 	}
 
 	protected String getDisplayName() {

@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.datamgr.editor;
 
 import java.util.*;
 
+import javax.swing.Icon;
+
 import docking.ComponentProvider;
 import docking.actions.DockingToolActions;
 import docking.actions.SharedDockingActionPlaceholder;
@@ -24,6 +26,8 @@ import ghidra.app.plugin.core.compositeeditor.*;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.actions.AbstractFindReferencesToFieldAction;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginSaveable;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -31,6 +35,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.*;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Manages program and archive data type editors.
@@ -298,6 +303,33 @@ public class DataTypeEditorManager implements EditorListener {
 	}
 
 	/**
+	 * {@return true if there are any unsaved data type editors}
+	 */
+	public boolean hasUnsavedEditors() {
+		for (EditorProvider editor : editorList) {
+			if (editor.needsSave()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * {@return all unsaved editor saveables}
+	 */
+	public List<PluginSaveable> getUnsavedEditorSaveables() {
+		List<PluginSaveable> results = new ArrayList<>();
+
+		for (EditorProvider editor : editorList) {
+			if (editor.needsSave()) {
+				results.add(new EditorProviderSaveable(editor));
+			}
+		}
+
+		return results;
+	}
+
+	/**
 	 * Check for data types being edited for the given data type manager and prompt the user to
 	 * save any unsaved changes.
 	 * If dtMgr is null then all editors will be checked.
@@ -532,6 +564,48 @@ public class DataTypeEditorManager implements EditorListener {
 //==================================================================================================
 
 	/**
+	 * An object that allows the tool to save editors generically.
+	 */
+	private class EditorProviderSaveable extends PluginSaveable {
+
+		private EditorProvider editor;
+
+		EditorProviderSaveable(EditorProvider editor) {
+			this.editor = editor;
+		}
+
+		@Override
+		public String getDescription() {
+			return editor.getDtPath().getDataTypeName();
+		}
+
+		@Override
+		public String getToolTipText() {
+			return editor.getDataTypeManager().getName() + ": " + editor.getDtPath();
+		}
+
+		@Override
+		public String getType() {
+			return "Data Type Editor";
+		}
+
+		@Override
+		public Icon getIcon() {
+			return editor.getIcon();
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			return editor.save();
+		}
+
+		@Override
+		public DomainObject getDependent() {
+			return editor.getDomainObject();
+		}
+	}
+
+	/**
 	 * <code>DTMEditFunctionSignatureDialog</code> provides the ability to edit the
 	 * function signature associated with a specific {@link FunctionDefinition}.
 	 * Use of this editor requires the presence of the tool-based datatype manager service.
@@ -719,4 +793,5 @@ public class DataTypeEditorManager implements EditorListener {
 			return name;
 		}
 	}
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@ package help.screenshot;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -36,6 +35,7 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
@@ -43,8 +43,11 @@ import ghidra.framework.LoggingInitialization;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.main.PickToolDialog;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginSaveable;
+import ghidra.framework.plugintool.SavePluginDataDialog;
 import ghidra.framework.plugintool.dialog.PluginInstallerDialog;
 import ghidra.test.TestEnv;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskDialog;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -56,6 +59,20 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		tool = env.showFrontEndTool();
+	}
+
+	@Test
+	public void testSaveAllDialog() {
+
+		Set<PluginSaveable> saveables = Set.of(
+			new ScreenshotSaveable("Program One", "icon.plugin.codebrowser.provider"),
+			new ScreenshotSaveable("Program Two", "icon.plugin.codebrowser.provider"),
+			new ScreenshotSaveable("Structure One", "icon.plugin.datatypes.structure"));
+
+		SavePluginDataDialog dialog = new SavePluginDataDialog(saveables);
+		showDialogWithoutBlocking(tool, dialog);
+
+		captureDialog();
 	}
 
 	@Test
@@ -324,6 +341,36 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 			sleep(5000);
 			return true;
 		}
+	}
 
+	private class ScreenshotSaveable extends PluginSaveable {
+
+		private String name;
+		private Icon icon;
+
+		ScreenshotSaveable(String name, String icon) {
+			this.name = name;
+			this.icon = new GIcon(icon);
+		}
+
+		@Override
+		public String getType() {
+			return "Screenshot";
+		}
+
+		@Override
+		public String getDescription() {
+			return name;
+		}
+
+		@Override
+		public Icon getIcon() {
+			return icon;
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			throw new UnsupportedOperationException();
+		}
 	}
 }

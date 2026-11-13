@@ -29,7 +29,6 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.services.Recover;
 import ghidra.app.services.Upgrade;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.SaveDataDialog;
 import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.UndoActionDialog;
 import ghidra.framework.main.projectdata.actions.VersionControlAction;
@@ -43,21 +42,20 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Action to undo checkouts for domain files in the repository.
  */
-public class ArchiveUndoCheckoutTask extends VersionControlAction {
+public class ArchiveUndoCheckoutAction extends VersionControlAction {
 
 	private static final Icon ICON =
 		new GIcon("icon.base.util.datatree.version.control.archive.dt.checkout.undo");
 
-	private DataTypeManagerPlugin dtmPlugin;
+	private DataTypeManagerPlugin plugin;
 
 	/**
 	 * Creates an action to undo checkouts for domain files in the repository.
 	 * @param plugin the plug-in that owns this action.
-	 * @param provider provides a list of domain files to be affected by this action.
 	 */
-	public ArchiveUndoCheckoutTask(DataTypeManagerPlugin plugin) {
+	public ArchiveUndoCheckoutAction(DataTypeManagerPlugin plugin) {
 		super("UndoCheckOut", plugin.getName(), plugin.getTool());
-		this.dtmPlugin = plugin;
+		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(new String[] { "Undo Checkout" }, ICON, GROUP));
 		setDescription("Undo checkout");
@@ -90,9 +88,9 @@ public class ArchiveUndoCheckoutTask extends VersionControlAction {
 	/**
 	 * Gets the domain files from the provider and then undoes the checkout on any that are 
 	 * checked out.
-	 * @param context 
+	 * @param context the context
 	 */
-	protected void undoCheckOut(DataTypesActionContext context) {
+	private void undoCheckOut(DataTypesActionContext context) {
 		if (!checkRepositoryConnected()) {
 			return;
 		}
@@ -124,7 +122,7 @@ public class ArchiveUndoCheckoutTask extends VersionControlAction {
 	}
 
 	private void closeEditorsForUndoCheckOut(List<ProjectDataTypeArchive> archives) {
-		DataTypeEditorManager editorManager = dtmPlugin.getEditorManager();
+		DataTypeEditorManager editorManager = plugin.getEditorManager();
 		for (ProjectDataTypeArchive archive : archives) {
 			if (!editorManager.checkEditors(archive.getDataTypeManager(), true)) {
 				continue;
@@ -209,21 +207,6 @@ public class ArchiveUndoCheckoutTask extends VersionControlAction {
 	}
 
 	/**
-	 * Saves all checked out changes.
-	 * @param changedList the list of changes
-	 * @throws CancelledException if cancelled
-	 */
-	protected void saveCheckOutChanges(List<DomainFile> changedList) throws CancelledException {
-		if (changedList.size() > 0) {
-			SaveDataDialog dialog = new SaveDataDialog(tool);
-			boolean cancelled = !dialog.showDialog(changedList);
-			if (cancelled) {
-				throw new CancelledException();
-			}
-		}
-	}
-
-	/**
 	 * Task for undoing check out of files that are in version control.
 	 */
 	private class DataTypeArchiveUndoCheckOutTask extends Task {
@@ -249,13 +232,13 @@ public class ArchiveUndoCheckoutTask extends VersionControlAction {
 
 		@Override
 		public void run(TaskMonitor monitor) {
-			DataTypeArchiveGTree gTree = dtmPlugin.getProvider().getGTree();
+			DataTypeArchiveGTree gTree = plugin.getProvider().getGTree();
 			GTreeState treeState = gTree.getTreeState();
 			try {
-				ArchiveManager archiveManager = dtmPlugin.getArchiveManager();
+				ArchiveManager archiveManager = plugin.getArchiveManager();
 				for (ProjectDataTypeArchive archive : unmodifiedCheckOutsList) {
 					DomainFile df = archive.getDomainFile();
-					if (df.isCheckedOut() && (dtmPlugin != null)) {
+					if (df.isCheckedOut() && (plugin != null)) {
 						archiveManager.closeArchive(archive);
 						df.undoCheckout(false);
 						archiveManager.openProjectArchiveInTask(df, DomainFile.DEFAULT_VERSION,

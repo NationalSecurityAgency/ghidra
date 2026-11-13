@@ -259,8 +259,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			new VersionControlCheckInAction(plugin, archiveGTree);
 		checkInAction.setEnabled(false);
 
-		ArchiveUndoCheckoutTask undoCheckOutAction =
-			new ArchiveUndoCheckoutTask(plugin);
+		ArchiveUndoCheckoutAction undoCheckOutAction =
+			new ArchiveUndoCheckoutAction(plugin);
 		undoCheckOutAction.setEnabled(false);
 
 		VersionControlShowHistoryAction showHistoryAction =

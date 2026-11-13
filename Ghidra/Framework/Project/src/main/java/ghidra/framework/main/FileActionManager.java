@@ -26,7 +26,6 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
-import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.wizard.WizardDialog;
 import ghidra.framework.client.RepositoryAdapter;
@@ -209,25 +208,6 @@ class FileActionManager {
 		fileChooser.dispose();
 	}
 
-	private class OpenTaskRunnable implements Runnable {
-
-		private final ProjectLocator newProjectLocator;
-		private boolean result = false;
-
-		OpenTaskRunnable(ProjectLocator newProjectLocator) {
-			this.newProjectLocator = newProjectLocator;
-		}
-
-		@Override
-		public void run() {
-			result = doOpenProject(newProjectLocator);
-		}
-
-		boolean getResult() {
-			return result;
-		}
-	}
-
 	/**
 	 * Opens the given project in a task that will show a dialog to block input while opening
 	 * the project in the swing thread.
@@ -273,7 +253,7 @@ class FileActionManager {
 				"\n \nEach user must create their own project. If needed, another user's project may be viewed\n" +
 				"and files copied, using the View Other action from your own open project.  Alternatively, \n" +
 				"creating a \"Shared Project\" will allow a group of users to use a shared server-based repository.");
-			Msg.error(this,  "Cannot open project: " + e.getMessage());
+			Msg.error(this, "Cannot open project: " + e.getMessage());
 		}
 		catch (LockException e) {
 			Msg.showInfo(this, null, "Open Project Failed", e.getMessage());
@@ -291,78 +271,9 @@ class FileActionManager {
 	}
 
 	/**
-	 * Obtain domain objects from files and lock.  If unable to lock 
-	 * one or more of the files, none are locked and null is returned.
-	 * @param files the files
-	 * @return locked domain objects, or null if unable to lock
-	 * all domain objects.
-	 */
-	private DomainObject[] lockDomainObjects(List<DomainFile> files) {
-		DomainObject[] domainObjects = new DomainObject[files.size()];
-		int lastIndex = 0;
-		boolean locked = true;
-		while (lastIndex < files.size()) {
-			try {
-				domainObjects[lastIndex] =
-					files.get(lastIndex).getDomainObject(this, false, false, null);
-			}
-			catch (Throwable t) {
-				Msg.error(this, "Failed to aqcuire domain object instance", t);
-				locked = false;
-				break;
-			}
-			if (!domainObjects[lastIndex].lock("save changes")) {
-				String title = "Exit Ghidra";
-				StringBuffer buf = new StringBuffer();
-				DomainObject d = domainObjects[lastIndex];
-				buf.append("The File " + files.get(lastIndex).getPathname() +
-					" is currently being modified by the\n");
-				buf.append("the following actions:\n \n");
-				TransactionInfo t = d.getCurrentTransactionInfo();
-				List<String> list = t.getOpenSubTransactions();
-				for (String element : list) {
-					buf.append("\n     ");
-					buf.append(element);
-				}
-				buf.append("\n \n");
-				buf.append(
-					"You may exit Ghidra, but the above action(s) will be aborted and all\n");
-				buf.append("changes made by those actions (and all changes made since those\n");
-				buf.append("actions started) will be lost!  You will still have the option of \n");
-				buf.append("saving any changes made before those actions began.\n \n");
-				buf.append("Do you want to abort the action(s) and exit Ghidra?");
-
-				int result = OptionDialog.showOptionDialog(tool.getToolFrame(), title,
-					buf.toString(), "Exit Ghidra", OptionDialog.WARNING_MESSAGE);
-
-				if (result == OptionDialog.CANCEL_OPTION) {
-					locked = false;
-					domainObjects[lastIndex].release(this);
-					break;
-				}
-				d.forceLock(true, null);
-			}
-			++lastIndex;
-		}
-		if (!locked) {
-			//skip the last one that could not be locked...
-			for (int i = 0; i < lastIndex; i++) {
-				domainObjects[i].unlock();
-				domainObjects[i].release(this);
-			}
-			return null;
-		}
-		return domainObjects;
-	}
-
-	/**
-	 * menu listener for File | Close Project...
-	 * <p>
-	 * This method will always save the FrontEndTool and project, but not the data unless 
-	 * {@code confirmClose} is called.
+	 * Called by clients that wish to close the project before performing project-related work.
 	 * 
-	 * @param isExiting true if we are closing the project because 
-	 * Ghidra is exiting
+	 * @param isExiting true if we are closing the project because Ghidra is exiting
 	 * @return false if user cancels the close operation
 	 */
 	boolean closeProject(boolean isExiting) {
@@ -372,16 +283,10 @@ class FileActionManager {
 			return true;
 		}
 
-		// check for any changes since last saved
+		FrontEndTool frontEndTool = plugin.getFrontEndTool();
 		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
-		for (PluginTool runningTool : runningTools) {
-			if (!PluginToolAccessUtils.canClose(runningTool)) {
-				return false;
-			}
-		}
-
-		boolean saveSuccessful = saveChangedData(activeProject);
-		if (!saveSuccessful) {
+		List<PluginTool> subTools = List.of(runningTools);
+		if (!PluginToolAccessUtils.canClose(frontEndTool, subTools)) {
 			return false;
 		}
 
@@ -391,12 +296,12 @@ class FileActionManager {
 
 		doSaveProject(activeProject);
 
-		// close the project
 		String name = activeProject.getName();
 		ProjectLocator projectLocator = activeProject.getProjectLocator();
 		activeProject.close();
 
-		// TODO: This should be done by tool.setActiveProject which should always be invoked
+		// Note: This should be done by tool.setActiveProject which should always be invoked.  If 
+		// so, we can remove this code.
 		fireProjectClosed(activeProject);
 
 		if (!isExiting) {
@@ -404,8 +309,6 @@ class FileActionManager {
 			tool.setActiveProject(null);
 			Msg.info(this, "Closed project: " + name);
 
-			// update the list of project views to include the "active"
-			// project that is no longer active
 			plugin.rebuildRecentMenus();
 			plugin.getProjectManager().setLastOpenedProject(null);
 		}
@@ -436,51 +339,6 @@ class FileActionManager {
 			return;
 		}
 		tool.setSaveableDisplayData(saveState);
-	}
-
-	private boolean saveChangedData(Project activeProject) {
-		List<DomainFile> data = activeProject.getOpenData();
-		if (data.isEmpty()) {
-			return true;
-		}
-
-		DomainObject[] lockedObjects = lockDomainObjects(data);
-		if (lockedObjects == null) {
-			return false;
-		}
-
-		List<DomainFile> changedFiles = getChangedFiles(data);
-
-		try {
-			if (!checkReadOnlyFiles(lockedObjects)) {
-				return false;
-			}
-
-			// pop up dialog to save the data
-			SaveDataDialog saveDialog = new SaveDataDialog(tool);
-			if (!saveDialog.showDialog(changedFiles)) {
-				// user hit the cancel button on the "Save" dialog
-				// so cancel closing the project
-				return false;
-			}
-		}
-		finally {
-			for (DomainObject lockedObject : lockedObjects) {
-				lockedObject.unlock();
-				lockedObject.release(this);
-			}
-		}
-		return true;
-	}
-
-	private List<DomainFile> getChangedFiles(List<DomainFile> data) {
-		List<DomainFile> changedFiles = new ArrayList<>();
-		for (DomainFile domainFile : data) {
-			if (domainFile.isChanged()) {
-				changedFiles.add(domainFile);
-			}
-		}
-		return changedFiles;
 	}
 
 	void setActiveProject(Project activeProject) {
@@ -541,7 +399,7 @@ class FileActionManager {
 
 		// give a special confirm message if user is about to
 		// remove the active project
-		StringBuffer confirmMsg = new StringBuffer("Project: ");
+		StringBuilder confirmMsg = new StringBuilder("Project: ");
 		confirmMsg.append(projectLocator.toString());
 		confirmMsg.append(" ?\n");
 		boolean isActiveProject =
@@ -598,55 +456,9 @@ class FileActionManager {
 		return isOpenView;
 	}
 
-	final void enableActions(boolean enabled) {
-//      renameAction.setEnabled(enabled);
+	void enableActions(boolean enabled) {
 		closeProjectAction.setEnabled(enabled);
 		saveAction.setEnabled(enabled);
-	}
-
-	/**
-	 * Checks the list for read-only files; if any are found, pops up
-	 * a dialog for whether to save now or lose changes.
-	 * @param objs list of files which correspond to modified 
-	 * domain objects.
-	 * @return true if there are no read only files OR if the user
-	 * wants to lose his changes; false if the user wants to save the
-	 * files now, so don't continue.
-	 */
-	private boolean checkReadOnlyFiles(DomainObject[] objs) {
-		ArrayList<DomainObject> list = new ArrayList<>(10);
-		for (DomainObject domainObject : objs) {
-			try {
-				if (domainObject.isChanged() && !domainObject.getDomainFile().canSave()) {
-					list.add(domainObject);
-				}
-			}
-			catch (Exception e) {
-				Msg.showError(this, null, null, null, e);
-			}
-		}
-		if (list.size() == 0) {
-			return true;
-		}
-
-		StringBuffer sb = new StringBuffer();
-		sb.append("The following files are Read-Only and cannot be\n" +
-			" saved 'As Is.' You must do a manual 'Save As' for these\n" + " files: \n \n");
-
-		for (DomainObject obj : list) {
-			sb.append(obj.getDomainFile().getPathname());
-			sb.append("\n");
-		}
-		// note: put the extra space in or else OptionDialog will not show
-		// the new line char
-		sb.append(" \nChoose 'Cancel' to cancel Close Project, or \n");
-		sb.append("'Lose Changes' to continue.");
-
-		if (OptionDialog.showOptionDialog(tool.getToolFrame(), "Read-Only Files", sb.toString(),
-			"Lose Changes", OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
-			return true; // Lose changes, so close the project
-		}
-		return false;
 	}
 
 	/**
@@ -669,17 +481,32 @@ class FileActionManager {
 		}
 	}
 
-	/**
-	 * Action for a recently opened project.
-	 *
-	 */
+	private class OpenTaskRunnable implements Runnable {
+
+		private final ProjectLocator newProjectLocator;
+		private boolean result = false;
+
+		OpenTaskRunnable(ProjectLocator newProjectLocator) {
+			this.newProjectLocator = newProjectLocator;
+		}
+
+		@Override
+		public void run() {
+			result = doOpenProject(newProjectLocator);
+		}
+
+		boolean getResult() {
+			return result;
+		}
+	}
+
 	private class ReopenProjectAction extends DockingAction {
 		private ProjectLocator projectLocator;
 
 		private ReopenProjectAction(ProjectLocator projectLocator, String filename) {
 			super(filename, plugin.getName(), false);
 			this.projectLocator = projectLocator;
-// ACTIONS - auto generated
+
 			setMenuBarData(new MenuData(
 				new String[] { ToolConstants.MENU_FILE, "Reopen", filename }, null, "AProject"));
 
@@ -688,9 +515,6 @@ class FileActionManager {
 			setHelpLocation(new HelpLocation(plugin.getName(), "Reopen_Project"));
 		}
 
-		/* (non Javadoc)
-		 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-		 */
 		@Override
 		public void actionPerformed(ActionContext context) {
 			doOpenProject(projectLocator);

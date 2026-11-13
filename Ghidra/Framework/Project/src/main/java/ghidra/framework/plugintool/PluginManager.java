@@ -37,10 +37,11 @@ import ghidra.util.exception.MultipleCauses;
 class PluginManager {
 	private static final Logger log = LogManager.getLogger(PluginManager.class);
 
-	private PluginsConfiguration pluginsConfiguration;
-	private List<Plugin> pluginList = new ArrayList<>();
 	private PluginTool tool;
 	private ServiceManager serviceMgr;
+
+	private PluginsConfiguration pluginsConfiguration;
+	private List<Plugin> plugins = new ArrayList<>();
 
 	PluginManager(PluginTool tool, ServiceManager serviceMgr,
 			PluginsConfiguration pluginsConfiguration) {
@@ -72,7 +73,7 @@ class PluginManager {
 	}
 
 	boolean acceptData(DomainFile[] data) {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			if (p.acceptData(data)) {
 				tool.getWindowManager().getMainWindow().toFront();
 				return true;
@@ -90,7 +91,7 @@ class PluginManager {
 	 * @return true if URL accepted and processed else false
 	 */
 	boolean accept(URL url) {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			if (p.accept(url)) {
 				tool.getWindowManager().getMainWindow().toFront();
 				return true;
@@ -100,7 +101,7 @@ class PluginManager {
 	}
 
 	void dispose() {
-		for (Iterator<Plugin> it = pluginList.iterator(); it.hasNext();) {
+		for (Iterator<Plugin> it = plugins.iterator(); it.hasNext();) {
 			Plugin plugin = it.next();
 			plugin.cleanup();
 			it.remove();
@@ -109,7 +110,7 @@ class PluginManager {
 
 	DomainFile[] getData() {
 		List<DomainFile> list = new ArrayList<>();
-		for (Plugin plugin : pluginList) {
+		for (Plugin plugin : plugins) {
 			for (DomainFile file : plugin.getData()) {
 				list.add(file);
 			}
@@ -120,7 +121,7 @@ class PluginManager {
 
 	Class<?>[] getSupportedDataTypes() {
 		Set<Class<?>> set = new HashSet<>();
-		for (Plugin plugin : pluginList) {
+		for (Plugin plugin : plugins) {
 			for (Class<?> element : plugin.getSupportedDataTypes()) {
 				set.add(element);
 			}
@@ -173,7 +174,7 @@ class PluginManager {
 	}
 
 	private <T extends Plugin> T getLoadedPlugin(Class<T> pluginClass) {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			if (p.getClass() == pluginClass) {
 				return pluginClass.cast(p);
 			}
@@ -181,7 +182,7 @@ class PluginManager {
 		return null;
 	}
 
-	private void addPlugins(Plugin[] plugs) throws PluginException {
+	private void addPlugins(Plugin[] newPlugins) throws PluginException {
 		serviceMgr.setServiceAddedNotificationsOn(false);
 
 		List<ServiceInterfaceImplementationPair> previousServices = serviceMgr.getAllServices();
@@ -189,12 +190,12 @@ class PluginManager {
 		StringBuilder errMsg = new StringBuilder();
 		MultipleCauses report = new MultipleCauses();
 
-		int numOldPlugins = pluginList.size();
-		for (Plugin newPluginToAdd : plugs) {
-			pluginList.add(newPluginToAdd);
+		int numOldPlugins = plugins.size();
+		for (Plugin newPlugin : newPlugins) {
+			plugins.add(newPlugin);
 
 			// have each plugin publish its services
-			newPluginToAdd.initServices();
+			newPlugin.initServices();
 		}
 
 		// Find any unresolved dependencies in the plugins we are trying to load.
@@ -207,7 +208,7 @@ class PluginManager {
 				Class<?> dependency = pd.dependency();
 				PluginException cause = dependencyProblemResults.get(dependency);
 				String dependencyName = dependency.getName();
-				String dependentName = pd.dependant().getName();
+				String dependentName = pd.dependent().getName();
 				String message = """
 						Unresolved dependency: %s.  Used by plugin: %s
 						""".formatted(dependencyName, dependentName);
@@ -274,16 +275,16 @@ class PluginManager {
 	}
 
 	List<Plugin> getPlugins() {
-		return new ArrayList<>(pluginList);
+		return new ArrayList<>(plugins);
 	}
 
 	/**
 	 * Removes the given plugins from the tool and removes any other plugins that were
 	 * depending on them.
-	 * @param plugins the list of plugins to remove.
+	 * @param toRemove the list of plugins to remove.
 	 */
-	void removePlugins(List<Plugin> plugins) {
-		for (Plugin plugin : plugins) {
+	void removePlugins(List<Plugin> toRemove) {
+		for (Plugin plugin : toRemove) {
 			unregisterPlugin(plugin);
 		}
 		cleanupPluginsWithUnresolvedDependencies();
@@ -291,14 +292,14 @@ class PluginManager {
 
 	void saveToXml(Element root, boolean includeConfigState) {
 
-		pluginsConfiguration.savePluginsToXml(root, pluginList);
+		pluginsConfiguration.savePluginsToXml(root, plugins);
 
 		if (!includeConfigState) {
 			return;
 		}
 
 		SaveState saveState = new SaveState("PLUGIN_STATE");
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			p.writeConfigState(saveState);
 			if (!saveState.isEmpty()) {
 				Element pluginElem = saveState.saveToXml();
@@ -380,8 +381,8 @@ class PluginManager {
 		}
 
 		Map<String, Exception> badMap = new LinkedHashMap<>();
-		List<Plugin> plugins = getPluginsByServiceOrder(0);
-		for (Plugin p : plugins) {
+		List<Plugin> orderedPlugins = getPluginsByServiceOrder(0);
+		for (Plugin p : orderedPlugins) {
 			SaveState saveState = map.get(p.getName());
 			if (saveState != null) {
 				try {
@@ -392,6 +393,7 @@ class PluginManager {
 				}
 			}
 		}
+
 		if (badMap.size() > 0) {
 			log.error("*** Errors in Plugin Data States  ***");
 			log.error("The data states for following plugins could not be restored:");
@@ -405,12 +407,12 @@ class PluginManager {
 			Msg.showError(this, null, "Data State Error",
 				"Errors in plugin data states - check console for details");
 		}
-		plugins.forEach(Plugin::dataStateRestoreCompleted);
+		orderedPlugins.forEach(Plugin::dataStateRestoreCompleted);
 	}
 
 	Element saveDataStateToXml(boolean savingProject) {
 		Element root = new Element("DATA_STATE");
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			SaveState ss = new SaveState("PLUGIN");
 			p.writeDataState(ss);
 			if (!ss.isEmpty()) {
@@ -423,7 +425,7 @@ class PluginManager {
 	}
 
 	private void unregisterPlugin(Plugin plugin) {
-		if (pluginList.remove(plugin)) {
+		if (plugins.remove(plugin)) {
 			plugin.cleanup();
 		}
 	}
@@ -436,7 +438,7 @@ class PluginManager {
 	}
 
 	private Plugin findPluginWithUnresolvedDependencies() {
-		for (Plugin plugin : pluginList) {
+		for (Plugin plugin : plugins) {
 			if (plugin.hasMissingRequiredService()) {
 				return plugin;
 			}
@@ -457,7 +459,7 @@ class PluginManager {
 
 	private void getUnresolvedDependencies(Set<PluginDependency> dependencies) {
 		dependencies.clear();
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			List<Class<?>> missingServices = p.getMissingRequiredServices();
 			for (Class<?> missingService : missingServices) {
 				dependencies.add(new PluginDependency(p.getClass(), missingService));
@@ -497,12 +499,12 @@ class PluginManager {
 		// This code attempts to find the needed plugins by finding service providers that either 
 		// implement the service interface or declare that they provide an implementation.
 		//
-		List<Class<? extends Plugin>> plugins = ClassSearcher.getClasses(Plugin.class)
+		List<Class<? extends Plugin>> allPlugins = ClassSearcher.getClasses(Plugin.class)
 				.stream()
 				.filter(pluginsConfiguration::accepts)
 				.collect(Collectors.toList());
 		List<Class<? extends Plugin>> serviceProviders = new ArrayList<>();
-		for (Class<? extends Plugin> pc : plugins) {
+		for (Class<? extends Plugin> pc : allPlugins) {
 
 			if (dependency.isAssignableFrom(pc)) {
 				serviceProviders.add(pc);
@@ -564,7 +566,7 @@ class PluginManager {
 
 			p.initServices();
 
-			pluginList.add(p);
+			plugins.add(p);
 			return true;
 		}
 		catch (PluginException e) {
@@ -575,7 +577,7 @@ class PluginManager {
 
 	private void initConfigStates(Map<String, SaveState> map) throws PluginException {
 		StringBuilder errMsg = new StringBuilder();
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			readSaveState(p, map, errMsg);
 		}
 		if (errMsg.length() > 0) {
@@ -605,48 +607,50 @@ class PluginManager {
 	}
 
 	private List<Plugin> getPluginsByServiceOrder(int startIndex) {
-		List<Plugin> plugins = new ArrayList<>(pluginList.subList(startIndex, pluginList.size()));
-		List<Plugin> orderedList = new ArrayList<>(plugins.size());
-		while (plugins.size() > 0) {
-			int n = plugins.size();
-			for (Iterator<Plugin> it = plugins.iterator(); it.hasNext();) {
+		List<Plugin> subList = new ArrayList<>(plugins.subList(startIndex, plugins.size()));
+		List<Plugin> orderedList = new ArrayList<>(subList.size());
+		while (subList.size() > 0) {
+			int n = subList.size();
+			for (Iterator<Plugin> it = subList.iterator(); it.hasNext();) {
 				Plugin p = it.next();
-				if (checkServices(p, plugins)) {
+				if (!hasDependency(p, subList)) {
 					orderedList.add(p);
 					it.remove();
 				}
 			}
-			if (n == plugins.size()) {
-				showWarning(plugins);
-				orderedList.addAll(plugins);
-				plugins.clear();
+
+			if (n == subList.size()) {
+				printCircularDependencyWarning(subList);
+				orderedList.addAll(subList);
+				subList.clear();
 			}
 		}
 		return orderedList;
 	}
 
 	/**
-	 * Checks to make sure no plugins in the list provide any services used by plugin p.
-	 * @param usingPlugin the plugin whose used services should not be provided by any plugins in the list
-	 * @param serviceProvidingPlugins the list of plugins that is being tested to see if they provide any
-	 * services used by p;
-	 * @return true if no plugins in the list provide any services used by p.
+	 * Checks to make sure no plugins in the list provide any services used by plugin 'consumer'.
+	 * @param consumer the plugin whose used services should not be provided by any plugins in 
+	 * the list
+	 * @param providers the list of plugins that is being tested to see if they provide any services
+	 *  used by 'usingPlugin'
+	 * @return true if no plugins in the list provide any services used by 'consumer'.
 	 */
-	private boolean checkServices(Plugin usingPlugin, List<Plugin> serviceProvidingPlugins) {
-		for (Class<?> usedService : usingPlugin.getServicesRequired()) {
-			for (Plugin providingPlugin : serviceProvidingPlugins) {
-				if (providingPlugin.providesService(usedService)) {
-					return false;
+	private boolean hasDependency(Plugin consumer, List<Plugin> providers) {
+		for (Class<?> usedService : consumer.getServicesRequired()) {
+			for (Plugin provider : providers) {
+				if (provider.providesService(usedService)) {
+					return true;
 				}
 			}
 		}
-		return true;
+		return false;
 	}
 
-	private void showWarning(List<Plugin> plugins) {
+	private void printCircularDependencyWarning(List<Plugin> badPlugins) {
 		Msg.warn(this, "The correct order for initializing the following plugins can't be\n" +
 			"determined because of circular use of services (check log)");
-		for (Plugin plugin : plugins) {
+		for (Plugin plugin : badPlugins) {
 			Msg.info(this, "Plugin: " + plugin.getClass().getName());
 			for (Class<?> service : plugin.getServiceClasses()) {
 				Msg.info(this, "    provides: " + service);
@@ -658,13 +662,21 @@ class PluginManager {
 	}
 
 	/**
-	 * Called to force plugins to terminate any tasks they has running and
-	 * apply any unsaved data to domain objects or files. If they can't do
-	 * this or the user cancels then this returns false.
+	 * Called for 3rd-party plugins still using {@link Plugin#saveData()} and 
+	 * {@link Plugin#canClose()} to have a chance to save and stop the tool closing process. This
+	 * method is considered 'legacy' since we have moved to using {@link Plugin#getUnsavedData()}.
+	 * Plugins overriding {@link Plugin#canClose()} should not prompt the user to save data.
+	 * 
 	 * @return true if all the plugins indicated they can close.
 	 */
-	boolean canClose() {
-		for (Plugin p : pluginList) {
+	boolean canClosePlugins() {
+		for (Plugin p : plugins) {
+
+			// this call will eventually go away
+			if (!p.saveData()) {
+				return false;
+			}
+
 			if (!p.canClose()) {
 				return false;
 			}
@@ -674,14 +686,15 @@ class PluginManager {
 
 	/**
 	 * Allow plugins to cancel the closing of the domain object.
-	 * Note: This forces plugins to terminate any tasks they have running for the
+	 * 
+	 * <P>Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
-	 * @param domainObject the domain object
+	 * @param domainObject the domain object.
 	 * @return true if all the plugins indicated the domain object can close.
 	 */
 	boolean canCloseDomainObject(DomainObject domainObject) {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			if (!p.canCloseDomainObject(domainObject)) {
 				return false;
 			}
@@ -690,20 +703,64 @@ class PluginManager {
 	}
 
 	/**
-	 * Called to force plugins to save any domain object data it is controlling.
-	 * @return false if a domain object related plugin couldn't save its data.
+	 * {@return all unsaved data from each plugin}
 	 */
-	boolean saveData() {
-		for (Plugin p : pluginList) {
-			if (!p.saveData()) {
-				return false;
+	Set<PluginSaveable> getUnsavedData() {
+		Set<PluginSaveable> allSaveables = new HashSet<>();
+		for (Plugin p : plugins) {
+			List<PluginSaveable> saveables = p.getUnsavedData();
+			allSaveables.addAll(saveables);
+		}
+		return allSaveables;
+	}
+
+	PluginSaveable getSaveable(DomainObject dobj) {
+		for (Plugin p : plugins) {
+			PluginSaveable saveable = p.getSaveable(dobj);
+			if (saveable != null) {
+				return saveable;
 			}
 		}
-		return true;
+		return null;
+	}
+
+	/**
+	 * Called to force plugins to save any domain object data it is controlling.
+	 * @return false if the user cancelled or there was an issue saving; true if there is no data
+	 * to save or if all data was successfully saved
+	 */
+	boolean saveData() {
+
+		Set<PluginSaveable> allSaveables = getSaveables();
+		if (allSaveables.isEmpty()) {
+			return true; // nothing to do
+		}
+
+		SavePluginDataDialog dialog = new SavePluginDataDialog(allSaveables);
+		return dialog.showAndSave(tool);
+	}
+
+	private Set<PluginSaveable> getSaveables() {
+		Set<PluginSaveable> allSaveables = new HashSet<>();
+		Set<PluginSaveable> saveables = getUnsavedData();
+		allSaveables.addAll(saveables);
+
+		// get any domain objects that may be changed when we save each saveable
+		for (PluginSaveable saveable : saveables) {
+			DomainObject dobj = saveable.getDependent();
+			if (dobj != null) {
+				PluginSaveable depedentSaveable = tool.getSaveable(dobj);
+				if (depedentSaveable != null) {
+					allSaveables.add(depedentSaveable);
+				}
+			}
+		}
+
+		return allSaveables;
 	}
 
 	boolean hasUnsavedData() {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			if (p.hasUnsaveData()) {
 				return true;
 			}
@@ -712,17 +769,17 @@ class PluginManager {
 	}
 
 	void close() {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			p.close();
 		}
 	}
 
 	public TransientToolState getTransientState() {
-		return new TransientToolState(new ArrayList<>(pluginList));
+		return new TransientToolState(new ArrayList<>(plugins));
 	}
 
 	public UndoRedoToolState getUndoRedoToolState(DomainObject domainObject) {
-		return new UndoRedoToolState(new ArrayList<>(pluginList), domainObject);
+		return new UndoRedoToolState(new ArrayList<>(plugins), domainObject);
 	}
 
 	/**
@@ -730,12 +787,12 @@ class PluginManager {
 	 * @param domainObject the domain object
 	 */
 	void prepareToSave(DomainObject domainObject) {
-		for (Plugin p : pluginList) {
+		for (Plugin p : plugins) {
 			p.prepareToSave(domainObject);
 		}
 	}
 
-	private record PluginDependency(Class<?> dependant, Class<?> dependency) {
-		// a simple record to tie together a dependant and its required dependency
+	private record PluginDependency(Class<?> dependent, Class<?> dependency) {
+		// a simple record to tie together a dependent and its required dependency
 	}
 }

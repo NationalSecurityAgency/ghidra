@@ -17,13 +17,17 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import javax.swing.Icon;
+
+import org.apache.commons.collections4.IterableUtils;
 
 import docking.widgets.pathmanager.PathManager;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeState;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import generic.util.Path;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.plugin.core.datamgr.archive.InvalidArchive;
@@ -32,6 +36,7 @@ import ghidra.app.services.Recover;
 import ghidra.app.services.Upgrade;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginSaveable;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.dtarchive.DataTypeArchiveContentHandler;
 import ghidra.program.database.dtarchive.DataTypeArchiveFactory;
@@ -379,21 +384,69 @@ public class ArchiveManager {
 	/**
 	 * Saves the given archive.
 	 * @param archive the DataTypeArchive to save
+	 * @return false if the archive was changed and could not be saved
 	 */
-	public void save(PersistentDataTypeArchive archive) {
+	public boolean save(PersistentDataTypeArchive archive) {
 		if (!archive.isChanged()) {
-			return;
+			return true;
 		}
+
 		PluginTool tool = plugin.getTool();
 		tool.prepareToSave(archive);
 		DataTypeArchiveSaveTask task = new DataTypeArchiveSaveTask(archive, tool);
 		TaskLauncher.launch(task);
+		if (!task.didSave()) {
+			return false;
+		}
+
 		openStores.notifyStateChanged(archive);
+		return true;
+	}
+
+	/**
+	 * {@return a list of all saveable open and modified project and file archives}
+	 */
+	public List<PluginSaveable> getUnsavedArchiveSaveables() {
+
+		List<PluginSaveable> results = new ArrayList<>();
+
+		Iterable<? extends PersistentDataTypeArchive> it = getSaveableArchives();
+		for (PersistentDataTypeArchive archive : it) {
+			if (archive.isChanged()) {
+				results.add(new ArchiveSaveable(archive));
+			}
+		}
+
+		return results;
+	}
+
+	/**
+	 * {@return a saveable for the given domain object if it is managed by this class}
+	 * @param dobj the domain object
+	 */
+	public PluginSaveable getSaveable(DomainObject dobj) {
+		if (!(dobj instanceof PersistentDataTypeArchive)) {
+			return null;
+		}
+
+		Iterable<? extends PersistentDataTypeArchive> it = getSaveableArchives();
+		for (PersistentDataTypeArchive archive : it) {
+			if (archive == dobj) {
+				return new ArchiveSaveable(archive);
+			}
+		}
+		return null;
+	}
+
+	public Iterable<? extends PersistentDataTypeArchive> getSaveableArchives() {
+		List<FileDataTypeArchive> fileArchives = getOpenFileArchives();
+		List<ProjectDataTypeArchive> projectArchives = getOpenProjectArchives();
+		return IterableUtils.chainedIterable(fileArchives, projectArchives);
 	}
 
 	/**
 	 * Removes the SourceArchive corresponding to the invalid archive from the active program
-	 * and removes the association from  all datatypes with that SourceArchive.
+	 * and removes the association from all datatypes with that SourceArchive.
 	 * @param archive the InvalidArchive to remove the SourceArchive that it represents
 	 */
 	public void removeInvalidArchiveFromProgram(InvalidArchive archive) {
@@ -532,7 +585,7 @@ public class ArchiveManager {
 	/**
 	 * {@return a list of all open ProjetDataTypeArhives}
 	 */
-	public List<ProjectDataTypeArchive> getProjectArchives() {
+	public List<ProjectDataTypeArchive> getOpenProjectArchives() {
 		return openStores.getOpenProjectArchives();
 	}
 
@@ -691,7 +744,8 @@ public class ArchiveManager {
 		return true;
 	}
 
-	private void checkForDuplicateArchiveID(PersistentDataTypeArchive archive) throws DuplicateIdException {
+	private void checkForDuplicateArchiveID(PersistentDataTypeArchive archive)
+			throws DuplicateIdException {
 		UniversalID id = archive.getDataTypeManager().getUniversalID();
 		DataTypeManager existing = openStores.getDataTypeManager(id);
 		if (existing != null) {
@@ -784,6 +838,7 @@ public class ArchiveManager {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
 	private class MyFolderListener extends DomainFolderListenerAdapter {
 
 		@Override
@@ -821,6 +876,77 @@ public class ArchiveManager {
 			String fileId = file.getFileID();
 			openStores.archiveNameChanged(fileId, newName);
 		}
+	}
+
+	/**
+	 * An object that allows the tool to save archives generically.
+	 */
+	private class ArchiveSaveable extends PluginSaveable {
+
+		private static final Icon ICON_ARCHIVE_FILE =
+			new GIcon("icon.plugin.datatypes.archive.file.closed");
+		private static final Icon ICON_ARCHIVE_PROJECT =
+			new GIcon("icon.plugin.datatypes.archive.project.closed");
+
+		private PersistentDataTypeArchive archive;
+
+		ArchiveSaveable(PersistentDataTypeArchive archive) {
+			this.archive = archive;
+		}
+
+		@Override
+		public DomainObject getDomainObject() {
+			return archive;
+		}
+
+		@Override
+		public String getDescription() {
+			return archive.getName();
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Archive: " + archive.getName();
+		}
+
+		@Override
+		public String getType() {
+			return "Archive";
+		}
+
+		@Override
+		public Icon getIcon() {
+			if (archive instanceof ProjectDataTypeArchive) {
+				return ICON_ARCHIVE_PROJECT;
+			}
+			return ICON_ARCHIVE_FILE;
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			return ArchiveManager.this.save(archive);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(archive);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			ArchiveSaveable other = (ArchiveSaveable) obj;
+			return Objects.equals(archive, other.archive);
+		}
+
 	}
 
 }

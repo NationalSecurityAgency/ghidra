@@ -21,12 +21,15 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.swing.Icon;
+
 import org.apache.commons.lang3.StringUtils;
 
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.events.*;
@@ -50,7 +53,9 @@ import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 //@formatter:off
 @PluginInfo(
@@ -82,7 +87,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	private static final int DEFAULT_PROGRAM_CACHE_CAPACITY = 50;
 	private static final int DEFAULT_PROGRAM_CACHE_DURATION = 30; // in minutes
 
-	private static final String SAVE_GROUP = "DomainObjectSave";
+	private static final String SAVE_GROUP = ToolConstants.MENU_GROUP_FILE_SAVE;
 	static final String OPEN_GROUP = "DomainObjectOpen";
 	private MultiProgramManager programMgr;
 	private ProgramCache programCache;
@@ -497,21 +502,39 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	}
 
 	@Override
-	protected boolean saveData() {
-		boolean result = programSaveMgr.saveAll();
-		contextChanged();
-		return result;
+	protected boolean hasUnsaveData() {
+		return programMgr.hasUnsavedPrograms();
 	}
 
 	@Override
-	protected boolean hasUnsaveData() {
+	protected List<PluginSaveable> getUnsavedData() {
+
+		List<PluginSaveable> results = new ArrayList<>();
 		Program[] allOpenPrograms = getAllOpenPrograms();
 		for (Program program : allOpenPrograms) {
-			if (program.isChanged()) {
-				return true;
+			if (!program.isChanged()) {
+				continue;
+			}
+
+			ProgramSaveable saveable = new ProgramSaveable(program);
+			results.add(saveable);
+		}
+
+		return results;
+	}
+
+	@Override
+	protected PluginSaveable getSaveable(DomainObject dobj) {
+		if (!(dobj instanceof Program)) {
+			return null;
+		}
+		Program[] allOpenPrograms = getAllOpenPrograms();
+		for (Program program : allOpenPrograms) {
+			if (program == dobj) {
+				return new ProgramSaveable(program);
 			}
 		}
-		return false;
+		return null;
 	}
 
 	private void createActions() {
@@ -547,15 +570,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 		tool.addAction(new SaveProgramAction(this, SAVE_GROUP, subMenuGroup));
 		tool.addAction(new SaveAsProgramAction(this, SAVE_GROUP, subMenuGroup));
-
-		DockingAction saveAllAction = new ActionBuilder("Save All Files", getName())
-				.menuPath(ToolConstants.MENU_FILE, "Save All")
-				.description("Save All Programs")
-				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroup++))
-				.enabledWhen(c -> programMgr.hasUnsavedPrograms())
-				.onAction(c -> programSaveMgr.saveChangedPrograms())
-				.buildAndInstall(tool);
-		saveAllAction.addToWindowWhen(ProgramActionContext.class);
 
 		tool.addAction(new ProgramOptionsAction(this));
 
@@ -1078,4 +1092,92 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	public boolean isManaged(Program program) {
 		return programMgr.contains(program);
 	}
+
+	private class ProgramSaveable extends PluginSaveable {
+
+		private static final Icon ICON = new GIcon("icon.plugin.codebrowser.provider");
+
+		private Program program;
+		private String description;
+
+		ProgramSaveable(Program program) {
+			this.program = program;
+			initDescription();
+		}
+
+		private void initDescription() {
+
+			// this is the name used in the tool
+			description = program.getDomainFile().getName();
+			if (program.canSave()) {
+				return;
+			}
+
+			DomainFile df = program.getDomainFile();
+			if (df.isInWritableProject()) {
+				description += " (read-only)";
+				return;
+			}
+
+			ProjectLocator locator = df.getProjectLocator();
+			if (locator != null) {
+				String projectName = df.getProjectLocator().getName();
+				description += " (read-only from " + projectName + ")";
+			}
+		}
+
+		@Override
+		public DomainObject getDomainObject() {
+			return program;
+		}
+
+		@Override
+		public String getDescription() {
+			return description;
+		}
+
+		@Override
+		public String getType() {
+			return "Program";
+		}
+
+		@Override
+		public Icon getIcon() {
+			return ICON;
+		}
+
+		@Override
+		public boolean isReadOnly() {
+			return program.isChanged() && !program.canSave();
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			if (isReadOnly()) {
+				return false;
+			}
+			return programSaveMgr.save(program, monitor);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(program);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			ProgramSaveable other = (ProgramSaveable) obj;
+			return Objects.equals(program, other.program);
+		}
+	}
+
 }

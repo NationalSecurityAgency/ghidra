@@ -15,6 +15,12 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -27,6 +33,8 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Plugin to popup edit sessions for function stack frames.
@@ -54,9 +62,6 @@ public class StackEditorManagerPlugin extends Plugin
 	private boolean showNumbersInHex = true;
 	private String HELP_TOPIC = "StackEditor";
 
-	/**
-	 * Constructor
-	 */
 	public StackEditorManagerPlugin(PluginTool tool) {
 		super(tool);
 		editorMgr = new StackEditorManager(this);
@@ -110,8 +115,19 @@ public class StackEditorManagerPlugin extends Plugin
 	}
 
 	@Override
-	protected boolean canClose() {
-		return editorMgr.canClose();
+	protected boolean hasUnsaveData() {
+		return editorMgr.hasChangedEditors();
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
+
+		List<PluginSaveable> results = new ArrayList<>();
+		List<StackEditorProvider> editors = editorMgr.getChangedEditors();
+		for (StackEditorProvider editor : editors) {
+			results.add(new StackEditorSaveable(editor));
+		}
+		return results;
 	}
 
 	@Override
@@ -140,11 +156,12 @@ public class StackEditorManagerPlugin extends Plugin
 		options.getOptions(EDITOR_NAME).setOptionsHelpLocation(helpLocation);
 
 		String description =
-			"Toggle for whether numeric values in the Stack Frame Editor "
-				+ "should be displayed in hexadecimal or decimal "
-				+ "when you initially begin editing a stack frame.";
+			"Toggle for whether numeric values in the Stack Frame Editor " +
+				"should be displayed in hexadecimal or decimal " +
+				"when you initially begin editing a stack frame.";
 
-		options.registerOption(HEX_NUMBERS_OPTION_NAME, showNumbersInHex, helpLocation, description);
+		options.registerOption(HEX_NUMBERS_OPTION_NAME, showNumbersInHex, helpLocation,
+			description);
 	}
 
 	private void setOptions(Options options) {
@@ -159,5 +176,46 @@ public class StackEditorManagerPlugin extends Plugin
 	@Override
 	public boolean showStackNumbersInHex() {
 		return showNumbersInHex;
+	}
+
+	private class StackEditorSaveable extends PluginSaveable {
+
+		private static final Icon ICON = new GIcon("icon.plugin.datatypes.function");
+
+		private StackEditorProvider editor;
+
+		StackEditorSaveable(StackEditorProvider editor) {
+			this.editor = editor;
+		}
+
+		@Override
+		public String getType() {
+			return "Stack Editor";
+		}
+
+		@Override
+		public Icon getIcon() {
+			return ICON;
+		}
+
+		@Override
+		public String getDescription() {
+			return editor.getFunction().getName();
+		}
+
+		@Override
+		public String getToolTipText() {
+			return "Stack Editor: " + editor.getFunction().getName();
+		}
+
+		@Override
+		public boolean save(TaskMonitor monitor) throws CancelledException {
+			return editor.save();
+		}
+
+		@Override
+		public DomainObject getDependent() {
+			return editor.getProgram();
+		}
 	}
 }

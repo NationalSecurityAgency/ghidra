@@ -20,8 +20,8 @@ import java.util.Set;
 
 import javax.swing.tree.TreePath;
 
-import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.app.plugin.core.datamgr.archive.BasicDataTypeArchiveService;
+import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
