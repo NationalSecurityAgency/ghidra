@@ -336,6 +336,59 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testRenameFunctionToExistingName() {
+		Symbol existing = getUniqueSymbol(program, "entry", null);
+		Symbol target = st.getPrimarySymbol(addr(0x01002239));
+		String originalName = target.getName();
+
+		editLabel(target);
+		setText(existing.getName());
+		pressOk();
+
+		Window warning = waitForWindow("Duplicate Function Name");
+		assertNotNull(warning);
+		pressButtonByText(warning, "No");
+		assertEditDialogVisible(true);
+		assertEquals(originalName, target.getName());
+
+		pressOk();
+		warning = waitForWindow("Duplicate Function Name");
+		assertNotNull(warning);
+		pressButtonByText(warning, "Yes");
+		assertEditDialogVisible(false);
+		assertEquals(existing.getName(), target.getName());
+	}
+
+	@Test
+	public void testRenameFunctionToExistingNameInAnotherNamespace() throws Exception {
+		Symbol existing = getUniqueSymbol(program, "entry", null);
+		Symbol target = st.getPrimarySymbol(addr(0x01002239));
+		String name = existing.getName();
+		Namespace namespace = program.withTransaction("Set function namespace", () -> {
+			Namespace ns = st.createNameSpace(globalScope, "OtherNamespace", SourceType.USER_DEFINED);
+			existing.setNamespace(ns);
+			return ns;
+		});
+
+		editLabel(target);
+		setText(name);
+		pressOk();
+		assertEditDialogVisible(false);
+		assertEquals(name, target.getName());
+		assertEquals(globalScope, target.getParentNamespace());
+
+		editLabel(target);
+		setText(namespace.getName() + Namespace.DELIMITER + name);
+		pressOk();
+
+		Window warning = waitForWindow("Duplicate Function Name");
+		assertNotNull(warning);
+		pressButtonByText(warning, "Yes");
+		assertEditDialogVisible(false);
+		assertEquals(namespace, target.getParentNamespace());
+	}
+
+	@Test
 	public void testRenameFunction_Trim() throws Exception {
 
 		Symbol s = getUniqueSymbol(program, "entry", null);
