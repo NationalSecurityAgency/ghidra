@@ -1838,6 +1838,10 @@ JumpBasicOverride::JumpBasicOverride(JumpTable *jt)
   startingvalue = 0;
   hash = 0;
   istrivial = false;
+  istwoleaf = false;
+  outerVn = (Varnode *)0;
+  innerVn = (Varnode *)0;
+  innerBits = 0;
 }
 
 /// \param adtable is the list of externally provided addresses, which will be deduped
@@ -2012,6 +2016,427 @@ void JumpBasicOverride::clearCopySpecific(void)
   pathMeld.clear();
   normalvn = (Varnode *)0;
   switchvn = (Varnode *)0;
+  outerVn = (Varnode *)0;
+  innerVn = (Varnode *)0;
+}
+
+/// \brief Return \b true if the op defining a Varnode can be evaluated by the two-leaf model
+///
+/// Only straight data-flow is evaluated: anything joining control-flow paths, carrying
+/// side-effects, or without a constant-foldable behavior stops the evaluation.
+static bool twoLeafEvaluable(PcodeOp *op)
+
+{
+  if (op->isCall() || op->isMarker()) return false;	// CALL*, CALLOTHER, MULTIEQUAL, INDIRECT
+  OpCode opc = op->code();
+  if (opc == CPUI_LOAD || opc == CPUI_CAST) return true;
+  if (opc == CPUI_PTRADD) return true;
+  if (op->numInput() < 1 || op->numInput() > 2) return false;
+  if (op->getOpcode()->getBehavior() == (OpBehavior *)0) return false;
+  return !op->getOpcode()->getBehavior()->isSpecial();
+}
+
+/// \brief Examine the backward slice of a Varnode for LOADs and free (unknown) inputs
+///
+/// \param vn is the root of the slice
+/// \param depth is the current recursion depth
+/// \param isfree is set to \b true if the slice reaches a Varnode whose value is unknown
+/// \return \b true if the slice contains a LOAD
+bool JumpBasicOverride::sliceHasLoad(Varnode *vn,int4 depth,bool &isfree)
+
+{
+  if (vn->isConstant()) return false;
+  if (depth > 32) { isfree = true; return false; }
+  if (!vn->isWritten()) {
+    if (!vn->isReadOnly())
+      isfree = true;
+    return false;
+  }
+  PcodeOp *op = vn->getDef();
+  if (!twoLeafEvaluable(op)) { isfree = true; return false; }
+  bool res = (op->code() == CPUI_LOAD);
+  int4 start = (op->code() == CPUI_LOAD) ? 1 : 0;
+  for(int4 i=start;i<op->numInput();++i)
+    if (sliceHasLoad(op->getIn(i),depth+1,isfree))
+      res = true;
+  return res;
+}
+
+/// \brief Return \b true if a pointer calculation adds a constant base in read-only memory
+///
+/// The walk follows only address arithmetic (INT_ADD, PTRADD, PTRSUB, ZEXT, CAST, COPY), so
+/// the constant found is the base of an indexed access, i.e. the start of a table.
+/// \param fd is the function containing the switch
+/// \param vn is (part of) the pointer
+/// \param spc is the address space the pointer points into
+/// \param depth is the current recursion depth
+/// \return \b true if a read-only base constant is found
+bool JumpBasicOverride::pointerHasRomBase(Funcdata *fd,Varnode *vn,AddrSpace *spc,int4 depth)
+
+{
+  if (vn->isConstant()) {
+    uintb off = AddrSpace::addressToByte(vn->getOffset(),spc->getWordSize());
+    if (off > spc->getHighest()) return false;
+    uintb val;
+    AddrSpace *fnspc = fd->getAddress().getSpace();
+    if (fnspc->isOverlay() && fnspc->getContain() == spc &&
+	readTwoLeafRom(fd,Address(fnspc,off),1,val))
+      return true;
+    return readTwoLeafRom(fd,Address(spc,off),1,val);
+  }
+  if (depth > 8 || !vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  switch(op->code()) {
+    case CPUI_INT_ADD:
+    case CPUI_PTRADD:
+    case CPUI_PTRSUB:
+    case CPUI_INT_ZEXT:
+    case CPUI_CAST:
+    case CPUI_COPY:
+      for(int4 i=0;i<op->numInput();++i) {
+	if (op->code() == CPUI_PTRADD && i == 2) break;	// Element size, not a base
+	if (pointerHasRomBase(fd,op->getIn(i),spc,depth+1))
+	  return true;
+      }
+      return false;
+    default:
+      break;
+  }
+  return false;
+}
+
+/// \brief Collect the \e free leaves of a computed-jump address calculation
+///
+/// A free leaf is a value the decompiler cannot know: an input, a merge of control-flow paths,
+/// or the result of a LOAD that reads a \e variable through an unknown pointer (such as
+/// \e type[x]).  A LOAD is instead a \e table read, evaluated from the load image, when its
+/// pointer depends on another LOAD (a pointer read from a table) or adds a constant base that
+/// lies in read-only memory; the walk then continues into its pointer.
+/// \param fd is the function containing the switch
+/// \param vn is the current Varnode in the walk
+/// \param depth is the current recursion depth
+/// \param leaves accumulates the (possibly duplicated) leaves
+/// \param budget limits the total number of Varnodes visited
+void JumpBasicOverride::collectFreeLeaves(Funcdata *fd,Varnode *vn,int4 depth,vector<Varnode *> &leaves,int4 &budget)
+
+{
+  if (vn->isConstant()) return;
+  if (--budget < 0 || depth > 32) { leaves.push_back(vn); return; }
+  if (!vn->isWritten()) {
+    if (!vn->isReadOnly())
+      leaves.push_back(vn);
+    return;
+  }
+  PcodeOp *op = vn->getDef();
+  if (!twoLeafEvaluable(op)) {
+    leaves.push_back(vn);
+    return;
+  }
+  if (op->code() == CPUI_LOAD) {
+    bool isfree = false;
+    bool hasload = sliceHasLoad(op->getIn(1),0,isfree);
+    if (!isfree) return;			// Pointer is a known constant: an ordinary read-only load
+    if (!hasload && !pointerHasRomBase(fd,op->getIn(1),op->getIn(0)->getSpaceFromConst(),0)) {
+      leaves.push_back(vn);			// Load of a variable through an unknown pointer
+      return;
+    }
+    collectFreeLeaves(fd,op->getIn(1),depth+1,leaves,budget);	// Table read: keep walking the pointer
+    return;
+  }
+  for(int4 i=0;i<op->numInput();++i)
+    collectFreeLeaves(fd,op->getIn(i),depth+1,leaves,budget);
+}
+
+/// \brief Count the LOADs crossed walking back from \b root to the given leaf
+///
+/// \param from is the leaf
+/// \param root is the current Varnode in the backward walk
+/// \param depth is the current recursion depth
+/// \return the maximum number of LOAD ops on a path from \b from to \b root, or -1 if there is no path
+int4 JumpBasicOverride::loadDepth(Varnode *from,Varnode *root,int4 depth)
+
+{
+  if (root == from) return 0;
+  if (depth > 32 || !root->isWritten()) return -1;
+  PcodeOp *op = root->getDef();
+  if (!twoLeafEvaluable(op)) return -1;
+  int4 res = -1;
+  if (op->code() == CPUI_LOAD) {
+    int4 d = loadDepth(from,op->getIn(1),depth+1);
+    return (d < 0) ? -1 : d + 1;
+  }
+  for(int4 i=0;i<op->numInput();++i) {
+    int4 d = loadDepth(from,op->getIn(i),depth+1);
+    if (d > res) res = d;
+  }
+  return res;
+}
+
+/// \brief Find exactly two free leaves feeding the BRANCHIND, one selecting a table of tables
+///
+/// The leaves are found by collectFreeLeaves().  A leaf whose only use within the calculation is an
+/// INT_AND with a constant is replaced by the AND result, so a masked index (\e state & 0xf)
+/// is enumerated over its masked range.  The \e outer leaf must pass through exactly two LOADs on
+/// its way to the BRANCHIND (it selects the inner table) and the \e inner leaf through exactly one
+/// (it indexes the selected table).
+/// \param root is the input to the BRANCHIND
+/// \return \b true if exactly two suitable leaves were found
+bool JumpBasicOverride::findFreeLeaves(Funcdata *fd,Varnode *root)
+
+{
+  vector<Varnode *> leaves;
+  int4 budget = 256;
+  collectFreeLeaves(fd,root,0,leaves,budget);
+  if (budget < 0) return false;
+  sort(leaves.begin(),leaves.end());
+  leaves.erase(unique(leaves.begin(),leaves.end()),leaves.end());
+  if (leaves.size() != 2) return false;
+  int4 depth[2];
+  for(int4 i=0;i<2;++i) {
+    Varnode *vn = leaves[i];
+    for(int4 iter=0;iter<4;++iter) {	// Climb through masking of the leaf
+      PcodeOp *andop = (PcodeOp *)0;
+      int4 inslice = 0;
+      list<PcodeOp *>::const_iterator it;
+      for(it=vn->beginDescend();it!=vn->endDescend();++it) {
+	PcodeOp *use = *it;
+	if (use->getOut() == (Varnode *)0) continue;
+	if (use->getOut() != root && loadDepth(use->getOut(),root,0) < 0) continue;
+	inslice += 1;
+	if (use->code() == CPUI_INT_AND && use->getIn(1)->isConstant())
+	  andop = use;
+      }
+      if (inslice != 1 || andop == (PcodeOp *)0) break;
+      vn = andop->getOut();
+    }
+    leaves[i] = vn;
+    depth[i] = loadDepth(vn,root,0);
+    if (depth[i] < 1) return false;
+  }
+  // The leaves must be the indices of the two table reads themselves:  the inner leaf indexes the
+  // table read producing the address (one LOAD), the outer leaf the read producing that table's
+  // base (two LOADs).  A longer chain means a value read from a table is itself the dispatch index
+  // (e.g. an opcode fetched through a pointer the leaves compute), so the leaves only select where
+  // that index is read from and do not label the cases.
+  if (depth[0] + depth[1] != 3 || (depth[0] != 1 && depth[1] != 1)) return false;
+  int4 outer = (depth[0] > depth[1]) ? 0 : 1;
+  outerVn = leaves[outer];
+  innerVn = leaves[1-outer];
+  return true;
+}
+
+/// \brief Evaluate a Varnode given values for the two leaves, reading tables from the load image
+///
+/// Tables are only read from addresses marked read-only.  The lowest address read by a LOAD whose
+/// pointer depends on the \e inner leaf (a read of the inner table) is recorded in \b rowaddr.
+/// \param fd is the function containing the switch
+/// \param vn is the Varnode to evaluate
+/// \param memo holds the values of the leaves and of every Varnode evaluated so far
+/// \param romcache caches values read from the load image
+/// \param innerLoads is the set of LOADs whose pointer depends on the inner leaf
+/// \param rowaddr is updated with the lowest address read by such a LOAD
+/// \param res will hold the value
+/// \param depth is the current recursion depth
+/// \return \b true if the value could be calculated
+bool JumpBasicOverride::evalTwoLeaf(Funcdata *fd,Varnode *vn,map<Varnode *,uintb> &memo,
+				    map<pair<Address,int4>,uintb> &romcache,const set<PcodeOp *> &innerLoads,
+				    Address &rowaddr,uintb &res,int4 depth) const
+{
+  if (vn->isConstant()) { res = vn->getOffset(); return true; }
+  map<Varnode *,uintb>::const_iterator iter = memo.find(vn);
+  if (iter != memo.end()) { res = (*iter).second; return true; }
+  if (depth > 32) return false;
+  AddrSpace *spc;
+  uintb off;
+  int4 sz = vn->getSize();
+  if (!vn->isWritten()) {
+    if (!vn->isReadOnly()) return false;
+    spc = vn->getSpace();
+    off = vn->getOffset();
+  }
+  else {
+    PcodeOp *op = vn->getDef();
+    if (!twoLeafEvaluable(op)) return false;
+    if (op->code() == CPUI_LOAD) {
+      if (!evalTwoLeaf(fd,op->getIn(1),memo,romcache,innerLoads,rowaddr,off,depth+1)) return false;
+      spc = op->getIn(0)->getSpaceFromConst();
+      off = AddrSpace::addressToByte(off & calc_mask(op->getIn(1)->getSize()),spc->getWordSize());
+      if (innerLoads.find(op) != innerLoads.end()) {
+	Address ld(spc,off);
+	if (rowaddr.isInvalid() || ld < rowaddr)
+	  rowaddr = ld;
+      }
+    }
+    else {
+      uintb in[3];
+      for(int4 i=0;i<op->numInput();++i)
+	if (!evalTwoLeaf(fd,op->getIn(i),memo,romcache,innerLoads,rowaddr,in[i],depth+1)) return false;
+      try {
+	OpBehavior *behave = op->getOpcode()->getBehavior();
+	int4 insz = op->getIn(0)->getSize();
+	if (op->code() == CPUI_CAST)
+	  res = in[0] & calc_mask(sz);
+	else if (op->numInput() == 1)
+	  res = behave->evaluateUnary(sz,insz,in[0]);
+	else if (op->numInput() == 2)
+	  res = behave->evaluateBinary(sz,insz,in[0],in[1]);
+	else
+	  res = behave->evaluateTernary(sz,insz,in[0],in[1],in[2]);
+      } catch(LowlevelError &err) {
+	return false;
+      }
+      memo[vn] = res;
+      return true;
+    }
+  }
+  // Read sz bytes at spc:off from the load image, only from read-only memory
+  if (sz > sizeof(uintb) || off > spc->getHighest() - (sz-1)) return false;	// No wrapped reads
+  Address addr(spc,off);
+  pair<Address,int4> key(addr,sz);
+  map<pair<Address,int4>,uintb>::const_iterator riter = romcache.find(key);
+  if (riter != romcache.end())
+    res = (*riter).second;
+  else {
+    // Code in an overlay reads its own overlay through addresses of the overlaid space
+    AddrSpace *fnspc = fd->getAddress().getSpace();
+    bool ok = false;
+    if (fnspc->isOverlay() && fnspc->getContain() == spc)
+      ok = readTwoLeafRom(fd,Address(fnspc,off),sz,res);
+    if (!ok)
+      ok = readTwoLeafRom(fd,addr,sz,res);
+    if (!ok) return false;
+    romcache[key] = res;
+  }
+  memo[vn] = res;
+  return true;
+}
+
+/// \brief Read a value from read-only memory in the load image
+///
+/// \param fd is the function containing the switch
+/// \param addr is the address to read
+/// \param sz is the number of bytes to read
+/// \param res will hold the value
+/// \return \b true if every byte is read-only and could be read
+bool JumpBasicOverride::readTwoLeafRom(Funcdata *fd,const Address &addr,int4 sz,uintb &res)
+
+{
+  Architecture *glb = fd->getArch();
+  AddrSpace *spc = addr.getSpace();
+  if (addr.getOffset() > spc->getHighest() - (sz-1)) return false;
+  uint4 flags = 0;
+  fd->getScopeLocal()->queryProperties(addr,sz,fd->getAddress(),flags);
+  if ((flags & Varnode::readonly) == 0)
+    return false;
+  uint1 buf[sizeof(uintb)];
+  try {
+    glb->loader->loadFill(buf,sz,addr);
+  } catch(DataUnavailError &err) {
+    return false;
+  }
+  res = 0;
+  for(int4 i=0;i<sz;++i) {
+    int4 pos = spc->isBigEndian() ? i : sz-1-i;
+    res = (res << 8) | buf[pos];
+  }
+  return true;
+}
+
+/// \brief Try to model the switch as a two-level table dispatch on two free leaves
+///
+/// Some computed jumps read the destination from a table of tables:  \e outer selects an inner
+/// table (e.g. one per object type) and \e inner indexes it (e.g. the object's state).  No single
+/// Varnode can then produce every destination, so trialNorm() fails.  Here both leaves are
+/// enumerated over their possible values (\e inner over its non-zero mask, which must be
+/// 2^k-1, \e outer over its non-zero mask capped at 0xff), evaluating the BRANCHIND input with
+/// tables read from read-only memory.  Each destination produced that is in the manual address set
+/// is recorded, with the label (outer << k) | inner.
+///
+/// A row (one outer value) ends at its first index that produces no manual address, or whose
+/// inner-table read reaches the start of a different row's inner table, since table data beyond
+/// that point belongs to another row.  After every manual address has been seen, enumeration stops
+/// at the first row producing none (the end of the outer table).  The model is accepted only if
+/// every address in the manual set is produced.
+/// \param fd is the function containing the switch
+/// \param indop is the BRANCHIND
+/// \param maxtablesize is the maximum number of table entries allowed
+/// \return \b true if the model was accepted
+bool JumpBasicOverride::trialTwoLeaf(Funcdata *fd,PcodeOp *indop,uint4 maxtablesize)
+
+{
+  Varnode *root = indop->getIn(0);
+  if (!findFreeLeaves(fd,root)) return false;
+  uintb innerMax = innerVn->getNZMask();
+  if (innerMax == 0 || innerMax > 0xff || (innerMax & (innerMax+1)) != 0) return false;
+  innerBits = mostsigbit_set(innerMax) + 1;
+  uintb outerMax = outerVn->getNZMask();
+  if (outerMax == 0) return false;
+  if (outerMax > 0xff) outerMax = 0xff;
+  if (outerVn->getSize() > 2 || innerVn->getSize() > 2) return false;
+
+  // LOADs reading the inner table: their pointer depends on the inner leaf
+  set<PcodeOp *> innerLoads;
+  vector<Varnode *> work;
+  set<Varnode *> visited;
+  work.push_back(root);
+  while(!work.empty()) {
+    Varnode *vn = work.back();
+    work.pop_back();
+    if (!visited.insert(vn).second || vn == innerVn || vn == outerVn || !vn->isWritten()) continue;
+    PcodeOp *op = vn->getDef();
+    if (!twoLeafEvaluable(op)) continue;
+    if (op->code() == CPUI_LOAD && loadDepth(innerVn,op->getIn(1),0) >= 0)
+      innerLoads.insert(op);
+    for(int4 i=0;i<op->numInput();++i)
+      work.push_back(op->getIn(i));
+  }
+  if (innerLoads.empty()) return false;
+
+  AddrSpace *spc = indop->getAddr().getSpace();
+  map<pair<Address,int4>,uintb> romcache;
+  // First pass: the start of each row's inner table
+  vector<Address> rowStart(outerMax+1);
+  set<Address> starts;
+  for(uintb o=0;o<=outerMax;++o) {
+    if ((o & ~outerMax) != 0) continue;
+    map<Varnode *,uintb> memo;
+    memo[outerVn] = o;
+    memo[innerVn] = 0;
+    uintb val;
+    if (evalTwoLeaf(fd,root,memo,romcache,innerLoads,rowStart[o],val,0) && !rowStart[o].isInvalid())
+      starts.insert(rowStart[o]);
+  }
+  set<Address> seen;
+  vector<uintb> vals;
+  vector<Address> addrs;
+  for(uintb o=0;o<=outerMax;++o) {
+    if ((o & ~outerMax) != 0) continue;
+    bool any = false;
+    for(uintb i=0;i<=innerMax;++i) {
+      map<Varnode *,uintb> memo;
+      memo[outerVn] = o;
+      memo[innerVn] = i;
+      uintb val;
+      Address rowaddr;
+      if (!evalTwoLeaf(fd,root,memo,romcache,innerLoads,rowaddr,val,0)) break;
+      if (i != 0 && rowaddr != rowStart[o] && starts.find(rowaddr) != starts.end())
+	break;			// Ran into another row's inner table
+      val &= calc_mask(root->getSize());
+      Address ad(spc,AddrSpace::addressToByte(val,spc->getWordSize()));
+      if (adset.find(ad) == adset.end()) break;
+      seen.insert(ad);
+      vals.push_back((o << innerBits) | i);
+      addrs.push_back(ad);
+      any = true;
+    }
+    if (!any && seen.size() == adset.size()) break;	// Past the end of the outer table
+    if (vals.size() > maxtablesize) return false;
+  }
+  if (seen.size() != adset.size()) return false;	// Must explain every manual address
+  values = vals;
+  addrtable = addrs;
+  istwoleaf = true;
+  return true;
 }
 
 bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize)
@@ -2019,6 +2444,14 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel
 {
   clearCopySpecific();
   findDeterminingVarnodes(indop,0);
+  if (istwoleaf) {		// Two-leaf model was chosen on an earlier copy of the function
+    values.clear();		// Re-derive it (and the leaves) on this copy
+    addrtable.clear();
+    istwoleaf = false;
+    if (!trialTwoLeaf(fd,indop,maxtablesize))
+      setupTrivial();
+    return true;
+  }
   if (!istrivial) {		// If we haven't previously decided to use trivial model
     Varnode *trialvn = (Varnode *)0;
     if (hash != 0) {
@@ -2037,6 +2470,11 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel
 	return true;
       }
     }
+    // No single normalized variable produces every address.  Before falling back to the trivial
+    // model, try a two-level table dispatch, but only on a first derivation (values is empty);
+    // a copy carrying values from an earlier derivation keeps that earlier decision.
+    if (values.empty() && trialTwoLeaf(fd,indop,maxtablesize))
+      return true;
   }
   setupTrivial();
   return true;
@@ -2053,6 +2491,15 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
 {
   uintb addr;
 
+  if (istwoleaf) {		// Labels are the composite values themselves
+    for(uint4 i=0;i<values.size() && i<addresstable.size();++i)
+      label.push_back(values[i]);
+    while(label.size() < addresstable.size()) {
+      fd->warning("Bad switch case",addresstable[label.size()]);
+      label.push_back(JumpValues::NO_LABEL);
+    }
+    return;
+  }
   for(uint4 i=0;i<values.size();++i) {
     try {
       addr = backup2Switch(fd,values[i],normalvn,switchvn);
@@ -2079,6 +2526,8 @@ JumpModel *JumpBasicOverride::clone(JumpTable *jt) const
   res->startingvalue = startingvalue;
   res->normaddress = normaddress;
   res->hash = hash;
+  res->istwoleaf = istwoleaf;	// Leaves are function-copy specific: recoverModel re-derives them
+  res->innerBits = innerBits;
   return res;
 }
 
@@ -2092,6 +2541,48 @@ void JumpBasicOverride::clear(void)
   values.clear();
   addrtable.clear();
   istrivial = false;
+  istwoleaf = false;
+  outerVn = (Varnode *)0;
+  innerVn = (Varnode *)0;
+}
+
+void JumpBasicOverride::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext)
+
+{
+  if (istwoleaf) return;	// The switch variable is synthesized by foldInNormalization
+  JumpBasic::findUnnormalized(maxaddsub,maxleftright,maxext);
+}
+
+/// For the two-leaf model, the switch variable  (ZEXT(outer) << innerBits) | ZEXT(inner)  is built
+/// in front of the BRANCHIND and made its input, so the table reads computing the address become
+/// dead code and the case labels read as the composite index.
+/// \param fd is the function containing the switch
+/// \param indop is the BRANCHIND
+/// \return the switch variable
+Varnode *JumpBasicOverride::foldInNormalization(Funcdata *fd,PcodeOp *indop)
+
+{
+  if (!istwoleaf)
+    return JumpBasic::foldInNormalization(fd,indop);
+  int4 sz = (mostsigbit_set(outerVn->getNZMask()) + 1 + innerBits <= 16) ? 2 : 4;
+  Varnode *pieces[2];
+  Varnode *leaf[2] = { outerVn, innerVn };
+  for(int4 i=0;i<2;++i) {
+    if (leaf[i]->getSize() == sz) {
+      pieces[i] = leaf[i];
+      continue;
+    }
+    PcodeOp *ext = fd->newOp(1,indop->getAddr());
+    fd->opSetOpcode(ext,CPUI_INT_ZEXT);
+    pieces[i] = fd->newUniqueOut(sz,ext);
+    fd->opSetInput(ext,leaf[i],0);
+    fd->opInsertBefore(ext,indop);
+  }
+  PcodeOp *shiftop = fd->newOpBefore(indop,CPUI_INT_LEFT,pieces[0],fd->newConstant(4,innerBits));
+  PcodeOp *orop = fd->newOpBefore(indop,CPUI_INT_OR,shiftop->getOut(),pieces[1]);
+  switchvn = orop->getOut();
+  fd->opSetInput(indop,switchvn,0);
+  return switchvn;
 }
 
 void JumpBasicOverride::encode(Encoder &encoder) const
@@ -2632,6 +3123,9 @@ void JumpTable::switchOver(const FlowInfo &flow)
       defaultBlock = curPos;
     }
   }
+  // A model whose labels list every table entry (with no guard) has no default case
+  if (jmodel != (JumpModel *)0 && jmodel->suppressDefault())
+    defaultBlock = -1;
 }
 
 /// Eliminate any code involved in actually computing the destination address so
