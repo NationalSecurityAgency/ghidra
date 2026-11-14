@@ -1862,7 +1862,11 @@ int4 JumpBasicOverride::findStartOp(Varnode *vn)
   for(;iter!=enditer;++iter)
     (*iter)->setMark();
   int4 res = -1;
-  for(int4 i=0;i<pathMeld.numOps();++i) {
+  // Ops are in reverse execution order and emulatePath() runs from the start op down to index 0,
+  // so start at the EARLIEST reader (highest index).  When the paths split after the Varnode,
+  // e.g. into the low and high byte reads of a split table, starting at a later reader would
+  // leave the other branch unexecuted.
+  for(int4 i=pathMeld.numOps()-1;i>=0;--i) {
     if (pathMeld.getOp(i)->isMark()) {
       res = i;
       break;
@@ -1901,6 +1905,9 @@ int4 JumpBasicOverride::trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance)
 
   AddrSpace *spc = startop->getAddr().getSpace();
   uintb val = startingvalue;
+  // Step over values the variable cannot hold, like JumpBasic's range does (getStride):  a
+  // doubled index (i << 1) is never odd, and an odd value would read a misaligned table entry.
+  uintb step = getStride(trialvn);
   uintb addr;
   uint4 total = 0;
   uint4 miss = 0;
@@ -1928,7 +1935,7 @@ int4 JumpBasicOverride::trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance)
       miss += 1;
       if (miss >= tolerance) break;
     }
-    val += 1;
+    val += step;
   }
   
   //  if ((loadpoint != (vector<LoadTable> *)0)&&(total == adset.size()))
@@ -2032,7 +2039,16 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel
     if (trialvn != (Varnode *)0) {
       int4 opi = trialNorm(fd,trialvn,10);
       if (opi >= 0) {
-	varnodeIndex = opi;
+	// varnodeIndex indexes the common Varnodes, not the ops; the two only coincide on a
+	// single path, so look the normalized Varnode up.
+	int4 vi = -1;
+	for(int4 k=0;k<pathMeld.numCommonVarnode();++k) {
+	  if (pathMeld.getVarnode(k) == trialvn) {
+	    vi = k;
+	    break;
+	  }
+	}
+	varnodeIndex = (vi >= 0) ? vi : opi;
 	normalvn = trialvn;
 	return true;
       }
