@@ -57,13 +57,14 @@ def generateHash(File file, String alg) {
  * against the jar filename to ensure we'll get the right one.
  *
  ******************************************************************************************/
- def extractFromPom(File jarFile, FileTree jarFileTree) {
+ def extractFromPom(File jarFile) {
 	def group = ""
 	def name = ""
 	def description = ""
 	def version = ""
-	jarFileTree.matching { include "**/pom.xml" }.each { pomFile ->
-		def pomProject = new XmlSlurper().parse(pomFile)
+	def jar = new JarFile(jarFile)
+	jar.entries().findAll { it.name == "pom.xml" || it.name.endsWith("/pom.xml") }.each { pomEntry ->
+		def pomProject = new XmlSlurper().parse(jar.getInputStream(pomEntry))
 		def artifactId = pomProject.artifactId.toString()
 		if (jarFile.name.contains(artifactId)) {
 			name = artifactId
@@ -72,6 +73,7 @@ def generateHash(File file, String alg) {
 			version = pomProject.version.toString() ?: pomProject.parent.version.toString()
 		}
 	}
+	jar.close()
 	return [group ?: "", name ?: "", description ?: "", version ?: ""]
  }
  
@@ -182,10 +184,8 @@ ext.writeSoftwareBillOfMaterials = { distroDir, sbomFile ->
 	def sbom = initializeSoftwareBillOfMaterials()
 	
 	fileTree(distroDir).matching { include "**/*.jar" }.each { jarFile ->
-		def jarFileTree = zipTree(jarFile)
-		
 		// First try to get the group, name, description, and version from a pom.xml (if it exists)
-		def (group, name, description, version) = extractFromPom(jarFile, jarFileTree)
+		def (group, name, description, version) = extractFromPom(jarFile)
 		
 		// If that didn't work, get the name and version from the filename.  We are out of luck
 		// with the group for now.
