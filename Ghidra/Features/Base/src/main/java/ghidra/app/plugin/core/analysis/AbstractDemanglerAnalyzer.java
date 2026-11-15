@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.util.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -127,6 +129,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		int count = initialCount;
+		Address previousAddress = null;
 
 		// Note: iterator will continually need to reinitialize due to symbol changes
 		//       consider copying primary symbols to alt storage for iteration
@@ -140,6 +143,11 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			}
 
 			Symbol primarySymbol = it.next();
+			Address address = primarySymbol.getAddress();
+			List<Symbol> nonPrimarySymbols =
+				address.equals(previousAddress) ? List.of() : getNonPrimarySymbols(program, address);
+			previousAddress = address;
+
 			if (!skipSymbol(primarySymbol)) {
 
 				MangledContext mangledContext =
@@ -150,22 +158,26 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 				}
 			}
 
-			Address address = primarySymbol.getAddress();
-			demangleNonPrimarySymbols(program, address, options, log, monitor);
+			demangleNonPrimarySymbols(program, nonPrimarySymbols, options, log, monitor);
 		}
 
 		return count;
 	}
 
-	private void demangleNonPrimarySymbols(Program program, Address address,
+	private List<Symbol> getNonPrimarySymbols(Program program, Address address) {
+		return Arrays.stream(program.getSymbolTable().getSymbols(address))
+				.filter(symbol -> !symbol.isPrimary())
+				.toList();
+	}
+
+	private void demangleNonPrimarySymbols(Program program, List<Symbol> symbols,
 			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
 
-		SymbolTable symbolTable = program.getSymbolTable();
-		for (Symbol symbol : symbolTable.getSymbols(address)) {
+		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();
 
-			if (symbol.isPrimary() || skipSymbol(symbol)) {
+			if (symbol.isDeleted() || skipSymbol(symbol)) {
 				continue;
 			}
 

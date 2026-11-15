@@ -27,6 +27,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -122,12 +123,43 @@ public class MicrosoftDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrat
 			function.getSignature().toString());
 	}
 
+	@Test
+	public void testDemangledLabelIsNotAppliedAgainAsNonPrimary() throws Exception {
+
+		Address addr = addr("0x110");
+		createSymbol(addr, "?foo@@YAHH@Z");
+
+		analyzeAndAssertAppliedOnce(addr);
+	}
+
+	@Test
+	public void testDemangledFunctionNameIsNotAppliedAgainAsNonPrimary() throws Exception {
+
+		Address addr = addr("0x110");
+		tx(program, () -> program.getFunctionManager()
+				.createFunction("?foo@@YAHH@Z", addr, new AddressSet(addr), SourceType.ANALYSIS));
+
+		analyzeAndAssertAppliedOnce(addr);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
 
 	private void analyze() {
 		tx(program, () -> analyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, log));
+	}
+
+	private void analyzeAndAssertAppliedOnce(Address addr) {
+		analyze();
+
+		Function function = program.getFunctionManager().getFunctionAt(addr);
+		assertNotNull(function);
+		assertEquals("int foo(int param_1)", function.getSignature().toString());
+		for (Bookmark bookmark : program.getBookmarkManager().getBookmarks(addr)) {
+			assertFalse(bookmark.getComment(),
+				bookmark.getComment().startsWith("Couldn't apply demangled signature"));
+		}
 	}
 
 	private void setApplySignatureOption(boolean doUse) {
