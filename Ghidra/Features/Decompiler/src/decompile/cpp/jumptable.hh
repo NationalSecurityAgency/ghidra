@@ -468,10 +468,12 @@ class JumpBasicOverride : public JumpBasic {
   Address normaddress;		///< Dynamic info for recovering normalized switch variable
   uint8 hash;			///< if (hash==0) there is no normalized switch (use trivial model)
   bool istrivial;		///< \b true if we use a trivial value model
+  bool isloadnorm;		///< \b true if the normalized switch variable is a LOADed value (see trialLoadNorm)
   int4 findStartOp(Varnode *vn);
   int4 trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance);
   void setupTrivial(void);
   Varnode *findLikelyNorm(void);
+  bool trialLoadNorm(Funcdata *fd);
   void clearCopySpecific(void);
 public:
   JumpBasicOverride(JumpTable *jt);		///< Constructor
