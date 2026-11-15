@@ -30,12 +30,13 @@ define token data (16)
 	imm16 = (0,15)
 ;
 
+# Bits 4 and 5 only exist in stacked status, not as physical flags.
+# Retain the legacy P and B register definitions for saved-program compatibility.
 macro popSR() {
 	SP = SP + 1;
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
-	B = ccr[4,1];
 	D = ccr[3,1];
 	I = ccr[2,1];
 	Z = ccr[1,1];
@@ -43,10 +44,9 @@ macro popSR() {
 }
 
 macro pushSR() {
-	local ccr:1 = 0xff;
+	local ccr:1 = 0x30;
 	ccr[7,1] = N;
 	ccr[6,1] = V;
-	ccr[4,1] = B;
 	ccr[3,1] = D;
 	ccr[2,1] = I;
 	ccr[1,1] = Z;
@@ -192,11 +192,13 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BRK   is op=0x00
 {
-	*:2 (SP - 1) = inst_next;
+	*:2 (SP - 1) = inst_next + 1;
 	SP = SP - 2;
-	B = 1;
 	pushSR();
 	I = 1;
+@ifdef CMOS_BRK_CLEAR_D
+	D = 0;
+@endif
 	local target:2 = 0xFFFE;
 	goto [*:2 target];
 }
@@ -313,7 +315,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :JSR   ADDR16    is op=0x20; ADDR16
 {
-	*:2 (SP-1) = inst_next;
+	*:2 (SP-1) = inst_next - 1;
 	SP=SP-2; 
 	call ADDR16;
 }
@@ -417,6 +419,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
+	tmp = tmp + 1;
 	
 	return [tmp];
 }
