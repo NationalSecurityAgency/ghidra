@@ -126,6 +126,11 @@ public class LibrarySymbol extends SymbolDB implements Comparable<LibrarySymbol>
 	}
 
 	@Override
+	public Library getLibrary() {
+		return getObject();
+	}
+
+	@Override
 	public Library getObject() {
 		try (Closeable c = lock.read()) {
 			if (!refreshIfNeeded()) {
@@ -146,7 +151,7 @@ public class LibrarySymbol extends SymbolDB implements Comparable<LibrarySymbol>
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
-			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address);
 	}
 
 	/**

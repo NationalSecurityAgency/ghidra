@@ -26,8 +26,6 @@ import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
  */
 public class DefaultEmulatorFactory implements EmulatorFactory {
 	public static final String TITLE = "Default Concrete P-code Emulator";
-	// TODO: Config options:
-	// 1) userop library
 
 	@Override
 	public String getTitle() {

@@ -1339,34 +1339,57 @@ bool JumpBasic::duplicateVarnodes(const vector<Varnode *> &arr)
   return true;
 }
 
-/// All CBRANCHs in addition to flowing to the given block, must also flow to another common block,
-/// and each boolean value must select between the given block and the common block in the same way.
-/// If this flow exists, \b true is returned and the boolean Varnode inputs to each CBRANCH are passed back.
-/// \param varArray will hold the input Varnodes being passed back
-/// \param bl is the given block
-/// \return \b true if the common CBRANCH flow exists across all incoming blocks
-bool JumpBasic::checkCommonCbranch(vector<Varnode *> &varArray,BlockBasic *bl)
+/// \brief Find CBRANCH with an out-edge that flows into the given block and in-edge
+///
+/// If a CBRANCH controls flow through the given edge, return it, otherwise return null.
+/// Flow may be through blocks with 1 input and 1 output edge.
+/// \param bl is destination block
+/// \param inslot is the in-edge index
+/// \param path will hold the out-edge index from the CBRANCH
+/// \return the controlling CBRANCH or null
+PcodeOp *JumpBasic::findCbranch(BlockBasic *bl,int4 inslot,int4 &path)
 
 {
-  BlockBasic *curBlock = (BlockBasic *)bl->getIn(0);
-  PcodeOp *op  = curBlock->lastOp();
-  if (op == (PcodeOp *)0 || op->code() != CPUI_CBRANCH)
-    return false;
-  int4 outslot = bl->getInRevIndex(0);
-  bool isOpFlip = op->isBooleanFlip();
-  varArray.push_back(op->getIn(1));	// Pass back boolean input to CBRANCH
-  for(int4 i=1;i<bl->sizeIn();++i) {
-    curBlock = (BlockBasic *)bl->getIn(i);
-    op = curBlock->lastOp();
-    if (op == (PcodeOp *)0 || op->code() != CPUI_CBRANCH)
-      return false;				// All blocks must end with CBRANCH
-    if (op->isBooleanFlip() != isOpFlip)
-      return false;
-    if (outslot != bl->getInRevIndex(i))
-      return false;				// Boolean value must have some meaning
-    varArray.push_back(op->getIn(1));		// Pass back boolean input to CBRANCH
+  BlockBasic *inBlock = (BlockBasic *)bl->getIn(inslot);
+  PcodeOp *cbranch = inBlock->lastOp();
+  while(cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH) {
+    if (inBlock->sizeOut() != 1) return (PcodeOp *)0;
+    if (inBlock->sizeIn() != 1) return (PcodeOp *)0;
+    inslot = 0;
+    bl = inBlock;
+    inBlock = (BlockBasic *)bl->getIn(inslot);
+    cbranch = inBlock->lastOp();
   }
-  return true;
+  path = bl->getInRevIndex(inslot);
+  return cbranch;
+}
+
+/// All CBRANCHs in addition to flowing to the given block, must also flow to another common block,
+/// and each boolean value must select between the given block and the common block in the same way.
+/// If this flow exists, a representative CBRANCH is returned and the boolean Varnode inputs to each
+/// CBRANCH are passed back. Otherwise NULL is returned.
+/// \param bl is the given block
+/// \param varArray will hold the input Varnodes being passed back
+/// \param path will hold the out index from the representative CBRANCH to the given block
+/// \return a representative CBRANCH or NULL
+PcodeOp *JumpBasic::checkCommonCbranch(BlockBasic *bl,vector<Varnode *> &varArray,int4 &path)
+
+{
+  PcodeOp *cbranch = findCbranch(bl, 0, path);
+  if (cbranch == (PcodeOp *)0) return cbranch;
+  bool isOpFlip = cbranch->isBooleanFlip();
+  varArray.push_back(cbranch->getIn(1));	// Pass back boolean input to CBRANCH
+  for(int4 i=1;i<bl->sizeIn();++i) {
+    int4 altpath;
+    PcodeOp *altBranch = findCbranch(bl,i, altpath);
+    if (altBranch == (PcodeOp *)0) return altBranch;
+    if (altBranch->isBooleanFlip() != isOpFlip)
+      return (PcodeOp *)0;
+    if (path != altpath)			// Boolean value must be consistent across incoming blocks
+      return (PcodeOp *)0;
+    varArray.push_back(altBranch->getIn(1));	// Pass back boolean input to CBRANCH
+  }
+  return cbranch;
 }
 
 /// \brief Check for a guard that has been unrolled across multiple blocks
@@ -1381,16 +1404,15 @@ bool JumpBasic::checkCommonCbranch(vector<Varnode *> &varArray,BlockBasic *bl)
 void JumpBasic::checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmask)
 
 {
+  int4 indpath;
   vector<Varnode *> varArray;
-  if (!checkCommonCbranch(varArray,bl))
-    return;
-  int4 indpath = bl->getInRevIndex(0);
+  PcodeOp *cbranch = checkCommonCbranch(bl,varArray,indpath);
+  if (cbranch == (PcodeOp *)0) return;
   bool toswitchval = (indpath == 1);
-  PcodeOp *cbranch = ((BlockBasic *)bl->getIn(0))->lastOp();
   if (cbranch->isBooleanFlip())
     toswitchval = !toswitchval;
   CircleRange rng(toswitchval);
-  int4 indpathstore = bl->getIn(0)->getFlipPath() ? 1-indpath : indpath;
+  int4 indpathstore = cbranch->getParent()->getFlipPath() ? 1-indpath : indpath;
   PcodeOp *readOp = cbranch;
   for(int4 j=0;j<maxpullback;++j) {
     if (duplicateVarnodes(varArray)) {
@@ -1405,7 +1427,7 @@ void JumpBasic::checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmas
     Varnode *markup;		// Throw away markup information
     Varnode *vn = varArray[0];
     if (!vn->isWritten()) break;
-    PcodeOp *readOp = vn->getDef();
+    readOp = vn->getDef();
     vn = rng.pullBack(readOp,&markup,usenzmask);
     if (vn == (Varnode *)0) break;
     if (rng.isEmpty()) break;

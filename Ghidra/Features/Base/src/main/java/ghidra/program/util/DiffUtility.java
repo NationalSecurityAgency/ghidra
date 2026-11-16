@@ -169,15 +169,30 @@ public class DiffUtility extends SimpleDiffUtility {
 		Namespace parentNamespace = namespace.getParentNamespace();
 		Namespace otherParentNamespace = createNamespace(program, parentNamespace, otherProgram);
 		SourceType source = namespace.getSymbol().getSource();
-		if (namespace instanceof Library) {
-			return otherProgram.getSymbolTable().createExternalLibrary(namespace.getName(), source);
-		}
-		else if (namespace instanceof GhidraClass) {
+		if (namespace instanceof GhidraClass) {
 			return otherProgram.getSymbolTable()
 					.createClass(otherParentNamespace, namespace.getName(), source);
 		}
 		return otherProgram.getSymbolTable()
 				.createNameSpace(otherParentNamespace, namespace.getName(), source);
+	}
+
+	/**
+	 * Create a library in the other program that corresponds to the given library in the given
+	 * program.
+	 * @param program the program containing the existing library
+	 * @param library the existing library in the program
+	 * @param otherProgram the program where an equivalent library is to be created
+	 * @return A library in the other program with the same name as the given library
+	 * @throws DuplicateNameException if a library with that name already exists in the other 
+	 * program
+	 * @throws InvalidInputException if the library name is invalid (Should never happen since
+	 * the name came from an existing library)
+	 */
+	public static Library createLibrary(Program program, Library library, Program otherProgram)
+			throws DuplicateNameException, InvalidInputException {
+		return otherProgram.getSymbolTable()
+				.createExternalLibrary(library.getName(), library.getSymbol().getSource());
 	}
 
 	/**
@@ -326,6 +341,12 @@ public class DiffUtility extends SimpleDiffUtility {
 	public static Reference createReference(final Program program, final Reference ref,
 			final Program otherProgram) {
 
+		Address otherFromAddress =
+			getCompatibleAddress(program, ref.getFromAddress(), otherProgram);
+		if (otherFromAddress == null) {
+			return null;
+		}
+
 		ReferenceManager otherRefMgr = otherProgram.getReferenceManager();
 
 		if (ref.isExternalReference()) {
@@ -346,7 +367,7 @@ public class DiffUtility extends SimpleDiffUtility {
 					otherExtLoc =
 						otherProgram.getExternalManager().getExternalLocation(otherExtSym);
 				}
-				return otherRefMgr.addExternalReference(ref.getFromAddress(), ref.getOperandIndex(),
+				return otherRefMgr.addExternalReference(otherFromAddress, ref.getOperandIndex(),
 					otherExtLoc, ref.getSource(), ref.getReferenceType());
 			}
 			catch (DuplicateNameException e) {
@@ -357,11 +378,6 @@ public class DiffUtility extends SimpleDiffUtility {
 			}
 		}
 
-		Address otherFromAddress =
-			getCompatibleAddress(program, ref.getFromAddress(), otherProgram);
-		if (otherFromAddress == null) {
-			return null;
-		}
 		Address otherToAddress = getCompatibleAddress(program, ref.getToAddress(), otherProgram);
 		if (otherToAddress == null && !ref.isStackReference()) {
 			return null;

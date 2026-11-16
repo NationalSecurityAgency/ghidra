@@ -47,8 +47,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.symbol.LibrarySymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -156,17 +155,18 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		functionCheckBox.setSelected(isFunction);
 	}
 
-	protected ExternalLocation setupExternalLocation(String library, String label, Address address,
+	protected ExternalLocation setupExternalLocation(String libraryName, String label,
+			Address address,
 			SourceType sourceType, boolean isFunction)
 			throws Exception {
 		boolean success = false;
 		int transactionID =
-			program.startTransaction("Setting Up External Location " + library + "::" + label);
+			program.startTransaction("Setting Up External Location " + libraryName + "::" + label);
 		try {
 			ExternalManager externalManager = program.getExternalManager();
-			Namespace libraryScope = getLibraryScope("ADVAPI32.dll");
+			Library library = getLibrary("ADVAPI32.dll");
 			ExternalLocation extLocation =
-				externalManager.addExtLocation(libraryScope, label, address, sourceType);
+				externalManager.addExtLocation(library, label, address, sourceType);
 			assertNotNull(extLocation);
 			if (isFunction) {
 				Function function = extLocation.createFunction();
@@ -190,15 +190,14 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		return setupExternalLocation(library, label, address, sourceType, true);
 	}
 
-	protected Namespace addNamespace(String libraryName, String namespace)
+	protected Namespace addNamespace(String namespace)
 			throws InvalidInputException {
 		boolean success = false;
 		int transactionID = program.startTransaction(
-			"Added namespace " + namespace + " to library " + libraryName + ".");
+			"Added namespace " + namespace + ".");
 		try {
-			Namespace libraryScope = getLibraryScope(libraryName);
 			Namespace namespaceInLibrary = NamespaceUtils.createNamespaceHierarchy(namespace,
-				libraryScope, program, SourceType.USER_DEFINED);
+				null, program, SourceType.USER_DEFINED);
 			assertNotNull(namespaceInLibrary);
 			success = true;
 			return namespaceInLibrary;
@@ -208,10 +207,10 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		}
 	}
 
-	protected Namespace getLibraryScope(String libraryName) {
+	protected Library getLibrary(String libraryName) {
 		Symbol s = program.getSymbolTable().getLibrarySymbol(libraryName);
 		if (s instanceof LibrarySymbol) {
-			return (Namespace) s.getObject();
+			return (Library) s.getObject();
 		}
 		return null;
 	}
@@ -240,7 +239,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		flushAndWaitForTree();
 		GTreeNode selectedNode = util.getSelectedNode();
 		assertEquals(advapiNode, selectedNode);
-		assertEquals("[Global, Imports, " + libraryName + "]",
+		assertEquals("[Root, Imports, " + libraryName + "]",
 			selectedNode.getTreePath().toString());
 		return advapiNode;
 	}
@@ -268,7 +267,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 		flushAndWaitForTree();
 		GTreeNode selectedNode = util.getSelectedNode();
 		assertEquals(locationNode, selectedNode);
-		assertEquals("[Global, Imports, ADVAPI32.dll, " + externalLocation + "]",
+		assertEquals("[Root, Imports, ADVAPI32.dll, " + externalLocation + "]",
 			selectedNode.getTreePath().toString());
 		return locationNode;
 	}

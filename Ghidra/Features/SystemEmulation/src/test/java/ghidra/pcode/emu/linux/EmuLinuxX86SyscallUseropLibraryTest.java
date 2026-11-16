@@ -45,6 +45,7 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.task.TaskMonitor;
 
 public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
+	// TODO: Add tests for parity with amd64
 	public enum Syscall implements SyscallName {
 		/**
 		 * These are the linux_x86 system call numbers as of writing this test, but it doesn't

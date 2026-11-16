@@ -125,11 +125,6 @@ public class GlobalNamespace implements Namespace {
 	}
 
 	@Override
-	public boolean isExternal() {
-		return false;
-	}
-
-	@Override
 	public int hashCode() {
 		return getClass().hashCode();
 	}

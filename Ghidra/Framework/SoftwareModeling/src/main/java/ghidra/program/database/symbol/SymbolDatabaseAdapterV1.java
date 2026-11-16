@@ -16,22 +16,17 @@
 package ghidra.program.database.symbol;
 
 import java.io.IOException;
-import java.util.Set;
 
 import db.*;
-import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * SymbolDatabaseAdapter for version 1
  */
-class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
+class SymbolDatabaseAdapterV1 extends PreV6SymbolDatabaseAdapter implements RecordTranslator {
 
 /* Do not remove the following commented out schema! It shows the version 1 symbol table schema. */
 //	static final Schema SYMBOL_SCHEMA = new Schema(1, "Key", 
@@ -41,7 +36,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 //			new String[] {"Name", "Address", "Parent", "Symbol Type",
 //						  "SymbolData1", "SymbolData2", "Comment"});
 
-	private static final int SYMBOL_VERSION = 1;
+	private static final int VERSION = 1;
 
 	private static final int V1_SYMBOL_NAME_COL = 0;
 	private static final int V1_SYMBOL_ADDR_COL = 1;
@@ -61,9 +56,9 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 		if (symbolTable == null) {
 			throw new VersionException("Missing Table: " + SYMBOL_TABLE_NAME);
 		}
-		if (symbolTable.getSchema().getVersion() != SYMBOL_VERSION) {
+		if (symbolTable.getSchema().getVersion() != VERSION) {
 			int version = symbolTable.getSchema().getVersion();
-			if (version < SYMBOL_VERSION) {
+			if (version < VERSION) {
 				throw new VersionException(true);
 			}
 			throw new VersionException(VersionException.NEWER_VERSION, false);
@@ -71,45 +66,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
-	DBRecord createSymbolRecord(String name, long namespaceID, Address address,
-			SymbolType symbolType, boolean isPrimary, SourceType source) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	void removeSymbol(long symbolID) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	boolean hasSymbol(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY) {
-			return false;
-		}
-		return symbolTable.hasRecord(new LongField(key), V1_SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	Field[] getSymbolIDs(Address addr) throws IOException {
-		long key = addrMap.getKey(addr, false);
-		if (key == AddressMap.INVALID_ADDRESS_KEY) {
-			return Field.EMPTY_ARRAY;
-		}
-		return symbolTable.findRecords(new LongField(key), V1_SYMBOL_ADDR_COL);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(long symbolID) throws IOException {
-		return convertV1Record(symbolTable.getRecord(symbolID));
-	}
-
-	/**
-	 * Returns a record matching the current data base schema from the version 1 record.
-	 * @param recV1 the record matching the version 1 schema.
-	 * @return a current symbol record.
-	 */
-	private DBRecord convertV1Record(DBRecord record) {
+	public DBRecord translateRecord(DBRecord record) {
 		if (record == null) {
 			return null;
 		}
@@ -175,144 +132,18 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
+	RecordIterator getSymbols() throws IOException {
+		RecordIterator it = symbolTable.iterator();
+		return new TranslatedRecordIterator(it, this);
+	}
+
+	@Override
+	protected int getVersion() {
+		return VERSION;
+	}
+
+	@Override
 	int getSymbolCount() {
 		return symbolTable.getRecordCount();
 	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(boolean forward) throws IOException {
-		return new V1ConvertedRecordIterator(new KeyToRecordIterator(symbolTable,
-			new AddressIndexPrimaryKeyIterator(symbolTable, V1_SYMBOL_ADDR_COL, addrMap, forward)));
-	}
-
-	@Override
-	RecordIterator getSymbolsByAddress(Address startAddr, boolean forward) throws IOException {
-		return new V1ConvertedRecordIterator(
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				V1_SYMBOL_ADDR_COL, addrMap, startAddr, forward)));
-	}
-
-	@Override
-	void updateSymbolRecord(DBRecord record) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	RecordIterator getSymbols() throws IOException {
-		return new V1ConvertedRecordIterator(symbolTable.iterator());
-	}
-
-	@Override
-	RecordIterator getSymbols(Address start, Address end, boolean forward) throws IOException {
-		return new V1ConvertedRecordIterator(
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				V1_SYMBOL_ADDR_COL, addrMap, start, end, forward)));
-	}
-
-	@Override
-	RecordIterator getSymbols(AddressSetView set, boolean forward) throws IOException {
-		return new V1ConvertedRecordIterator(
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				V1_SYMBOL_ADDR_COL, addrMap, set, forward)));
-	}
-
-	@Override
-	RecordIterator getPrimarySymbols(AddressSetView set, boolean forward) throws IOException {
-		KeyToRecordIterator it =
-			new KeyToRecordIterator(symbolTable, new AddressIndexPrimaryKeyIterator(symbolTable,
-				SYMBOL_ADDR_COL, addrMap, set, forward));
-
-		return getPrimaryFilterRecordIterator(new V1ConvertedRecordIterator(it));
-	}
-
-	@Override
-	DBRecord getPrimarySymbol(Address address) throws IOException {
-		RecordIterator it = getPrimarySymbols(new AddressSet(address, address), true);
-		if (it.hasNext()) {
-			return it.next();
-		}
-		return null;
-	}
-
-	@Override
-	void moveAddress(Address oldAddr, Address newAddr) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	Set<Address> deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByMemoryAddress(Address extProgAddr) throws IOException {
-		return EmptyRecordIterator.INSTANCE; // External symbols were not supported
-	}
-
-	@Override
-	RecordIterator getExternalSymbolsByOriginalImportName(String extLabel) throws IOException {
-		return EmptyRecordIterator.INSTANCE; // External symbols were not supported
-	}
-
-	@Override
-	RecordIterator getSymbolsByNamespace(long id) throws IOException {
-		LongField field = new LongField(id);
-		return new V1ConvertedRecordIterator(
-			symbolTable.indexIterator(V1_SYMBOL_PARENT_COL, field, field, true));
-	}
-
-	@Override
-	RecordIterator getSymbolsByName(String name) throws IOException {
-		StringField field = new StringField(name);
-		return new V1ConvertedRecordIterator(
-			symbolTable.indexIterator(V1_SYMBOL_NAME_COL, field, field, true));
-	}
-
-	@Override
-	RecordIterator scanSymbolsByName(String startName) throws IOException {
-		StringField val = new StringField(startName);
-		return new V1ConvertedRecordIterator(
-			symbolTable.indexIterator(V1_SYMBOL_NAME_COL, val, null, true));
-	}
-
-	private class V1ConvertedRecordIterator extends ConvertedRecordIterator {
-
-		V1ConvertedRecordIterator(RecordIterator originalIterator) {
-			super(originalIterator, false);
-		}
-
-		@Override
-		protected DBRecord convertRecord(DBRecord record) {
-			return convertV1Record(record);
-		}
-	}
-
-	@Override
-	Table getTable() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
-		RecordIterator symbolsByName = getSymbolsByName(name);
-		return getNameAndNamespaceFilterIterator(name, id, symbolsByName);
-	}
-
-	@Override
-	DBRecord getSymbolRecord(Address address, String name, long id) throws IOException {
-		RecordIterator it = getSymbolsByName(name);
-		long addressKey = addrMap.getKey(address, false);
-		RecordIterator filtered = getNameNamespaceAddressFilterIterator(name, id, addressKey, it);
-		if (filtered.hasNext()) {
-			return filtered.next();
-		}
-		return null;
-	}
-
 }

@@ -280,11 +280,25 @@ public class ImporterDialog extends DialogComponentProvider {
 
 	private Component buildLoaderChooser() {
 		Set<Loader> orderedLoaders = new LinkedHashSet<>(loaderMap.keySet()); // maintain order
+		Map<Loader, String> uniqueNameMap = new HashMap<>();
+		for (Loader ldr : orderedLoaders) {
+			boolean needsSuffix = orderedLoaders
+					.stream()
+					.filter(e -> e.getName().equals(ldr.getName()))
+					.limit(2)
+					.count() > 1;
+			String uniqueName = ldr.getName();
+			if (needsSuffix) {
+				uniqueName += " (%s)".formatted(ldr.getClass().getSimpleName());
+			}
+			uniqueNameMap.put(ldr, uniqueName);
+
+		}
 		loaderComboBox = new GhidraComboBox<>(orderedLoaders);
 		loaderComboBox.addItemListener(e -> selectedLoaderChanged());
 		loaderComboBox.getAccessibleContext().setAccessibleName("Loader Choices");
-		loaderComboBox.setRenderer(
-			GComboBoxCellRenderer.createDefaultTextRenderer(loader -> loader.getName()));
+		loaderComboBox.setRenderer(GComboBoxCellRenderer
+				.createDefaultTextRenderer(loader -> uniqueNameMap.get(loader)));
 
 		if (!orderedLoaders.isEmpty()) {
 			loaderComboBox.setSelectedIndex(0);

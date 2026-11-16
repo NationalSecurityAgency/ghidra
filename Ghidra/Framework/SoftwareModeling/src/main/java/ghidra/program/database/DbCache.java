@@ -96,7 +96,7 @@ public class DbCache<T extends DbObject> {
 			return t;
 		}
 
-		try (Closeable c = lock.read()) {
+		try (Closeable _ = lock.read()) {
 			if (t != null && t.refreshIfNeeded()) {
 				return t;
 			}
@@ -158,7 +158,7 @@ public class DbCache<T extends DbObject> {
 		if (t != null && t.isValid()) {
 			return t;
 		}
-		try (Closeable c = lock.read()) {
+		try (Closeable _ = lock.read()) {
 			if (t != null && t.refreshIfNeeded(dbRecord)) {
 				return t;
 			}

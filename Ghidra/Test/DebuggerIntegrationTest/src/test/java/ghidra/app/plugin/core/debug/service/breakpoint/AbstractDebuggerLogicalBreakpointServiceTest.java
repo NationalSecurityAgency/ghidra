@@ -1596,7 +1596,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		createTrace();
 		traceManager.openTrace(tb.trace);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		createProgramFromTrace();
 		intoProject(program);
 		programManager.openProgram(program);
@@ -1651,7 +1651,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 
 		createTrace();
 		traceManager.openTrace(tb.trace);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		createProgramFromTrace();
 		intoProject(program);
 		programManager.openProgram(program);

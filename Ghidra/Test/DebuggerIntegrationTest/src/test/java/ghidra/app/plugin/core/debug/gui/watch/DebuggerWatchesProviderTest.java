@@ -376,13 +376,10 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		assertFalse(row.isRawValueEditable());
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		waitForWatches();
 
 		assertNoErr(row);
-		assertFalse(row.isRawValueEditable());
-
-		performAction(watchesProvider.actionEnableEdits);
 		assertEquals(expectWritable, row.isRawValueEditable());
 	}
 
@@ -410,10 +407,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		waitForWatches();
-
-		performAction(watchesProvider.actionEnableEdits);
 
 		return row;
 	}
@@ -585,8 +580,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerInt
 		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
-		performAction(watchesProvider.actionEnableEdits);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
 		return row;
 	}

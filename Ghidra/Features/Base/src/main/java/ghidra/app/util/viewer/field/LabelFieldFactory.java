@@ -259,25 +259,25 @@ public class LabelFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		StringBuilder externalLocationDetails = new StringBuilder();
-		Address addr = extLoc.getAddress();
-		if (addr != null) {
-			externalLocationDetails.append(addr.toString());
-		}
+		StringBuilder buf = new StringBuilder();
+		buf.append(symbol.getName(true));
 		String origImportedName = extLoc.getOriginalImportedName();
 		if (origImportedName != null) {
-			if (!externalLocationDetails.isEmpty()) {
-				externalLocationDetails.append(": ");
-			}
-			externalLocationDetails.append(origImportedName);
+			buf.append(" (");
+			buf.append(origImportedName);
+			buf.append(")");
 		}
-
-		if (externalLocationDetails.isEmpty()) {
-			return null;
+		buf.append(" [");
+		buf.append(extLoc.getLibraryName());
+		Address addr = extLoc.getAddress();
+		if (addr != null) {
+			buf.append("@");
+			buf.append(addr.toString());
 		}
+		buf.append("]");
 
 		FontMetrics fm = getMetrics(OptionsGui.LABELS_NON_PRIMARY.getStyle());
-		String text = externalLocationDetails.toString();
+		String text = buf.toString();
 		Color color = OptionsGui.LABELS_NON_PRIMARY.getColor();
 		AttributedString as = new AttributedString(EMPTY_ICON, text, color, fm, false, null);
 		return new TextFieldElement(as, 0, 0);

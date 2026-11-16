@@ -1145,6 +1145,9 @@ public class GTree extends JPanel implements BusyListener {
 
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
+			if (isBusy()) {
+				return null;
+			}
 			GTreeNode modelParent = getModelNode(parent);
 			if (modelParent == null) {
 				return null;
@@ -1173,6 +1176,9 @@ public class GTree extends JPanel implements BusyListener {
 
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
+			if (isBusy()) {
+				return null;
+			}
 			GTreeNode viewParent = getViewNode(parent);
 			if (viewParent == null) {
 				return null;

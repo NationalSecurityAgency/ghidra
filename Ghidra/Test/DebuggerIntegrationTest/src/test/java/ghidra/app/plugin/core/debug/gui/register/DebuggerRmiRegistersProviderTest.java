@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Objects;
 
@@ -60,10 +59,8 @@ public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersP
 		setUpRmiTarget();
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
+		assertTrue(controlService.getCurrentMode(tb.trace).isEditable());
 
 		RegisterRow row = findRegisterRow(r0);
 
@@ -78,10 +75,9 @@ public class DebuggerRmiRegistersProviderTest extends AbstractDebuggerRegistersP
 		setUpRmiTarget();
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
+		assertTrue(controlService.getCurrentMode(tb.trace).isEditable());
 
 		RegisterRow row = findRegisterRow(r0);
 		assertFalse(row.isRepresentationEditable());

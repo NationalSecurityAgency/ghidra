@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,8 +172,8 @@ public class TextLayoutGraphics extends Graphics2D {
 		textInfos.sort(pointComparator);
 
 		// Group the text into rows based on font height and y position
-		//TODO - Ideally, it would be nice if there was a good way to group text that
-		//       varied in height in a nice way
+		// Note: Ideally, it would be nice if there was a better way to group text that
+		//       varied in height 
 		int lastPos = textInfos.get(0).point.y;
 		int row = 0;
 		for (TextInfo info : textInfos) {

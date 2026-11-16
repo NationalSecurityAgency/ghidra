@@ -363,7 +363,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertEquals(ControlMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
+		assertEquals(ControlMode.TARGET, editingService.getCurrentMode(tb.trace));
 		long initSnap = target.getSnap();
 		assertEquals(initSnap, traceManager.getCurrentSnap());
 
@@ -374,7 +374,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 1, target.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RO_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, false);
 
 		rmiCx.setLastSnapshot(tb.trace, initSnap + 2);
 		rmiCx.synthActivate(thread.getObject());
@@ -383,7 +383,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 2, target.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		editingService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		editingService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 		waitForSwing();
 
 		assertEquals(initSnap + 2, target.getSnap());

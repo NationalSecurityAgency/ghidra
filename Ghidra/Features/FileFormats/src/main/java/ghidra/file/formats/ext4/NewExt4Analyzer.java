@@ -16,7 +16,6 @@
 package ghidra.file.formats.ext4;
 
 import java.io.IOException;
-import java.util.List;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -335,67 +334,67 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		}
 	}
 
-	private void processIBlock(Program program, BinaryReader reader, boolean isDirEntry2,
-			Ext4IBlock i_block, TaskMonitor monitor) throws Exception {
-
-		Ext4ExtentHeader header = i_block.getHeader();
-		if (header.getEh_depth() == 0) {//leaf node....
-			short numEntries = header.getEh_entries();
-			List<Ext4Extent> entries = i_block.getExtentEntries();
-			for (int i = 0; i < numEntries; i++) {
-				Ext4Extent extent = entries.get(i);
-				long offset = extent.getExtentStartBlockNumber() * blockSize;
-				reader.setPointerIndex(offset);
-				Address address = toAddr(program, offset);
-				if (isDirEntry2) {
-					while ((reader.getPointerIndex() - offset) < (extent.getEe_len() * blockSize)) {
-						Ext4DirEntry2 dirEnt2 = Ext4DirEntry2.read(reader);
-						DataType dataType = dirEnt2.toDataType();
-						createData(program, address, dataType);
-						String comment = "Name: " + dirEnt2.getName() + "\n";
-						if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_REGULAR_FILE) {
-							comment += "Type: REGULAR FILE" + "\n";
-						}
-						else if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY) {
-							comment += "Type: DIRECTORY" + "\n";
-						}
-						comment += "Type: INODE_0x" + Integer.toHexString(dirEnt2.getInode());
-						//TODO: add link to iNode using {@program program_name.exe@symbol_name}
-						//TODO: add parent path to comment
-						setPlateComment(program, address, comment);
-						address = address.add(dataType.getLength());
-					}
-				}
-				else {
-					throw new RuntimeException("TODO: support old style dir entry");
-				}
-			}
-		}
-		else {//interior node....
-			short numEntries = header.getEh_entries();
-			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
-			for (int i = 0; i < numEntries; i++) {
-				monitor.checkCancelled();
-
-				Ext4ExtentIdx extentIndex = entries.get(i);
-				long lo = extentIndex.getEi_leaf_lo();
-				long hi = extentIndex.getEi_leaf_hi();
-				long physicalBlockOfNextLevel = (hi << 32) | lo;
-				long offset = physicalBlockOfNextLevel * blockSize;
-
-				Address address = toAddr(program, offset);
-				setPlateComment(program, address, "TODO Ext4ExtentIdx / ext4_fsblk_t  ???");
-
-				reader.setPointerIndex(offset);
-
-				Ext4IBlock iBlock = new Ext4IBlock(reader, true);
-				DataType dataType = iBlock.toDataType();
-				createData(program, address, dataType);
-
-				processIBlock(program, reader, isDirEntry2, iBlock, monitor);
-			}
-		}
-	}
+//	private void processIBlock(Program program, BinaryReader reader, boolean isDirEntry2,
+//			Ext4IBlock i_block, TaskMonitor monitor) throws Exception {
+//
+//		Ext4ExtentHeader header = i_block.getHeader();
+//		if (header.getEh_depth() == 0) {//leaf node....
+//			short numEntries = header.getEh_entries();
+//			List<Ext4Extent> entries = i_block.getExtentEntries();
+//			for (int i = 0; i < numEntries; i++) {
+//				Ext4Extent extent = entries.get(i);
+//				long offset = extent.getExtentStartBlockNumber() * blockSize;
+//				reader.setPointerIndex(offset);
+//				Address address = toAddr(program, offset);
+//				if (isDirEntry2) {
+//					while ((reader.getPointerIndex() - offset) < (extent.getEe_len() * blockSize)) {
+//						Ext4DirEntry2 dirEnt2 = Ext4DirEntry2.read(reader);
+//						DataType dataType = dirEnt2.toDataType();
+//						createData(program, address, dataType);
+//						String comment = "Name: " + dirEnt2.getName() + "\n";
+//						if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_REGULAR_FILE) {
+//							comment += "Type: REGULAR FILE" + "\n";
+//						}
+//						else if (dirEnt2.getFile_type() == Ext4Constants.FILE_TYPE_DIRECTORY) {
+//							comment += "Type: DIRECTORY" + "\n";
+//						}
+//						comment += "Type: INODE_0x" + Integer.toHexString(dirEnt2.getInode());
+//						//TODO: add link to iNode using {@program program_name.exe@symbol_name}
+//						//TODO: add parent path to comment
+//						setPlateComment(program, address, comment);
+//						address = address.add(dataType.getLength());
+//					}
+//				}
+//				else {
+//					throw new RuntimeException("TODO: support old style dir entry");
+//				}
+//			}
+//		}
+//		else {//interior node....
+//			short numEntries = header.getEh_entries();
+//			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
+//			for (int i = 0; i < numEntries; i++) {
+//				monitor.checkCancelled();
+//
+//				Ext4ExtentIdx extentIndex = entries.get(i);
+//				long lo = extentIndex.getEi_leaf_lo();
+//				long hi = extentIndex.getEi_leaf_hi();
+//				long physicalBlockOfNextLevel = (hi << 32) | lo;
+//				long offset = physicalBlockOfNextLevel * blockSize;
+//
+//				Address address = toAddr(program, offset);
+//				setPlateComment(program, address, "TODO Ext4ExtentIdx / ext4_fsblk_t  ???");
+//
+//				reader.setPointerIndex(offset);
+//
+//				Ext4IBlock iBlock = new Ext4IBlock(reader, true);
+//				DataType dataType = iBlock.toDataType();
+//				createData(program, address, dataType);
+//
+//				processIBlock(program, reader, isDirEntry2, iBlock, monitor);
+//			}
+//		}
+//	}
 
 	private void processHashTreeDirectory(Program program, BinaryReader reader,
 			Ext4SuperBlock superBlock, Ext4Inode inode, TaskMonitor monitor) {

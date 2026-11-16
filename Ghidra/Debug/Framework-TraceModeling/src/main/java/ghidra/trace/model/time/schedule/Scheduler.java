@@ -48,7 +48,6 @@ public interface Scheduler {
 	interface RunResult {
 		/**
 		 * Get the actual schedule executed
-		 * 
 		 * <p>
 		 * It is possible for the machine to be interrupted mid-instruction. If this is the case,
 		 * the trace schedule will indicate the p-code steps taken.
@@ -59,11 +58,9 @@ public interface Scheduler {
 
 		/**
 		 * Get the error that interrupted execution
-		 * 
 		 * <p>
 		 * Ideally, this is a {@link InterruptPcodeExecutionException}, indicating a breakpoint
 		 * trapped the emulator, but it could be a number of things:
-		 * 
 		 * <ul>
 		 * <li>An instruction decode error</li>
 		 * <li>An unimplemented instruction</li>

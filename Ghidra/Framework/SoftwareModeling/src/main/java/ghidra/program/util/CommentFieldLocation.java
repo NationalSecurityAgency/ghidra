@@ -56,7 +56,6 @@ public class CommentFieldLocation extends CodeUnitLocation {
 			this.comment = new String[0];
 		}
 		this.type = type;
-
 	}
 
 	/**

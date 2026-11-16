@@ -19,12 +19,13 @@ import java.util.Date;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
@@ -37,12 +38,27 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 
 public class SnapshotRow {
 	private final TraceSnapshot snapshot;
+	private final SnapshotTableModel model;
 	private final ServiceProvider serviceProvider;
 
 	private final Trace trace;
 
-	public SnapshotRow(TraceSnapshot snapshot, ServiceProvider serviceProvider) {
+	record Cached<T>(int version, T value) {
+		boolean invalid(int version) {
+			return this.version != version;
+		}
+	}
+
+	private Cached<Address> pc;
+	private Cached<Function> function;
+	private Cached<String> moduleName;
+	private Cached<String> eventThreadName;
+	private Cached<Instruction> instruction;
+
+	public SnapshotRow(TraceSnapshot snapshot, SnapshotTableModel model,
+			ServiceProvider serviceProvider) {
 		this.snapshot = snapshot;
+		this.model = model;
 		this.serviceProvider = serviceProvider;
 		this.trace = snapshot.getTrace();
 	}
@@ -93,7 +109,47 @@ public class SnapshotRow {
 		return frame.getProgramCounter(viewSnap);
 	}
 
-	private Address getProgramCounterByRegister() {
+	record ProgramCounterInfo(TracePlatform platform, long snap, RegisterValue value) {
+		static ProgramCounterInfo choose(ProgramCounterInfo a, ProgramCounterInfo b) {
+			if (a == null) {
+				return b;
+			}
+			if (b == null) {
+				return a;
+			}
+			// Prefer negative ("view") snaps to positive. Of that, pick most recent.
+			if (Long.compareUnsigned(a.snap, b.snap) > 0) {
+				return a;
+			}
+			return b;
+		}
+
+		static ProgramCounterInfo get(TracePlatform platform, TraceThread thread, long viewSnap,
+				long snap) {
+			Register reg = platform.getLanguage().getProgramCounter();
+			TraceMemoryManager mm = thread.getTrace().getMemoryManager();
+			TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()
+					? mm.getMemoryRegisterSpace(thread, false)
+					: mm.getMemorySpace(reg.getAddressSpace(), false);
+			if (regs == null) {
+				return null;
+			}
+			if (regs.getState(platform, viewSnap, reg) == TraceMemoryState.KNOWN) {
+				RegisterValue value = regs.getValue(platform, viewSnap, reg);
+				return value == null ? null : new ProgramCounterInfo(platform, viewSnap, value);
+			}
+			RegisterValue value = regs.getValue(platform, snap, reg);
+			return value == null ? null : new ProgramCounterInfo(platform, snap, value);
+		}
+
+		Address mapToHost() {
+			AddressSpace codeSpace = platform.getAddressFactory().getDefaultAddressSpace();
+			return platform.mapGuestToHost(
+				codeSpace.getAddress(value.getUnsignedValue().longValue(), true));
+		}
+	}
+
+	private ProgramCounterInfo getProgramCounterByRegister() {
 		TraceThread thread = getEventThread();
 		if (thread == null) {
 			return null;
@@ -109,60 +165,33 @@ public class SnapshotRow {
 		 * is totally irrelevant. For now, seek out the platform with the most recent update to its
 		 * PC for the event thread. While this should be perfectly accurate, it's a bit expensive.
 		 */
-		record MostRecentValue(TracePlatform platform, long snap, RegisterValue value) {
-			static MostRecentValue choose(MostRecentValue a, MostRecentValue b) {
-				if (a == null) {
-					return b;
-				}
-				if (b == null) {
-					return a;
-				}
-				// Prefer negative ("view") snaps to positive. Of that, pick most recent.
-				if (Long.compareUnsigned(a.snap, b.snap) > 0) {
-					return a;
-				}
-				return b;
-			}
 
-			static MostRecentValue get(TracePlatform platform, TraceThread thread, long viewSnap,
-					long snap) {
-				Register reg = platform.getLanguage().getProgramCounter();
-				TraceMemoryManager mm = thread.getTrace().getMemoryManager();
-				TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()
-						? mm.getMemoryRegisterSpace(thread, false)
-						: mm.getMemorySpace(reg.getAddressSpace(), false);
-				if (regs == null) {
-					return null;
-				}
-				if (regs.getState(platform, viewSnap, reg) == TraceMemoryState.KNOWN) {
-					RegisterValue value = regs.getValue(platform, viewSnap, reg);
-					return value == null ? null : new MostRecentValue(platform, viewSnap, value);
-				}
-				RegisterValue value = regs.getValue(platform, snap, reg);
-				return value == null ? null : new MostRecentValue(platform, snap, value);
-			}
-
-			Address mapToHost() {
-				AddressSpace codeSpace = platform.getAddressFactory().getDefaultAddressSpace();
-				return platform.mapGuestToHost(
-					codeSpace.getAddress(value.getUnsignedValue().longValue(), true));
-			}
-		}
-		MostRecentValue choice = MostRecentValue.get(trace.getPlatformManager().getHostPlatform(),
-			thread, viewSnap, snap);
+		ProgramCounterInfo choice = ProgramCounterInfo
+				.get(trace.getPlatformManager().getHostPlatform(), thread, viewSnap, snap);
 		for (TraceGuestPlatform guest : trace.getPlatformManager().getGuestPlatforms()) {
-			choice =
-				MostRecentValue.choose(choice, MostRecentValue.get(guest, thread, viewSnap, snap));
+			choice = ProgramCounterInfo.choose(choice,
+				ProgramCounterInfo.get(guest, thread, viewSnap, snap));
 		}
-		return choice == null ? null : choice.mapToHost();
+		return choice;
+	}
+
+	private Address computeProgramCounter() {
+		Address byStack = getProgramCounterByStack();
+		if (byStack != null) {
+			return byStack;
+		}
+		ProgramCounterInfo info = getProgramCounterByRegister();
+		return info == null ? null : info.mapToHost();
 	}
 
 	public Address getProgramCounter() {
-		Address byStack = getProgramCounterByStack();
-		return byStack != null ? byStack : getProgramCounterByRegister();
+		if (pc == null || pc.invalid(model.cacheVersion)) {
+			pc = new Cached<>(model.cacheVersion, computeProgramCounter());
+		}
+		return pc.value();
 	}
 
-	public Function getFunction() {
+	private Function computeFunction() {
 		Address pc = getProgramCounter();
 		if (pc == null) {
 			return null;
@@ -171,12 +200,26 @@ public class SnapshotRow {
 			serviceProvider);
 	}
 
-	public String getModuleName() {
+	public Function getFunction() {
+		if (function == null || function.invalid(model.cacheVersion)) {
+			function = new Cached<>(model.cacheVersion, computeFunction());
+		}
+		return function.value();
+	}
+
+	private String computeModuleName() {
 		Address pc = getProgramCounter();
 		if (pc == null) {
 			return null;
 		}
 		return DebuggerStaticMappingUtils.getModuleName(pc, trace, getTime().getSnap());
+	}
+
+	public String getModuleName() {
+		if (moduleName == null || moduleName.invalid(model.cacheVersion)) {
+			moduleName = new Cached<>(model.cacheVersion, computeModuleName());
+		}
+		return moduleName.value();
 	}
 
 	private TraceThread getEventThread() {
@@ -187,9 +230,16 @@ public class SnapshotRow {
 		return getTime().getLastThread(trace);
 	}
 
-	public String getEventThreadName() {
+	private String computeEventThreadName() {
 		TraceThread thread = getEventThread();
 		return thread == null ? "" : thread.getName(getTime().getSnap());
+	}
+
+	public String getEventThreadName() {
+		if (eventThreadName == null || eventThreadName.invalid(model.cacheVersion)) {
+			eventThreadName = new Cached<>(model.cacheVersion, computeEventThreadName());
+		}
+		return eventThreadName.value();
 	}
 
 	public TraceSchedule getSchedule() {
@@ -201,8 +251,66 @@ public class SnapshotRow {
 	}
 
 	public void setDescription(String description) {
-		try (Transaction tx = trace.openTransaction("Modify snapshot description")) {
+		try (Transaction _ = trace.openTransaction("Modify snapshot description")) {
 			snapshot.setDescription(description);
 		}
+	}
+
+	private Instruction computeInstruction() {
+		// I need the platform, no matter where the counter comes from
+		ProgramCounterInfo info = getProgramCounterByRegister();
+		if (info == null) {
+			return null;
+		}
+		Address pc = getProgramCounterByStack();
+		if (pc == null) {
+			pc = info.mapToHost();
+		}
+
+		TracePlatform platform = info.platform();
+		Language language = platform.getLanguage();
+		Register ctxreg = language.getContextBaseRegister();
+		long snap = getSnap();
+		MemBuffer buf = trace.getMemoryManager().getBufferAt(snap, pc);
+		ProcessorContext context = new ProcessorContextImpl(language);
+		if (ctxreg != null && ctxreg != Register.NO_CONTEXT) {
+			TraceMemorySpace regs =
+				trace.getMemoryManager().getMemoryRegisterSpace(getEventThread(), false);
+			RegisterValue ctxval;
+			if (regs == null) {
+				ProgramContextImpl defaultContext = new ProgramContextImpl(language);
+				language.applyContextSettings(defaultContext);
+				ctxval = defaultContext.getDefaultDisassemblyContext();
+			}
+			else {
+				ctxval = regs.getValue(platform, snap, ctxreg);
+			}
+			try {
+				context.setRegisterValue(ctxval);
+			}
+			catch (ContextChangeException e) {
+				throw new AssertionError(e);
+			}
+		}
+		InstructionPrototype prototype;
+		try {
+			prototype = language.parse(buf, context, false);
+		}
+		catch (InsufficientBytesException | UnknownInstructionException e) {
+			return null;
+		}
+		try {
+			return new PseudoInstruction(pc, prototype, buf, context);
+		}
+		catch (AddressOverflowException e) {
+			return null;
+		}
+	}
+
+	public Instruction getInstruction() {
+		if (instruction == null || instruction.invalid(model.cacheVersion)) {
+			instruction = new Cached<>(model.cacheVersion, computeInstruction());
+		}
+		return instruction.value();
 	}
 }

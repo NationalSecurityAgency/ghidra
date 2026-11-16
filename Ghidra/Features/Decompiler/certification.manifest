@@ -51,6 +51,7 @@ src/decompile/datatests/indproto.xml||GHIDRA||||END|
 src/decompile/datatests/injectoverride.xml||GHIDRA||||END|
 src/decompile/datatests/inline.xml||GHIDRA||||END|
 src/decompile/datatests/inlinetarget.xml||GHIDRA||||END|
+src/decompile/datatests/laneleft.xml||GHIDRA||||END|
 src/decompile/datatests/longdouble.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
 src/decompile/datatests/lzcount.xml||GHIDRA||||END|
@@ -85,6 +86,7 @@ src/decompile/datatests/revisit.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackcorner.xml||GHIDRA||||END|
+src/decompile/datatests/stackmatrix.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
 src/decompile/datatests/stackspill.xml||GHIDRA||||END|
 src/decompile/datatests/stackstring.xml||GHIDRA||||END|
@@ -101,6 +103,8 @@ src/decompile/datatests/union_datatype.xml||GHIDRA||||END|
 src/decompile/datatests/varcross.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
 src/decompile/datatests/wraprange.xml||GHIDRA||||END|
+src/decompile/datatests/zeroload.xml||GHIDRA||||END|
+src/decompile/datatests/zerotop.xml||GHIDRA||||END|
 src/decompile/zlib/README.txt||GHIDRA||||END|
 src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,20 +27,20 @@ public class NamespaceWrappedOption implements CustomOption {
 	private static final String SHOW_NON_LOCAL_NAMESPACE = "showNonLocalNamespace";
 	private static final String USE_LOCAL_PREFIX_OVERRIDE = "useLocalPrefixOverride";
 	private static final String LOCAL_PREFIX = "localPrefix";
-	private static final String SHOW_LIBRARY_IN_NAMESPACE = "showLibraryInNamespace";
+	private static final String SHOW_LIBRARY = "showLibrary";
 
 	private static boolean DEFAULT_SHOW_LOCAL_NAMESPACE = false;
 	private static boolean DEFAULT_SHOW_NONLOCAL_NAMESPACE = true;
 	private static boolean DEFAULT_USE_LOCAL_PREFIX_OVERRIDE = false;
 	private static String DEFAULT_LOCAL_PREFIX_TEXT = "local::";
-	private static boolean DEFAULT_SHOW_LIBRARY_IN_NAMESPACE = true;
+	private static boolean DEFAULT_SHOW_LIBRARY = true;
 
 	// init with default values
 	private boolean showLocalNamespace = DEFAULT_SHOW_LOCAL_NAMESPACE;
 	private boolean showNonLocalNamespace = DEFAULT_SHOW_NONLOCAL_NAMESPACE;
 	private boolean useLocalPrefixOverride = DEFAULT_USE_LOCAL_PREFIX_OVERRIDE;
 	private String localPrefixText = DEFAULT_LOCAL_PREFIX_TEXT;
-	private boolean showLibraryInNamespace = DEFAULT_SHOW_LIBRARY_IN_NAMESPACE;
+	private boolean showLibrary = DEFAULT_SHOW_LIBRARY;
 
 	public NamespaceWrappedOption() {
 		// required for persistence
@@ -78,12 +78,12 @@ public class NamespaceWrappedOption implements CustomOption {
 		this.localPrefixText = localPrefixText;
 	}
 
-	public boolean isShowLibraryInNamespace() {
-		return showLibraryInNamespace;
+	public boolean isShowLibrary() {
+		return showLibrary;
 	}
 
-	public void setShowLibraryInNamespace(boolean showLibraryInNamespace) {
-		this.showLibraryInNamespace = showLibraryInNamespace;
+	public void setShowLibrary(boolean showLibrary) {
+		this.showLibrary = showLibrary;
 	}
 
 	@Override
@@ -101,7 +101,7 @@ public class NamespaceWrappedOption implements CustomOption {
 			showNonLocalNamespace == otherOption.showNonLocalNamespace &&
 			useLocalPrefixOverride == otherOption.useLocalPrefixOverride &&
 			localPrefixText.equals(otherOption.localPrefixText) &&
-			showLibraryInNamespace == otherOption.showLibraryInNamespace;
+			showLibrary == otherOption.showLibrary;
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class NamespaceWrappedOption implements CustomOption {
 		result = prime * result + (showNonLocalNamespace ? 1 : 0);
 		result = prime * result + (useLocalPrefixOverride ? 1 : 0);
 		result = prime * result + (localPrefixText == null ? 0 : localPrefixText.hashCode());
-		result = prime * result + (showLibraryInNamespace ? 1 : 0);
+		result = prime * result + (showLibrary ? 1 : 0);
 		return result;
 	}
 
@@ -127,8 +127,8 @@ public class NamespaceWrappedOption implements CustomOption {
 		useLocalPrefixOverride =
 			properties.getBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
 		localPrefixText = properties.getString(LOCAL_PREFIX, localPrefixText);
-		showLibraryInNamespace =
-			properties.getBoolean(SHOW_LIBRARY_IN_NAMESPACE, DEFAULT_SHOW_LIBRARY_IN_NAMESPACE);
+		showLibrary =
+			properties.getBoolean(SHOW_LIBRARY, DEFAULT_SHOW_LIBRARY);
 	}
 
 	@Override
@@ -137,6 +137,6 @@ public class NamespaceWrappedOption implements CustomOption {
 		properties.putBoolean(SHOW_NON_LOCAL_NAMESPACE, showNonLocalNamespace);
 		properties.putBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
 		properties.putString(LOCAL_PREFIX, localPrefixText);
-		properties.putBoolean(SHOW_LIBRARY_IN_NAMESPACE, showLibraryInNamespace);
+		properties.putBoolean(SHOW_LIBRARY, showLibrary);
 	}
 }

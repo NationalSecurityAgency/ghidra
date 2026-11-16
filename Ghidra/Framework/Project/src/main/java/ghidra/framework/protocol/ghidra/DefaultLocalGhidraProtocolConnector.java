@@ -66,6 +66,13 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	}
 
 	@Override
+	protected String parseRepositoryName() {
+		// The URL path is a local storage path (possibly UNC), not a server repository path.
+		// The project name is obtained from the locator after superclass construction.
+		return null;
+	}
+
+	@Override
 	public String getRepositoryName() {
 		return localStorageLocator.getName();
 	}
@@ -73,7 +80,9 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	@Override
 	protected String parseItemPath() throws MalformedURLException {
 
-		String path = url.getQuery();
+		// Content names must be decoded before project lookup or folder creation.
+		// URI decoding preserves literal '+' characters and decodes percent escapes only once.
+		String path = uri.getQuery();
 
 		initFolderItemPath(path);
 

@@ -23,14 +23,11 @@ import java.awt.dnd.DnDConstants;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.swing.tree.TreePath;
-
 import org.junit.*;
 
 import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
-import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import docking.widgets.tree.support.GTreeNodeTransferable;
@@ -39,7 +36,6 @@ import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.plugin.core.symboltree.actions.NavigateOnIncomingAction;
 import ghidra.app.plugin.core.symboltree.nodes.*;
-import ghidra.app.util.viewer.field.LabelFieldFactory;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
@@ -98,7 +94,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDropSiteOK() throws Exception {
 		// verify that a function is not a valid drop site
-		GTreeNode nsNode = rootNode.getChild(5);
+		GTreeNode nsNode = rootNode.getChild("Namespaces");
 		util.createObject(nsNode, "MyNamespace", createNamespaceAction);
 		GTreeNode fNode = rootNode.getChild(2);
 		util.expandNode(fNode);
@@ -117,7 +113,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDropSiteOK2() throws Exception {
 		// verify that a SymbolCategory is not a valid drop site
-		GTreeNode nsNode = rootNode.getChild(5);
+		GTreeNode nsNode = rootNode.getChild("Namespaces");
 		util.createObject(nsNode, "MyNamespace", createNamespaceAction);
 		GTreeNode fNode = rootNode.getChild(2);
 		util.expandNode(fNode);
@@ -138,7 +134,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDragDrop() throws Exception {
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
 		assertTrue(nsParentNode instanceof SymbolCategoryNode);
 
 		SymbolCategory namespaceCategory = ((SymbolCategoryNode) nsParentNode).getSymbolCategory();
@@ -160,7 +156,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		doDrag(nsNode, DnDConstants.ACTION_MOVE, gNode, sNode);
 
 		util.waitForTree();
-		nsParentNode = rootNode.getChild(5);
+		nsParentNode = rootNode.getChild("Namespaces");
 		nsNode = nsParentNode.getChild(index);
 		util.expandNode(nsNode);
 		assertEquals(2, nsNode.getChildCount());
@@ -187,58 +183,6 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testDragDropLabelOnClass() throws Exception {
-		final ToggleDockingAction navigateIncomingAction =
-			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
-
-		runSwing(() -> navigateIncomingAction.setSelected(true));
-		GTreeNode cNode = rootNode.getChild(4);
-		GTreeNode nsNode = util.createObject(cNode, "MyClass", createClassAction);
-		assertNotNull(nsNode);
-		int index = nsNode.getIndexInParent();
-		GTreeNode fNode = rootNode.getChild(2);
-		util.expandNode(fNode);
-
-		GTreeNode gNode = fNode.getChild(1);
-		GTreeNode sNode = fNode.getChild(2);
-		String gNodeName = gNode.getName();
-		String sNodeName = sNode.getName();
-		util.selectNodes(new GTreeNode[] { gNode, sNode });
-		doDrag(nsNode, DnDConstants.ACTION_MOVE, gNode, sNode);
-
-		util.waitForTree();
-		cNode = rootNode.getChild(4);
-		nsNode = cNode.getChild(index);
-		Symbol classSymbol = ((SymbolNode) nsNode).getSymbol();
-
-		util.expandNode(nsNode);
-		assertEquals(2, nsNode.getChildCount());
-		gNode = nsNode.getChild(0);
-		assertEquals(gNodeName, gNode.getName());
-		sNode = nsNode.getChild(1);
-		assertEquals(sNodeName, sNode.getName());
-
-		Symbol symbol = getUniqueSymbol(program, "entry");
-		assertTrue(cbPlugin.goToField(symbol.getAddress(), LabelFieldFactory.FIELD_NAME, 0, 0));
-
-		Thread.sleep(1000);
-		cbPlugin.updateNow();
-
-		GTree tree = util.getTree();
-		TreePath path = tree.getSelectionPath();
-		assertNotNull(path);
-		GTreeNode eNode = (GTreeNode) path.getLastPathComponent();
-		util.selectNodes(new GTreeNode[] { eNode });
-
-		doDrag(nsNode, DnDConstants.ACTION_MOVE, eNode);
-
-		Symbol s = ((SymbolNode) eNode).getSymbol();
-
-		// parent namespace should be MyClass.
-		assertEquals(classSymbol.getObject(), s.getParentNamespace());
-	}
-
-	@Test
 	public void testSortNamespaces() throws Exception {
 		SymbolTable symTable = program.getSymbolTable();
 		String[] names =
@@ -260,7 +204,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		List<Symbol> symbolList = new ArrayList<>();
 
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
 		util.expandNode(nsParentNode);
 		for (int i = 0; i < nsParentNode.getChildCount(); i++) {
 			GTreeNode node = nsParentNode.getChild(i);
@@ -311,8 +255,8 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		program.flushEvents();
 		util.waitForTree();
 
-		GTreeNode cnode = rootNode.getChild(4);
-		List<GTreeNode> children = cnode.getChildren();
+		GTreeNode nsNode = rootNode.getChild("Namespaces");
+		List<GTreeNode> children = nsNode.getChildren();
 
 		//@formatter:off
 		List<String> symbolNames = 
@@ -378,39 +322,31 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		runSwing(() -> util.getTree().stopEditing());
 
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
 		util.expandNode(nsParentNode);
 		assertEquals(1, nsParentNode.getChildCount());
 	}
 
 	@Test
-	public void testCreateClassAtClassesNode() throws Exception {
-		GTreeNode classesRoot = rootNode.getChild("Classes");
-		util.selectNode(classesRoot);
+	public void testCreateClassOnNamespacesNode() throws Exception {
+		GTreeNode namespacesNode = rootNode.getChild("Namespaces");
+		util.selectNode(namespacesNode);
 		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
 		performAction(createClassAction, util.getSymbolTreeContext(), true);
 		program.flushEvents();
 		util.waitForTree();
 
 		runSwing(() -> util.getTree().stopEditing());
-		GTreeNode cParentNode = rootNode.getChild(4);
-		util.expandNode(cParentNode);
-		assertEquals(1, cParentNode.getChildCount());
-	}
-
-	@Test
-	public void testActionsEnabledOnClassNode() throws Exception {
-		GTreeNode cNode = rootNode.getChild(4);
-		util.selectNode(cNode);
-		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
-		assertFalse(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
+		namespacesNode = rootNode.getChild("Namespaces");
+		util.expandNode(namespacesNode);
+		assertEquals(1, namespacesNode.getChildCount());
 	}
 
 	@Test
 	public void testActionsEnabledOnNamespaceNode() throws Exception {
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsParentNode = rootNode.getChild("Namespaces");
 		util.selectNode(nsParentNode);
-		assertFalse(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
+		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
 		assertTrue(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 }

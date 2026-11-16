@@ -20,9 +20,8 @@ import javax.swing.tree.TreePath;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
-import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
-import ghidra.app.plugin.core.symboltree.nodes.ClassCategoryNode;
+import ghidra.app.plugin.core.symboltree.*;
+import ghidra.app.plugin.core.symboltree.nodes.NamespaceCategoryNode;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -33,12 +32,21 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CreateClassAction extends SymbolTreeContextAction {
 
+	private SymbolTreePlugin plugin;
+
 	public CreateClassAction(SymbolTreePlugin plugin, String group, String subGroup) {
 		super("Create Class", plugin.getName());
+		this.plugin = plugin;
 		MenuData menuData = new MenuData(new String[] { "Create Class" }, group);
 		menuData.setMenuSubGroup(subGroup);
 		setPopupMenuData(menuData);
 		setEnabled(false);
+	}
+
+	@Override
+	public void dispose() {
+		this.plugin = null;
+		super.dispose();
 	}
 
 	@Override
@@ -61,7 +69,7 @@ public class CreateClassAction extends SymbolTreeContextAction {
 		}
 
 		Object object = selectionPaths[0].getLastPathComponent();
-		if (object instanceof ClassCategoryNode) {
+		if (object instanceof NamespaceCategoryNode) {
 			return true;
 		}
 		if (!(object instanceof SymbolNode symbolNode)) {
@@ -69,16 +77,12 @@ public class CreateClassAction extends SymbolTreeContextAction {
 		}
 
 		Symbol symbol = symbolNode.getSymbol();
-		SymbolType symbolType = symbol.getSymbolType();
-		if (symbolType == SymbolType.NAMESPACE) {
-			Namespace parent = (Namespace) symbol.getObject();
-			if (parent == null) {
-				return false; // the symbol has been deleted, but the tree has not updated
-			}
-			return SymbolType.CLASS.isValidParent(context.getProgram(), parent,
-				Address.NO_ADDRESS, parent.isExternal());
+		Object parent = symbol.getObject();
+		if (parent instanceof Namespace namespace) {
+			return SymbolType.CLASS.isValidParent(context.getProgram(), namespace,
+				Address.NO_ADDRESS);
 		}
-		return (symbolType == SymbolType.CLASS || symbolType == SymbolType.LIBRARY);
+		return false;
 	}
 
 	private void createNewClass(SymbolTreeActionContext context) {
@@ -95,14 +99,14 @@ public class CreateClassAction extends SymbolTreeContextAction {
 			}
 		}
 
-		final String newClassName = createClass(program, parent);
+		String newClassName = createClass(program, parent);
 		if (newClassName == null) {
 			// error occurred
 			return;
 		}
 
-		program.flushEvents();
-		context.getSymbolTree().startEditing(node, newClassName);
+		SymbolTreeProvider provider = plugin.getProvider();
+		provider.editNode(node, newClassName);
 	}
 
 	private String createClass(Program program, Namespace parent) {

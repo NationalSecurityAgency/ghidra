@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4Extent implements StructConverter {
+	private static final int EE_LEN_MAX_WRITTEN = 0x8000;
 
 	private int ee_block;
 	private short ee_len;
@@ -39,29 +40,28 @@ public class Ext4Extent implements StructConverter {
 		ee_start_lo = reader.readNextInt();
 	}
 	
-	public int getEe_block() {
-		return ee_block;
-	}
-
-	public short getEe_len() {
-		return ee_len;
-	}
-
-	public short getEe_start_hi() {
-		return ee_start_hi;
-	}
-
-	public int getEe_start_lo() {
-		return ee_start_lo;
-	}
-
 	/**
 	 * Returns the number of blocks this extent contains.
+	 * <p>
+	 * Max 32768 (0x8000) if written, 32767 (0x7fff) if unwritten.
 	 * 
 	 * @return number of blocks in this extent
 	 */
 	public int getExtentBlockCount() {
-		return Short.toUnsignedInt(ee_len);
+		int rawLen = Short.toUnsignedInt(ee_len);
+
+		// not a simple written/unwritten bit flag, 0x8000 is considered part of the 'written' range  
+		return rawLen <= EE_LEN_MAX_WRITTEN
+				? rawLen
+				: rawLen - EE_LEN_MAX_WRITTEN;
+	}
+
+	/**
+	 * {@return boolean true if this extent is unwritten, false if written.}
+	 */
+	public boolean isUnWritten() {
+		int rawLen = Short.toUnsignedInt(ee_len);
+		return rawLen > EE_LEN_MAX_WRITTEN;
 	}
 
 	/**

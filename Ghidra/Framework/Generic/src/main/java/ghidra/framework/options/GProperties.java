@@ -20,6 +20,7 @@ import java.awt.Font;
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.*;
 import java.util.*;
 
@@ -36,7 +37,6 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.xml.XmlUtilities;
-import utilities.util.FileUtilities;
 
 /**
  * Class for saving name/value pairs as XML or Json.  Classes that want to be
@@ -509,7 +509,7 @@ public class GProperties {
 	public void saveToXmlFile(File file) throws IOException {
 		Element saveToXml = saveToXml();
 		byte[] bytes = XmlUtilities.xmlToByteArray(saveToXml);
-		FileUtilities.writeBytes(file, bytes);
+		Files.write(file.toPath(), bytes);
 	}
 
 	/**

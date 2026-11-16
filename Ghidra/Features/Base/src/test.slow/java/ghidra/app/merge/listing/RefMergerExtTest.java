@@ -323,16 +323,16 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Label1" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Label1" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Label2" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Label2" },
 						addr(program, "77db1130"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Foo" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Foo" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Bar" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Bar" },
 						addr(program, "77db1130"), SourceType.ANALYSIS);
 				}
 				catch (Exception e) {
@@ -346,10 +346,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
 
-					ExternalLocation extLoc1 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label1" });
-					ExternalLocation extLoc2 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label2" });
+					ExternalLocation extLoc1 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label1" });
+					ExternalLocation extLoc2 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label2" });
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x1001000"), 0);
 					assertEquals(1, refs.length);
@@ -380,10 +380,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
 
-					ExternalLocation extLoc1 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Foo" });
-					ExternalLocation extLoc2 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Bar" });
+					ExternalLocation extLoc1 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Foo" });
+					ExternalLocation extLoc2 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Bar" });
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x1001000"), 0);
 					assertEquals(1, refs.length);
@@ -449,16 +449,16 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Label1" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Label1" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Label2" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Label2" },
 						addr(program, "77db1130"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Foo" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Foo" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
 
-					createExternalLabel(program, new String[] { "Library", "Namespace", "Bar" },
+					createExternalLabel(program, "Library", new String[] { "Namespace", "Bar" },
 						addr(program, "77db1130"), SourceType.ANALYSIS);
 				}
 				catch (Exception e) {
@@ -472,10 +472,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
 
-					ExternalLocation extLoc1 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label1" });
-					ExternalLocation extLoc2 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label2" });
+					ExternalLocation extLoc1 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label1" });
+					ExternalLocation extLoc2 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label2" });
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x1001000"), 0);
 					assertEquals(1, refs.length);
@@ -506,10 +506,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
 
-					ExternalLocation extLoc1 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Foo" });
-					ExternalLocation extLoc2 = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Bar" });
+					ExternalLocation extLoc1 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Foo" });
+					ExternalLocation extLoc2 = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Bar" });
 
 					refs = refMgr.getReferencesFrom(addr(program, "0x1001000"), 0);
 					assertEquals(1, refs.length);
@@ -562,7 +562,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					ExternalLocation extLoc = createExternalLabel(program,
-						new String[] { "Library", "Namespace", "Label1" },
+						"Library", new String[] { "Namespace", "Label1" },
 						addr(program, "77db1020"), SourceType.ANALYSIS);
 
 					ReferenceManager refMgr = program.getReferenceManager();
@@ -586,8 +586,8 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 
-					ExternalLocation extLoc = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label1" });
+					ExternalLocation extLoc = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label1" });
 
 					refMgr.addExternalReference(addr(program, "0x1001000"), 0, extLoc,
 						extLoc.getSource(), RefType.COMPUTED_CALL);
@@ -602,8 +602,8 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 
-					ExternalLocation extLoc = getExternalLocation(program,
-						new String[] { "Library", "Namespace", "Label1" });
+					ExternalLocation extLoc = getExternalLocation(program, "Library",
+						new String[] { "Namespace", "Label1" });
 
 					refMgr.addExternalReference(addr(program, "0x1001000"), 0, extLoc,
 						extLoc.getSource(), RefType.COMPUTED_CALL_TERMINATOR);
@@ -1090,10 +1090,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				}
 
 				ExternalLocation externalLocation1 =
-					getExternalLocation(program, new String[] { "USER32.DLL", "printf" });
+					getExternalLocation(program, "USER32.DLL", new String[] { "printf" });
 				assertNotNull(externalLocation1);
 				ExternalLocation externalLocation2 =
-					getExternalLocation(program, new String[] { "ADVAPI32.DLL", "EXT_77db2233" });
+					getExternalLocation(program, "ADVAPI32.DLL", new String[] { "EXT_77db2233" });
 				assertNotNull(externalLocation2);
 			}
 
@@ -1117,7 +1117,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 				ExternalLocation externalLocation2 =
-					getExternalLocation(program, new String[] { "USER32.DLL", "getName" });
+					getExternalLocation(program, "USER32.DLL", new String[] { "getName" });
 				assertNotNull(externalLocation2);
 			}
 		});
@@ -1127,10 +1127,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ExternalLocation externalLocation1 =
-			getExternalLocation(resultProgram, new String[] { "ADVAPI32.DLL", "EXT_77db2233" });
+			getExternalLocation(resultProgram, "ADVAPI32.DLL", new String[] { "EXT_77db2233" });
 		assertNotNull(externalLocation1);
 		ExternalLocation externalLocation2 =
-			getExternalLocation(resultProgram, new String[] { "USER32.DLL", "getName" });
+			getExternalLocation(resultProgram, "USER32.DLL", new String[] { "getName" });
 		assertNotNull(externalLocation2);
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -1192,10 +1192,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 				}
 
 				ExternalLocation externalLocation1 =
-					getExternalLocation(program, new String[] { "USER32.DLL", "printf" });
+					getExternalLocation(program, "USER32.DLL", new String[] { "printf" });
 				assertNotNull(externalLocation1);
 				ExternalLocation externalLocation2 =
-					getExternalLocation(program, new String[] { "ADVAPI32.DLL", "EXT_77db2233" });
+					getExternalLocation(program, "ADVAPI32.DLL", new String[] { "EXT_77db2233" });
 				assertNotNull(externalLocation2);
 			}
 
@@ -1219,7 +1219,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 				ExternalLocation externalLocation2 =
-					getExternalLocation(program, new String[] { "USER32.DLL", "getName" });
+					getExternalLocation(program, "USER32.DLL", new String[] { "getName" });
 				assertNotNull(externalLocation2);
 			}
 		});
@@ -1229,10 +1229,10 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ExternalLocation externalLocation1 =
-			getExternalLocation(resultProgram, new String[] { "ADVAPI32.DLL", "EXT_77db2233" });
+			getExternalLocation(resultProgram, "ADVAPI32.DLL", new String[] { "EXT_77db2233" });
 		assertNotNull(externalLocation1);
 		ExternalLocation externalLocation2 =
-			getExternalLocation(resultProgram, new String[] { "USER32.DLL", "getName" });
+			getExternalLocation(resultProgram, "USER32.DLL", new String[] { "getName" });
 		assertNotNull(externalLocation2);
 
 		ReferenceManager refMgr = resultProgram.getReferenceManager();

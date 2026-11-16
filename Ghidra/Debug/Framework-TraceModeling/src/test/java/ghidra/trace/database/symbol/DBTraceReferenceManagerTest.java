@@ -29,9 +29,13 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.symbol.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.target.path.KeyPath;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -190,7 +194,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		DBTraceReference memRef;
 		DBTraceReference offRef;
 		DBTraceReference sftRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef = manager.addReference(
 				new DummyTraceReference(0, b.addr(0x4000), b.range(0x5000, 0x5003)));
 			offRef = manager.addReference(
@@ -220,7 +224,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testAddMemoryReference() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 		}
 		DBTraceReferenceSpace space =
@@ -232,7 +236,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testAddOffsetReference() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5001), false, 20);
 		}
 		DBTraceReferenceSpace space =
@@ -244,7 +248,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testAddShiftedReference() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5002), 1);
 		}
 		DBTraceReferenceSpace space =
@@ -256,7 +260,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testAddRegisterReference() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addRegisterReference(0, b.addr(0x4003), "r5");
 		}
 		DBTraceReferenceSpace space =
@@ -268,7 +272,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testAddStackReference() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addStackReference(0, b.addr(0x4004), 0x20);
 		}
 		DBTraceReferenceSpace space =
@@ -285,7 +289,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		DBTraceReference sftRef;
 		DBTraceReference regRef;
 		DBTraceReference stkRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			offRef = b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5001), false, 20);
 			sftRef = b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5002), 1);
@@ -324,7 +328,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		DBTraceReference sftRef;
 		DBTraceReference regRef;
 		DBTraceReference stkRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003), 3);
 			offRef = b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 			sftRef = b.addShiftedReference(0, b.addr(0x4000), b.addr(0x5002), 1);
@@ -349,7 +353,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		DBTraceReference diffFrom;
 		DBTraceReference diffTo;
 		DBTraceReference diffOpIndex;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			at0 = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003), 0);
 			b.addMemoryReference(15, b.addr(0x4000), b.range(0x5000, 0x5003), 0); // Lost
 			at10 = b.addMemoryReference(10, b.addr(0x4000), b.range(0x5000, 0x5003), 0);
@@ -377,7 +381,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		// TODO: See how ReferenceDBManager select new primary on deletion
 		DBTraceReference memRef;
 		DBTraceReference offRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			offRef = b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 
@@ -399,7 +403,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	@Test
 	public void testGetFlowReferencesFrom() {
 		TraceReference flowRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			flowRef = manager.addMemoryReference(Lifespan.nowOn(0), b.addr(0x4000), b.addr(0x4001),
 				RefType.FLOW, SourceType.DEFAULT, -1);
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
@@ -413,7 +417,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	@Test
 	public void testClearReferencesFrom() {
 		DBTraceReference keptRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003), 3);
 			b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 			b.addShiftedReference(0, b.addr(0x4000), b.addr(0x5002), 1);
@@ -425,7 +429,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(5, manager.getReferencesFrom(0, b.addr(0x4000)).size());
 		assertEquals(1, manager.getReferencesFrom(0, b.addr(0x4001)).size());
 
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			manager.clearReferencesFrom(Lifespan.nowOn(10), b.range(0x3000, 0x4000));
 		}
 
@@ -434,7 +438,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(Lifespan.span(0, 9),
 			manager.getReferencesFrom(0, b.addr(0x4000)).iterator().next().getLifespan());
 
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			manager.clearReferencesFrom(Lifespan.nowOn(0), b.range(0x3000, 0x4000));
 		}
 
@@ -450,7 +454,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		DBTraceReference memRef;
 		DBTraceReference offRef;
 		DBTraceReference sftRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			offRef = b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5000), false, 20);
 			sftRef = b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5000), 1);
@@ -465,11 +469,31 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	}
 
 	@Test
+	public void testGetReferencesToRegSpace() {
+		DBTraceReference memRegRef;
+		AddressRange r0;
+		try (Transaction _ = b.startTransaction()) {
+			b.createRootObject();
+			TraceThread thread = b.getOrAddThread("Targets[1].Threads[1]", 0);
+			b.trace.getObjectManager()
+					.createObject(KeyPath.parse("Targets[1].Threads[1].Registers"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			DBTraceMemorySpace space =
+				b.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			r0 = b.host.getConventionalRegisterRange(space.getAddressSpace(), b.reg("r0"));
+			memRegRef = b.addMemoryReference(0, b.addr(0x4000), r0);
+		}
+
+		assertEquals(Set.of(memRegRef),
+			Set.copyOf(manager.getReferencesTo(0, r0.getMinAddress())));
+	}
+
+	@Test
 	public void tesGetReferencesToRange() {
 		DBTraceReference memRef1;
 		DBTraceReference memRef2;
 		DBTraceReference memRef3;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			memRef1 = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			memRef2 = b.addMemoryReference(5, b.addr(0x4000), b.range(0x5002, 0x5005));
 			memRef3 = b.addMemoryReference(0, b.addr(0x4000), b.range(0x5004, 0x5007));
@@ -486,7 +510,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	@Test
 	public void testClearReferencesTo() {
 		DBTraceReference keptRef;
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003), 3);
 			b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5000), false, 20);
 			b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5000), 1);
@@ -496,7 +520,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
 		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
 
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			manager.clearReferencesTo(Lifespan.nowOn(10), b.range(0x4000, 0x5000));
 		}
 
@@ -505,7 +529,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(Lifespan.span(0, 9),
 			manager.getReferencesTo(0, b.addr(0x5000)).iterator().next().getLifespan());
 
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			manager.clearReferencesTo(Lifespan.nowOn(0), b.range(0x4000, 0x5000));
 		}
 
@@ -518,7 +542,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testGetReferenceSourcesAndDestinations() {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5000));
 			b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5001), false, 20);
 			b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5002), 1);
@@ -540,7 +564,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(0, manager.getReferenceCountFrom(0, b.addr(0x4000)));
 		assertEquals(0, manager.getReferenceCountTo(0, b.addr(0x5000)));
 
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 			b.addShiftedReference(0, b.addr(0x4000), b.addr(0x5002), 1);
@@ -558,7 +582,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testSaveAndLoad() throws CancelledException, IOException, VersionException {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 			b.addShiftedReference(0, b.addr(0x4000), b.addr(0x5002), 1);
@@ -595,7 +619,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testUndo() throws IOException {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.range(0x5000, 0x5003));
 			b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
 			b.addShiftedReference(0, b.addr(0x4000), b.addr(0x5002), 1);
@@ -614,7 +638,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 
 	@Test
 	public void testOverlaySpaces() throws Exception {
-		try (Transaction tx = b.startTransaction()) {
+		try (Transaction _ = b.startTransaction()) {
 			AddressSpace os = b.trace.getMemoryManager()
 					.createOverlayAddressSpace("test",
 						b.trace.getBaseAddressFactory().getDefaultAddressSpace());

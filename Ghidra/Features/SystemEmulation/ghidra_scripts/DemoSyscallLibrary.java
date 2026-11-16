@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import ghidra.app.script.GhidraScript;
@@ -56,7 +57,7 @@ import ghidra.program.model.listing.Program;
  * it will borrow many conventions from Linux-amd64.
  */
 public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]> {
-	private final static Charset UTF8 = Charset.forName("utf8");
+	private final static Charset UTF8 = StandardCharsets.UTF_8;
 
 	private final GhidraScript script;
 

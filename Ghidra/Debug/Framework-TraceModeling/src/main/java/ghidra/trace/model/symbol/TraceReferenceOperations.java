@@ -197,10 +197,23 @@ public interface TraceReferenceOperations {
 	 * 
 	 * @param span the lifespan to examine
 	 * @param range the range to examine
+	 * @param order the order of results or null for no particular order
 	 * @return the collection of results
 	 */
 	Collection<? extends TraceReference> getReferencesFromRange(Lifespan span,
-			AddressRange range);
+			AddressRange range, Rectangle2DDirection order);
+
+	/**
+	 * Find all references with from addresses contained in the given lifespan and address range
+	 * 
+	 * @param span the lifespan to examine
+	 * @param range the range to examine
+	 * @return the collection of results
+	 */
+	default Collection<? extends TraceReference> getReferencesFromRange(Lifespan span,
+			AddressRange range) {
+		return getReferencesFromRange(span, range, null);
+	}
 
 	/**
 	 * Get the primary reference matching from the given snapshot, address, and operand index

@@ -22,11 +22,9 @@ import org.jdom2.Element;
 
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.Target;
-import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.store.LockException;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceContentHandler;
@@ -41,8 +39,8 @@ import ghidra.trace.model.target.path.KeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.*;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.Msg;
+import ghidra.util.Radix;
 
 public class DebuggerCoordinates {
 
@@ -741,15 +739,12 @@ public class DebuggerCoordinates {
 		ProjectData projData = tool.getProject().getProjectData(projLoc);
 		if (projData == null) {
 			try {
-				// FIXME! orphaned instance - transient in nature
-				projData = new DefaultProjectData(projLoc, false, false);
+				projData = tool.getProject().addProjectView(projLoc.getURL(), false);
+				if (projData == null) { // still
+					return null;
+				}
 			}
-			catch (NotOwnerException e) {
-				Msg.error(DebuggerCoordinates.class,
-					"Not project owner: " + projLoc + "(" + pathname + ")");
-				return null;
-			}
-			catch (NotFoundException | IOException | LockException e) {
+			catch (IOException e) {
 				Msg.error(DebuggerCoordinates.class, "Project error: " + e.getMessage());
 				return null;
 			}

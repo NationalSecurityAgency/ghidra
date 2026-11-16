@@ -23,8 +23,7 @@ import db.DBRecord;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.FunctionReturnTypeFieldLocation;
 import ghidra.program.util.ProgramLocation;
@@ -81,6 +80,7 @@ public class FunctionSymbol extends MemorySymbol {
 			Symbol parentSymbol = getParentSymbol();
 			String extOrigImportName = null;
 			Address extProgramAddr = null;
+			Library library = getLibrary();
 			if (isExternal()) {
 				// preserve external data
 				extOrigImportName = getExternalOriginalImportedName();
@@ -107,8 +107,9 @@ public class FunctionSymbol extends MemorySymbol {
 					// does not mean that we want to lose the function name (that is our policy).
 					Symbol newSymbol;
 					if (isExternal()) {
-						newSymbol = symbolMgr.createExternalCodeSymbol(address, symName, namespace,
-							source, extOrigImportName, extProgramAddr);
+						newSymbol =
+							symbolMgr.createExternalCodeSymbol(library, address, symName, namespace,
+								source, extOrigImportName, extProgramAddr);
 					}
 					else {
 						newSymbol = symbolMgr.createLabel(address, symName, namespace, source);
@@ -161,7 +162,7 @@ public class FunctionSymbol extends MemorySymbol {
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) && SymbolType.FUNCTION
-				.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+				.isValidParent(symbolMgr.getProgram(), parent, address);
 	}
 
 	@Override

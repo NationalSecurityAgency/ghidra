@@ -58,7 +58,7 @@ public interface DebuggerControlService {
 
 	ControlMode getCurrentMode(Trace trace);
 
-	void setCurrentMode(Trace trace, ControlMode mode);
+	void setCurrentMode(Trace trace, ControlMode mode, boolean canEdit);
 
 	void addModeChangeListener(ControlModeChangeListener listener);
 
@@ -75,4 +75,5 @@ public interface DebuggerControlService {
 	StateEditor createStateEditor(Trace trace);
 
 	StateEditor createStateEditor(TraceProgramView view);
+
 }

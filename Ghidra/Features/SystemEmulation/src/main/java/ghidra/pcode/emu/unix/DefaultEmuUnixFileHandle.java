@@ -84,6 +84,19 @@ public class DefaultEmuUnixFileHandle<T> extends AbstractEmuUnixFileHandle<T> {
 	}
 
 	@Override
+	public int pread(T buf, long offset) throws EmuIOException {
+		checkReadable();
+		int len = file.read(offset, buf);
+		return len; // Do not change offset
+	}
+
+	@Override
+	public T pread(T buf, T offset) throws EmuIOException {
+		return arithmetic.fromConst(pread(buf, arithmetic.toLong(offset, Purpose.OTHER)),
+			offsetBytes);
+	}
+
+	@Override
 	public int write(T buf) throws EmuIOException {
 		checkWritable();
 		int len = file.write(offset, buf);

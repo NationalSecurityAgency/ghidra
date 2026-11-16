@@ -104,7 +104,7 @@ public class FieldMatcher {
 			return null;
 		}
 
-		int offset = fieldOffsets.getMin();
+		int offset = fieldOffsets.getMinAsInt();
 		if (dataType instanceof Structure) {
 			Structure structure = (Structure) dataType;
 			DataTypeComponent dtc = structure.getComponentContaining(offset);

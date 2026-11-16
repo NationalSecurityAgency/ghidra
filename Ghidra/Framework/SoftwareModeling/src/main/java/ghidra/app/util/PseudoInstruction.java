@@ -227,6 +227,11 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	}
 
 	@Override
+	public Language getLanguage() {
+		return instrProto.getLanguage();
+	}
+
+	@Override
 	public String getMnemonicString() {
 		return instrProto.getMnemonic(this);
 	}

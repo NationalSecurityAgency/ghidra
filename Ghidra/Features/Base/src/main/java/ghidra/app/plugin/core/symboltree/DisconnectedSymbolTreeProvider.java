@@ -20,9 +20,7 @@ import javax.swing.JPanel;
 
 import docking.WindowPosition;
 import docking.action.KeyBindingData;
-import docking.action.builder.ActionBuilder;
 import ghidra.app.nav.DecoratorPanel;
-import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -36,12 +34,10 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 	private static final String WINDOW_GROUP = "Disconnected Symbol Tree";
 
 	public DisconnectedSymbolTreeProvider(PluginTool tool, SymbolTreePlugin plugin,
-			Program program) {
+			Program program, SymbolTreeFilterState filterState) {
 		super(tool, plugin);
-
+		this.filterState = filterState;
 		setDefaultWindowPosition(WindowPosition.WINDOW);
-
-		createActions();
 
 		// Snapshots do not usually respond to incoming location events.  But, it seems to make 
 		// sense that users would like to use the snapshot to navigate the tool.
@@ -87,7 +83,7 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 	}
 
 	@Override
-	void setProgram(Program newProgram) {
+	void programActivated(Program newProgram) {
 		// nothing to do; we maintain our state as the user changes programs
 	}
 
@@ -114,27 +110,8 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 	}
 
 	@Override
-	protected SymbolTreeRootNode createRootNode() {
-		return new ConfigurableSymbolTreeRootNode(program, getNodeGroupThreshold());
-	}
-
-	@Override
 	public void closeComponent() {
 		plugin.closeDisconnectedProvider(this);
-	}
-
-	@Override
-	protected void transferSettings(DisconnectedSymbolTreeProvider newProvider) {
-
-		// transfer disabled node settings
-		ConfigurableSymbolTreeRootNode myModelRoot =
-			(ConfigurableSymbolTreeRootNode) tree.getModelRoot();
-
-		ConfigurableSymbolTreeRootNode newModelRoot =
-			(ConfigurableSymbolTreeRootNode) newProvider.tree.getModelRoot();
-		myModelRoot.transferSettings(newModelRoot);
-
-		super.transferSettings(newProvider);
 	}
 
 	@Override
@@ -145,38 +122,5 @@ public class DisconnectedSymbolTreeProvider extends SymbolTreeProvider {
 	@Override
 	void readConfigState(SaveState saveState) {
 		// we have no state we are interested in loading
-	}
-
-	private void createActions() {
-
-		//@formatter:off
-		new ActionBuilder("Enable Category", plugin.getName())
-			.popupMenuPath("Enable Category")
-			.withContext(SymbolTreeActionContext.class)
-			.enabledWhen(c -> {				
-				SymbolTreeNode node = c.getSelectedNode();
-				return node instanceof SymbolCategoryNode;	
-			})
-			.onAction(c -> {
-				SymbolCategoryNode node = (SymbolCategoryNode) c.getSelectedNode();
-				node.setEnabled(true);
-			})
-			.buildAndInstallLocal(this);
-		//@formatter:on
-
-		//@formatter:off
-		new ActionBuilder("Disable Category", plugin.getName())
-			.popupMenuPath("Disable Category")
-			.withContext(SymbolTreeActionContext.class)
-			.enabledWhen(c -> {				
-				SymbolTreeNode node = c.getSelectedNode();
-				return node instanceof SymbolCategoryNode;	
-			})
-			.onAction(c -> {
-				SymbolCategoryNode node = (SymbolCategoryNode) c.getSelectedNode();
-				node.setEnabled(false);
-			})
-			.buildAndInstallLocal(this);
-		//@formatter:on
 	}
 }

@@ -70,20 +70,6 @@ public class SarifClassesNamespaceWriter extends AbstractExtWriter {
 		SarifObject sarif = new SarifObject(ExternalLibSarifMgr.SUBKEY0, ExternalLibSarifMgr.KEY,
 			getTree(lib), null);
 		objects.add(getTree(sarif));
-
-		if (cls.isExternal()) {
-			SymbolIterator symbols = symbolTable.getSymbols(cls);
-			while (symbols.hasNext()) {
-				Symbol sym = symbols.next();
-				ExternalLocation loc = externalManager.getExternalLocation(sym);
-				if (loc != null) {
-					ExtLibraryLocation obj = new ExtLibraryLocation(loc);
-					SarifObject sarif2 = new SarifObject(ExternalLibSarifMgr.SUBKEY1,
-						ExternalLibSarifMgr.KEY, getTree(obj), loc.getAddress(), loc.getAddress());
-					objects.add(getTree(sarif2));
-				}
-			}
-		}
 	}
 
 	@Override

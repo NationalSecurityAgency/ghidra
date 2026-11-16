@@ -74,8 +74,9 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 			if (oldProgram != null) {
 				connectedProvider.programDeactivated(oldProgram);
 			}
-
-			connectedProvider.setProgram(program);
+			if (program != null) {
+				connectedProvider.programActivated(program);
+			}
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
 			programClosed(((ProgramClosedPluginEvent) event).getProgram());
@@ -196,13 +197,13 @@ public class SymbolTreePlugin extends Plugin implements SymbolTreeService {
 		return program;
 	}
 
-	SymbolTreeProvider getProvider() {
+	public SymbolTreeProvider getProvider() {
 		return connectedProvider;
 	}
 
 	public DisconnectedSymbolTreeProvider createNewDisconnectedProvider(Program p) {
-		DisconnectedSymbolTreeProvider newProvider =
-			new DisconnectedSymbolTreeProvider(tool, this, p);
+		DisconnectedSymbolTreeProvider newProvider = new DisconnectedSymbolTreeProvider(tool, this,
+			p, connectedProvider.getSymbolTreeFilterState());
 		disconnectedProviders.add(newProvider);
 		tool.showComponentProvider(newProvider, true);
 		return newProvider;

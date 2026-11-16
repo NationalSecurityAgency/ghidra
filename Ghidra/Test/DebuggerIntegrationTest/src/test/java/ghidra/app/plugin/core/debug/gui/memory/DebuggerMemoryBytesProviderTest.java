@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.*;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -800,7 +800,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		TraceObject process = tb.obj("Processes[1]");
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 		waitForSwing();
 		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
@@ -819,7 +819,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		rmiCx.setLastSnapshot(tb.trace, 1);
 		traceManager.activateSnap(1);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, false);
 		traceManager.activateSnap(0);
 		waitForSwing();
 		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
@@ -1136,10 +1136,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		runSwingLater(() -> sendKeyStrokesForText("42"));
 		/**
@@ -1151,7 +1149,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		 */
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x40));
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x02));
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}
@@ -1179,10 +1176,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		runSwing(() -> sendKeyStrokesForText("42"));
 
@@ -1191,7 +1186,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(new Bytes(0x42), data);
 
 		assertTrue(rmiMethodWriteMem.argQueue().isEmpty());
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}
@@ -1223,10 +1217,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
-		performAction(actionEdit);
 		goToDyn(tb.addr(0x55550800));
 		Clipboard clipboard = GClipboard.getSystemClipboard();
 		clipboard.setContents(new StringSelection("42 53 64 75"), null);
@@ -1242,8 +1234,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		OptionDialog confirm = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(confirm, "Yes");
 		handleWriteMemInvocation(process, tb.addr(0x55550800), new Bytes(0x42, 0x53, 0x64, 0x75));
-
-		performAction(actionEdit);
 
 		rmiCx.withdrawTarget(tool, tb.trace);
 	}

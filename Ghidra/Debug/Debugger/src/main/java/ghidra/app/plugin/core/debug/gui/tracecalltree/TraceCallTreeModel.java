@@ -25,6 +25,19 @@ import ghidra.framework.plugintool.ServiceProvider;
 
 class TraceCallTreeModel extends GTreeTableModel<AbstractTraceCallTreeNode> {
 
+	private static class FunctionColumn extends TreeColumn<AbstractTraceCallTreeNode> {
+		private final String columnName;
+
+		FunctionColumn(String columnName) {
+			this.columnName = columnName;
+		}
+
+		@Override
+		public String getColumnName() {
+			return columnName;
+		}
+	}
+
 	private static class ModuleColumn
 			extends AbstractDynamicTableColumnStub<AbstractTraceCallTreeNode, String> {
 		private final String columnName;
@@ -115,8 +128,9 @@ class TraceCallTreeModel extends GTreeTableModel<AbstractTraceCallTreeNode> {
 
 	@Override
 	protected TableColumnDescriptor<AbstractTraceCallTreeNode> createTableColumnDescriptor() {
-		final TableColumnDescriptor<AbstractTraceCallTreeNode> descriptor =
-			super.createTableColumnDescriptor();
+		// Do not call super. Replace default "Tree" column.
+		TableColumnDescriptor<AbstractTraceCallTreeNode> descriptor = new TableColumnDescriptor<>();
+		descriptor.addVisibleColumn(new FunctionColumn("Function"));
 		descriptor.addVisibleColumn(new SnapColumn("Snapshot"));
 		descriptor.addVisibleColumn(new ModuleColumn("Module"));
 		descriptor.addVisibleColumn(new ReturnColumn("Return"));
@@ -133,10 +147,5 @@ class TraceCallTreeModel extends GTreeTableModel<AbstractTraceCallTreeNode> {
 		if (!parameterColumns.isEmpty()) {
 			addTableColumns(parameterColumns);
 		}
-	}
-
-	@Override
-	protected String treeColumnName() {
-		return "Function";
 	}
 }

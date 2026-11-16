@@ -301,7 +301,7 @@ class SymbolTreeTestUtils {
 	void selectNode(GTreeNode node) throws Exception {
 		GTreeNode parent = node.getParent();
 		if (parent != null) {
-			tree.expandTree(node.getParent());
+			tree.expandPath(node);
 		}
 		tree.setSelectedNode(node);
 		waitForTree();
@@ -400,7 +400,8 @@ class SymbolTreeTestUtils {
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
 
-		navigateIncomingAction = (ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
+		navigateIncomingAction =
+			(ToggleDockingAction) getAction(plugin, NavigateOnIncomingAction.NAME);
 		assertNotNull(navigateIncomingAction);
 	}
 

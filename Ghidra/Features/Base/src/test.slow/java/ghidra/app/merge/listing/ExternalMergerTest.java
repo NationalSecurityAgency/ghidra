@@ -1519,6 +1519,7 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		ExternalManager externalManager = resultProgram.getExternalManager();
+
 		ExternalLocation latestExtLoc =
 			externalManager.getUniqueExternalLocation("advapi32.dll", "oranges");
 		assertNotNull(latestExtLoc);
@@ -2255,8 +2256,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function function = createExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" },
+					Function function = createExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" },
 						addr(program, "77db1020"), new DWordDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -2271,8 +2272,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function function = getExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" });
+					Function function = getExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" });
 
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -2288,8 +2289,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function function = getExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" });
+					Function function = getExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" });
 
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -2311,11 +2312,11 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		chooseVariousOptions(new int[] { INFO_ROW, KEEP_LATEST, KEEP_MY, KEEP_LATEST });
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", externalLibrary).getObject();
+			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", null).getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, "apples", myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, "apples_conflict1", myNamespace);
@@ -2341,8 +2342,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function function = createExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" },
+					Function function = createExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" },
 						addr(program, "77db1020"), new DWordDataType(), SourceType.USER_DEFINED);
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -2357,8 +2358,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function function = getExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" });
+					Function function = getExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" });
 
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -2374,8 +2375,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function function = getExternalFunction(program,
-						new String[] { "user32.dll", "MyNamespace", "apples" });
+					Function function = getExternalFunction(program, "user32.dll",
+						new String[] { "MyNamespace", "apples" });
 
 					assertNotNull(function);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -2396,11 +2397,11 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		chooseVariousOptions(new int[] { INFO_ROW, KEEP_MY, KEEP_LATEST, KEEP_MY });
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", externalLibrary).getObject();
+			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", null).getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, "apples", myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, "apples_conflict1", myNamespace);
@@ -2427,14 +2428,15 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
-					Library externalLibrary =
+					Library library =
 						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
-					Namespace myNamespace = symbolTable.createNameSpace(externalLibrary,
+					Namespace myNamespace = symbolTable.createNameSpace(null,
 						"MyNamespace", SourceType.USER_DEFINED);
 
 					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation = externalManager.addExtFunction(myNamespace,
-						"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(library, myNamespace,
+							"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -2454,10 +2456,10 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
 					SymbolType librarySymbolType = librarySymbol.getSymbolType();
 					assertEquals(SymbolType.LIBRARY, librarySymbolType);
-					Library externalLibrary = (Library) librarySymbol.getObject();
+//					Library externalLibrary = (Library) librarySymbol.getObject();
 
 					Symbol namespaceSymbol =
-						getUniqueSymbol(program, "MyNamespace", externalLibrary);
+						getUniqueSymbol(program, "MyNamespace", null);
 					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
 					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
 					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
@@ -2483,10 +2485,10 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
 					SymbolType librarySymbolType = librarySymbol.getSymbolType();
 					assertEquals(SymbolType.LIBRARY, librarySymbolType);
-					Library externalLibrary = (Library) librarySymbol.getObject();
+//					Library externalLibrary = (Library) librarySymbol.getObject();
 
 					Symbol namespaceSymbol =
-						getUniqueSymbol(program, "MyNamespace", externalLibrary);
+						getUniqueSymbol(program, "MyNamespace", null);
 					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
 					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
 					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
@@ -2510,11 +2512,11 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		chooseVariousOptions(new int[] { INFO_ROW, KEEP_MY });
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", externalLibrary).getObject();
+			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", null).getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, "apples", myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, "apples_conflict1", myNamespace);
@@ -2537,14 +2539,15 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			public void modifyOriginal(ProgramDB program) {
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
-					Library externalLibrary =
+					Library library =
 						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
-					Namespace myNamespace = symbolTable.createNameSpace(externalLibrary,
+					Namespace myNamespace = symbolTable.createNameSpace(null,
 						"MyNamespace", SourceType.USER_DEFINED);
 
 					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation = externalManager.addExtFunction(myNamespace,
-						"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(library, myNamespace,
+							"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -2560,12 +2563,12 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					SymbolTable symbolTable = program.getSymbolTable();
-					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
-					Library externalLibrary = (Library) librarySymbol.getObject();
+//					SymbolTable symbolTable = program.getSymbolTable();
+//					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
+//					Library externalLibrary = (Library) librarySymbol.getObject();
 
 					Symbol namespaceSymbol =
-						getUniqueSymbol(program, "MyNamespace", externalLibrary);
+						getUniqueSymbol(program, "MyNamespace", null);
 					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
 					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
 					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
@@ -2591,10 +2594,10 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
 					SymbolType librarySymbolType = librarySymbol.getSymbolType();
 					assertEquals(SymbolType.LIBRARY, librarySymbolType);
-					Library externalLibrary = (Library) librarySymbol.getObject();
+					//				Library externalLibrary = (Library) librarySymbol.getObject();
 
 					Symbol namespaceSymbol =
-						getUniqueSymbol(program, "MyNamespace", externalLibrary);
+						getUniqueSymbol(program, "MyNamespace", null);
 					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
 					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
 					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
@@ -2618,11 +2621,11 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 		chooseVariousOptions(new int[] { INFO_ROW, KEEP_MY });
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", externalLibrary).getObject();
+			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", null).getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, "apples", myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, "apples_conflict1", myNamespace);
@@ -2651,8 +2654,8 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 //				try {
 //					Function applesFunction =
 //						program.getFunctionManager().getFunctionAt(addr(program, "01003250"));
-////						createFunction(program, new String[] { "user32.dll", "MyNamespace",
-////							"apples" });
+	//// createFunction(program, new String[] { "user32.dll", "MyNamespace", /
+	/// "apples" });
 //
 //					Function orangesFunction =
 //						createExternalFunction(program, new String[] { "user32.dll", "MyNamespace",
@@ -2663,11 +2666,10 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 //
 //					applesFunction.setThunkedFunction(orangesFunction);
 //
-////					function.setReturnType(new ByteDataType());
-////					Parameter parameter1 =
-////						new StackParameterImpl("P1", new DWordDataType(), 4,
-////							"Test Parameter Comment", 0, SourceType.USER_DEFINED);
-////					function.addParameter(parameter1, SourceType.USER_DEFINED);
+	//// function.setReturnType(new ByteDataType()); / Parameter parameter1 = /
+	/// new StackParameterImpl("P1", new DWordDataType(), 4, / "Test Parameter
+	/// Comment", 0, SourceType.USER_DEFINED); /
+	/// function.addParameter(parameter1, SourceType.USER_DEFINED);
 //					String applesName = applesFunction.getName(true);
 //					String orangesName = orangesFunction.getName(true);
 //					System.out.println("apples=" + applesName + "    oranges=" + orangesName);
@@ -2700,40 +2702,29 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 //			 */
 //			@Override
 //			public void modifyLatest(ProgramDB program) {
-////				int txId = program.startTransaction("Modify Latest Program");
-////				boolean commit = false;
-////				try {
-////					SymbolTable symbolTable = program.getSymbolTable();
-////					Symbol librarySymbol =
-////						symbolTable.getLibrarySymbol("user32.dll");
-////					SymbolType librarySymbolType = librarySymbol.getSymbolType();
-////					assertEquals(SymbolType.LIBRARY, librarySymbolType);
-////					Library externalLibrary = (Library) librarySymbol.getObject();
-////
-////					Symbol namespaceSymbol = symbolTable.getUniqueSymbol("MyNamespace", externalLibrary);
-////					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
-////					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
-////					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
-////
-////					Symbol functionSymbol = symbolTable.getUniqueSymbol("apples", myNamespace);
-////					SymbolType functionSymbolType = functionSymbol.getSymbolType();
-////					assertEquals(SymbolType.FUNCTION, functionSymbolType);
-////					Function function = (Function) functionSymbol.getObject();
-////
-////					assertNotNull(function);
-////					function.setReturnType(new ByteDataType());
-////					Parameter parameter1 =
-////						new StackParameterImpl("P1", new DWordDataType(), 4,
-////							"Test Parameter Comment", 0, SourceType.USER_DEFINED);
-////					function.addParameter(parameter1, SourceType.USER_DEFINED);
-////					commit = true;
-////				}
-////				catch (Exception e) {
-////					Assert.fail(e.getMessage());
-////				}
-////				finally {
-////					program.endTransaction(txId, commit);
-////				}
+	//// int txId = program.startTransaction("Modify Latest Program"); / boolean
+	/// commit = false; / try { / SymbolTable symbolTable =
+	/// program.getSymbolTable(); / Symbol librarySymbol = /
+	/// symbolTable.getLibrarySymbol("user32.dll"); / SymbolType
+	/// librarySymbolType = librarySymbol.getSymbolType(); /
+	/// assertEquals(SymbolType.LIBRARY, librarySymbolType); / Library
+	/// externalLibrary = (Library) librarySymbol.getObject(); / / Symbol
+	/// namespaceSymbol = symbolTable.getUniqueSymbol("MyNamespace",
+	/// externalLibrary); / SymbolType namespaceSymbolType =
+	/// namespaceSymbol.getSymbolType(); / assertEquals(SymbolType.NAMESPACE,
+	/// namespaceSymbolType); / Namespace myNamespace = (Namespace)
+	/// namespaceSymbol.getObject(); / / Symbol functionSymbol =
+	/// symbolTable.getUniqueSymbol("apples", myNamespace); / SymbolType
+	/// functionSymbolType = functionSymbol.getSymbolType(); /
+	/// assertEquals(SymbolType.FUNCTION, functionSymbolType); / Function
+	/// function = (Function) functionSymbol.getObject(); / /
+	/// assertNotNull(function); / function.setReturnType(new ByteDataType()); /
+	/// Parameter parameter1 = / new StackParameterImpl("P1", new
+	/// DWordDataType(), 4, / "Test Parameter Comment", 0,
+	/// SourceType.USER_DEFINED); / function.addParameter(parameter1,
+	/// SourceType.USER_DEFINED); / commit = true; / } / catch (Exception e) { /
+	/// Assert.fail(e.getMessage()); / } / finally { /
+	/// program.endTransaction(txId, commit); / }
 //			}
 //
 //			/* (non-Javadoc)
@@ -2741,88 +2732,68 @@ public class ExternalMergerTest extends AbstractExternalMergerTest {
 //			 */
 //			@Override
 //			public void modifyPrivate(ProgramDB program) {
-////				int txId = program.startTransaction("Modify My Program");
-////				boolean commit = false;
-////				try {
-////					SymbolTable symbolTable = program.getSymbolTable();
-////					Symbol librarySymbol =
-////						symbolTable.getLibrarySymbol("user32.dll");
-////					SymbolType librarySymbolType = librarySymbol.getSymbolType();
-////					assertEquals(SymbolType.LIBRARY, librarySymbolType);
-////					Library externalLibrary = (Library) librarySymbol.getObject();
-////
-////					Symbol namespaceSymbol = symbolTable.getUniqueSymbol("MyNamespace", externalLibrary);
-////					SymbolType namespaceSymbolType = namespaceSymbol.getSymbolType();
-////					assertEquals(SymbolType.NAMESPACE, namespaceSymbolType);
-////					Namespace myNamespace = (Namespace) namespaceSymbol.getObject();
-////
-////					Symbol functionSymbol = symbolTable.getUniqueSymbol("apples", myNamespace);
-////					SymbolType functionSymbolType = functionSymbol.getSymbolType();
-////					assertEquals(SymbolType.FUNCTION, functionSymbolType);
-////					Function function = (Function) functionSymbol.getObject();
-////
-////					assertNotNull(function);
-////					function.setReturnType(new ByteDataType());
-////					function.setReturnType(new FloatDataType());
-////					Register register = program.getRegister("AX");
-////					Parameter parameter1 =
-////						new RegisterParameterImpl(register, "Length", new AsciiDataType(),
-////							"My Parameter Comment", 0, SourceType.USER_DEFINED);
-////					function.addParameter(parameter1, SourceType.USER_DEFINED);
-////					commit = true;
-////				}
-////				catch (Exception e) {
-////					Assert.fail(e.getMessage());
-////				}
-////				finally {
-////					program.endTransaction(txId, commit);
-////				}
+	//// int txId = program.startTransaction("Modify My Program"); / boolean
+	/// commit = false; / try { / SymbolTable symbolTable =
+	/// program.getSymbolTable(); / Symbol librarySymbol = /
+	/// symbolTable.getLibrarySymbol("user32.dll"); / SymbolType
+	/// librarySymbolType = librarySymbol.getSymbolType(); /
+	/// assertEquals(SymbolType.LIBRARY, librarySymbolType); / Library
+	/// externalLibrary = (Library) librarySymbol.getObject(); / / Symbol
+	/// namespaceSymbol = symbolTable.getUniqueSymbol("MyNamespace",
+	/// externalLibrary); / SymbolType namespaceSymbolType =
+	/// namespaceSymbol.getSymbolType(); / assertEquals(SymbolType.NAMESPACE,
+	/// namespaceSymbolType); / Namespace myNamespace = (Namespace)
+	/// namespaceSymbol.getObject(); / / Symbol functionSymbol =
+	/// symbolTable.getUniqueSymbol("apples", myNamespace); / SymbolType
+	/// functionSymbolType = functionSymbol.getSymbolType(); /
+	/// assertEquals(SymbolType.FUNCTION, functionSymbolType); / Function
+	/// function = (Function) functionSymbol.getObject(); / /
+	/// assertNotNull(function); / function.setReturnType(new ByteDataType()); /
+	/// function.setReturnType(new FloatDataType()); / Register register =
+	/// program.getRegister("AX"); / Parameter parameter1 = / new
+	/// RegisterParameterImpl(register, "Length", new AsciiDataType(), / "My
+	/// Parameter Comment", 0, SourceType.USER_DEFINED); /
+	/// function.addParameter(parameter1, SourceType.USER_DEFINED); / commit =
+	/// true; / } / catch (Exception e) { / Assert.fail(e.getMessage()); / } /
+	/// finally { / program.endTransaction(txId, commit); / }
 //			}
 //		});
 //
 //		executeMerge(ASK_USER);
-////		chooseRadioButton(MY_BUTTON);
-////		chooseVariousOptions(new int[] { INFO_ROW, KEEP_MY });
+	//// chooseRadioButton(MY_BUTTON); / chooseVariousOptions(new int[] {
+	/// INFO_ROW, KEEP_MY });
 //		waitForMergeCompletion(5000);
 //
-////		Namespace externalLibrary =
-////			(Namespace) resultProgram.getSymbolTable().getUniqueSymbol("user32.dll",
-////				resultProgram.getGlobalNamespace()).getObject();
-////		assertNotNull(externalLibrary);
-////		Namespace myNamespace =
-////			(Namespace) resultProgram.getSymbolTable().getUniqueSymbol("MyNamespace", externalLibrary).getObject();
-////		assertNotNull(myNamespace);
-////		SymbolTable symtab = resultProgram.getSymbolTable();
-////		Symbol apples = symtab.getUniqueSymbol("thunk_oranges", myNamespace);
-////		Symbol oranges = symtab.getUniqueSymbol("oranges", myNamespace);
-////		assertEquals(SymbolType.FUNCTION, apples.getSymbolType());
-////		assertEquals(SymbolType.FUNCTION, oranges.getSymbolType());
-////		Function function = (Function) apples.getObject();
-////		assertEquals(true, function.isThunk());
-////		checkFunctionReturnType(function, new FloatDataType());
-////		assertEquals(1, function.getParameterCount());
-////		Parameter parameter = function.getParameter(0);
-////		assertEquals("Length", parameter.getName());
-////		assertEquals("My Parameter Comment", parameter.getComment());
-////		checkParameterDataType(parameter, new AsciiDataType());
-////		assertTrue(parameter.isRegisterVariable());
+	//// Namespace externalLibrary = / (Namespace)
+	/// resultProgram.getSymbolTable().getUniqueSymbol("user32.dll", /
+	/// resultProgram.getGlobalNamespace()).getObject(); /
+	/// assertNotNull(externalLibrary); / Namespace myNamespace = / (Namespace)
+	/// resultProgram.getSymbolTable().getUniqueSymbol("MyNamespace",
+	/// externalLibrary).getObject(); / assertNotNull(myNamespace); / SymbolTable
+	/// symtab = resultProgram.getSymbolTable(); / Symbol apples =
+	/// symtab.getUniqueSymbol("thunk_oranges", myNamespace); / Symbol oranges =
+	/// symtab.getUniqueSymbol("oranges", myNamespace); /
+	/// assertEquals(SymbolType.FUNCTION, apples.getSymbolType()); /
+	/// assertEquals(SymbolType.FUNCTION, oranges.getSymbolType()); / Function
+	/// function = (Function) apples.getObject(); / assertEquals(true,
+	/// function.isThunk()); / checkFunctionReturnType(function, new
+	/// FloatDataType()); / assertEquals(1, function.getParameterCount()); /
+	/// Parameter parameter = function.getParameter(0); / assertEquals("Length",
+	/// parameter.getName()); / assertEquals("My Parameter Comment",
+	/// parameter.getComment()); / checkParameterDataType(parameter, new
+	/// AsciiDataType()); / assertTrue(parameter.isRegisterVariable());
 //	}
 
-///	public void testExtRefRemoveNoConflict() throws Exception {
-//	// External Refs
-//	// 01001000: op1 to ADVAPI32.DLL IsTextUnicode 77dc4f85
-//	// 01001004: op1 to ADVAPI32.DLL RegCreateKeyW 77db90b0
-//	// 01001008: op1 to ADVAPI32.DLL RegQueryValueExW 77db8078
-//	// 0100100c: op1 to ADVAPI32.DLL RegSetValueExW 77db9348
-//	// 01001010: op1 to ADVAPI32.DLL RegOpenKeyExA 77db82ac
-//	// 01001014: op1 to ADVAPI32.DLL RegQueryValueExA 77db858e
-//	// 01001018: op1 to ADVAPI32.DLL RegCloseKey 77db7d4d
-//	// 0100101c: no ref
-//	// 010010c0: op1 to KERNEL32.DLL LocalFree 77e9499c
-//	// 010010c4: op1 to KERNEL32.DLL GetProcAddress 77e9564b
-//	// 010013cc: no ref (has string)
-//	// 010013d8: no ref (has string)
-//	// 010013f0: no ref (has string)
+	/// public void testExtRefRemoveNoConflict() throws Exception { // External
+	/// Refs // 01001000: op1 to ADVAPI32.DLL IsTextUnicode 77dc4f85 // 01001004:
+	/// op1 to ADVAPI32.DLL RegCreateKeyW 77db90b0 // 01001008: op1 to
+	/// ADVAPI32.DLL RegQueryValueExW 77db8078 // 0100100c: op1 to ADVAPI32.DLL
+	/// RegSetValueExW 77db9348 // 01001010: op1 to ADVAPI32.DLL RegOpenKeyExA
+	/// 77db82ac // 01001014: op1 to ADVAPI32.DLL RegQueryValueExA 77db858e //
+	/// 01001018: op1 to ADVAPI32.DLL RegCloseKey 77db7d4d // 0100101c: no ref //
+	/// 010010c0: op1 to KERNEL32.DLL LocalFree 77e9499c // 010010c4: op1 to
+	/// KERNEL32.DLL GetProcAddress 77e9564b // 010013cc: no ref (has string) //
+	/// 010013d8: no ref (has string) // 010013f0: no ref (has string)
 //
 //		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 //

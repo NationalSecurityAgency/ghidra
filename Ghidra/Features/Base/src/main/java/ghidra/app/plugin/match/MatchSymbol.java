@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,7 +117,8 @@ public class MatchSymbol {
 						SymbolPath namespacePath = aSymbolPath.getParent();
 						if (!aSymbolIdentifier.isExternalSymbol() && namespacePath != null &&
 							!aSymbolPath.equals(bSymbolIdentifier.symbolPath) &&
-							NamespaceUtils.getNonFunctionNamespace(bProgram, namespacePath) != null) {
+							NamespaceUtils.getNonFunctionNamespace(bProgram,
+								namespacePath) != null) {
 							// skip match with namespace mismatch when source namespace exists in destination
 							continue;
 						}
@@ -248,7 +249,7 @@ public class MatchSymbol {
 		if (originalImportedName != null) {
 			Symbol s = externalLocation.getSymbol();
 			// original name associated with library namespace only
-			Library lib = NamespaceUtils.getLibrary(s.getParentNamespace());
+			Library lib = s.getLibrary();
 			SymbolPath libPath = new SymbolPath(lib.getSymbol());
 			SymbolPath symbolPath = new SymbolPath(libPath, originalImportedName);
 			updateUniqueSymbolPathMap(uniqueSymbolPathMap, symbolPath);

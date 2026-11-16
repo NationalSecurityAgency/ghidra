@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,20 @@ public class SwiftGlobalNode extends SwiftNode {
 			switch (child.getKind()) {
 				case GenericSpecialization:
 				case MergedFunction:
-				case ObjCAttribute:
 					continue;
+				case ObjCAttribute:
+					// The symbol is the Objective-C thunk of the entity in the next child; its
+					// signature and calling convention are Objective-C, not Swift
+					return getUnknown();
+				case AccessibleFunctionRecord:
+				case AsyncFunctionPointer:
+				case CoroFunctionPointer:
+				case DynamicallyReplaceableFunctionKey:
+				case DynamicallyReplaceableFunctionVar:
+				case OutlinedReadOnlyObject:
+				case OutlinedVariable:
+					// The symbol is data that belongs to the entity in the next child, not its code
+					return getUnknown();
 				case Suffix:
 					suffix = child.demangle(demangler);
 					break;

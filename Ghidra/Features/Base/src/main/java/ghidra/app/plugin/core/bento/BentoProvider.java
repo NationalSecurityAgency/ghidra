@@ -169,10 +169,6 @@ public class BentoProvider extends ComponentProviderAdapter {
 		bentoPanel.setBoxes(bentoPanel.getBoxes());
 	}
 
-	void dispose() {
-		tool.removeComponentProvider(this);
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (event != null && event.getSource() == mainPanel) {

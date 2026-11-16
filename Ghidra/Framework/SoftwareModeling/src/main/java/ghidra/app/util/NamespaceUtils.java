@@ -59,57 +59,19 @@ public class NamespaceUtils {
 	}
 
 	/**
-	 * Get the normal namespace path excluding any library name.  Global namespace will be
-	 * returned as empty string, while other namespace paths will be returned with trailing ::
-	 * suffix.
-	 * @param namespace namespace
-	 * @return namespace path excluding any library name
-	 */
-	public static String getNamespacePathWithoutLibrary(Namespace namespace) {
-		String str = new String();
-		while (namespace != null && !(namespace instanceof GlobalNamespace) &&
-			!(namespace instanceof Library)) {
-			str = namespace.getName() + Namespace.DELIMITER + str;
-			namespace = namespace.getParentNamespace();
-		}
-		return str;
-	}
-
-	/**
 	 * Get namespace qualified symbol name
 	 * @param namespace namespace object
 	 * @param symbolName name of symbol
-	 * @param excludeLibraryName if true any library name will be excluded from path returned,
 	 * otherwise it will be included
 	 * @return namespace qualified symbol name
 	 */
-	public static String getNamespaceQualifiedName(Namespace namespace, String symbolName,
-			boolean excludeLibraryName) {
+	public static String getNamespaceQualifiedName(Namespace namespace, String symbolName) {
 		String str = "";
-		if (excludeLibraryName && namespace.isExternal()) {
-			str = getNamespacePathWithoutLibrary(namespace);
-		}
-		else if (namespace != null && !(namespace instanceof GlobalNamespace)) {
+		if (namespace != null && !(namespace instanceof GlobalNamespace)) {
 			str = namespace.getName(true) + Namespace.DELIMITER;
 		}
 		str += symbolName;
 		return str;
-	}
-
-	/**
-	 * Get the library associated with the specified namespace
-	 * @param namespace namespace
-	 * @return associated library or null if not associated with a library
-	 */
-	public static Library getLibrary(Namespace namespace) {
-		Namespace ns = namespace;
-		while (ns.isExternal()) {
-			if (ns instanceof Library) {
-				return (Library) ns;
-			}
-			ns = ns.getParentNamespace();
-		}
-		return null;
 	}
 
 	/**
@@ -166,30 +128,18 @@ public class NamespaceUtils {
 		}
 
 		List<String> namespaceNames = path.asList();
-		List<Namespace> namespaces = doGetNamespaces(namespaceNames, parent, program, false);
+		List<Namespace> namespaces = doGetNamespaces(namespaceNames, parent, program);
 		return namespaces;
 	}
 
-	private static List<Namespace> doGetNamespaces(List<String> namespaceNames,
-			Namespace root, Program program, boolean searchWithinAllLibraries) {
+	private static List<Namespace> doGetNamespaces(List<String> namespaceNames, Namespace root,
+			Program program) {
 
 		if (root == null) {
 			root = program.getGlobalNamespace();
 		}
 
 		List<Namespace> parents = Arrays.asList(root);
-
-		if (searchWithinAllLibraries && root.isGlobal() && !namespaceNames.isEmpty()) {
-			ExternalManager extMgr = program.getExternalManager();
-			String ns = namespaceNames.get(0); // only consider if first namespace is not Library
-			if (extMgr.getExternalLibrary(ns) == null) {
-				parents = new ArrayList<>();
-				parents.add(root);
-				for (String libraryName : extMgr.getExternalLibraryNames()) {
-					parents.add(extMgr.getExternalLibrary(libraryName));
-				}
-			}
-		}
 
 		for (String name : namespaceNames) {
 			List<Namespace> matches = getMatchingNamespaces(name, parents, program);
@@ -251,23 +201,6 @@ public class NamespaceUtils {
 	 * if none found.
 	 */
 	public static List<Symbol> getSymbols(String symbolPath, Program program) {
-		return getSymbols(symbolPath, program, false);
-	}
-
-	/**
-	 * Returns a list of all symbols that match the given path. The path consists of a series
-	 * of namespaces names separated by "::" followed by a label or function name.
-	 *
-	 * @param symbolPath the names of namespaces and symbol separated by "::".
-	 * @param program the program to search
-	 * @param searchWithinAllLibraries if true all libraries will be searched provided first element 
-	 * of symbolPath is not a library name, else search symbolPath within global namespace only.
-	 * @return the list of symbols that match the given symbolPath.  An empty list is returned
-	 * if none found.
-	 */
-	public static List<Symbol> getSymbols(String symbolPath, Program program,
-			boolean searchWithinAllLibraries) {
-
 		List<String> namespaceNames = new SymbolPath(symbolPath).asList();
 		if (namespaceNames.isEmpty()) {
 			return Collections.emptyList();
@@ -275,8 +208,7 @@ public class NamespaceUtils {
 
 		String symbolName = namespaceNames.remove(namespaceNames.size() - 1);
 		List<Namespace> parents =
-			doGetNamespaces(namespaceNames, program.getGlobalNamespace(), program,
-				searchWithinAllLibraries);
+			doGetNamespaces(namespaceNames, program.getGlobalNamespace(), program);
 		return searchForAllSymbolsInAnyOfTheseNamespaces(parents, symbolName, program);
 	}
 
@@ -289,27 +221,11 @@ public class NamespaceUtils {
 	 * if none found.
 	 */
 	public static List<Symbol> getSymbols(SymbolPath symbolPath, Program program) {
-		return getSymbols(symbolPath, program, false);
-	}
-
-	/**
-	 * Returns a list of Symbol that match the given symbolPath.
-	 *
-	 * @param symbolPath the symbol path that specifies a series of namespace and symbol names.
-	 * @param program the program to search for symbols with the given path.
-	 * @param searchWithinAllLibraries if true all libraries will be searched provided first element 
-	 * of symbolPath is not a library name, else search symbolPath within global namespace only.
-	 * @return  a list of Symbol that match the given symbolPath.  An empty list is returned
-	 * if none found.
-	 */
-	public static List<Symbol> getSymbols(SymbolPath symbolPath, Program program,
-			boolean searchWithinAllLibraries) {
 		SymbolPath parentPath = symbolPath.getParent();
 		if (parentPath == null) {
 			return program.getSymbolTable().getGlobalSymbols(symbolPath.getName());
 		}
-		List<Namespace> parents =
-			doGetNamespaces(parentPath.asList(), null, program, searchWithinAllLibraries);
+		List<Namespace> parents = doGetNamespaces(parentPath.asList(), null, program);
 		return searchForAllSymbolsInAnyOfTheseNamespaces(parents, symbolPath.getName(), program);
 	}
 

@@ -508,11 +508,16 @@ uintb OpBehaviorIntDiv::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb 
 uintb OpBehaviorIntSdiv::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
-  if (in2 == 0)
-    throw EvaluationError("Divide by 0");
   intb num = sign_extend(in1,8*sizein-1);		// Convert to signed
   intb denom = sign_extend(in2,8*sizein-1);
-  intb sres = num/denom;	// Do the signed division
+  if (denom == 0)
+    throw EvaluationError("Divide by 0");
+  constexpr intb INT_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
+  intb sres;
+  if (num == INT_MIN && denom == -1)	// INT_MIN divided by -1 produces a signed overflow
+    sres = num;			// Set an explicit result to avoid a possible hardware exception
+  else
+    sres = num/denom;		// Do the signed division
   sres = zero_extend(sres,8*sizeout-1); // Cut to appropriate size
   return (uintb)sres;		// Recast as unsigned
 }
@@ -530,11 +535,16 @@ uintb OpBehaviorIntRem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb 
 uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const
 
 {
-  if (in2 == 0)
-    throw EvaluationError("Remainder by 0");
   intb val = sign_extend(in1,8*sizein-1);	// Convert inputs to signed values
   intb mod = sign_extend(in2,8*sizein-1);
-  intb sres = val % mod;	// Do the remainder
+  if (mod == 0)
+    throw EvaluationError("Remainder by 0");
+  constexpr intb INT_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
+  intb sres;
+  if (val == INT_MIN && mod == -1)
+    sres = 0;		// Set an explicit result to avoid a possible hardware exception
+  else
+    sres = val % mod;	// Do the remainder
   sres = zero_extend(sres,8*sizeout-1); // Convert back to unsigned
   return (uintb)sres;
 }

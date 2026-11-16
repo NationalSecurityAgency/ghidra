@@ -709,7 +709,6 @@ public interface Function extends Namespace {
 	/**
 	 * @return true if this function is external (i.e., entry point is in EXTERNAL address space)
 	 */
-	@Override
 	public boolean isExternal();
 
 	/**

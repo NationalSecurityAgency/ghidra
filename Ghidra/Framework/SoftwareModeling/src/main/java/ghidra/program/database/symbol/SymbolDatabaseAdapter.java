@@ -37,25 +37,28 @@ import ghidra.util.task.TaskMonitor;
 abstract class SymbolDatabaseAdapter {
 	static final String SYMBOL_TABLE_NAME = "Symbols";
 
-	static final int SYMBOL_NAME_COL = 0;
-	static final int SYMBOL_ADDR_COL = 1;
-	static final int SYMBOL_PARENT_ID_COL = 2;
-	static final int SYMBOL_TYPE_COL = 3;
-	static final int SYMBOL_FLAGS_COL = 4;
+	//@formatter:off
+	static final int SYMBOL_NAME_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_NAME_COL;
+	static final int SYMBOL_ADDR_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_ADDR_COL;
+	static final int SYMBOL_PARENT_ID_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_PARENT_ID_COL;
+	static final int SYMBOL_TYPE_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_TYPE_COL;
+	static final int SYMBOL_FLAGS_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_FLAGS_COL;
 
 	// Sparse fields - the following fields are not always applicable so they are optional and 
 	// don't consume space in the database if they aren't used.
-	static final int SYMBOL_HASH_COL = 5;
-	static final int SYMBOL_PRIMARY_COL = 6;
-	static final int SYMBOL_DATATYPE_COL = 7;
-	static final int SYMBOL_VAROFFSET_COL = 8;
-	static final int SYMBOL_ORIGINAL_IMPORTED_NAME_COL = 9;
-	static final int SYMBOL_EXTERNAL_PROG_ADDR_COL = 10;
-	static final int SYMBOL_COMMENT_COL = 11;
-	static final int SYMBOL_LIBPATH_COL = 12;
-	static final int SYMBOL_LIB_ORDINAL_COL = 13;
+	static final int SYMBOL_HASH_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_HASH_COL;
+	static final int SYMBOL_PRIMARY_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_PRIMARY_COL;
+	static final int SYMBOL_DATATYPE_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_DATATYPE_COL;
+	static final int SYMBOL_VAROFFSET_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_VAROFFSET_COL;
+	static final int SYMBOL_ORIGINAL_IMPORTED_NAME_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_ORIGINAL_IMPORTED_NAME_COL;
+	static final int SYMBOL_EXTERNAL_PROG_ADDR_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_EXTERNAL_PROG_ADDR_COL;
+	static final int SYMBOL_COMMENT_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_COMMENT_COL;
+	static final int SYMBOL_LIBPATH_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_LIBPATH_COL;
+	static final int SYMBOL_LIB_ORDINAL_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_LIB_ORDINAL_COL;
+	static final int SYMBOL_LIBRARY_ID_COL = SymbolDatabaseAdapterV6.V6_SYMBOL_LIBRARY_ID_COL;
+	//@formatter:on
 
-	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV5.V5_SYMBOL_SCHEMA;
+	static final Schema SYMBOL_SCHEMA = SymbolDatabaseAdapterV6.V6_SYMBOL_SCHEMA;
 
 	// Bits 0, 1 and 3 are used for the source of the symbol.
 	// NOTE: On the next V5 adapter revision the source type bits should be made contiguous
@@ -80,6 +83,8 @@ abstract class SymbolDatabaseAdapter {
 	static final int SYMBOL_TYPE_LOCAL_VAR = SymbolType.LOCAL_VAR.getID();
 	static final int SYMBOL_TYPE_GLOBAL_VAR = SymbolType.GLOBAL_VAR.getID();
 
+	private static final int LIBRARY_UPGRADE_VERSION = 6;
+
 	// TODO: NEXT UPGRADE: remove all variable/parameter symbols with NO_ADDRESS
 
 	/**
@@ -98,11 +103,11 @@ abstract class SymbolDatabaseAdapter {
 			throws VersionException, CancelledException, IOException {
 
 		if (openMode == OpenMode.CREATE) {
-			return new SymbolDatabaseAdapterV5(dbHandle, addrMap, true);
+			return new SymbolDatabaseAdapterV6(dbHandle, addrMap, true);
 		}
 
 		try {
-			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV5(dbHandle, addrMap, false);
+			SymbolDatabaseAdapter adapter = new SymbolDatabaseAdapterV6(dbHandle, addrMap, false);
 			return adapter;
 		}
 		catch (VersionException e) {
@@ -113,7 +118,7 @@ abstract class SymbolDatabaseAdapter {
 			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
-			else if (adapter instanceof SymbolDatabaseAdapterV0) {
+			else if (adapter.getVersion() < SymbolDatabaseAdapterV6.VERSION) {
 				// Upgrade required - read-only use not supported
 				throw e;
 			}
@@ -123,6 +128,13 @@ abstract class SymbolDatabaseAdapter {
 
 	private static SymbolDatabaseAdapter findReadOnlyAdapter(DBHandle handle, AddressMap addrMap)
 			throws VersionException {
+
+		try {
+			return new SymbolDatabaseAdapterV5(handle, addrMap.getOldAddressMap());
+		}
+		catch (VersionException e) {
+			// failed try older version
+		}
 
 		try {
 			return new SymbolDatabaseAdapterV4(handle, addrMap.getOldAddressMap());
@@ -175,9 +187,13 @@ abstract class SymbolDatabaseAdapter {
 			SymbolDatabaseAdapter tmpAdapter =
 				copyToTempAndFixupRecords(addrMap, oldAdapter, tmpHandle, monitor);
 
+			if (oldAdapter.getVersion() < LIBRARY_UPGRADE_VERSION) {
+				LibraryUpgrader updater = new LibraryUpgrader(tmpAdapter, monitor);
+				updater.update();
+			}
 			dbHandle.deleteTable(SYMBOL_TABLE_NAME);
 
-			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV5(dbHandle, addrMap, true);
+			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV6(dbHandle, addrMap, true);
 
 			copyTempToNewAdapter(tmpAdapter, newAdapter, monitor);
 			return newAdapter;
@@ -186,6 +202,11 @@ abstract class SymbolDatabaseAdapter {
 			tmpHandle.deleteTable(SYMBOL_TABLE_NAME);
 		}
 	}
+
+	/**
+	 * {@return the symbol adapter version for this instance}
+	 */
+	protected abstract int getVersion();
 
 	private static SymbolDatabaseAdapter copyToTempAndFixupRecords(AddressMap addrMap,
 			SymbolDatabaseAdapter oldAdapter, DBHandle tmpHandle, TaskMonitor monitor)
@@ -203,7 +224,7 @@ abstract class SymbolDatabaseAdapter {
 				((SymbolDatabaseAdapterV0) oldAdapter).extractLocalSymbols(tmpHandle, monitor);
 		}
 
-		SymbolDatabaseAdapterV5 tmpAdapter = new SymbolDatabaseAdapterV5(tmpHandle, addrMap, true);
+		SymbolDatabaseAdapterV6 tmpAdapter = new SymbolDatabaseAdapterV6(tmpHandle, addrMap, true);
 		RecordIterator iter = oldAdapter.getSymbols();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
@@ -427,6 +448,16 @@ abstract class SymbolDatabaseAdapter {
 	 * @throws IOException if a database io error occurs
 	 */
 	abstract RecordIterator getSymbolsByName(String name) throws IOException;
+
+	/**
+	 * Return a record iterator over all symbols that have the given libraryID set in
+	 * their library.
+	 * @param libraryID the id of the library to find symbols for
+	 * @return a record iterator over all symbols that have the given libraryID set in
+	 * their library
+	 * @throws IOException if a database io error occurs
+	 */
+	abstract RecordIterator getSymbolsByLibrary(long libraryID) throws IOException;
 
 	/**
 	 * Scan symbols lexicographically by name starting from the given name

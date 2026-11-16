@@ -196,9 +196,6 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	private class DomainFileNameColumn
 			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
-		private static AlphaNumericComparator alphaNumericComparator =
-			new AlphaNumericComparator(false);
-
 		@Override
 		public String getColumnName() {
 			return "Name";
@@ -219,7 +216,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 		@Override
 		public Comparator<String> getComparator() {
 			if (useNaturalSort) {
-				return alphaNumericComparator;
+				return AlphaNumericComparator.CI;
 			}
 			return super.getComparator();
 		}

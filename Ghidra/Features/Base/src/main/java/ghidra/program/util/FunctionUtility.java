@@ -524,9 +524,6 @@ public class FunctionUtility {
 		if (otherNamespace instanceof GhidraClass) {
 			return symbolTable.createClass(parent, otherName, source);
 		}
-		else if (otherNamespace instanceof Library) {
-			return symbolTable.createExternalLibrary(otherName, source);
-		}
 		return symbolTable.createNameSpace(parent, otherName, source);
 	}
 

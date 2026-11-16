@@ -550,7 +550,7 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 		if (thunkedFunction.isExternal()) {
-			if (thunkedFunction.getParentNamespace() instanceof Library) {
+			if (thunkedFunction.getParentNamespace().isGlobal()) {
 				// Thunked function does not have mangled name, if it did it would have
 				// matched name check above or now reside in a different namespace
 				return false;

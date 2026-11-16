@@ -1311,6 +1311,7 @@ public class ProgramMerge {
 		String fromExtLabel = fromExtLoc.getLabel();
 		Address fromExtAddr = fromExtLoc.getAddress();
 		SourceType fromSourceType = fromExtLoc.getSource();
+		Library fromLibrary = fromExtLoc.getLibrary();
 
 		ExternalManager toExtMgr = toPgm.getExternalManager();
 		try {
@@ -1319,7 +1320,9 @@ public class ProgramMerge {
 			ExternalLocation toExternalLocation =
 				SimpleDiffUtility.getMatchingExternalLocation(fromPgm, fromExtLoc, toPgm, false);
 			if (toExternalLocation == null) {
-				toExtMgr.addExtLocation(toNamespace, fromExtLabel, fromExtAddr, fromSourceType);
+				Library toLibrary = DiffUtility.createLibrary(fromPgm, fromLibrary, toPgm);
+				toExtMgr.addExtLocation(toLibrary, toNamespace, fromExtLabel, fromExtAddr,
+					fromSourceType);
 			}
 			else {
 				String toExtLabel = toExternalLocation.getLabel();

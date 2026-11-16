@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.microsoft.win32.*;
@@ -118,7 +119,7 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 			Shell shell = isImplicitCmd(args) ? Shell.WINDOWS_CMD : Shell.WINDOWS;
 			String commandLine = ShellUtils.generateLine(Arrays.asList(args), shell);
 
-			Charset utf16le = Charset.forName("UTF-16LE");
+			Charset utf16le = StandardCharsets.UTF_16LE;
 			Win32Err.checkFalse(win32_h.CreateProcessW(cs,
 				MemorySegment.NULL, // lpApplicationName
 				arena.allocateFrom(commandLine, utf16le), // lpCommandLine

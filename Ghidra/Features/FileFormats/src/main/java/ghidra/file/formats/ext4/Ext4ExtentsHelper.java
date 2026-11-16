@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,6 +72,12 @@ public class Ext4ExtentsHelper {
 				if (ebp.length() + extentLen > expectedLength) {
 					// the last extent may have a trailing partial block
 					extentLen = expectedLength - ebp.length();
+				}
+
+				if (extent.isUnWritten()) {
+					// treat the range as sparse, which results in 00's, because the bytes on disk
+					// have not been initialized yet
+					providerOfs = -1;
 				}
 
 				ebp.addRange(providerOfs, extentLen);

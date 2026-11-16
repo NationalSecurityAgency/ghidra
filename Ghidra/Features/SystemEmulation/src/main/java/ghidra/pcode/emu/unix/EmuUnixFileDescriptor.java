@@ -82,6 +82,10 @@ public interface EmuUnixFileDescriptor<T> {
 	 */
 	int read(T buf) throws EmuIOException;
 
+	T pread(T buf, T offset) throws EmuIOException;
+
+	int pread(T buf, long offset) throws EmuIOException;
+
 	/**
 	 * Write into the file opened by this handle
 	 * 

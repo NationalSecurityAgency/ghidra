@@ -46,10 +46,13 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	public final static String GROUP_TITLE = "Function Signature Field";
 	public final static String DISPLAY_NAMESPACE =
 		GROUP_TITLE + Options.DELIMITER + GhidraOptions.DISPLAY_NAMESPACE;
+	public final static String DISPLAY_LIBRARY =
+		GROUP_TITLE + Options.DELIMITER + "Display Library";
 
 	private SymbolInspector inspector;
 
-	private boolean displayFunctionScope;
+	private boolean displayNamespace;
+	private boolean displayLibrary;
 
 	public FunctionSignatureFieldFactory() {
 		super(FIELD_NAME);
@@ -69,10 +72,13 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(DISPLAY_NAMESPACE, false, null,
 			"Prepends namespaces to labels that are not in the global namespace.");
+		fieldOptions.registerOption(DISPLAY_LIBRARY, false, null,
+			"Prepends the library to labels that are in an external library.");
 
 		inspector = new SymbolInspector(displayOptions, null);
 
-		displayFunctionScope = fieldOptions.getBoolean(DISPLAY_NAMESPACE, false);
+		displayNamespace = fieldOptions.getBoolean(DISPLAY_NAMESPACE, false);
+		displayLibrary = fieldOptions.getBoolean(DISPLAY_LIBRARY, false);
 	}
 
 	@Override
@@ -140,7 +146,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		}
 
 		// function name
-		String functionName = simplifyTemplates(function.getName(displayFunctionScope));
+		String functionName = simplifyTemplates(function.getName(displayNamespace));
+		functionName = addLibrary(functionName, function);
 		as = new AttributedString(functionName, getFunctionNameColor(function), getMetrics());
 		textElements.add(new FunctionNameFieldElement(as, elementIndex, 0, startCol));
 		startCol += as.length();
@@ -222,6 +229,20 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		return ListingTextField.createSingleLineTextField(this, proxy,
 			new CompositeFieldElement(textElements), startX + varWidth, width, hlProvider);
+	}
+
+	private String addLibrary(String functionName, Function function) {
+		if (function == null) {
+			return functionName;
+		}
+		if (!displayLibrary || !function.isExternal()) {
+			return functionName;
+		}
+		Library library = function.getSymbol().getLibrary();
+		if (library == null) {
+			return functionName;
+		}
+		return library.getName() + CodeUnitFormat.LIBRARY_DELIMITER + functionName;
 	}
 
 	private Color getFunctionNameColor(Function function) {
@@ -371,7 +392,11 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		if (optionName.equals(DISPLAY_NAMESPACE)) {
-			displayFunctionScope = ((Boolean) newValue).booleanValue();
+			displayNamespace = ((Boolean) newValue).booleanValue();
+			model.update();
+		}
+		if (optionName.equals(DISPLAY_LIBRARY)) {
+			displayLibrary = ((Boolean) newValue).booleanValue();
 			model.update();
 		}
 	}
@@ -574,7 +599,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 				getCharacterIndexForDataLocation(rowInField, columnInRow) + functionSigIndex;
 			return new FunctionNameFieldLocation(function.getProgram(),
 				functionProxy.getLocationAddress(), functionProxy.getFunctionAddress(),
-				signatureIndex, signature, function.getName(displayFunctionScope));
+				signatureIndex, signature, function.getName(displayNamespace));
 		}
 
 		@Override

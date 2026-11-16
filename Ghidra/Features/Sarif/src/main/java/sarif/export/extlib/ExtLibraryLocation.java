@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,13 @@ package sarif.export.extlib;
 
 import ghidra.program.model.data.ISF.IsfObject;
 import ghidra.program.model.symbol.ExternalLocation;
+import ghidra.program.model.symbol.Namespace;
 
 public class ExtLibraryLocation implements IsfObject {
 
 	String name;
-	String location;
+	String libraryName;
+	String location;	// this is really the namespace path
 	String originalImportedName;
 	String externalAddress;
 	String symbol;
@@ -31,11 +33,13 @@ public class ExtLibraryLocation implements IsfObject {
 
 	public ExtLibraryLocation(ExternalLocation extLoc) {
 		name = extLoc.getLabel();
+		libraryName = extLoc.getLibraryName();
 		originalImportedName = extLoc.getOriginalImportedName();
-		location = extLoc.getParentNameSpace().getName(true);
+		Namespace parentNameSpace = extLoc.getParentNameSpace();
+		location = parentNameSpace.isGlobal() ? "" : parentNameSpace.getName(true);
 		externalAddress = extLoc.getExternalSpaceAddress().toString();
 		isFunction = extLoc.getFunction() != null;
-		isClass = extLoc.getClass() != null;
+		isClass = false;
 		source = extLoc.getSource().toString();
 		symbol = extLoc.getSymbol().getName();
 	}

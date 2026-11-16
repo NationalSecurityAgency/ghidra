@@ -342,6 +342,9 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	 * @param message the message to display
 	 */
 	public void setStatusMessage(String message) {
+		// Note: we currently do not have any code that clears messages. All current clients of the
+		// messaging feature rely on the messages to go away when the viewer is replaced with a new
+		// function.
 		view.setStatusMessage(message);
 	}
 

@@ -15,7 +15,6 @@
  */
 package help.screenshot;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import javax.swing.table.TableColumn;
@@ -58,7 +57,7 @@ public class DefinedStringsPluginScreenShots extends GhidraScreenShotGenerator {
 			"Roses are \u001b[0;31mred\u001b[0m, violets are \u001b[0;34mblue. Hope you enjoy terminal hue",
 			StandardCharsets.US_ASCII, true, StringDataType.dataType);
 
-		Data tempDegrees = builder.createString("0x500", "Temp \u2103", Charset.forName("UTF-32LE"),
+		Data tempDegrees = builder.createString("0x500", "Temp \u2103", StandardCharsets.UTF_32LE,
 			true, Unicode32DataType.dataType);
 
 		builder.withTransaction(() -> {

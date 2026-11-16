@@ -15,15 +15,15 @@
  */
 package ghidra.pyghidra.test;
 
-import ghidra.app.util.recognizer.Recognizer;
+import ghidra.framework.ModuleInitializer;
 
 /**
  * Simple ExtensionPoint class for PyGhidra plugin test.
  * 
- * This can be any ExtensionPoint. Recognizer was chosen here
+ * This can be any ExtensionPoint. ModuleInitializer was chosen here
  * because it has a small number of methods and hasn't changed in a long time.
  */
-public class DummyTestRecognizer implements Recognizer {
+public class DummyTestModuleInitializer implements ModuleInitializer {
     
     // simple static field we can reach and check for a pytest
     // normally this would be an interface implemented in Python
@@ -31,17 +31,13 @@ public class DummyTestRecognizer implements Recognizer {
     public static boolean preLaunchInitialized = false;
     
     @Override
-    public int getPriority() {
-        return 0;
-    }
+	public String getName() {
+		return "Dummy";
+	}
     
     @Override
-    public int numberOfBytesRequired() {
-        return 0;
+    public void run() {
+    	// do nothing
     }
-    
-    @Override
-    public String recognize(byte[] bytes) {
-        return "";
-    }
+
 }

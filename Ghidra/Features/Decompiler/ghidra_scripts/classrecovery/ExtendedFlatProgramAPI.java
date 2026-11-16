@@ -1161,7 +1161,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		CategoryPath dataTypePath = parent;
 
-		for (String name : namespace.getPathList(true)) {
+		for (String name : namespace.getPathList()) {
 			monitor.checkCancelled();
 
 			dataTypePath = new CategoryPath(dataTypePath, name);

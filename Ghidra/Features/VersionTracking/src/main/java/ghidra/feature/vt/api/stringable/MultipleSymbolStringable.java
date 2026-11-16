@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -143,8 +143,9 @@ public class MultipleSymbolStringable extends Stringable {
 	private Symbol createSymbol(Program program, Address address, SymbolInfo symbolInfo)
 			throws DuplicateNameException, InvalidInputException {
 		Namespace namespace = getNamespaceForNewLabel(program, symbolInfo, address);
-		return program.getSymbolTable().createLabel(address, symbolInfo.getName(), namespace,
-			symbolInfo.sourceType);
+		return program.getSymbolTable()
+				.createLabel(address, symbolInfo.getName(), namespace,
+					symbolInfo.sourceType);
 	}
 
 	private Namespace getNamespaceForNewLabel(Program program, SymbolInfo symbolInfo,
@@ -181,10 +182,7 @@ public class MultipleSymbolStringable extends Stringable {
 		SymbolType type = info.symbolType;
 		SourceType sourceType = info.sourceType;
 
-		if (type == SymbolType.LIBRARY) {
-			return symbolTable.createExternalLibrary(name, sourceType);
-		}
-		else if (type == SymbolType.CLASS) {
+		if (type == SymbolType.CLASS) {
 			return symbolTable.createClass(namespace, name, sourceType);
 		}
 		return symbolTable.createNameSpace(namespace, name, sourceType);

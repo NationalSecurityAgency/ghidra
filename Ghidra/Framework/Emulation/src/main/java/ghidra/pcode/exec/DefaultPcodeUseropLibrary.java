@@ -17,6 +17,8 @@ package ghidra.pcode.exec;
 
 import java.util.*;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+
 /**
  * The default implemenation of a userop library
  * 
@@ -26,9 +28,10 @@ import java.util.*;
  * @param <T> the type of data processed by the library
  */
 public class DefaultPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
-	protected Map<String, PcodeUseropDefinition<T>> ops = new HashMap<>();
-	private Map<String, PcodeUseropDefinition<T>> unmodifiableOps =
+	protected final Map<String, PcodeUseropDefinition<T>> ops = new HashMap<>();
+	private final Map<String, PcodeUseropDefinition<T>> unmodifiableOps =
 		Collections.unmodifiableMap(ops);
+	private final SymbolsCache symbolsCache = new SymbolsCache(this);
 
 	/**
 	 * Add the given userop to this library
@@ -42,5 +45,10 @@ public class DefaultPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
 	@Override
 	public Map<String, PcodeUseropDefinition<T>> getUserops() {
 		return unmodifiableOps;
+	}
+
+	@Override
+	public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+		return symbolsCache.getSymbols(language);
 	}
 }

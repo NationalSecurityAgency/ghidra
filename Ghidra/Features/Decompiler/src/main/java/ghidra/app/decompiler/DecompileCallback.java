@@ -492,7 +492,7 @@ public class DecompileCallback {
 		int pathSize = 0;
 		Namespace curspace = namespace;
 		long curId = namespace.getID();
-		while (curId != stopId && curId != 0 && !HighFunction.collapseToGlobal(curspace)) {
+		while (curId != stopId && curId != 0) {
 			pathSize += 1;
 			curspace = curspace.getParentNamespace();
 			curId = curspace.getID();
@@ -809,7 +809,7 @@ public class DecompileCallback {
 	private void encodeResult(Encoder encoder, HighSymbol highSymbol, Namespace namespc)
 			throws IOException {
 		long namespaceId;
-		if (namespc == null || namespc instanceof Library) {
+		if (namespc == null) {
 			namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
 		}
 		else {

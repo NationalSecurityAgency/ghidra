@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ import javax.swing.JComponent;
 import ghidra.graph.viewer.GraphViewerUtils;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.task.RunManager;
-import ghidra.util.task.SwingUpdateManager;
+import ghidra.util.task.*;
 
 public class FGModel {
 
@@ -30,13 +29,16 @@ public class FGModel {
 	private SwingUpdateManager updateManager;
 
 	private RunManager runManager;
+	private RunnableListener runnableListener = new RunnableListener();
+
 	private volatile FunctionGraphRunnable pendingGraphRunnable;
 	private volatile FunctionGraphRunnable currentGraphRunnable;
 
 	public FGModel(FGController controller) {
 		this.controller = controller;
 
-		runManager = new RunManager(GraphViewerUtils.GRAPH_BUILDER_THREAD_POOL_NAME, null);
+		runManager =
+			new RunManager(GraphViewerUtils.GRAPH_BUILDER_THREAD_POOL_NAME, null, runnableListener);
 		updateManager = new SwingUpdateManager(500, () -> doPendingFunctionGraph());
 	}
 
@@ -115,5 +117,25 @@ public class FGModel {
 
 	synchronized boolean isBusy() {
 		return currentGraphRunnable != null || pendingGraphRunnable != null;
+	}
+
+	private class RunnableListener implements RunManagerListener {
+
+		@Override
+		public void jobFinished() {
+			// stub
+		}
+
+		@Override
+		public void jobCancelled() {
+			// stub
+		}
+
+		@Override
+		public void jobFailed(Throwable t) {
+			controller.setStatusMessage("Unexpected exception processing graph job: " +
+				t.getMessage());
+		}
+
 	}
 }

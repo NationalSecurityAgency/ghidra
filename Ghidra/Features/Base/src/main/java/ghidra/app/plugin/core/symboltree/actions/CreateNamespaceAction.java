@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
-import ghidra.app.plugin.core.symboltree.nodes.NamespaceCategoryNode;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -48,6 +47,12 @@ public class CreateNamespaceAction extends SymbolTreeContextAction {
 		}
 
 		Object object = selectionPaths[0].getLastPathComponent();
+		if (object instanceof ImportsNamespaceNode) {
+			// We don't allow it here because we only show namespaces in library categories if it
+			// has at least one symbol with that namespace and library. So creating a new, empty
+			// namespace wouldn't show up and it would seem broken.
+			return false;
+		}
 		if (object instanceof SymbolNode) {
 			SymbolNode symbolNode = (SymbolNode) object;
 			Symbol symbol = symbolNode.getSymbol();
@@ -55,8 +60,7 @@ public class CreateNamespaceAction extends SymbolTreeContextAction {
 			if (symbolType == SymbolType.FUNCTION) {
 				return !symbol.isExternal();
 			}
-			return (symbolType == SymbolType.NAMESPACE || symbolType == SymbolType.CLASS ||
-				symbolType == SymbolType.LIBRARY);
+			return (symbolType == SymbolType.NAMESPACE || symbolType == SymbolType.CLASS);
 		}
 		else if (object instanceof NamespaceCategoryNode) {
 			return true;

@@ -27,8 +27,10 @@ import javax.swing.table.TableCellEditor;
 import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.menu.MultiActionDockingAction;
 import docking.widgets.table.*;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -47,6 +49,7 @@ import ghidra.debug.api.target.Target.ObjectArgumentPolicy;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
@@ -751,6 +754,24 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
+	
+	interface ShowLocationTableAction {
+		String NAME = "Show Location Table";
+		Icon ICON = new GIcon("icon.debugger.breakpoint.table.location");
+		String DESCRIPTION = "Toggle display for the Location Table pane";
+		String GROUP = DebuggerResources.FilterAction.GROUP;
+		String ORDER = "1";
+		String HELP_ANCHOR = "show_location_table";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	interface SetEmulatedBreakpointInjectionAction {
 		String NAME = "Set Injection (Emulator)";
@@ -875,6 +896,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	private GoToService goToService;
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
+	
+	@AutoConfigStateField
+	boolean showLocationTable = true;
 
 	private final Map<Trace, ForBreakpointLocationsTraceListener> listenersByTrace =
 		new HashMap<>();
@@ -882,6 +906,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	Trace currentTrace;
 
 	private final JSplitPane mainPanel = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final int defaultDividerSize = mainPanel.getDividerSize();
 
 	LogicalBreakpointTableModel breakpointTableModel = new LogicalBreakpointTableModel(this);
 	GhidraTable breakpointTable;
@@ -910,6 +935,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	MakeBreakpointsEffectiveResolutionAction actionMakeBreakpointsEffectiveResolution;
 	ToggleDockingAction actionFilterByCurrentTrace;
 	ToggleDockingAction actionFilterLocationsByBreakpoints;
+	ToggleDockingAction actionShowLocationTable;
 	DockingAction actionSetCondition;
 	DockingAction actionSetInjection;
 
@@ -1318,6 +1344,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				.popupWhen(this::isPopupSetInjection)
 				.onAction(this::activatedSetInjection)
 				.buildAndInstall(tool);
+		actionShowLocationTable = ShowLocationTableAction.builder(plugin)
+				.onAction(this::toggledShowLocationTable)
+				.selected(showLocationTable)
+				.buildAndInstallLocal(this);
 
 		actionMakeBreakpointsEffectiveResolution = new MakeBreakpointsEffectiveResolutionAction();
 	}
@@ -1467,6 +1497,25 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	private void toggledFilterLocationsByBreakpoints(ActionContext ignored) {
 		locationTableModel.fireTableDataChanged();
+	}
+	
+	private void toggledShowLocationTable(ActionContext ignored) {
+		setShowLocationTable(actionShowLocationTable.isSelected());
+	}
+
+	public void setShowLocationTable(boolean showLocationTable) {
+		if (this.showLocationTable == showLocationTable) {
+			return;
+		}
+		doSetShowLocationTable(showLocationTable);
+	}
+
+	protected void doSetShowLocationTable(boolean showLocationTable) {
+		this.showLocationTable = showLocationTable;
+		actionShowLocationTable.setSelected(showLocationTable);
+		mainPanel.setDividerSize(showLocationTable ? defaultDividerSize : 0);
+		mainPanel.getBottomComponent().setVisible(showLocationTable);
+		mainPanel.resetToPreferredSizes();
 	}
 
 	public boolean isFilterLocationsByBreakpoints() {

@@ -15,17 +15,15 @@
  */
 package ghidra.app.cmd.data;
 
-import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * This command will create a TypeDescriptor data type. Since unsized arrays are not properly
@@ -140,6 +138,12 @@ public class CreateTypeDescriptorBackgroundCmd
 		}
 		String prefix = demangledName + " ";
 
+		// This is to make the type descriptor ptr have a different symbol than the type descriptor 
+		String labelPrefix = "";
+		if (demangledName.endsWith("__ptr64")) {
+			labelPrefix = "__ptr64_";
+		}
+
 		// Plate Comment
 		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null,
 			getDataAddress(), applyOptions);
@@ -148,42 +152,13 @@ public class CreateTypeDescriptorBackgroundCmd
 
 		// Label
 		Namespace classNamespace = model.getDescriptorAsNamespace();
-
-		// if cannot demangle then use the mangled name as the namespace
-		if (classNamespace == null || classNamespace.isGlobal()) {
-			Msg.error(RttiUtil.class, "Cannot get demangled namespace from model " +
-				model.getAddress() + " so will use the mangled name for the namespace");
-			try {
-				classNamespace = program.getSymbolTable()
-						.getOrCreateNameSpace(program.getGlobalNamespace(), demangledName,
-							SourceType.IMPORTED);
-			}
-			catch (DuplicateNameException e) {
-				// ok if it is duplicate as it was likely created in another rtti handling method
-			}
-			catch (InvalidInputException e) {
-				Msg.error(TypeDescriptorModel.class,
-					"Failed to create mangled namespace: " + e.getMessage());
-				classNamespace = null;
-				return false;
-			}
-
-		}
-
-		// If PDB had been run, then the namespace here might already have been promoted to
-		//  a class type.  At this point in processing, we know that the model only has a type
-		//  with a "class" or "struct" tag (see TypeDescriptorModel).
-		// <br>Note: For now this assumes all classes and structs with RTTI data must
-		// actually be classes. In the future this might need additional checking before
-		// promoting some "struct" ref types to being a class, if we can better determine
-		// whether or not they are actually classes.
-		if (!(classNamespace instanceof GhidraClass)) {
-			classNamespace = RttiUtil.promoteToClassNamespace(program, classNamespace);
+		if (classNamespace == null) {
+			return false;
 		}
 
 		// Make the symbol even if the namespace couldn't be promoted
 		// the method to promote spits out debug error if it cannot be promoted
-		EHDataTypeUtilities.createSymbolIfNeeded(program, classNamespace, RTTI_0_NAME,
+		EHDataTypeUtilities.createSymbolIfNeeded(program, classNamespace, labelPrefix + RTTI_0_NAME,
 			getDataAddress(), applyOptions);
 
 		return true;

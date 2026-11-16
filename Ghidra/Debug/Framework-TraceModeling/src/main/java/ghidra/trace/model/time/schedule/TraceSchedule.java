@@ -23,7 +23,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.model.time.schedule.TraceSchedule.Source;
 import ghidra.util.Radix;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -198,7 +197,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * <p>
 	 * A schedule consists of a snap, a optional {@link Sequence} of thread instruction-level steps,
 	 * and optional p-code-level steps (pSteps). The form of {@code steps} and {@code pSteps} is
-	 * specified by {@link Sequence#parse(String, TimeRadix)}. Each sequence consists of stepping
+	 * specified by {@link Sequence#parse(String, Radix)}. Each sequence consists of stepping
 	 * selected threads forward, and/or patching machine state.
 	 * 
 	 * @param spec the string specification
@@ -251,7 +250,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
-	 * As in {@link #parse(String, Source, TimeRadix)}, but assumed abnormal
+	 * As in {@link #parse(String, Source, Radix)}, but assumed abnormal
 	 * 
 	 * @param spec the string specification
 	 * @param radix the radix
@@ -262,7 +261,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
-	 * As in {@link #parse(String, TimeRadix)}, but with the {@link TimeRadix#DEFAULT} radix.
+	 * As in {@link #parse(String, Radix)}, but with the {@link Radix#DEFAULT} radix.
 	 * 
 	 * @param spec the string specification
 	 * @return the parse sequence

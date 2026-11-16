@@ -862,6 +862,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			List<Symbol> vftableSymbols) throws CancelledException, Exception {
 
 		List<RecoveredClass> recoveredClasses = new ArrayList<RecoveredClass>();
+		Set<String> dupes = new HashSet<>();
 
 		List<Symbol> classHierarchyDescriptorList = getListOfClassHierarchyDescriptors();
 
@@ -875,6 +876,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				Msg.warn(this, "ClassHierarchyDescriptor at " + classHierarchyDescriptorAddress +
 					" is unexpectedly in the Global namespace so processing cannot continue for " +
 					"this class");
+				continue;
+			}
+
+			// NEW CHECK: don't process invalid classes that have more than one Base Class Array
+			List<Symbol> symbols = symbolTable.getSymbols("RTTI_Base_Class_Array", classNamespace);
+			if (symbols.size() > 1) {
+				dupes.add(classNamespace.getName(true));
 				continue;
 			}
 			// get the data type category associated with the given class namespace
@@ -936,6 +944,17 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			}
 
+		}
+		// If there are any classes with dupes print out list of them to the log 
+		if (dupes.size() > 0) {
+			String errorOutput =
+				"Cannot process classes in the following " + dupes.size() + " namespaces because " +
+					"there are duplicate RTTI_Base_Class_Array's in them.\n";
+			for (String dupe : dupes) {
+				monitor.checkCancelled();
+				errorOutput += "\t" + dupe + "\n";
+			}
+			Msg.error(this, errorOutput);
 		}
 
 		return recoveredClasses;

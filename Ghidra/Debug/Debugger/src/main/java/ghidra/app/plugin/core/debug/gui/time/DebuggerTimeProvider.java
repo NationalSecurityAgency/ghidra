@@ -184,9 +184,6 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 				myActionContext = null;
 				return;
 			}
-			if (snap.longValue() == current.getSnap()) {
-				return;
-			}
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
 			contextChanged();
 		});
@@ -244,27 +241,27 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 
 	protected void createActions() {
 		actionGoToTime = GoToTimeAction.builder(plugin)
-				.enabledWhen(c -> current.getTrace() != null)
-				.onAction(c -> activatedGoToTime())
+				.enabledWhen(_ -> current.getTrace() != null)
+				.onAction(_ -> activatedGoToTime())
 				.buildAndInstall(tool);
 		actionHideScratch = DebuggerResources.HideScratchSnapshotsAction.builder(plugin)
 				.selected(hideScratch)
 				.onAction(this::activatedHideScratch)
 				.buildAndInstallLocal(this);
 		actionSetRadixDec = SetTimeRadixAction.builder("Decimal", plugin)
-				.enabledWhen(c -> current.getTrace() != null &&
+				.enabledWhen(_ -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(Radix.DEC))
+				.onAction(_ -> activatedSetRadix(Radix.DEC))
 				.buildAndInstall(tool);
 		actionSetRadixHexUpper = SetTimeRadixAction.builder("Upper Hex", plugin)
-				.enabledWhen(c -> current.getTrace() != null &&
+				.enabledWhen(_ -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(Radix.HEX_UPPER))
+				.onAction(_ -> activatedSetRadix(Radix.HEX_UPPER))
 				.buildAndInstall(tool);
 		actionSetRadixHexLower = SetTimeRadixAction.builder("Lower Hex", plugin)
-				.enabledWhen(c -> current.getTrace() != null &&
+				.enabledWhen(_ -> current.getTrace() != null &&
 					current.getTrace().getObjectManager().getRootObject() != null)
-				.onAction(c -> activatedSetRadix(Radix.HEX_LOWER))
+				.onAction(_ -> activatedSetRadix(Radix.HEX_LOWER))
 				.buildAndInstall(tool);
 	}
 
@@ -283,7 +280,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	}
 
 	private void activatedSetRadix(Radix radix) {
-		try (Transaction tx = current.getTrace().openTransaction("Set Time Radix")) {
+		try (Transaction _ = current.getTrace().openTransaction("Set Time Radix")) {
 			current.getTrace().getTimeManager().setTimeRadix(radix);
 		}
 		// NOTE: refreshRadixSelection() should happen via listener

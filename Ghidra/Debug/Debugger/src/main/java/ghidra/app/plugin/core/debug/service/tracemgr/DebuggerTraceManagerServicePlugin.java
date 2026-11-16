@@ -635,7 +635,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	private ControlMode getEffectiveControlMode(Trace trace) {
 		if (trace == null) {
-			return ControlMode.RO_TRACE;
+			return ControlMode.TRACE;
 		}
 		return controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
 	}
@@ -809,9 +809,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		/**
-		 * NOTE: We can actually reach this point in RO_TARGET mode, though ordinarily, it should
-		 * only reach here in RW_EMULATOR mode. The reason is because during many automated tests,
-		 * the "default" mode of RO_TARGET is taken as the effective mode, and the tests still
+		 * NOTE: We can actually reach this point in TARGET mode, though ordinarily, it should
+		 * only reach here in EMULATOR mode. The reason is because during many automated tests,
+		 * the "default" mode of TARGET is taken as the effective mode, and the tests still
 		 * expect emulation behavior. So do it.
 		 */
 

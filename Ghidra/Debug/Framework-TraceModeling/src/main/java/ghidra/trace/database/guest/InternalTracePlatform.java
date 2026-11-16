@@ -156,7 +156,7 @@ public interface InternalTracePlatform extends TracePlatform, ProgramArchitectur
 			throw new IllegalStateException(
 				"Given register is not mapped to the host, or it's not in the guest language");
 		}
-		try (LockHold hold = getTrace().lockWrite()) {
+		try (LockHold _ = getTrace().lockWrite()) {
 			TraceSymbolManager symbolManager = getTrace().getSymbolManager();
 			TraceNamespaceSymbol globals = symbolManager.getGlobalNamespace();
 			TraceNamespaceSymbolView namespaces = symbolManager.namespaces();

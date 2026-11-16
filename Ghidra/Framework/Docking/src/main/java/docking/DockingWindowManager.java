@@ -2030,6 +2030,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		E -A long-running API shows a non-modal progress dialog.  This API then shows a
 		 		   results dialog which is also non-modal.  We do not want to parent the new dialog
 		 		   to the original dialog, since it is a progress dialog that will go away.
+		 		F -The user acts in a detached window, a dialog closes, and a new dialog is shown
+		 		   before the OS has made the detached window active again, so Java reports no
+		 		   active window, or still reports the closed dialog.  The new dialog should use
+		 		   the window the user last worked in, not the main tool frame, or that frame
+		 		   comes to the front when the dialog closes.  This applies to case 4 as well:
+		 		   with no showing active window, a background thread's dialog also uses the last
+		 		   active window.
 		
 		
 		 	For now, the easiest mental model to use is to always prefer the active non-transient
@@ -2114,13 +2121,24 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	private static Window getJavaActiveWindow() {
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Window activeWindow = kfm.getActiveWindow();
-		if (activeWindow == null) {
+		if (activeWindow != null && activeWindow.isShowing()) {
+			return activeWindow;
+		}
+
+		// Don't let non-showing windows be considered active.  There may be no active window, or
+		// a window that has just closed, when a dialog is shown before Java has finished updating
+		// the KeyboardFocusManager's active window.  (See Use Case 'F' in getParentWindow().)
+		DockingWindowManager dwm = getActiveInstance();
+		if (dwm == null) {
 			return null;
 		}
-		if (!activeWindow.isShowing()) {
-			return null; // don't let non-showing windows be considered active
+
+		// the last active window may be a dialog that has since closed; use its owner
+		Window w = dwm.lastActiveWindow;
+		while (w != null && !w.isShowing()) {
+			w = w.getOwner();
 		}
-		return activeWindow;
+		return w;
 	}
 
 	private static Window getActiveNonTransientWindow() {

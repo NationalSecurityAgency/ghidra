@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class CodeUnitFormatOptions {
 	protected volatile ShowBlockName showBlockName = ShowBlockName.NEVER;
 	protected volatile ShowNamespace showNamespace = ShowNamespace.NEVER;
 	protected volatile String localPrefixOverride = null;
-	protected volatile boolean showLibraryInNamespace = true;
+	protected volatile boolean showLibrary = true;
 	protected volatile boolean doRegVariableMarkup = true;
 	protected volatile boolean doStackVariableMarkup = true;
 	protected volatile boolean includeInferredVariableMarkup = false;
@@ -114,19 +114,20 @@ public class CodeUnitFormatOptions {
 	 * the operand using the =&gt; separator if necessary
 	 * @param includeScalarReferenceAdjustment if true scalar adjustment of certain reference offsets
 	 * will be included to maintain replaced scalar value
-	 * @param showLibraryInNamespace if true any referenced external symbols will include 
+	 * @param showLibrary if true any referenced external symbols will include 
 	 * library name
 	 * @param followReferencedPointers if true referenced pointers (read or indirect) will
 	 * follow the pointer and display the indirect symbol with -&gt; instead of pointer label.
+	 * @param templateSimplifier The {@link TemplateSimplifier}
 	 */
 	public CodeUnitFormatOptions(ShowBlockName showBlockName, ShowNamespace showNamespace,
 			String localPrefixOverride, boolean doRegVariableMarkup, boolean doStackVariableMarkup,
 			boolean includeInferredVariableMarkup, boolean alwaysShowPrimaryReference,
-			boolean includeScalarReferenceAdjustment, boolean showLibraryInNamespace,
+			boolean includeScalarReferenceAdjustment, boolean showLibrary,
 			boolean followReferencedPointers, TemplateSimplifier templateSimplifier) {
 		this.showBlockName = showBlockName;
 		this.showNamespace = showNamespace;
-		this.showLibraryInNamespace = showLibraryInNamespace;
+		this.showLibrary = showLibrary;
 		this.localPrefixOverride = localPrefixOverride;
 		this.doRegVariableMarkup = doRegVariableMarkup;
 		this.doStackVariableMarkup = doStackVariableMarkup;

@@ -15,20 +15,12 @@
  */
 package ghidra.server;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.nio.file.*;
+import java.util.*;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -44,9 +36,11 @@ import utility.function.ExceptionalCallback;
 import utility.function.ExceptionalConsumer;
 
 /**
- * <code>CommandProcessor</code> provides server processing of commands queued
- * by the {@link ServerAdmin} class which corresponds to the
- * <code>svrAdmin</code> shell command.
+ * <code>CommandProcessor</code> provides server processing of commands queued by the
+ * {@link ServerAdmin} class which corresponds to the <code>svrAdmin</code> shell command.
+ * <p>
+ * NOTE: Some of the static methods in this class may be called by console applications that have
+ * not initialized logging. Those methods should be using System.out/err.
  */
 public class CommandProcessor {
 	static final Logger log = LogManager.getLogger(CommandProcessor.class);

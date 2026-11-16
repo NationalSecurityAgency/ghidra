@@ -228,7 +228,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 	@Test
 	public void testWriteMemoryGivenContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		assertTrue(api.writeMemory(tb.trace, 0, tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -239,7 +239,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 	@Test
 	public void testWriteMemoryCurrentContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		assertTrue(api.writeMemory(tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -250,7 +250,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 	@Test
 	public void testWriteRegisterGivenContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
@@ -266,7 +266,7 @@ public abstract class AbstractFlatDebuggerAPITest<API extends FlatDebuggerAPI>
 	@Test
 	public void testWriteRegisterCurrentContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		traceManager.activateThread(thread);
 		waitForSwing();
 

@@ -21,8 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.junit.*;
 
@@ -56,7 +55,9 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		CLOSE(3, "close"),
 		READV(19, "readv"),
 		WRITEV(20, "writev"),
-		GROUP_EXIT(231, "group_exit");
+		MMAP(9, "mmap"),
+		GETPID(39, "getpid"),
+		EXIT_GROUP(231, "exit_group");
 
 		public final int number;
 		public final String name;
@@ -203,6 +204,76 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	}
 
 	@Test
+	public void testMmapReadsFromRequestedFileOffset() throws Exception {
+		Address pathAddr = space.getAddress(0x00400880);
+		byte[] fileContents = new byte[2 * 4096];
+		byte[] expected = "second page".getBytes();
+		System.arraycopy(expected, 0, fileContents, 4096, expected.length);
+		EmuUnixFile<byte[]> file = fs.createOrGetFile("/mapped", 4);
+		for (int i = 0; i < fileContents.length; i += 1024) {
+			file.write(i, Arrays.copyOfRange(fileContents, i, i + 1024));
+		}
+
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
+		buf.assemble("MOV RAX, %d".formatted(Syscall.OPEN.number));
+		buf.assemble("LEA RDI, [0x%x]".formatted(pathAddr.getOffset()));
+		buf.assemble("MOV RSI, 0"); // O_RDONLY
+		buf.assemble("MOV RDX, 0");
+		buf.assemble("SYSCALL");
+		buf.assemble("MOV R8, RAX");
+		buf.assemble("MOV RAX, %d".formatted(Syscall.MMAP.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("MOV RSI, 4096");
+		buf.assemble("MOV RDX, %d".formatted(AbstractEmuLinuxSyscallUseropLibrary.PROT_READ));
+		buf.assemble("MOV R10, %d".formatted(AbstractEmuLinuxSyscallUseropLibrary.MAP_PRIVATE));
+		buf.assemble("MOV R9, 4096");
+		buf.assemble("SYSCALL");
+		Address captureAt = buf.getNext();
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset()));
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
+			block.putBytes(pathAddr, "/mapped\0".getBytes());
+		}
+
+		PcodeEmulator emu = prepareEmulator();
+		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
+		execute(thread);
+
+		assertEquals(1, capture.captured.size());
+		assertArrayEquals(expected,
+			emu.getSharedState()
+					.getVar(space, capture.captured.get(0), expected.length, true,
+						Reason.INSPECT));
+	}
+
+	@Test
+	public void testGetPid() throws Exception {
+		AssemblyBuffer buf = new AssemblyBuffer(asm, start);
+		buf.assemble("MOV RAX, %d".formatted(Syscall.GETPID.number));
+		buf.assemble("SYSCALL");
+		Address captureAt = buf.getNext();
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
+		buf.assemble("MOV RDI, 0");
+		buf.assemble("SYSCALL");
+		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset()));
+		try (Transaction _ = program.openTransaction("Initialize")) {
+			block.putBytes(start, buf.getBytes());
+		}
+
+		PcodeEmulator emu = prepareEmulator();
+		PcodeThread<byte[]> thread = launchThread(emu, start);
+		thread.inject(captureAt, "capture(RAX); emu_exec_decoded();");
+		execute(thread);
+
+		assertEquals(List.of((long) AbstractEmuUnixSyscallUseropLibrary.DEFAULT_PID),
+			capture.captured);
+	}
+
+	@Test
 	public void testWriteStdout() throws Exception {
 		Address hwAddr = space.getAddress(0x00400800);
 
@@ -213,7 +284,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
 		buf.assemble("SYSCALL");
 		final Address captureAt = buf.getNext();
-		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		buf.assemble("MOV RDI, 0");
 		buf.assemble("SYSCALL");
 		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
@@ -247,7 +318,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		buf.assemble("MOV RDX, %d".formatted(BYTES_HW.length));
 		buf.assemble("SYSCALL");
 		final Address captureAt = buf.getNext();
-		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		buf.assemble("MOV RDI, 0");
 		buf.assemble("SYSCALL");
 		buf.assemble("JMP 0x%x".formatted(buf.getNext().getOffset())); // Snuff JIT look-ahead
@@ -299,7 +370,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		cBuf.assemble("MOV RDX, 2");
 		cBuf.assemble("SYSCALL");
 		final Address captureAt = cBuf.getNext();
-		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		cBuf.assemble("MOV RDI, 0");
 		cBuf.assemble("SYSCALL");
 		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
@@ -351,7 +422,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		cBuf.assemble("MOV RDX, 2");
 		cBuf.assemble("SYSCALL");
 		final Address captureAt = cBuf.getNext();
-		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		cBuf.assemble("MOV RDI, 0");
 		cBuf.assemble("SYSCALL");
 		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
@@ -406,7 +477,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		cBuf.assemble("MOV RDX, 2");
 		cBuf.assemble("SYSCALL");
 		final Address captureAt = cBuf.getNext();
-		cBuf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		cBuf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		cBuf.assemble("MOV RDI, 0");
 		cBuf.assemble("SYSCALL");
 		cBuf.assemble("JMP 0x%x".formatted(cBuf.getNext().getOffset())); // Snuff JIT look-ahead
@@ -453,7 +524,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		buf.assemble("MOV RDI, RBP");
 		buf.assemble("SYSCALL");
 
-		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		buf.assemble("MOV RDI, 0");
 		buf.assemble("SYSCALL");
 
@@ -498,7 +569,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		buf.assemble("MOV RDI, RBP");
 		buf.assemble("SYSCALL");
 
-		buf.assemble("MOV RAX, %d".formatted(Syscall.GROUP_EXIT.number));
+		buf.assemble("MOV RAX, %d".formatted(Syscall.EXIT_GROUP.number));
 		buf.assemble("MOV RDI, 0");
 		buf.assemble("SYSCALL");
 

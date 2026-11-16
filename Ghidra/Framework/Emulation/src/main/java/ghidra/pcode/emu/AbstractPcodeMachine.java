@@ -341,7 +341,6 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	/**
 	 * Perform checks on a requested LOAD
-	 * 
 	 * <p>
 	 * Throw an exception if the LOAD should cause an interrupt.
 	 * 
@@ -366,7 +365,6 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	/**
 	 * Perform checks on a requested STORE
-	 * 
 	 * <p>
 	 * Throw an exception if the STORE should cause an interrupt.
 	 * 
@@ -380,7 +378,8 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		}
 		try {
 			long concrete = arithmetic.toLong(offset, Purpose.LOAD);
-			if (accessBreakpoints.hasEntry(space.getAddress(concrete), AccessKind::trapsWrite)) {
+			Address address = space.getAddress(concrete);
+			if (accessBreakpoints.hasEntry(address, AccessKind::trapsWrite)) {
 				throw new InterruptPcodeExecutionException(null, null);
 			}
 		}

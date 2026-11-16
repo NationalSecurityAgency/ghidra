@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,11 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 	private static final String DISPLAY_LOCAL_NAMESPACE_LABEL = "Display Local Namespace";
 	private static final String DISPLAY_NON_LOCAL_NAMESPACE_LABEL = "Display Non-local Namespace";
 	private static final String LOCAL_NAMESPACE_PREFIX_LABEL = "Local Namespace Prefix";
-	private static final String DISPLAY_LIBRARY_IN_NAMESPACE_LABEL = "Display library in Namespace";
+	private static final String DISPLAY_LIBRARY_LABEL = "Display library Name";
 
 	private static final String[] NAMES =
 		{ DISPLAY_LOCAL_NAMESPACE_LABEL, DISPLAY_NON_LOCAL_NAMESPACE_LABEL,
-			LOCAL_NAMESPACE_PREFIX_LABEL, DISPLAY_LIBRARY_IN_NAMESPACE_LABEL };
+			LOCAL_NAMESPACE_PREFIX_LABEL, DISPLAY_LIBRARY_LABEL };
 
 	// help tooltips
 	private static final String SHOW_NON_LOCAL_NAMESPACE_TOOLTIP = HTMLUtilities.toWrappedHTML(
@@ -62,7 +62,7 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 	private JCheckBox showLocalCheckBox;
 	private JCheckBox useLocalPrefixCheckBox;
 	private JTextField localPrefixField;
-	private JCheckBox showLibraryInNamespaceCheckBox;
+	private JCheckBox showLibraryCheckBox;
 
 	public NamespacePropertyEditor() {
 		editorComponent = buildEditor();
@@ -81,12 +81,12 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		showLocalCheckBox.setSelected(false);
 		showLocalCheckBox.setToolTipText(SHOW_LOCAL_NAMESPACE_TOOLTIP);
 
-		showLibraryInNamespaceCheckBox = new GCheckBox(DISPLAY_LIBRARY_IN_NAMESPACE_LABEL);
-		showLibraryInNamespaceCheckBox.setSelected(true);
-		showLibraryInNamespaceCheckBox.setToolTipText(SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
+		showLibraryCheckBox = new GCheckBox(DISPLAY_LIBRARY_LABEL);
+		showLibraryCheckBox.setSelected(true);
+		showLibraryCheckBox.setToolTipText(SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
 
 		panel.add(showNonLocalCheckBox);
-		panel.add(showLibraryInNamespaceCheckBox);
+		panel.add(showLibraryCheckBox);
 		panel.add(showLocalCheckBox);
 
 		localPrefixField =
@@ -101,7 +101,7 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 			firePropertyChange();
 		});
 		showNonLocalCheckBox.addItemListener(e -> firePropertyChange());
-		showLibraryInNamespaceCheckBox.addItemListener(e -> firePropertyChange());
+		showLibraryCheckBox.addItemListener(e -> firePropertyChange());
 		panel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createEmptyBorder(10, 0, 10, 0), new TitledBorder("Namespace Options")));
 
@@ -169,9 +169,9 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		if (namespaceOption.isShowLocalNamespace() != showLocalCheckBox.isSelected()) {
 			showLocalCheckBox.setSelected(namespaceOption.isShowLocalNamespace());
 		}
-		if (namespaceOption.isShowLibraryInNamespace() != showLibraryInNamespaceCheckBox
+		if (namespaceOption.isShowLibrary() != showLibraryCheckBox
 				.isSelected()) {
-			showLibraryInNamespaceCheckBox.setSelected(namespaceOption.isShowLibraryInNamespace());
+			showLibraryCheckBox.setSelected(namespaceOption.isShowLibrary());
 		}
 		if (namespaceOption.isUseLocalPrefixOverride() != useLocalPrefixCheckBox.isSelected()) {
 			useLocalPrefixCheckBox.setSelected(namespaceOption.isUseLocalPrefixOverride());
@@ -183,14 +183,14 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		useLocalPrefixCheckBox.setEnabled(localNamespaceEnabled);
 		localPrefixField.setEnabled(localNamespaceEnabled && useLocalPrefixCheckBox.isSelected());
 		boolean nonLocalNamespaceEnabled = showNonLocalCheckBox.isSelected();
-		showLibraryInNamespaceCheckBox.setEnabled(nonLocalNamespaceEnabled);
+		showLibraryCheckBox.setEnabled(nonLocalNamespaceEnabled);
 	}
 
 	private NamespaceWrappedOption cloneNamespaceValues() {
 		NamespaceWrappedOption newOption = new NamespaceWrappedOption();
 		newOption.setShowLocalNamespace(showLocalCheckBox.isSelected());
 		newOption.setShowNonLocalNamespace(showNonLocalCheckBox.isSelected());
-		newOption.setShowLibraryInNamespace(showLibraryInNamespaceCheckBox.isSelected());
+		newOption.setShowLibrary(showLibraryCheckBox.isSelected());
 		newOption.setUseLocalPrefixOverride(useLocalPrefixCheckBox.isSelected());
 		newOption.setLocalPrefixText(localPrefixField.getText());
 		return newOption;

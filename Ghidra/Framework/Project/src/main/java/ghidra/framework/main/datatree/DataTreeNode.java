@@ -257,9 +257,6 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 
 	private static class DataNodeSortComparator implements Comparator<GTreeNode> {
 
-		private static AlphaNumericComparator alphaNumericComparator =
-			new AlphaNumericComparator(false);
-
 		@Override
 		public int compare(GTreeNode o1, GTreeNode o2) {
 
@@ -290,7 +287,7 @@ public abstract class DataTreeNode extends GTreeSlowLoadingNode implements Cutta
 
 		private int compareNames(String n1, String n2) {
 			if (useNaturalSort) {
-				return alphaNumericComparator.compare(n1, n2);
+				return AlphaNumericComparator.CI.compare(n1, n2);
 			}
 
 			int result = n1.compareToIgnoreCase(n2);

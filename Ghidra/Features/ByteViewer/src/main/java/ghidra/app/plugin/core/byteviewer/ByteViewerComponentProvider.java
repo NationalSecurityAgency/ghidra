@@ -172,17 +172,19 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	}
 
 	private void createActions() {
-		editModeAction =
-			new ToggleActionBuilder("Enable/Disable Byteviewer Editing", plugin.getName())
-					.selected(false)
-					.description("Enable/Disable editing of bytes in Byte Viewer panels.")
-					.toolBarIcon(new GIcon("icon.base.edit.bytes"))
-					.toolBarGroup("Byteviewer")
-					.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_E,
-						DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK))
-					.enabledWhen(ac -> blockSet != null && blockSet.isValid())
-					.onAction(ac -> setEditMode(editModeAction.isSelected()))
-					.buildAndInstallLocal(this);
+		if (hasEditAction()) {
+			editModeAction =
+				new ToggleActionBuilder("Enable/Disable Byteviewer Editing", plugin.getName())
+						.selected(false)
+						.description("Enable/Disable editing of bytes in Byte Viewer panels.")
+						.toolBarIcon(new GIcon("icon.base.edit.bytes"))
+						.toolBarGroup("Byteviewer")
+						.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_E,
+							DockingUtils.CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK))
+						.enabledWhen(ac -> blockSet != null && blockSet.isValid())
+						.onAction(ac -> setEditMode(editModeAction.isSelected()))
+						.buildAndInstallLocal(this);
+		}
 
 		optionsAction = new ActionBuilder("Byte Viewer Options", plugin.getName())
 				.description("Set Byte Viewer Options")
@@ -640,6 +642,15 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	 */
 	public void removeDisplayListener(AddressSetDisplayListener listener) {
 		panel.removeDisplayListener(listener);
+	}
+
+	/**
+	 * Panel uses an action to determine edits
+	 * 
+	 * @return edits can be toggled
+	 */
+	public boolean hasEditAction() {
+		return true;
 	}
 
 }

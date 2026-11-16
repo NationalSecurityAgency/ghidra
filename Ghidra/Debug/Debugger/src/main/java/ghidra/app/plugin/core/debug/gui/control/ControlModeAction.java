@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import docking.ActionContext;
@@ -40,15 +41,15 @@ class ControlModeAction extends MultiStateDockingAction<ControlMode> {
 		setDescription(DESCRIPTION);
 		setToolBarData(new ToolBarData(DebuggerResources.ICON_BLANK, GROUP, ""));
 		setHelpLocation(new HelpLocation(getOwner(), HELP_ANCHOR));
-		setActionStates(ControlMode.ALL.stream()
+		List<ActionState<ControlMode>> modes = ControlMode.ALL.stream()
 				.map(m -> new ActionState<>(m.name, m.icon, m))
-				.collect(Collectors.toList()));
-		setEnabled(false);
+				.collect(Collectors.toList());
+		setActionStates(modes);
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		return plugin.current.getTrace() != null;
+		return true;
 	}
 
 	@Override
@@ -61,4 +62,5 @@ class ControlModeAction extends MultiStateDockingAction<ControlMode> {
 			EventTrigger trigger) {
 		plugin.activateControlMode(newActionState, trigger);
 	}
+
 }

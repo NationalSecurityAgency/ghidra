@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,63 +16,22 @@
 package ghidra.app.plugin.core.symboltree.nodes;
 
 import java.awt.datatransfer.DataFlavor;
-import java.util.Comparator;
+import java.util.*;
 
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
+import ghidra.app.plugin.core.symboltree.SymbolTreeFilterState;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public class LibrarySymbolNode extends SymbolNode {
 
-	private static final String ORDINAL_PREFIX = "Ordinal_";
-
 	private static final Icon LIBRARY_ICON = new GIcon("icon.plugin.symboltree.node.library");
-
-	private static Comparator<GTreeNode> CHILD_COMPARATOR = (o1, o2) -> {
-		SymbolNode symbolNode1 = (SymbolNode) o1;
-		SymbolNode symbolNode2 = (SymbolNode) o2;
-
-		Symbol s1 = symbolNode1.getSymbol();
-		Symbol s2 = symbolNode2.getSymbol();
-
-		Integer result = tryToCompareExternalLocationsByOrdinal(s1, s2);
-		if (result != null) {
-			return result;
-		}
-
-		return o1.compareTo(o2);
-	};
-
-	private static Integer tryToCompareExternalLocationsByOrdinal(Symbol s1, Symbol s2) {
-		Object so1 = s1.getObject();
-		if (!(so1 instanceof ExternalLocation)) {
-			return null;
-		}
-
-		Object so2 = s2.getObject();
-		if (!(so2 instanceof ExternalLocation)) {
-			return null;
-		}
-
-		String n1 = s1.getName();
-		String n2 = s2.getName();
-		if (n1.startsWith(ORDINAL_PREFIX) && n2.startsWith(ORDINAL_PREFIX)) {
-			try {
-				int ordinal1 = Integer.parseInt(n1.substring(ORDINAL_PREFIX.length()));
-				int ordinal2 = Integer.parseInt(n2.substring(ORDINAL_PREFIX.length()));
-				return ordinal1 - ordinal2;
-			}
-			catch (NumberFormatException nfe) {
-				// just perform default operation below
-			}
-		}
-
-		return null;
-	}
 
 	private String tooltip;
 
@@ -87,9 +46,50 @@ public class LibrarySymbolNode extends SymbolNode {
 		}
 	}
 
+	/**
+	 * {@return the Library represented by this node}
+	 */
+	public Library getLibrary() {
+		return getSymbol().getLibrary();
+	}
+
 	@Override
-	public Comparator<GTreeNode> getChildrenComparator() {
-		return CHILD_COMPARATOR;
+	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+		List<GTreeNode> list = new ArrayList<>();
+		if (program.isClosed()) {
+			return list;
+		}
+
+		Set<Symbol> symbolsInLibrary = getSymbolsForLibrary(monitor);
+		Namespace global = getGlobalNamespace();
+		Map<Namespace, Set<Symbol>> map =
+			ImportsNamespaceNode.organizeByNamespace(symbolsInLibrary, global);
+		Set<Symbol> globalSymbols = map.computeIfAbsent(global, k -> new HashSet<>());
+		for (Symbol s : globalSymbols) {
+			list.add(createNode(s, program));
+		}
+		map.remove(global);
+		for (Namespace namespace : map.keySet()) {
+			list.add(new ImportsNamespaceNode(namespace, map.get(namespace), program));
+		}
+
+		sort(list);
+		return list;
+	}
+
+	private Set<Symbol> getSymbolsForLibrary(TaskMonitor monitor) throws CancelledException {
+		Set<Symbol> set = new HashSet<>();
+		SymbolTreeFilterState filterState = getFilterState();
+		Library library = (Library) symbol.getObject();
+		SymbolTable symbolTable = program.getSymbolTable();
+		SymbolIterator iter = symbolTable.getSymbols(library);
+		for (Symbol s : iter) {
+			monitor.checkCancelled();
+			if (filterState.passesFilter(s)) {
+				set.add(s);
+			}
+		}
+		return set;
 	}
 
 	@Override
@@ -117,8 +117,29 @@ public class LibrarySymbolNode extends SymbolNode {
 		return false;
 	}
 
-	@Override
-	public Namespace getNamespace() {
-		return (Library) symbol.getObject();
+	SymbolNode symbolAdded(Symbol s) {
+		if (!isLoaded()) {
+			return null;
+		}
+
+		Namespace topLevelNamespace =
+			ImportsNamespaceNode.getTopLevelNamespace(s, getGlobalNamespace());
+		// we already know that this namespace is not global, so we either have a node for it
+		// or we need to add one.
+		GTreeNode child = getChild(topLevelNamespace.getName());
+		if (child instanceof ImportsNamespaceNode namespaceNode) {
+			return namespaceNode.symbolAdded(s);
+		}
+
+		doInsertNode(new ImportsNamespaceNode(topLevelNamespace, s, program));
+
+		// The direct parent namespace node of the symbol is not in the tree. We did add one of
+		// its ancestors above, but did not add the symbol itself.
+		return null;
+	}
+
+	private Namespace getGlobalNamespace() {
+		// the symbol is a library which is always global
+		return symbol.getParentNamespace();
 	}
 }

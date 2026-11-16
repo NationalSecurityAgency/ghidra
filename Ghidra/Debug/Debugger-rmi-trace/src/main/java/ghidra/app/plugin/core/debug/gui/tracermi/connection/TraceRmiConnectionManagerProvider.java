@@ -299,7 +299,7 @@ public class TraceRmiConnectionManagerProvider extends ComponentProviderAdapter 
 				return;
 			}
 			if (!controlService.getCurrentMode(target.getTrace()).isTarget()) {
-				controlService.setCurrentMode(target.getTrace(), ControlMode.RO_TARGET);
+				controlService.setCurrentMode(target.getTrace(), ControlMode.TARGET, false);
 			}
 		}
 	}

@@ -151,10 +151,10 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		activateThread(thread);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
+		assertTrue(controlService.getCurrentMode(tb.trace).isEditable());
+		//assertTrue(registersProvider.actionEnableEdits.isEnabled());
+		//performAction(registersProvider.actionEnableEdits);
 
 		addRegisterValues(thread);
 		waitForDomainObject(tb.trace);
@@ -183,10 +183,10 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		activateThread(thread);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-		performAction(registersProvider.actionEnableEdits);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
+		assertTrue(controlService.getCurrentMode(tb.trace).isEditable());
+		//assertTrue(registersProvider.actionEnableEdits.isEnabled());
+		//performAction(registersProvider.actionEnableEdits);
 
 		addRegisterValues(thread);
 		waitForDomainObject(tb.trace);
@@ -355,26 +355,6 @@ public class DebuggerTraceRegistersProviderTest extends AbstractDebuggerRegister
 		assertR0RowValueEmpty();
 		assertPCRowTypeEmpty();
 		assertR0RowTypeEmpty();
-	}
-
-	@Test
-	public void testActionEnableEdits() throws Exception {
-		traceManager.openTrace(tb.trace);
-		TraceThread thread = addThread();
-		waitForSwing();
-
-		assertFalse(registersProvider.actionEnableEdits.isEnabled());
-
-		activateThread(thread);
-		waitForSwing();
-
-		assertTrue(registersProvider.actionEnableEdits.isEnabled());
-
-		// NB, can't activate "null" trace. Manager ignores it.
-		traceManager.closeTrace(tb.trace);
-		waitForSwing();
-
-		assertFalse(registersProvider.actionEnableEdits.isEnabled());
 	}
 
 	@Test

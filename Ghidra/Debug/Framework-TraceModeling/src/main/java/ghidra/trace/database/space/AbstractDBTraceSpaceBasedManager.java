@@ -140,15 +140,15 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		if (!space.isMemorySpace() && !space.isRegisterSpace() &&
 			space != Address.NO_ADDRESS.getAddressSpace()) {
 			throw new IllegalArgumentException(
-				"Space must be a memory, register, or NO_ADDRESS space");
+				"Space must be a memory, register, or NO_ADDRESS space. Got %s".formatted(space));
 		}
 		if (!createIfAbsent) {
-			try (LockHold hold = LockHold.lock(lock.readLock())) {
+			try (LockHold _ = LockHold.lock(lock.readLock())) {
 				return spaces.get(space);
 			}
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			return spaces.computeIfAbsent(space, s -> {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
+			return spaces.computeIfAbsent(space, _ -> {
 				// NOTE: Require caller to start transaction
 				try {
 					DBTraceSpaceEntry ent = spaceStore.create();
@@ -182,7 +182,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 			boolean createIfAbsent) {
 		AddressSpace as = TraceRegisterUtils.getRegisterAddressSpace(container, createIfAbsent);
 		if (!createIfAbsent) {
-			try (LockHold hold = LockHold.lock(lock.readLock())) {
+			try (LockHold _ = LockHold.lock(lock.readLock())) {
 				if (as == null) {
 					// NOTE: Would like to cache this, but answer is likely to change
 					return null;
@@ -197,7 +197,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 				return space;
 			}
 		}
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			M space = getForSpace(as, createIfAbsent);
 			synchronized (regSpacesByContainer) {
 				regSpacesByContainer.put(container, space);
@@ -207,7 +207,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	}
 
 	protected M getForRegisterSpace(TraceRegisterContainer container, boolean createIfAbsent) {
-		try (LockHold hold = LockHold.lock(createIfAbsent ? lock.writeLock() : lock.readLock())) {
+		try (LockHold _ = LockHold.lock(createIfAbsent ? lock.writeLock() : lock.readLock())) {
 			if (container == null) {
 				return null;
 			}
@@ -261,7 +261,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 	@Override
 	public void invalidateCache(boolean all) {
-		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+		try (LockHold _ = LockHold.lock(lock.writeLock())) {
 			regSpacesByContainer.clear();
 			spaceStore.invalidateCache();
 			loadSpaces();

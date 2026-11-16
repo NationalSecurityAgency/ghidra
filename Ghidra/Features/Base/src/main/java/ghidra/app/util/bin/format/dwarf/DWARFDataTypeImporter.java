@@ -348,11 +348,11 @@ public class DWARFDataTypeImporter {
 	private DWARFDataType makeDataTypeForBaseType(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
 
-		return makeNamedBaseType(prog.getName(diea), diea);
+		return makeNamedBaseType(prog.getName(diea), diea, diea);
 	}
 
-	private DWARFDataType makeNamedBaseType(DWARFName dni, DIEAggregate diea)
-			throws IOException, DWARFExpressionException {
+	private DWARFDataType makeNamedBaseType(DWARFName dni, DIEAggregate nameSrcDIEA,
+			DIEAggregate diea) throws IOException, DWARFExpressionException {
 		int dwarfSize = diea.parseInt(DW_AT_byte_size, 0);
 		int dwarfEncoding = (int) diea.getUnsignedLong(DW_AT_encoding, -1);
 		boolean isBigEndian = DWARFEndianity.getEndianity(
@@ -372,7 +372,7 @@ public class DWARFDataTypeImporter {
 
 		DataType dt = dwarfDTM.getBaseType(dni.getOriginalName(), dwarfSize, dwarfEncoding,
 			isBigEndian, explictSize);
-		return new DWARFDataType(dt, dni, diea.getOffset());
+		return new DWARFDataType(dt, dni, nameSrcDIEA.getOffset());
 	}
 
 	private boolean isExplictSizedGolangType(GoKind kind) {
@@ -1254,7 +1254,7 @@ public class DWARFDataTypeImporter {
 		if (refdDIEA != null && refdDIEA.getTag() == DW_TAG_base_type) {
 			// if this is a typedef to a base type, skip to the base data type which
 			// can create a better typedef than we can
-			return makeNamedBaseType(typedefDNI, refdDIEA);
+			return makeNamedBaseType(typedefDNI, diea, refdDIEA);
 		}
 
 		DWARFDataType refdDT = getDataType(refdDIEA, voidDDT);
@@ -1330,12 +1330,6 @@ public class DWARFDataTypeImporter {
 			this.dataType = dataType;
 			this.dni = dni;
 			this.offsets.add(offset);
-		}
-
-		DWARFDataType(DataType dataType, DWARFName dni, Set<Long> offsets) {
-			this.dataType = dataType;
-			this.dni = dni;
-			this.offsets.addAll(offsets);
 		}
 
 		@Override

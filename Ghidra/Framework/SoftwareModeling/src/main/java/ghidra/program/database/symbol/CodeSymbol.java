@@ -152,7 +152,7 @@ public class CodeSymbol extends MemorySymbol {
 	@Override
 	public boolean isValidParent(Namespace parent) {
 		return super.isValidParent(parent) &&
-			SymbolType.LABEL.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
+			SymbolType.LABEL.isValidParent(symbolMgr.getProgram(), parent, address);
 	}
 
 	@Override

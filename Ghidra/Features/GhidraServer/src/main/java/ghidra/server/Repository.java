@@ -38,8 +38,10 @@ import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
 /**
- * <code>Repository</code> manages a versioned LocalFileSystem and a set of user's
- * and permissions.  
+ * <code>Repository</code> manages a versioned LocalFileSystem and a set of user's and permissions.
+ * <p>
+ * NOTE: Some of the static methods in this class may be called by console applications that have
+ * not initialized logging. Those methods should be using System.out/err.
  */
 public class Repository implements FileSystemListener, RepositoryLogger {
 	static final Logger log = LogManager.getLogger(Repository.class);

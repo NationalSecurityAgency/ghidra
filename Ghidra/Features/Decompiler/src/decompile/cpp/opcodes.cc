@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,9 @@
  */
 #include "opcodes.hh"
 #include "types.h"
+#include <map>
+
+using std::map;
 
 namespace ghidra {
 
@@ -44,16 +47,10 @@ static const char *opcode_name[] = {
   "TRUNC", "CEIL", "FLOOR", "ROUND",
   "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST",
   "LABEL", "CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW",
-  "INSERT", "EXTRACT", "POPCOUNT", "LZCOUNT"
+  "INSERT", "ZPULL", "POPCOUNT", "LZCOUNT", "SPULL"
 };
 
-static const int4 opcode_indices[] = {
-   0, 39, 37, 40, 38,  4,  6, 60,  7,  8,  9, 64,  5, 57,  1, 68, 66,
-  61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70,
-  54, 24, 19, 27, 21, 33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30,
-  23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17, 65,  2, 73, 69, 62, 72, 10, 59,
-  67,  3, 63, 56, 45
-};
+static map<string,OpCode> name2opcode;		///< Map from name to OpCode
 
 /// \param opc is an OpCode value
 /// \return the name of the operation as a string
@@ -68,70 +65,14 @@ const char *get_opname(OpCode opc)
 OpCode get_opcode(const string &nm)
 
 {
-  int4 min = 1;			// Don't include BLANK
-  int4 max = CPUI_MAX-1;
-  int4 cur,ind;
-
-  while(min <= max) {		// Binary search
-    cur = (min + max)/2;
-    ind = opcode_indices[cur];	// Get opcode in cur's sort slot
-    if (opcode_name[ind] < nm)
-      min = cur + 1;		// Everything equal or below cur is less
-    else if (opcode_name[ind] > nm)
-      max = cur - 1;		// Everything equal or above cur is greater
-    else
-      return (OpCode)ind;	// Found the match
+  if (name2opcode.empty()) {
+    for(int4 i=CPUI_COPY;i<CPUI_MAX;++i)
+      name2opcode[opcode_name[i]] = (OpCode)i;
   }
-  return (OpCode)0;	// Name isn't an op
-}
-
-/// Every comparison operation has a complementary form that produces
-/// the opposite output on the same inputs. Set \b reorder to true if
-/// the complimentary operation involves reordering the input parameters.
-/// \param opc is the OpCode to complement
-/// \param reorder is set to \b true if the inputs need to be reordered
-/// \return the complementary OpCode or CPUI_MAX if not given a comparison operation
-OpCode get_booleanflip(OpCode opc,bool &reorder)
-
-{
-  switch(opc) {
-  case CPUI_INT_EQUAL:
-    reorder = false;
-    return CPUI_INT_NOTEQUAL;
-  case CPUI_INT_NOTEQUAL:
-    reorder = false;
-    return CPUI_INT_EQUAL;
-  case CPUI_INT_SLESS:
-    reorder = true;
-    return CPUI_INT_SLESSEQUAL;
-  case CPUI_INT_SLESSEQUAL:
-    reorder = true;
-    return CPUI_INT_SLESS;
-  case CPUI_INT_LESS:
-    reorder = true;
-    return CPUI_INT_LESSEQUAL;
-  case CPUI_INT_LESSEQUAL:
-    reorder = true;
-    return CPUI_INT_LESS;
-  case CPUI_BOOL_NEGATE:
-    reorder = false;
-    return CPUI_COPY;
-  case CPUI_FLOAT_EQUAL:
-    reorder = false;
-    return CPUI_FLOAT_NOTEQUAL;
-  case CPUI_FLOAT_NOTEQUAL:
-    reorder = false;
-    return CPUI_FLOAT_EQUAL;
-  case CPUI_FLOAT_LESS:
-    reorder = true;
-    return CPUI_FLOAT_LESSEQUAL;
-  case CPUI_FLOAT_LESSEQUAL:
-    reorder = true;
-    return CPUI_FLOAT_LESS;
-  default:
-    break;
-  }
-  return CPUI_MAX;
+  map<string,OpCode>::const_iterator iter = name2opcode.find(nm);
+  if (iter != name2opcode.end())
+    return (*iter).second;
+  return (OpCode)0;
 }
 
 } // End namespace ghidra

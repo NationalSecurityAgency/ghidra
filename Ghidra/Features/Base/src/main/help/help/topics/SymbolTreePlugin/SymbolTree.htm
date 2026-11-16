@@ -16,8 +16,8 @@
     <H1><A name="Manage_Symbol_Tree"></A><A name="Symbol_Tree"></A>Symbol Tree</H1>
 
     <P>The Symbol Tree shows symbols from a program in a hierarchical view. The Symbol tree is
-    organized by the following categories: <I>Externals</I>, <I>Function</I>, <I>Labels</I>,
-    <I>Classes</I>, and <I>Namespaces</I>.</P>
+    organized by the following categories: <I>Imports</I>, <I>Exports</I>, <I>Globals</I>,
+    and <I>Namespaces</I>.</P>
 
     <P align="left">To display the Symbol Tree, select the icon <IMG alt="" src=
     "images/sitemap_color.png"> on the tool bar, OR select the option <B>Window</B><IMG alt="" src=
@@ -28,68 +28,49 @@
     <H2>Display</H2>
 
     <BLOCKQUOTE>
-      <P>The root of the Symbol Tree is the <I>Global</I> <I>namespace</I>. A <I><A name=
-      "Namespace"></A>Namespace</I>&nbsp; defines a scope, such that symbol names are unique
-      <I>within</I> a namespace. The types of namespaces that Ghidra supports are <B>Global</B>,
-      <B>External</B>, <B>Function</B>, <B>Class</B>, and <A name="GenericNamespace"></A> "generic"
-      <B>Namespaces</B> that reside in the global namespace. Every namespace has an associated
-      symbol.</P>
+      <P>The top level categories within the root symbol tree node each has a specific purpose and
+      are described below:</P>
 
       <UL>
-        <LI>The <B><A name="Externals"></A>Imports</B> category contains symbols that represent
-        external library namespaces which in turn contain anything considered to be "external" to
-        the program such as external locations/functions. The library name "&lt;EXTERNAL&gt;" is
-        reserved to hold those external symbols which have not yet been associated with a specific
-        library.</LI>
+        <LI><A name="Externals">
+         <B>Imports:</B> This category shows a tree node for each external library defined in this
+        program. Under each library node, all the external labels and functions associated with
+        that library will have corresponding nodes, orgnanized by their namespace. The library name
+        "&lt;EXTERNAL&gt;" is used as a default node to show any external symbols where the library
+        is not known. Note: unlike previous versions of Ghidra, external libraries do not represent
+        a namespace.</LI>
 
-        <LI>The <SPAN style="font-style: italic;">exports</SPAN> category contains symbols that
-        represent exported entry points into the program.<BR>
-        </LI>
+        <LI><B>Exports:</B> This category includes all labels or functions that have been tagged as
+        an exported entry point into the program.</LI>
 
-        <LI>The <B>Functions</B> category contains symbols that represent functions within the
-        program (excluding external functions). Expand a function symbol to show its parameter and
-        variable symbols.</LI>
+        <LI><B>Globals:</B> This category shows all labels and Functions that are in the global
+		namespace. If there a more than a handful of global labels, they will be organized by name
+		into groups based on common name prefixes. Note: non-global labels and functions will appear
+		in the Namespaces category under their assigned namespace.</LI>
 
-        <LI>All&nbsp; symbols in the <B>Labels</B> category are in the Global namespace.</LI>
-
-        <LI>The <B>Class</B> category contains class namespaces that may contain function
-        namespaces or label symbols. Class namespaces reside in the global namespace.</LI>
-
-        <LI>
-          The <B>Namespace</B> category contains generic namespaces that reside in the Global
-          namespace, and may contain class, function, label, or other namespaces.&nbsp; 
-
-          <UL>
-            <LI>The <A href="help/topics/ImporterPlugin/importer.htm">import</A> process creates a
-            namespace (under the <I>Namespace</I> category) for each external library it
-            encounters. (The name is created as _&lt;library name&gt;, e.g., _USER32.DLL,&nbsp; to
-            avoid naming collisions with the external library symbols, under <I>Externals</I>,
-            e.g., USER32.DLL.)</LI>
-
-            <LI>Based upon the importer capability and/or analysis, external locations or functions
-            may be associated with a <I>Library</I> namespace.&nbsp; You will find these external
-            location/function symbols under the <I>Imports</I> category node.</LI>
-
-            <LI>Any function node (internal or external) may be expanded to show parameters. In
-            addition, various popup function actions are available to modify the function. An
-            external location may be converted to a function using the <I>Create External
-            Function</I> popup action.</LI>
-          </UL>
-        </LI>
+        <LI><B>Namespaces:</B> This category shows all non-global labels and functions, organized by
+		their namespace/class.</LI>
       </UL>
 
-      <P align="left"><A name="GroupNode"></A>When the label or function category has many elements, the
-      Symbol Tree will show <I>group nodes</I> that represent groups of symbols in order to reduce
-      the "clutter" in the tree. In the sample image above, the <I>Labels</I> category contains a
-      group node (indicated by the <IMG alt="" src="images/openFolderGroup.png"> icon). The
-      <I>group node</I> shows the common prefix for all the symbols in the group. The tool tip
-      will display the total number of nodes in the group.</P>
+      <P>Any function node (internal or external) may be expanded to show parameters. In addition,
+      various popup function actions are available to modify the function. An external location may
+      be converted to a function using the <I>Create External Function</I> popup action.</P>
+
+      <P align="left"><A name="GroupNode"></A>When a top level category has too many
+      elements, the Symbol Tree will show <I>group nodes</I> that represent groups of symbols in
+      order to reduce the "clutter" in the tree. In the sample image above, the <I>Labels</I>
+      category contains a group node (indicated by the <IMG alt="" src=
+      "images/openFolderGroup.png"> icon). The <I>group node</I> shows the common prefix for all
+      the symbols in the group. The tool tip will display the total number of nodes in the
+      group.</P>
+
       <P>The group nodes can become out of balance if enough symbols are added/deleted/renamed. The
-      entire category can be reorganized by closing and reopening the category node (Functions, Labels). 
-      Also, the tree will detect if the organization becomes too far out of balance. In this case, the
-      category node (Functions, Labels) will automatically close. Typically, this would be caused by
-      a long running bulk operation such as analysis. This has the added benefit of 
-      speeding up the bulk operation as it will no longer have to keep updating the nodes in the tree.</P> 
+      entire category can be reorganized by closing and reopening the category node (Functions,
+      Labels). Also, the tree will detect if the organization becomes too far out of balance. In
+      this case, the category node (Functions, Labels) will automatically close. Typically, this
+      would be caused by a long running bulk operation such as analysis. This has the added benefit
+      of speeding up the bulk operation as it will no longer have to keep updating the nodes in the
+      tree.</P>
 
       <BLOCKQUOTE>
         <P align="left"><IMG alt="" src="help/shared/note.png"> The Symbol Tree does not show
@@ -99,14 +80,28 @@
         "help/topics/SymbolTablePlugin/symbol_table.htm#Set_Filter">filter</A> for user-defined
         symbols.</P>
       </BLOCKQUOTE>
-    </BLOCKQUOTE>
+ 
+	<H3><A name="Symbol_Tree_Filter"></A>Symbol Tree Filter Settings</H3>
+		<P>The symbol tree can be configured to filter out top level categorires and some symbol
+			types. Press the  <IMG alt="" src="Icons.CONFIGURE_FILTER_ICON"> icon on the local
+			toolbar to bring up the filter settings.</P>
+			<P align="center"><IMG alt="" src="images/SymbolTreeSettings.png"></P>
+		<P> The <B>Symbol Categories</B> section in the dialog allows you to pick which top level
+			categories to display in the tree. At least one category must be selected.</P>
+			
+		<P> The <B>Symbol Types</B> section allows you to filter out Function or Label symbols from
+			anywhere in the tree. To filter out function or labels, unselect the corresponding
+			checkbox. If you filter out both labels and functions, there won't be much left in the tree
+			other than libraries, namespaces, and classes. You can't filter out libraries, namespaces,
+			or classes because they are container classes and must be there to show other types.</P>
+		
 
-    <DIV STYLE="margin-top:50px; margin-bottom:50px">
+	</BLOCKQUOTE>
+
+    <DIV style="margin-top:50px; margin-bottom:50px">
       <HR width="90%">
-
     </DIV>
-
-    <P>Each group below lists operations that can be performed via the Symbol Tree.</P>
+   <P>Each group below lists operations that can be performed via the Symbol Tree.</P>
 
     <H2><A name="Create_Library"></A>Create a Library</H2>
 
@@ -138,22 +133,21 @@
       <P>You can create a <I>External Location</I> used to refer to a location or function in a
       external library. Right mouse click on the Imports node or on a particular library and choose
       the <B>Create External Location</B> option. If invoked from a specific library node, the
-      <I>External Program Name</I> will default to that library for the location being created.
-      The default library <i>&lt;EXTERNAL&gt;</i> should be used when the library is unknown.
-      Otherwise you can type the name in the field or choose it from the combo box list. The
-      <I>External Program Path</I>, which is the program in the project which corresponds to the 
-      named library, will
-      be filled in if there is an associated program in the project. Otherwise, it can be selected via the
-      <I>Edit</I> button, which displays a chooser dialog. Either a <I>Label</I>, an
-      <I>Address</I>, or both must be specified for the External Location. If you check the <I>Make
-      External Function</I> box, then an external function will be created. Otherwise, if you don't
-      check the box, a non-function external location gets created.  The ability to associate a 
-      data type with the location is not yet supported. Press the <I>Create</I> button to create the
-      external location.</P>
+      <I>External Program Name</I> will default to that library for the location being created. The
+      default library <I>&lt;EXTERNAL&gt;</I> should be used when the library is unknown. Otherwise
+      you can type the name in the field or choose it from the combo box list. The <I>External
+      Program Path</I>, which is the program in the project which corresponds to the named library,
+      will be filled in if there is an associated program in the project. Otherwise, it can be
+      selected via the <I>Edit</I> button, which displays a chooser dialog. Either a <I>Label</I>,
+      an <I>Address</I>, or both must be specified for the External Location. If you check the
+      <I>Make External Function</I> box, then an external function will be created. Otherwise, if
+      you don't check the box, a non-function external location gets created. The ability to
+      associate a data type with the location is not yet supported. Press the <I>Create</I> button
+      to create the external location.</P>
 
       <P>The following dialog shows a external function being created. It will be named "Sample"
-      and is in "TestLibrary" at address 01001234. The library name, TestLibrary, is
-      associated with "libraryA" in the project.</P>
+      and is in "TestLibrary" at address 01001234. The library name, TestLibrary, is associated
+      with "libraryA" in the project.</P>
 
       <P align="center"><IMG alt="" src="images/CreateExternalLocation.png"></P>
     </BLOCKQUOTE>
@@ -161,26 +155,28 @@
     <H2><A name="Edit_External_Location"></A>Edit External Location</H2>
 
     <BLOCKQUOTE>
-      <P>You can edit the external location and associated library details for any <I>External Location</I>
-      symbol within the symbol tree (including locations which have been converted to an external function). 
-      Right mouse click on
-      the external location/function node in the symbol tree under Imports and choose the <B>Edit External
-      Location</B> action. </P>
-      <P>The Edit External Location dialog will default to the current
-      values for the location being edited. You can change the <I>External Program Name</I> in the
-      field or by selecting a different one from the combo box list. The <I>External Program
-      Path</I>, which is the program in the project corresponding to the named library, will be filled in if
-      there is an associated program. Otherwise, it can be selected via the <I>Edit</I> button,
-      which displays a chooser dialog. You can modify the <I>Label</I> and/or <I>Address</I> for
-      the location being edited. Either a <I>Label</I>, an <I>Address</I>, or both must be
-      specified for the external location. Press the <I>Update</I> button to apply your edits to
-      the external location or function.</P>
-      <P>If the location was initially created by the importer, and was subsequently demangled or changed,
-      the <I>Original Label</I> will be specified.  While you can not change this original name, you can revert 
-      the location to this label by clicking the <I>Restore</I> button.  If the symbol was not an imported symbol 
-      or has never been demangled or changed the <I>Original Label</I> and <I>Restore</I> button will not be displayed.
-    
-     <P align="center"><IMG alt="" src="images/EditExternalLocation.png"></P>
+      <P>You can edit the external location and associated library details for any <I>External
+      Location</I> symbol within the symbol tree (including locations which have been converted to
+      an external function). Right mouse click on the external location/function node in the symbol
+      tree under Imports and choose the <B>Edit External Location</B> action.</P>
+
+      <P>The Edit External Location dialog will default to the current values for the location
+      being edited. You can change the <I>External Program Name</I> in the field or by selecting a
+      different one from the combo box list. The <I>External Program Path</I>, which is the program
+      in the project corresponding to the named library, will be filled in if there is an
+      associated program. Otherwise, it can be selected via the <I>Edit</I> button, which displays
+      a chooser dialog. You can modify the <I>Label</I> and/or <I>Address</I> for the location
+      being edited. Either a <I>Label</I>, an <I>Address</I>, or both must be specified for the
+      external location. Press the <I>Update</I> button to apply your edits to the external
+      location or function.</P>
+
+      <P>If the location was initially created by the importer, and was subsequently demangled or
+      changed, the <I>Original Label</I> will be specified. While you can not change this original
+      name, you can revert the location to this label by clicking the <I>Restore</I> button. If the
+      symbol was not an imported symbol or has never been demangled or changed the <I>Original
+      Label</I> and <I>Restore</I> button will not be displayed.</P>
+
+      <P align="center"><IMG alt="" src="images/EditExternalLocation.png"></P>
     </BLOCKQUOTE>
 
     <H2><A name="Show_References_to"></A>Show References to</H2>
@@ -192,8 +188,8 @@
     <H2><A name="Convert_to_Class"></A>Convert Namespace to Class</H2>
 
     <BLOCKQUOTE>
-      <P>You can convert a <I>Namespace</I> to a <I>Class</I>. 
-      Right mouse click on a namespace and choose the <B>Convert To Class</B> option.</P>
+      <P>You can convert a <I>Namespace</I> to a <I>Class</I>. Right mouse click on a namespace and
+      choose the <B>Convert To Class</B> option.</P>
     </BLOCKQUOTE>
 
     <H2><A name="Create_Class"></A>Create a Class</H2>
@@ -295,7 +291,6 @@
     <BLOCKQUOTE>
       <P>To delete a symbol, make a selection of symbols, right mouse click and choose the
       <B>Delete</B> option.</P>
-
     </BLOCKQUOTE>
 
     <H2><A name="Make_Selection"></A>Make a Selection</H2>
@@ -307,42 +302,40 @@
       you select a <A href="#GroupNode">group node</A> for the <B>Make Selection</B> option, all
       symbols in that group are selected in the Code Browser.</P>
     </BLOCKQUOTE>
+	
+	<H2><A name="Collapse_All"></A>Collapse All <IMG alt="" src="Icons.COLLAPSE_ALL_ICON"></H2>
+		<P>The <B>Collapse All</B> toolbar action closes all open category nodes in the tree, 
+			restoring it to its initial display state</P>
 
     <H2><A name="Navigate_To"></A>Navigation <IMG alt="" src="images/locationIn.gif"></H2>
 
     <BLOCKQUOTE>
-		
       <H3><A name="Navigate_on_Incoming"></A>Navigating on Program Location Changes</H3>
 
       <BLOCKQUOTE>
-        <P>The <IMG alt="" src="icon.navigate.in"> button controls whether a symbol is
-        selected in the Symbol Tree when you click in the Code Browser. While the <IMG alt=""
-        src="icon.navigate.in">  button is selected, if the location from the Code
-        Browser can be interpreted as a symbol, the symbol is automatically selected in the Symbol
-        Tree. This action is off by default. The state of the 
-		<IMG alt="" src="icon.navigate.in"> button is
+        <P>The <IMG alt="" src="icon.navigate.in"> button controls whether a symbol is selected in
+        the Symbol Tree when you click in the Code Browser. While the <IMG alt="" src=
+        "icon.navigate.in"> button is selected, if the location from the Code Browser can be
+        interpreted as a symbol, the symbol is automatically selected in the Symbol Tree. This
+        action is off by default. The state of the <IMG alt="" src="icon.navigate.in"> button is
         saved when you close the project or exit Ghidra and restored when you reopen the
         project.</P>
       </BLOCKQUOTE>
-	  
-	  
-	  <H3><A name="Navigate_on_Outgoing"></A>Navigating on Symbol Changes</H3>
 
-        <BLOCKQUOTE>
-          <P>The <IMG alt="" src="icon.navigate.out"> button controls whether a Code Browser 
-			navigation happens when symbol is selected. This action is on by default. 
-			The state of the <IMG alt="" src="icon.navigate.out"> button is saved when you close the
-		    project or exit Ghidra and restored when you reopen the project.</P>
-	      </P>
-        </BLOCKQUOTE>
-	  
-	  
+      <H3><A name="Navigate_on_Outgoing"></A>Navigating on Symbol Changes</H3>
+
+      <BLOCKQUOTE>
+        <P>The <IMG alt="" src="icon.navigate.out"> button controls whether a Code Browser
+        navigation happens when symbol is selected. This action is on by default. The state of the
+        <IMG alt="" src="icon.navigate.out"> button is saved when you close the project or exit
+        Ghidra and restored when you reopen the project.</P>
+      </BLOCKQUOTE>
 
       <H3><A name="Go_To_External_Location"></A>Navigating to External Locations</H3>
 
       <BLOCKQUOTE>
-        <P>If you select an external symbol (under the <I>Externals</I> folder in the symbol
-        tree), you will navigate to an external <I>reference</I> <I>source</I> which has a
+        <P>If you select an external symbol (under the <I>Externals</I> folder in the symbol tree),
+        you will navigate to an external <I>reference</I> <I>source</I> which has a
         <I>destination</I> corresponding to the external symbol (i.e., where it is being called
         from). To actually <B>go to</B> the external location, right mouse click on the external
         symbol and choose <B>Go To External Location</B>.&nbsp;&nbsp;</P>
@@ -358,7 +351,7 @@
     </BLOCKQUOTE>
 
     <H2>View Qualified Names in Code Browser</H2>
-	
+
     <BLOCKQUOTE>
       <P>To include namespace names in the display of labels and names within the Code Browser,
       select <B>Edit</B> <IMG alt="" src="help/shared/arrow.gif"> <B>Tool Options...</B> from the
@@ -369,57 +362,46 @@
       "help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm">CodeBrowser Options</A>).<BR>
       </P>
     </BLOCKQUOTE>
-    
-    
-    <H2><A NAME="Create_Table"></A>Create Table From Selection</H2>
-    
+
+    <H2><A name="Create_Table"></A>Create Table From Selection</H2>
+
     <BLOCKQUOTE>
-    	<P>Create a new temporary 
-    	<A HREF="help/topics/SymbolTablePlugin/symbol_table_transient.htm">Symbol Table</A> with the symbols 
-    	in the current selection.  The table's features are similar to the 
-    	<A HREF="help/topics/Search/Query_Results_Dialog.htm">search results table.</A>
-    	</P>
+      <P>Create a new temporary <A href=
+      "help/topics/SymbolTablePlugin/symbol_table_transient.htm">Symbol Table</A> with the symbols
+      in the current selection. The table's features are similar to the <A href=
+      "help/topics/Search/Query_Results_Dialog.htm">search results table.</A></P>
     </BLOCKQUOTE>
-    
-    
-    
+
     <H2>Symbol Tree Snapshots</H2>
 
     <BLOCKQUOTE>
-    	<P>Pressing the <IMG SRC="icon.provider.clone" /> action will create a copy of the current 
-    	Symbol Tree in a new window.  The new disconnected Symbol Tree will not respond to program 
-    	activation events.	This allows users to keep the new window open while working with various
-    	 programs, without affecting the contents.
-    	</P>
+      <P>Pressing the <IMG alt="" src="icon.provider.clone"> action will create a copy of the
+      current Symbol Tree in a new window. The new disconnected Symbol Tree will not respond to
+      program activation events. This allows users to keep the new window open while working with
+      various programs, without affecting the contents.</P>
 
-		<H3><A name="Symbol_Tree_Clone"></A>Symbol Tree Clone Action <IMG SRC="icon.provider.clone" /></H3>
-	
-	      <BLOCKQUOTE>
-	      	<P>Creates a new disconnected snapshot (cloned) view of the Symbol Tree.  This action is on
-	      	 the primary Symbol Tree, as well as any cloned symbol trees.</P>
-	      </BLOCKQUOTE>
-	
-		<H3><A name="Disable_Category"></A>Disable Category</H3>
-	
-	    <BLOCKQUOTE>
-	    	<P>When working in a snapshot Symbol Tree, you can choose to disable a root-level folder
-	    	by right-clicking and selected <B>Disable Category</B>.  Once disabled, the node will remain
-	    	in the tree with a disabled icon.  A disabled node will no longer show any children.
-	    	</P>
-	    </BLOCKQUOTE>
-	
-		<H3><A name="Enable_Category"></A>Enable Category</H3>
-	
-	    <BLOCKQUOTE>
-	    	<P>This action is used to re-enable categories that were previously disabled.
-	    	</P>
-	    </BLOCKQUOTE>
-    
-     </BLOCKQUOTE>
-    
+      <H3><A name="Symbol_Tree_Clone"></A>Symbol Tree Clone Action <IMG alt="" src=
+      "icon.provider.clone"></H3>
 
+      <BLOCKQUOTE>
+        <P>Creates a new disconnected snapshot (cloned) view of the Symbol Tree. This action is on
+        the primary Symbol Tree, as well as any cloned symbol trees.</P>
+      </BLOCKQUOTE>
 
+      <H3><A name="Disable_Category"></A>Disable Category</H3>
 
+      <BLOCKQUOTE>
+        <P>When working in a snapshot Symbol Tree, you can choose to disable a root-level folder by
+        right-clicking and selected <B>Disable Category</B>. Once disabled, the node will remain in
+        the tree with a disabled icon. A disabled node will no longer show any children.</P>
+      </BLOCKQUOTE>
+
+      <H3><A name="Enable_Category"></A>Enable Category</H3>
+
+      <BLOCKQUOTE>
+        <P>This action is used to re-enable categories that were previously disabled.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
 
     <P class="providedbyplugin">Provided By: <I>SymbolTreePlugin</I></P>
 

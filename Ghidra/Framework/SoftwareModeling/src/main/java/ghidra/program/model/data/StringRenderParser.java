@@ -107,6 +107,7 @@ public class StringRenderParser {
 	private CharsetEncoder encoder;
 	private int val;
 	private int codeDigits;
+	private char pendingHighSurrogate;
 
 	/**
 	 * Construct a parser
@@ -134,6 +135,7 @@ public class StringRenderParser {
 		pos = 0;
 		state = State.INIT;
 		val = 0;
+		pendingHighSurrogate = 0;
 
 		charset = null;
 		encoder = null;
@@ -209,6 +211,9 @@ public class StringRenderParser {
 			encodeChar(out, (char) cp);
 			return;
 		}
+		if (pendingHighSurrogate != 0) {
+			throw new MalformedInputException(1);
+		}
 		oneCodePointBuffer.clear();
 		oneCodePointBuffer.put(0, Character.highSurrogate(cp));
 		oneCodePointBuffer.put(1, Character.lowSurrogate(cp));
@@ -217,6 +222,21 @@ public class StringRenderParser {
 
 	protected void encodeChar(ByteBuffer out, char c)
 			throws MalformedInputException, UnmappableCharacterException {
+		if (pendingHighSurrogate != 0) {
+			if (!Character.isLowSurrogate(c)) {
+				throw new MalformedInputException(1);
+			}
+			oneCodePointBuffer.clear();
+			oneCodePointBuffer.put(0, pendingHighSurrogate);
+			oneCodePointBuffer.put(1, c);
+			encodeBufferedCodePoint(out);
+			pendingHighSurrogate = 0;
+			return;
+		}
+		if (Character.isHighSurrogate(c)) {
+			pendingHighSurrogate = c;
+			return;
+		}
 		oneCodePointBuffer.clear();
 		oneCodePointBuffer.put(0, c);
 		oneCodePointBuffer.limit(1);
@@ -240,6 +260,9 @@ public class StringRenderParser {
 	protected State parseCharStr(ByteBuffer out, char c)
 			throws MalformedInputException, UnmappableCharacterException {
 		if (c == quoteChar) {
+			if (pendingHighSurrogate != 0) {
+				throw new MalformedInputException(1);
+			}
 			return State.COMMA;
 		}
 		if (c == '\\') {
@@ -326,6 +349,7 @@ public class StringRenderParser {
 		val = (val << 4) + valHexDigit(c);
 		if (0 == (--codeDigits)) {
 			encodeCodePoint(out, val);
+			val = 0;
 			return State.STR;
 		}
 		return State.CODE_POINT;
@@ -420,6 +444,9 @@ public class StringRenderParser {
 	 * @throws StringParseException if the representation is not complete
 	 */
 	public void finish(ByteBuffer out) throws StringParseException {
+		if (pendingHighSurrogate != 0) {
+			throw new StringParseException(pos);
+		}
 		state.checkFinal(pos);
 	}
 }

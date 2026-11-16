@@ -562,12 +562,9 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 //		assertNotNull(window);
 //		try {
 //			pressButtonByName(comp, componentName, false);
-////			if (componentName.equals(LATEST_BUTTON)) {
-////				sleep(1000);
-////				pressButtonByName(comp, MY_BUTTON, false);
-////				sleep(1000);
-////				pressButtonByName(comp, LATEST_BUTTON, false);
-////			}
+	//// if (componentName.equals(LATEST_BUTTON)) { / sleep(1000); /
+	/// pressButtonByName(comp, MY_BUTTON, false); / sleep(1000); /
+	/// pressButtonByName(comp, LATEST_BUTTON, false); / }
 //			waitForApply(window, true, 2000);
 //			pressButtonByText(window, "Apply");
 //			waitForSwing();

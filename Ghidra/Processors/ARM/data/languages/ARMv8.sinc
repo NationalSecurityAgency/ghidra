@@ -339,7 +339,7 @@ define pcodeop consumptionOfSpeculativeDataBarrier;
 	consumptionOfSpeculativeDataBarrier();
 }
 
-:csdb^ItCond  is TMode=1 & ItCond & thv_c1631=0xf3bf & thv_c0015=0x8014 {
+:csdb^ItCond  is TMode=1 & ItCond & thv_c1631=0xf3af & thv_c0015=0x8014 {
 	build ItCond;
 	consumptionOfSpeculativeDataBarrier();
 }

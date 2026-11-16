@@ -17,17 +17,16 @@ package ghidra.pcode.exec.trace.data;
 
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A trace access shim
- * 
  * <p>
  * This encapsulates the source or destination "coordinates" of a trace to simplify access to that
  * trace by p-code operations. This is also meant to encapsulate certain conventions, e.g., writes
  * are effective from the destination snapshot into the indefinite future, and meant to protect
  * p-code executor/emulator states from future re-factorings of the Trace API.
- * 
  * <p>
  * While, technically anything can be behind the shim, the default implementations are backed by a
  * trace. The shim is associated with a chosen platform and snapshot. All methods are with respect
@@ -43,6 +42,21 @@ public interface PcodeTraceAccess {
 	 * @return the derived access shim
 	 */
 	PcodeTraceAccess deriveForWrite(long snap);
+
+	/**
+	 * {@return the associated platform}
+	 */
+	TracePlatform getPlatform();
+
+	/**
+	 * {@return the associated snap}
+	 */
+	long getSnap();
+
+	/**
+	 * {@return the associated snap for listing threads (and other objects)}
+	 */
+	long getThreadsSnap();
 
 	/**
 	 * Get the language of the associated platform

@@ -147,8 +147,7 @@ public class CFStringAnalyzer extends AbstractAnalyzer {
 	private boolean isMachOAndContainsCFStrings(Program program) {
 		String format = program.getExecutableFormat();
 		if (MachoLoader.MACH_O_NAME.equals(format) ||
-			DyldCacheLoader.DYLD_CACHE_NAME.equals(format) ||
-			"Extracted DYLD Component".equals(format)) {
+			DyldCacheLoader.DYLD_CACHE_NAME.equals(format)) {
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (block.getName().equals(CFSTRING)) {
 					return true;

@@ -508,7 +508,7 @@ public class DialogComponentProvider
 		cancelButton.setMnemonic('C');
 		cancelButton.setName("Cancel");
 		cancelButton.getAccessibleContext().setAccessibleName("Cancel");
-		cancelButton.addActionListener(e -> cancelCallback());
+		cancelButton.addActionListener(_ -> cancelCallback());
 		addButton(cancelButton);
 	}
 
@@ -521,7 +521,7 @@ public class DialogComponentProvider
 		dismissButton.setMnemonic('D');
 		dismissButton.setName("Dismiss");
 		dismissButton.getAccessibleContext().setAccessibleName("Dismiss");
-		dismissButton.addActionListener(e -> dismissCallback());
+		dismissButton.addActionListener(_ -> dismissCallback());
 		addButton(dismissButton);
 	}
 
@@ -534,7 +534,7 @@ public class DialogComponentProvider
 		applyButton.setMnemonic('A');
 		applyButton.setName("Apply");
 		applyButton.getAccessibleContext().setAccessibleName("Apply");
-		applyButton.addActionListener(e -> applyCallback());
+		applyButton.addActionListener(_ -> applyCallback());
 		addButton(applyButton);
 	}
 
@@ -807,7 +807,7 @@ public class DialogComponentProvider
 				showProgressBar(localTitle, hasProgress, canCancel);
 			}
 			else {
-				showTimer = new Timer(delay, ev -> {
+				showTimer = new Timer(delay, _ -> {
 					if (taskScheduler.isBusy()) {
 						showProgressBar(localTitle, hasProgress, canCancel);
 						showTimer = null;
@@ -1299,8 +1299,12 @@ public class DialogComponentProvider
 	}
 
 	/**
-	 * Signals to this provider that it needs to updated the enabled state of its managed
-	 * actions.
+	 * Signals to this provider that it needs to update the enabled state of its managed actions.
+	 * <p>
+	 * This method works differently than {@link ComponentProvider#contextChanged()} in that this
+	 * method does not use the framework to update context.  Calls to this method will only affect
+	 * this dialog. Dialog actions are generally managed by the dialog and are not fully integrated
+	 * into the framework. 
 	 */
 	protected void notifyContextChanged() {
 		ActionContext context = getActionContext(null);

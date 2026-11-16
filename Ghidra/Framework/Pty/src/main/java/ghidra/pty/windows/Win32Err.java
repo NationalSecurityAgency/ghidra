@@ -17,7 +17,7 @@ package ghidra.pty.windows;
 
 import java.lang.foreign.*;
 import java.lang.invoke.VarHandle;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import com.microsoft.win32.win32_h;
 
@@ -60,7 +60,7 @@ public interface Win32Err {
 			byte[] managed = new byte[lenBytes];
 			MemorySegment.copy(unmanaged, ValueLayout.JAVA_BYTE, 0, managed, 0, lenBytes);
 			win32_h.LocalFree(unmanaged);
-			return new String(managed, Charset.forName("UTF-16LE"));
+			return new String(managed, StandardCharsets.UTF_16LE);
 		}
 	}
 

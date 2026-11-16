@@ -577,19 +577,6 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * The decompiler treats some namespaces as equivalent to the "global" namespace.
-	 * Return true if the given namespace is treated as equivalent.
-	 * @param namespace is the namespace
-	 * @return true if equivalent
-	 */
-	static final public boolean collapseToGlobal(Namespace namespace) {
-		if (namespace instanceof Library) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Encode &lt;parent&gt; element to the stream describing the formal path elements
 	 * from the root (global) namespace up to the given namespace
 	 * @param encoder is the stream encoder
@@ -605,9 +592,6 @@ public class HighFunction extends PcodeSyntaxTree {
 			Namespace curspc = namespace;
 			while (curspc != null) {
 				arr.add(0, curspc);
-				if (collapseToGlobal(curspc)) {
-					break;		// Treat library namespace as root
-				}
 				curspc = curspc.getParentNamespace();
 			}
 			encoder.openElement(ELEM_VAL);	// Force global scope to have empty name

@@ -379,10 +379,11 @@ public class GoToHelper {
 			return null; // default name is not valid for external program
 		}
 		Stack<String> nameStack = new Stack<>();
-		for (Namespace namespace =
-			s.getParentNamespace(); !(namespace instanceof Library); namespace =
-				namespace.getParentNamespace()) {
+
+		Namespace namespace = s.getParentNamespace();
+		while (!namespace.isGlobal()) {
 			nameStack.push(namespace.getName());
+			namespace = namespace.getParentNamespace();
 		}
 		return nameStack;
 	}
@@ -419,7 +420,7 @@ public class GoToHelper {
 			if (s.getSource() == SourceType.DEFAULT) {
 				return null; // must rely on address for navigation
 			}
-			symbolPath = new SymbolPath(s, true);
+			symbolPath = new SymbolPath(s);
 		}
 		else {
 			symbolPath = new SymbolPath(label);

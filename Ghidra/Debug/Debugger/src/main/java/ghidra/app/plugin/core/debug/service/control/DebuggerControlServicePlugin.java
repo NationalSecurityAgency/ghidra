@@ -152,10 +152,11 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 	}
 
 	@Override
-	public void setCurrentMode(Trace trace, ControlMode newMode) {
+	public void setCurrentMode(Trace trace, ControlMode newMode, boolean canEdit) {
 		ControlMode oldMode;
 		synchronized (currentModes) {
 			oldMode = currentModes.getOrDefault(Objects.requireNonNull(trace), ControlMode.DEFAULT);
+			newMode.setEditable(canEdit);
 			if (newMode != oldMode) {
 				currentModes.put(trace, newMode);
 			}
@@ -221,4 +222,5 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 			coordinatesActivated(ev.getActiveCoordinates(), ev.getCause());
 		}
 	}
+
 }

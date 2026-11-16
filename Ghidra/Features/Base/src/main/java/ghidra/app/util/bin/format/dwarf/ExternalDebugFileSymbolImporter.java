@@ -76,8 +76,8 @@ public class ExternalDebugFileSymbolImporter {
 			for (Symbol extSym : extSymTable.getPrimarySymbolIterator(true)) {
 				monitor.increment();
 				totalSymbolCount++;
-				if (shouldCopyExtSymbol(extSym)) {
-					copyExtSymbol(extSym);
+				if (!extSym.isExternal()) {
+					copyDebugSymbol(extSym);
 				}
 			}
 		}
@@ -94,7 +94,7 @@ public class ExternalDebugFileSymbolImporter {
 		}
 	}
 
-	private void copyExtSymbol(Symbol extSym)
+	private void copyDebugSymbol(Symbol extSym)
 			throws InvalidInputException, OverlappingFunctionException, CodeUnitInsertionException {
 		Address extAddr = extSym.getAddress();
 		Address localAddr = DiffUtility.getCompatibleMemoryAddress(extAddr, program);
@@ -143,10 +143,6 @@ public class ExternalDebugFileSymbolImporter {
 			}
 		}
 		symTable.createLabel(addr, name, SourceType.IMPORTED);
-	}
-
-	private boolean shouldCopyExtSymbol(Symbol extSym) {
-		return !extSym.getParentNamespace().isLibrary();
 	}
 
 	private boolean isCommonMemblock(MemoryBlock memBlk) {

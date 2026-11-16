@@ -21,7 +21,7 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.*;
@@ -68,7 +68,6 @@ import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionMa
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLaunchDialog;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin.EmulateProgramAction;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest.HoverLocation;
 import ghidra.app.plugin.core.debug.stack.UnwindStackCommand;
@@ -201,7 +200,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	@Override
 	public void loadProgram() throws Exception {
 		loadProgram("termmines");
-		try (Transaction tx = program.openTransaction("Set exe path")) {
+		try (Transaction _ = program.openTransaction("Set exe path")) {
 			program.setExecutablePath(TERMMINES_PATH);
 		}
 		intoProject(program);
@@ -252,10 +251,9 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		Pty pty = PtyFactory.local().openpty();
 		pty.getChild().session(new String[] { TERMMINES_PATH }, Map.of("TERM", "xterm-256color"));
 		PtyParent parent = pty.getParent();
-		try (Terminal terminal =
-			terminalService.createWithStreams(Charset.forName("utf8"), parent.getInputStream(),
+		try (Terminal _ =
+			terminalService.createWithStreams(StandardCharsets.UTF_8, parent.getInputStream(),
 				parent.getOutputStream())) {
-
 			TerminalProvider provider = waitForComponentProvider(TerminalProvider.class);
 			captureIsolatedProvider(provider, 600, 600);
 		}
@@ -440,7 +438,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
 		ModuleMapProposal proposal =
 			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
-		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+		try (Transaction _ = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
@@ -468,7 +466,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
 		ModuleMapProposal proposal =
 			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
-		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+		try (Transaction _ = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
@@ -582,7 +580,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
 		ModuleMapProposal proposal =
 			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
-		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+		try (Transaction _ = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
@@ -605,7 +603,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
 		ModuleMapProposal proposal =
 			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
-		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+		try (Transaction _ = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
@@ -637,7 +635,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		placeBreakpointsRand();
 		Address pc = flatDbg.getProgramCounter();
 		long snapA = flatDbg.getCurrentSnap();
-		try (Transaction tx = result.trace().openTransaction("Name snapshot")) {
+		try (Transaction _ = result.trace().openTransaction("Name snapshot")) {
 			result.trace()
 					.getTimeManager()
 					.getSnapshot(snapA, false)
@@ -673,7 +671,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		placeBreakpointsRand();
 		Address pc = flatDbg.getProgramCounter();
 		long snapA = flatDbg.getCurrentSnap();
-		try (Transaction tx = result.trace().openTransaction("Name snapshot")) {
+		try (Transaction _ = result.trace().openTransaction("Name snapshot")) {
 			result.trace()
 					.getTimeManager()
 					.getSnapshot(snapA, false)
@@ -753,7 +751,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
 		ModuleMapProposal proposal =
 			mappings.proposeModuleMap(modLibC, flatDbg.getCurrentSnap(), progLibC);
-		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+		try (Transaction _ = modLibC.getTrace().openTransaction("Map")) {
 			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
 		}
 
@@ -836,7 +834,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	protected void emulateCommandLineParser() throws Throwable {
 		Function function = findCommandLineParser();
 		goToStaticUntilContext(function.getEntryPoint());
-		performAction(EmulateProgramAction.NAME,
+		performAction("Emulate Program",
 			PluginUtils.getPluginNameFromClass(DebuggerEmulationServicePlugin.class),
 			getCodeViewerProvider(), true);
 
@@ -933,7 +931,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 		TraceProgramView view = flatDbg.getCurrentView();
 		waitForCondition(() -> view.getSnap() != 0);
-		try (Transaction tx = view.openTransaction("Place units")) {
+		try (Transaction _ = view.openTransaction("Place units")) {
 			Listing listing = view.getListing();
 			Data datArgv =
 				listing.createData(addrArgv, new ArrayDataType(PointerDataType.dataType, 3, 8));

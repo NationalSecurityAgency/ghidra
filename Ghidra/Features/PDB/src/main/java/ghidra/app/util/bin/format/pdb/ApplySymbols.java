@@ -101,7 +101,7 @@ class ApplySymbols {
 			if (name.startsWith("$") && !name.contains(Namespace.DELIMITER)) {
 				Function f = functionManager.getFunctionContaining(address);
 				if (f != null && !f.getName().equals(name)) {
-					name = NamespaceUtils.getNamespaceQualifiedName(f, name, true);
+					name = NamespaceUtils.getNamespaceQualifiedName(f, name);
 				}
 			}
 
@@ -117,14 +117,15 @@ class ApplySymbols {
 				pdbParser.createSymbol(address, name, forcePrimary, log);
 			}
 
-			////////////
+			///////////
 			// Commented out the following for now, because it appears to be doing things it 
 			// shouldn't. Many of the things are very loosely speculative.
 			// TODO Someone needs to determine if the attempted functionality can be properly refined.
-			////////////
+			///////////
 //			if (name.startsWith(MS_VF_TABLE_PREFIX)) {
-//// TODO: Should this be handled by the demangler instead of here?
-//				//MemBuffer mbuf = new MemoryBufferImpl(program.getMemory(), address);
+			//// TODO: Should this be handled by the demangler instead of here?
+			// //MemBuffer mbuf = new
+			/// MemoryBufferImpl(program.getMemory(), address);
 //				PointerDataType pointer = new PointerDataType(program.getDataTypeManager());
 //				int nPtrs = length / pointer.getLength();
 //				for (int i = 0; i < nPtrs; ++i) {
@@ -133,7 +134,7 @@ class ApplySymbols {
 //				}
 //			}
 //			else if (name.startsWith(MS_VB_TABLE_PREFIX)) {
-//// TODO: Should this be handled by the demangler instead of here?
+			//// TODO: Should this be handled by the demangler instead of here?
 //				DWordDataType dword = DWordDataType.dataType;
 //				int nDwords = length / dword.getLength();
 //				for (int i = 0; i < nDwords; ++i) {
@@ -147,11 +148,11 @@ class ApplySymbols {
 //				boolean isUnicode = isUnicode(name);
 //				pdbParser.createString(isUnicode, address, log);
 //			}
-			////////////
+			///////////
 			// Commented out the following for now, because it appears to be doing things it 
 			// shouldn't. Many of the things are very loosely speculative.
 			// TODO Someone needs to determine if the attempted functionality can be properly refined.
-			////////////
+			///////////
 //			else if (PdbUtil.isFunction(program, name, address, length)) {
 //				disassembleSet.add(new AddressRangeImpl(address, address));
 //			}

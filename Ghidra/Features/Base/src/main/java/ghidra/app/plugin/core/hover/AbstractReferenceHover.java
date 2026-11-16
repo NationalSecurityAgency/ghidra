@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 
 /**
@@ -162,6 +161,7 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 			codeFormatService = tool.getService(CodeFormatService.class);
 		}
 		if (codeFormatService == null) {
+			Msg.info(this, "Cannot show reference hovers without the CodeFormatService installed");
 			return;
 		}
 
@@ -251,21 +251,21 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 		/*
 		 		Format
-
+		
 		 	Address: ram:1234
 		 	Address not in memory
-
-
+		
+		
 		 		Or, when multiple symbols at destination
-
-
+		
+		
 		 	Address: ram:1234
 		 	Symbols (3):
 		 		foo
 		 		bar
 		 		baz
 		 	Address not in memory
-
+		
 		 */
 
 		String newline = HTMLUtilities.HTML_NEW_LINE;

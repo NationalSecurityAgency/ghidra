@@ -44,7 +44,8 @@ public:
     shift_op = 4,		///< Shift operation
     arithmetic_op = 8,		///< Operation involving addition, multiplication, or division
     logical_op = 0x10,		///< Logical operation
-    floatingpoint_op = 0x20	///< Floating-point operation
+    floatingpoint_op = 0x20,	///< Floating-point operation
+    boolean_reorder = 0x40	///< \b true if operands need to be reordered when flipping \b this (boolean) op
   };
 protected:
   TypeFactory *tlst;		///< Pointer to data-type factory
@@ -53,6 +54,7 @@ protected:
   uint4 addlflags;		///< Additional properties
   string name;			///< Symbol denoting this operation
   OpBehavior *behave;		///< Object for emulating the behavior of the op-code
+  OpCode booleanFlip;		///< The complementary op-code
 
   /// \brief Set the data-type (as a meta-type) associated with inputs to this opcode
   ///
@@ -71,6 +73,18 @@ public:
   OpCode getOpcode(void) const { return opcode; }	///< Get the op-code value
   uint4 getFlags(void) const { return opflags; }	///< Get the properties associated with the op-code
   OpBehavior *getBehavior(void) const { return behave; }	///< Get the behavior associated with the op-code
+
+  /// \brief Return the complementary boolean OpCode
+  ///
+  /// Every comparison operation has a complementary form that produces
+  /// the opposite output on the same inputs.
+  /// \return the complementary OpCode or CPUI_MAX if \b this is not a comparison operation
+  OpCode getBooleanFlip(void) const {
+    return booleanFlip; }
+
+  /// \brief Return \b true if the complimentary operation involves reordering the input parameters.
+  bool isBooleanFlipReorder(void) const {
+    return ((addlflags & boolean_reorder) != 0); }
 
   /// \brief Emulate the unary op-code on an input value
   ///

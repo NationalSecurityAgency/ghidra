@@ -68,8 +68,8 @@ public class DyldCacheBuilderPlugin extends Plugin {
 		new ActionBuilder(addActionName, getName())
 				.withContext(ProgramLocationActionContext.class)
 				.enabledWhen(context -> context.getProgram()
-						.getExecutableFormat()
-						.equals(DyldCacheExtractLoader.DYLD_CACHE_EXTRACT_NAME))
+						.getOptions(Program.PROGRAM_INFO)
+						.getBoolean(DyldCacheExtractLoader.DYLD_CACHE_EXTRACT_PROPERTY, false))
 				.onAction(context -> TaskLauncher.launchModal(addActionName,
 					monitor -> addMissingDyldCacheComponent(context.getLocation(), monitor)))
 				.popupMenuPath("References", addActionName)

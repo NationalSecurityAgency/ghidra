@@ -15,7 +15,9 @@
  */
 package ghidra.pcode.emu.unix;
 
+import ghidra.pcode.emu.sys.EmuFileContents;
 import ghidra.pcode.emu.sys.EmuIOException;
+import ghidra.pcode.emu.unix.AbstractEmuUnixSyscallUseropLibrary.Errno;
 import ghidra.pcode.exec.PcodeArithmetic;
 
 /**
@@ -38,6 +40,13 @@ public interface EmuUnixFile<T> {
 	 * @return the pathname
 	 */
 	String getPathname();
+
+	/**
+	 * {@return the contents of this file}
+	 * <p>
+	 * Note multiple files may share the same contents to simulate hard linking.
+	 */
+	EmuFileContents<T> getContents();
 
 	/**
 	 * Read contents from the file starting at the given offset into the given buffer
@@ -122,13 +131,24 @@ public interface EmuUnixFile<T> {
 	}
 
 	/**
+	 * Check if the given user can execute this file
+	 * 
+	 * @param user the user
+	 * @return true if permitted, false otherwise
+	 */
+	default boolean isExecutable(EmuUnixUser user) {
+		return getStat().hasPermissions(EmuUnixFileStat.MODE_X, user);
+	}
+
+	/**
 	 * Require the user to have read permission on this file, throwing {@link EmuIOException} if not
 	 * 
 	 * @param user the user
 	 */
 	default void checkReadable(EmuUnixUser user) {
 		if (!isReadable(user)) {
-			throw new EmuIOException("The file " + getPathname() + " cannot be read.");
+			throw new EmuUnixException("The file " + getPathname() + " cannot be read.",
+				Errno.EACCES);
 		}
 	}
 
@@ -140,7 +160,21 @@ public interface EmuUnixFile<T> {
 	 */
 	default void checkWritable(EmuUnixUser user) {
 		if (!isWritable(user)) {
-			throw new EmuIOException("The file " + getPathname() + " cannot be written.");
+			throw new EmuUnixException("The file " + getPathname() + " cannot be written.",
+				Errno.EACCES);
+		}
+	}
+
+	/**
+	 * Require the user to have execute permission on this file, throwing {@link EmuIOException} if
+	 * not
+	 * 
+	 * @param user the user
+	 */
+	default void checkExecutable(EmuUnixUser user) {
+		if (!isExecutable(user)) {
+			throw new EmuUnixException("The file " + getPathname() + " cannot be executed.",
+				Errno.EACCES);
 		}
 	}
 }

@@ -76,8 +76,7 @@ public final class Objc2Constants {
 	public final static boolean isObjectiveC2(Program program) {
 		String format = program.getExecutableFormat();
 		if (MachoLoader.MACH_O_NAME.equals(format) ||
-			DyldCacheLoader.DYLD_CACHE_NAME.equals(format) ||
-			"Extracted DYLD Component".equals(format)) {
+			DyldCacheLoader.DYLD_CACHE_NAME.equals(format)) {
 			MemoryBlock[] blocks = program.getMemory().getBlocks();
 			for (MemoryBlock memoryBlock : blocks) {
 				if (memoryBlock.getName().startsWith(OBJC2_PREFIX)) {

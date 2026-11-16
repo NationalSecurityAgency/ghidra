@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.format.dwarf.DWARFUtil;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.Register;
@@ -165,11 +166,23 @@ public class GoRegisterInfo {
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {
 			return Math.min(maxAlign, dt.getLength());
 		}
-		if (dt instanceof Complex8DataType /* Go complex64 */ ) {
-			return 4;
+		if (dt instanceof AbstractComplexDataType) {	// aligned as its real part
+			return Math.min(maxAlign, dt.getLength() / 2);
 		}
 		if (dt instanceof AbstractFloatDataType) {
 			return Math.min(maxAlign, dt.getLength());
+		}
+		if (dt instanceof Structure struct) {
+			// a Go struct is aligned to its most aligned field, or to its RTTI alignment
+			int align = struct.hasExplicitMinimumAlignment()
+					? struct.getExplicitMinimumAlignment()
+					: 1;
+			for (DataTypeComponent dtc : struct.getDefinedComponents()) {
+				align = Math.max(align, GoRttiMapper.isAtomicAlign64(dtc.getDataType())
+						? 8
+						: getAlignmentForType(dtc.getDataType()));
+			}
+			return align;
 		}
 		return maxAlign;
 	}

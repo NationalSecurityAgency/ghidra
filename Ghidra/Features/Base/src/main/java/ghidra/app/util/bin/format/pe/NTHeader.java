@@ -20,6 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -155,37 +156,32 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * @param rva the relative virtual address
 	 */
 	public long rvaToPointer(long rva) {
+		if (layout == SectionLayout.MEMORY) {
+			return rva;
+		}
+
 		for (SectionHeader section : fileHeader.getSectionHeaders()) {
-			long sectionVA = Integer.toUnsignedLong(section.getVirtualAddress());
-			long vSize = Integer.toUnsignedLong(section.getVirtualSize());
+			long sectionVA =
+				Integer.toUnsignedLong(section.getAlignedVirtualAddress(optionalHeader));
+			long vSize = Integer.toUnsignedLong(
+				section.getAlignedVirtualSize(optionalHeader, new MessageLog()));
 			long rawPtr = Integer.toUnsignedLong(section.getPointerToRawData());
 			long rawSize = Integer.toUnsignedLong(section.getSizeOfRawData());
 
-			switch (layout) {
-				case MEMORY:
-					return rva;
-				case FILE:
-				default:
-					if (rva >= sectionVA && rva < sectionVA + vSize) {
-						// NOTE: virtual size is used in the above check because it's already been
-						// adjusted for special-case scenarios when the sections were first 
-						// processed in FileHeader.java
-						long ptr = rva + rawPtr - sectionVA;
+			if (rva >= sectionVA && rva < sectionVA + vSize) {
+				long ptr = rva + rawPtr - sectionVA;
 
-						// Make sure the pointer points to actual section file byte, rather than
-						// padding bytes
-						if (ptr >= rawPtr + rawSize) {
-							return -1;
-						}
+				// Make sure the pointer points to actual section file byte, rather than
+				// padding bytes
+				if (ptr >= rawPtr + rawSize) {
+					return -1;
+				}
 
-						return ptr;
-					}
-					break;
+				return ptr;
 			}
 		}
-		//
-		//low alignment mode?
-		//
+		
+		// Low alignment mode?
 		if (optionalHeader != null) {
 			if (optionalHeader.getFileAlignment() == optionalHeader.getSectionAlignment() &&
 				optionalHeader.getSectionAlignment() < 800 &&

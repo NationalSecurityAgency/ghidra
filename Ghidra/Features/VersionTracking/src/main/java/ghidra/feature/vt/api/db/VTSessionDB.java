@@ -308,8 +308,6 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 			throw new IOException(buffer.toString());
 		}
 
-		associationManager.sessionInitialized();
-
 		try {
 			addSynchronizedDomainObject(destinationProgram);
 		}

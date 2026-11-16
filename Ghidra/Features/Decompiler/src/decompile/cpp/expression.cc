@@ -203,10 +203,9 @@ int4 BooleanMatch::evaluate(Varnode *vn1,Varnode *vn2,int4 depth)
     // Check if the binary ops are complements of one another
     int4 slot1 = 0;
     int4 slot2 = 0;
-    bool reorder;
-    if (opc1 != get_booleanflip(opc2,reorder))
+    if (opc1 != op2->getOpcode()->getBooleanFlip())
       return uncorrelated;
-    if (reorder) slot2 = 1;
+    if (op2->getOpcode()->isBooleanFlipReorder()) slot2 = 1;
     if (!varnodeSame(op1->getIn(slot1),op2->getIn(slot2)))
       return uncorrelated;
     if (!varnodeSame(op1->getIn(1-slot1),op2->getIn(1-slot2)))

@@ -4887,8 +4887,8 @@ vmrsReg: mvfr2 is (($(AMODE) & c1619=5) | (TMode=1 & thv_c1619=5)) & mvfr2 { exp
 vmrsReg: mvfr1 is (($(AMODE) & c1619=6) | (TMode=1 & thv_c1619=6)) & mvfr1 { export mvfr1; }
 vmrsReg: mvfr0 is (($(AMODE) & c1619=7) | (TMode=1 & thv_c1619=7)) & mvfr0 { export mvfr0; }
 vmrsReg: fpexc is (($(AMODE) & c1619=8) | (TMode=1 & thv_c1619=8)) & fpexc { export fpexc; }
-vmrsReg: fpinst is (($(AMODE) & c1619=9) | (TMode=1 & thv_c1619=9)) & fpinst { export mvfr1; }
-vmrsReg: fpinst2 is (($(AMODE) & c1619=0xa) | (TMode=1 & thv_c1619=0xa)) & fpinst2 { export mvfr0; }
+vmrsReg: fpinst is (($(AMODE) & c1619=9) | (TMode=1 & thv_c1619=9)) & fpinst { export fpinst; }
+vmrsReg: fpinst2 is (($(AMODE) & c1619=0xa) | (TMode=1 & thv_c1619=0xa)) & fpinst2 { export fpinst2; }
 @if defined(VERSION_8M)
 vmrsReg: vpr             is TMode=1 & thv_c1619=0xc & vpr { export vpr; }
 define pcodeop SaveFloatingPointContext; # contedxt register, 

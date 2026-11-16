@@ -556,7 +556,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 		T target = createTarget1();
 		Trace trace = getTrace(target);
-		controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(trace, ControlMode.EMULATOR, true);
 		createProgramFromTrace(trace);
 		intoProject(trace);
 		intoProject(program);
@@ -846,7 +846,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 			return newRow;
 		});
 
-		controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(trace, ControlMode.EMULATOR, true);
 		lbRow1.setEnabled(true);
 		TraceBreakpointLocation emuBpt = waitForValue(
 			() -> Unique.assertAtMostOne(trace.getBreakpointManager().getAllBreakpointLocations()));
@@ -863,12 +863,12 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		});
 
 		for (int i = 0; i < 3; i++) {
-			controlService.setCurrentMode(trace, ControlMode.RO_TARGET);
+			controlService.setCurrentMode(trace, ControlMode.TARGET, false);
 			waitOn(breakpointService.changesSettled());
 			waitForSwing();
 			assertEquals(0, breakpointsProvider.locationTableModel.getModelData().size());
 
-			controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
+			controlService.setCurrentMode(trace, ControlMode.EMULATOR, true);
 			waitOn(breakpointService.changesSettled());
 			waitForSwing();
 			assertEquals(1, breakpointsProvider.locationTableModel.getModelData().size());

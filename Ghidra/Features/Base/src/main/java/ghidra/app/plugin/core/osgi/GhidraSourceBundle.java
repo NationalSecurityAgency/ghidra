@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.*;
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -977,7 +977,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		Path activatorSourceFileName = bindir.resolve(activatorClassName + ".java");
 		try (PrintWriter activatorWriter = new PrintWriter(
-			Files.newBufferedWriter(activatorSourceFileName, Charset.forName("UTF-8")))) {
+			Files.newBufferedWriter(activatorSourceFileName, StandardCharsets.UTF_8))) {
 			activatorWriter.println("import " + GhidraBundleActivator.class.getName() + ";");
 			activatorWriter.println("import org.osgi.framework.BundleActivator;");
 			activatorWriter.println("import org.osgi.framework.BundleContext;");

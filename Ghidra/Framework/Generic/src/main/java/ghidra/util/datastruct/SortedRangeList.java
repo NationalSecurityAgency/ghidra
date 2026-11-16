@@ -17,6 +17,8 @@ package ghidra.util.datastruct;
 
 import java.util.*;
 
+import ghidra.util.exception.AssertException;
+
 /**
  * Provides a list of integer ranges that are maintained in sorted order.  When a range is added
  * any ranges that overlap or are adjacent to one another will coalesce into a single range.
@@ -50,12 +52,12 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param min the range minimum
 	 * @param max the range maximum (inclusive)
 	 */
-	public void addRange(int min, int max) {
+	public void addRange(long min, long max) {
 		Range key = new Range(min, min);
 		SortedSet<Range> headSet = set.headSet(key);
 		if (!headSet.isEmpty()) {
 			Range last = headSet.last();
-			if (min <= (long) last.max + 1) {
+			if (min <= last.max + 1) {
 				last.max = Math.max(last.max, max);
 				coalesce(last, set.tailSet(key).iterator());
 				return;
@@ -68,7 +70,7 @@ public class SortedRangeList implements Iterable<Range> {
 		}
 		Iterator<Range> it = ss.iterator();
 		Range first = it.next();
-		if (max < (long) first.min - 1) {
+		if (max < first.min - 1) {
 			set.add(new Range(min, max));
 			return;
 		}
@@ -105,30 +107,54 @@ public class SortedRangeList implements Iterable<Range> {
 	}
 
 	/**
-	 * Returns the minimum int value in this sorted range list.
+	 * Returns the minimum long value in this sorted range list.
 	 * @return the min value
 	 * @throws NoSuchElementException if the list is empty.
 	 */
-	public int getMin() throws NoSuchElementException {
+	public long getMin() throws NoSuchElementException {
 		Range r = set.first();
 		return r.min;
 	}
 
 	/**
-	 * Returns the maximum int value in this sorted range list.
+	 * Returns the maximum long value in this sorted range list.
 	 * @return the max value
 	 * @throws NoSuchElementException if the list is empty.
 	 */
-	public int getMax() throws NoSuchElementException {
+	public long getMax() throws NoSuchElementException {
 		Range r = set.last();
 		return r.max;
+	}
+
+	/**
+	 * Returns the minimum  value in this sorted range list as an int. This method should only be
+	 * used when you know that only int values are placed in this SortedRangeMap.
+	 * @return the min value
+	 * @throws NoSuchElementException if the list is empty.
+	 * @throws AssertException if the value is not in range of an int value.
+	 */
+	public int getMinAsInt() throws NoSuchElementException {
+		Range r = set.first();
+		return r.getMinAsInt();
+	}
+
+	/**
+	 * Returns the maximum  value in this sorted range list as an int. This method should only be
+	 * used when you know that only int values are placed in this SortedRangeMap.
+	 * @return the max value
+	 * @throws NoSuchElementException if the list is empty.
+	 * @throws AssertException if the value is not in range of an int value.
+	 */
+	public int getMaxAsInt() throws NoSuchElementException {
+		Range r = set.last();
+		return r.getMaxAsInt();
 	}
 
 	/**
 	 * Returns the number of ranges in the list.
 	 * @return the number of ranges
 	 */
-	public int getNumRanges() {
+	public long getNumRanges() {
 		return set.size();
 	}
 
@@ -138,7 +164,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param min the minimum value for the range to remove.
 	 * @param max the maximum value for the range to remove.
 	 */
-	public void removeRange(int min, int max) {
+	public void removeRange(long min, long max) {
 		Range key = new Range(min, min);
 		SortedSet<Range> headSet = set.headSet(key);
 		if (!headSet.isEmpty()) {
@@ -174,7 +200,7 @@ public class SortedRangeList implements Iterable<Range> {
 	void coalesce(Range range, Iterator<Range> it) {
 		while (it.hasNext()) {
 			Range next = it.next();
-			if (next.min > (long) range.max + 1) {
+			if (next.min > range.max + 1) {
 				break;
 			}
 			range.max = Math.max(range.max, next.max);
@@ -187,7 +213,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param value the value to check for.
 	 * @return true if the value is contained in any ranges within this list.
 	 */
-	public boolean contains(int value) {
+	public boolean contains(long value) {
 		Range key = new Range(value, value);
 		SortedSet<Range> head = set.headSet(key);
 		if (!head.isEmpty()) {
@@ -198,7 +224,7 @@ public class SortedRangeList implements Iterable<Range> {
 		return set.contains(key);
 	}
 
-	private Range getRangeContaining(int value) {
+	private Range getRangeContaining(long value) {
 		Range key = new Range(value, value);
 		SortedSet<Range> head = set.headSet(key);
 		if (!head.isEmpty()) {
@@ -223,7 +249,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param max the maximum value
 	 * @return true if a single range contains all the values from min to max.
 	 */
-	public boolean contains(int min, int max) {
+	public boolean contains(long min, long max) {
 		Range range = getRangeContaining(min);
 		if (range != null) {
 			return range.contains(max);
@@ -236,7 +262,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @param value the value to look for.
 	 * @return the range index or a negative value if the range list doesn't contain the value.
 	 */
-	public int getRangeIndex(int value) {
+	public int getRangeIndex(long value) {
 		Range key = new Range(value, value);
 		SortedSet<Range> head = set.headSet(key);
 		int index = head.size() - 1;
@@ -276,7 +302,7 @@ public class SortedRangeList implements Iterable<Range> {
 
 	/**
 	 * Gets the total number of int values in this range.
-	 * @return the number of int values.
+	 * @return the number of long values.
 	 */
 	public long getNumValues() {
 		Iterator<Range> it = set.iterator();
@@ -296,7 +322,7 @@ public class SortedRangeList implements Iterable<Range> {
 	 * @return true if the range from min to max intersects (overlaps) any ranges in this sorted
 	 * range list.
 	 */
-	public boolean intersects(int min, int max) {
+	public boolean intersects(long min, long max) {
 		Range key = new Range(min, min);
 		SortedSet<Range> head = set.headSet(key);
 		if (!head.isEmpty()) {

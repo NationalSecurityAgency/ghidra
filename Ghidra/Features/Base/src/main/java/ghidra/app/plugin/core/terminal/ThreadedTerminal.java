@@ -102,6 +102,7 @@ public class ThreadedTerminal extends DefaultTerminal {
 			catch (IOException e) {
 				Msg.error(this, "Console input closed unexpectedly: " + e);
 				closed = true;
+				provider.terminated(-1);
 				return;
 			}
 			catch (Exception e) {

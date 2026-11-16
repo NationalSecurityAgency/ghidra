@@ -109,7 +109,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		activateTrace();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		StateEditor editor = createStateEditor();
 		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
@@ -121,7 +121,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuRegisterNoThreadErr() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		activateTrace();
 		waitForSwing();
@@ -144,7 +144,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuMemory() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
@@ -170,7 +170,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuRegister() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
@@ -200,7 +200,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuMemoryAfterStep() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
@@ -215,7 +215,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 			tb.exec(getPlatform(), 0, thread, 0, "pc = 0x00400000;");
 		}
 		activateTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		waitForSwing();
 
 		TraceSchedule step1 = TraceSchedule.snap(0).steppedForward(thread, 1);
@@ -240,7 +240,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuRegisterAfterStep() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
@@ -255,7 +255,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 			tb.exec(getPlatform(), 0, thread, 0, "pc = 0x00400000;");
 		}
 		activateTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		waitForSwing();
 
 		TraceSchedule step1 = TraceSchedule.snap(0).steppedForward(thread, 1);
@@ -281,7 +281,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuMemoryTwice() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
@@ -311,7 +311,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	@Test
 	public void testWriteEmuRegisterTwice() throws Throwable {
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
@@ -343,7 +343,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	public void testWriteTraceMemory() throws Throwable {
 		// NB. Definitely no thread required
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		activateTrace();
 		waitForSwing();
 
@@ -366,7 +366,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	public void testWriteTraceRegisterNoThreadErr() throws Throwable {
 		// NB. Definitely no thread required
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 		activateTrace();
 		waitForSwing();
 
@@ -382,7 +382,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 	public void testWriteTraceRegister() throws Throwable {
 		// NB. Definitely no thread required
 		createAndOpenTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		TraceThread thread;
 		try (Transaction tx = tb.startTransaction()) {
@@ -439,7 +439,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
 		StateEditor editor = createStateEditor();
 		assertTrue(editor.isVariableEditable(tb.addr(0x00400000), 4));
@@ -459,7 +459,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
 		StateEditor editor = createStateEditor();
 		assertTrue(editor.isRegisterEditable(r0));
@@ -480,7 +480,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		activateTrace(); // platform
 		traceManager.activateThread(thread);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 
 		StateEditor editor = createStateEditor();
 		assertTrue(editor.isRegisterEditable(r0));
@@ -509,24 +509,24 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		waitForSwing();
 		assertEquals(target.getSnap(), traceManager.getCurrentSnap());
 
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 		waitForSwing();
 		assertEquals(
-			"Cannot navigate time in Control Target mode. Switch to Trace or Emulate mode first.",
+			"Cannot navigate time in Target mode. Switch to Trace or Emulate mode first.",
 			tool.getStatusInfo());
 		assertEquals(target.getSnap(), traceManager.getCurrentSnap());
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 		waitForSwing();
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 		waitForSwing();
-		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
+		assertEquals(ControlMode.EMULATOR, controlService.getCurrentMode(tb.trace));
 
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		waitForSwing();
 		assertEquals(target.getSnap(), traceManager.getCurrentSnap());
 	}
@@ -536,7 +536,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		activateTrace();
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
@@ -551,7 +551,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		activateTrace();
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, true);
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
@@ -566,7 +566,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		targetService.publishTarget(new MockTarget(tb.trace));
 		activateTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 
 		StateEditor editor = createStateEditor();
 		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
@@ -580,7 +580,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerInte
 		createAndOpenTrace();
 		targetService.publishTarget(new MockTarget(tb.trace));
 		activateTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 
 		StateEditor editor = createStateEditor();
 		assertFalse(editor.isRegisterEditable(r0));

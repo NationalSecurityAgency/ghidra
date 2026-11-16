@@ -167,10 +167,6 @@ public class FunctionNameStringable extends Stringable {
 				namespace = createNamespace(destProgram, info, namespace);
 				continue;
 			}
-
-			if (destFunction.isExternal() != ns.isExternal()) {
-				throw new DuplicateNameException("Conflicting namespace: " + info.name);
-			}
 			if (info.symbolType == SymbolType.CLASS &&
 				ns.getSymbol().getSymbolType() == SymbolType.NAMESPACE) {
 				// Promote existing namespace to class
@@ -290,10 +286,7 @@ public class FunctionNameStringable extends Stringable {
 		SymbolType type = info.symbolType;
 		SourceType namespaceSourceType = info.sourceType;
 
-		if (type == SymbolType.LIBRARY) {
-			return symbolTable.createExternalLibrary(name, namespaceSourceType);
-		}
-		else if (type == SymbolType.CLASS) {
+		if (type == SymbolType.CLASS) {
 			return symbolTable.createClass(namespace, name, namespaceSourceType);
 		}
 		return symbolTable.createNameSpace(namespace, name, namespaceSourceType);

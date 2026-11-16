@@ -213,7 +213,7 @@ public class SymZ3PcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				"CMP word ptr [RBP + -0x1a],0x6162",
 				"JZ 0x00400632",
 				"MOV byte ptr [RBP + -0x11],0x30",
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
+				"MOV RAX," + Syscall.EXIT_GROUP.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(space.getAddress(0x00400880), "myfile\0".getBytes());

@@ -226,7 +226,19 @@ public class AttributedString {
 		}
 
 		g.setColor(textColor);
-		GraphicsUtils.drawString(c, g, text, x, 0);
+
+		// The call to GraphicsUtils.drawString() will not paint text that is empty. Some clients 
+		// provider a Graphics object used to convert calls to drawString() into text output to be
+		// used for copying/pasting of text. We may have empty text when the UI builds fields that
+		// have blank lines, such as for comments. We must manually call the graphics object for 
+		// blank text to make sure that out custom Graphics objects work as intended.
+		if (text.length() == 0) {
+			g.drawString(text, x, 0);
+		}
+		else {
+			GraphicsUtils.drawString(c, g, text, x, 0);
+		}
+
 	}
 
 //==================================================================================================

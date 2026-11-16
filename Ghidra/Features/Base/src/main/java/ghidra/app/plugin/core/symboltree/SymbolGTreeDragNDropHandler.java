@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import ghidra.app.plugin.core.symtable.dnd.SymbolDataFlavor;
 import ghidra.app.plugin.core.symtable.dnd.SymbolTransferData;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
+import ghidra.program.database.symbol.MemorySymbol;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
@@ -52,41 +53,66 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		if (dropAction != DnDConstants.ACTION_MOVE) {
 			return;
 		}
-
-		if (!(destinationNode instanceof SymbolTreeNode)) {
-			return;
+		if (destinationNode instanceof NamespaceSymbolNode namespaceNode) {
+			doDropOnNamespace(namespaceNode, transferable);
+		}
+		else if (destinationNode instanceof LibrarySymbolNode libraryNode) {
+			doDropOnLibrary(libraryNode, transferable);
+		}
+		else if (destinationNode instanceof GlobalsCategoryNode) {
+			doDropOnGlobal(transferable);
 		}
 
-		SymbolTreeNode destinationSymbolNode = (SymbolTreeNode) destinationNode;
-		Namespace namespace = destinationSymbolNode.getNamespace();
-		if (namespace == null) {
-			return;
-		}
+	}
 
+	private void doDropOnGlobal(Transferable transferable) {
+
+		List<Symbol> symbols = getSymbolTreeSymbols(transferable);
+		Namespace global = plugin.getProgram().getGlobalNamespace();
+		SymbolTreeProvider provider = plugin.getProvider();
+		provider.reparentSymbols(global, symbols);	// set to global namespace
+	}
+
+	private void doDropOnLibrary(LibrarySymbolNode libraryNode, Transferable transferable) {
+		Library library = libraryNode.getLibrary();
+		List<Symbol> symbols = getSymbolTreeSymbols(transferable);
+		List<MemorySymbol> memorySymbols = new ArrayList<>();
+		for (Symbol symbol : symbols) {
+			// MemorySymbol has the method for setting a library and only external symbols can
+			// be in a library.
+			if (!(symbol instanceof MemorySymbol memorySymbol) || !symbol.isExternal()) {
+				Msg.showError(this, null, "Drop Failed",
+					"Only external function or label symbols can be dropped on a Library: " +
+						symbol.getName());
+				return;
+			}
+			memorySymbols.add(memorySymbol);
+		}
+		SymbolTreeProvider provider = plugin.getProvider();
+		provider.setLibrary(library, memorySymbols);
+	}
+
+	private void doDropOnNamespace(NamespaceSymbolNode destination, Transferable transferable) {
+		Namespace namespace = destination.getNamespace();
 		if (transferable.isDataFlavorSupported(SelectionTransferable.localProgramSelectionFlavor)) {
-			try {
-				Object transferData =
-					transferable.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
-				SelectionTransferData selectionData = (SelectionTransferData) transferData;
-				dropProgramSelection(namespace, selectionData);
-				return;
-			}
-			catch (UnsupportedFlavorException e) {
-				Msg.showError(this, plugin.getTool().getToolFrame(), "Unsupported Data Flavor",
-					"Unable to handle dropping of given data flavor: " + e.getMessage());
-			}
-			catch (IOException e) {
-				Msg.showError(this, plugin.getTool().getToolFrame(), "Unexpected Exception",
-					"Unable to handle dropping of given data", e);
+			SelectionTransferData selectionData = getSelectionTransferData(transferable);
+			dropProgramSelection(namespace, selectionData);
+		}
+		else {
+			List<Symbol> symbolsToMoveList = getSymbolTreeSymbols(transferable);
+			SymbolTreeProvider provider = plugin.getProvider();
+			int count = provider.reparentSymbols(namespace, symbolsToMoveList);
+			if (count != symbolsToMoveList.size()) {
+				plugin.getTool().setStatusInfo("Failed to move one more specified symbols");
 			}
 		}
+	}
 
+	private SelectionTransferData getSelectionTransferData(Transferable transferable) {
 		try {
-			Object transferData = transferable.getTransferData(SymbolTreeDataFlavor.DATA_FLAVOR);
-			if (transferData instanceof List<?>) {
-				dropNodeList(namespace, transferData);
-				return;
-			}
+			Object transferData =
+				transferable.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
+			return (SelectionTransferData) transferData;
 		}
 		catch (UnsupportedFlavorException e) {
 			Msg.showError(this, plugin.getTool().getToolFrame(), "Unsupported Data Flavor",
@@ -96,10 +122,13 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 			Msg.showError(this, plugin.getTool().getToolFrame(), "Unexpected Exception",
 				"Unable to handle dropping of given data", e);
 		}
-
+		return null;
 	}
 
 	private void dropProgramSelection(Namespace namespace, SelectionTransferData selectionData) {
+		if (selectionData == null) {
+			return;
+		}
 		List<Symbol> symbolsToMove = new ArrayList<>();
 		Program program = plugin.getProgram();
 		FunctionManager functionManager = program.getFunctionManager();
@@ -115,21 +144,23 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		}
 	}
 
-	private void dropNodeList(Namespace namespace, Object transferData) {
-		@SuppressWarnings("unchecked")
-		List<GTreeNode> nodeList = (List<GTreeNode>) transferData;
-		List<Symbol> symbolsToMoveList = new ArrayList<>();
-		for (GTreeNode node : nodeList) {
-			// we only allow dragging of SymbolNodes
-			SymbolNode symbolNode = (SymbolNode) node;
-			Symbol symbol = symbolNode.getSymbol();
-			symbolsToMoveList.add(symbol);
+	private List<Symbol> getSymbolTreeSymbols(Transferable transferable) {
+		List<Symbol> symbols = new ArrayList<>();
+		try {
+			Object transferData = transferable.getTransferData(SymbolTreeDataFlavor.DATA_FLAVOR);
+			@SuppressWarnings("unchecked")
+			List<GTreeNode> nodeList = (List<GTreeNode>) transferData;
+			for (GTreeNode node : nodeList) {
+				if (node instanceof SymbolNode symbolNode) {
+					symbols.add(symbolNode.getSymbol());
+				}
+			}
 		}
-
-		SymbolTreeProvider provider = plugin.getProvider();
-		if (provider.reparentSymbols(namespace, symbolsToMoveList) != symbolsToMoveList.size()) {
-			plugin.getTool().setStatusInfo("Failed to move one more specified symbols");
+		catch (UnsupportedFlavorException | IOException e) {
+			Msg.showError(this, plugin.getTool().getToolFrame(), "Unexpected Exception",
+				"Unable to handle dropping of given data", e);
 		}
+		return symbols;
 	}
 
 	@Override
@@ -140,6 +171,7 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 	@Override
 	public boolean isDropSiteOk(GTreeNode destinationUserNode, DataFlavor[] flavors,
 			int dropAction) {
+
 		if (dropAction != DnDConstants.ACTION_MOVE) {
 			return false;
 		}
@@ -147,6 +179,9 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		Program program = plugin.getProgram();
 		if (program == null || program.isClosed()) {
 			return false;
+		}
+		if (destinationUserNode instanceof GlobalsCategoryNode) {
+			return true;
 		}
 
 		if (!(destinationUserNode instanceof SymbolTreeNode)) {
@@ -162,7 +197,18 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		if (dragAction != DnDConstants.ACTION_MOVE) {
 			return false;
 		}
-		return dragUserData.size() != 0;
+		if (dragUserData.isEmpty()) {
+			return false;
+		}
+		for (GTreeNode node : dragUserData) {
+			if (!(node instanceof SymbolNode)) {
+				return false;
+			}
+			if (node instanceof LibrarySymbolNode) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -187,8 +233,18 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 			throws UnsupportedFlavorException {
 
 		if (SymbolDataFlavor.DATA_FLAVOR.equals(flavor)) {
-			return getSymbols(transferNodes);
+			return getSymbolTransferData(transferNodes);
 		}
+		/*
+			The generic flavor for the Symbol Tree.  This is used to paste all nodes in the list.
+			These nodes will be given to the Symbol Tree provider, which will decide how to process
+			each node.
+		
+			Note: symbolNode.getNodeDataFlavor() is used to get the flavor of each node being 
+		      	transfered.  But, we do not use those flavors to process the nodes on a drop().
+		      	Instead, we use the generic SymbolTreeDataFlavor.DATA_FLAVOR and let the provider
+		      	handle each node separately. (see getSupportedDataFlavors() in this file) 
+		 */
 		else if (SymbolTreeDataFlavor.DATA_FLAVOR.equals(flavor)) {
 			List<GTreeNode> nodes = new ArrayList<>();
 			for (GTreeNode node : transferNodes) {
@@ -201,7 +257,7 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		throw new UnsupportedFlavorException(flavor);
 	}
 
-	private SymbolTransferData getSymbols(List<GTreeNode> transferNodes) {
+	private SymbolTransferData getSymbolTransferData(List<GTreeNode> transferNodes) {
 		List<Symbol> symbols = new ArrayList<>();
 		for (GTreeNode node : transferNodes) {
 			if (node instanceof SymbolNode symbolNode) {

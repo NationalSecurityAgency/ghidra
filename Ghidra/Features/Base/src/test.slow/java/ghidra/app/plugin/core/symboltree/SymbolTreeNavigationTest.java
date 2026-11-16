@@ -438,9 +438,8 @@ public class SymbolTreeNavigationTest extends AbstractProgramBasedTest {
 
 	private void assertNodeExists(Symbol symbol) {
 
-		SymbolNode key = SymbolNode.createNode(symbol, program);
 		SymbolTreeRootNode rootNode = util.getRootNode();
-		GTreeNode node = rootNode.findSymbolTreeNode(key, true, TaskMonitor.DUMMY);
+		GTreeNode node = rootNode.findSymbolNode(symbol, true, TaskMonitor.DUMMY);
 		assertNotNull("Could not find node: " + symbol.getName(true), node);
 	}
 

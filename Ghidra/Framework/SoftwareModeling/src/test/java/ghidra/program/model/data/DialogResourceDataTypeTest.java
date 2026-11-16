@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,9 +25,7 @@ import org.junit.Test;
 import generic.test.AbstractGTest;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.GenericAddressSpace;
-import ghidra.program.model.mem.ByteMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.util.LittleEndianDataConverter;
 
 public class DialogResourceDataTypeTest extends AbstractGTest {
@@ -51,7 +49,7 @@ public class DialogResourceDataTypeTest extends AbstractGTest {
 		assertEquals("Dialog Title", titleComponent.getFieldName());
 		byte[] titleBytes = new byte[titleComponent.getLength() - 2]; // cut off the null terminator
 		mb.getBytes(titleBytes, titleComponent.getOffset());
-		String title = new String(titleBytes, Charset.forName("UTF-16LE"));
+		String title = new String(titleBytes, StandardCharsets.UTF_16LE);
 		assertEquals("Test Dialog", title);
 
 		DataTypeComponent sizeComponent = components[4];
@@ -62,7 +60,7 @@ public class DialogResourceDataTypeTest extends AbstractGTest {
 		assertEquals("Dialog Font Typeface", typefaceComponent.getFieldName());
 		byte[] typefaceBytes = new byte[typefaceComponent.getLength() - 2]; // cut off the null terminator
 		mb.getBytes(typefaceBytes, typefaceComponent.getOffset());
-		String typeface = new String(typefaceBytes, Charset.forName("UTF-16LE"));
+		String typeface = new String(typefaceBytes, StandardCharsets.UTF_16LE);
 		assertEquals("Test Typeface", typeface);
 	}
 
@@ -78,7 +76,7 @@ public class DialogResourceDataTypeTest extends AbstractGTest {
 		assertEquals("Dialog Title", titleComponent.getFieldName());
 		byte[] titleBytes = new byte[titleComponent.getLength() - 2]; // cut off the null terminator
 		mb.getBytes(titleBytes, titleComponent.getOffset());
-		String title = new String(titleBytes, Charset.forName("UTF-16LE"));
+		String title = new String(titleBytes, StandardCharsets.UTF_16LE);
 		assertEquals("Test Dialog", title);
 
 		DataTypeComponent sizeComponent = components[4];
@@ -101,7 +99,7 @@ public class DialogResourceDataTypeTest extends AbstractGTest {
 		assertEquals("Dialog Font Typeface", typefaceComponent.getFieldName());
 		byte[] typefaceBytes = new byte[typefaceComponent.getLength() - 2]; // cut off the null terminator
 		mb.getBytes(typefaceBytes, typefaceComponent.getOffset());
-		String typeface = new String(typefaceBytes, Charset.forName("UTF-16LE"));
+		String typeface = new String(typefaceBytes, StandardCharsets.UTF_16LE);
 		assertEquals("Test Typeface", typeface);
 	}
 

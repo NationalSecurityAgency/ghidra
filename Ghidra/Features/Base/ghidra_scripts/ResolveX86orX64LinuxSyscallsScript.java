@@ -44,6 +44,7 @@ import ghidra.program.util.SymbolicPropogator;
 import ghidra.program.util.SymbolicPropogator.Value;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -145,6 +146,27 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			printf("AddressSpace %s found, continuing...\n", SYSCALL_SPACE_NAME);
 		}
 
+		//get the map from system call numbers to system call names
+		//you might have to create this yourself!
+		Map<Long, String> syscallNumbersToNames = getSyscallNumberMap();
+
+		//populate the full set of system calls. Only those called with have an xref to them.
+		//this is to ensure emulation can see the full system call set.
+		for (Entry<Long, String> entry : syscallNumbersToNames.entrySet()) {
+			createSyscallFunction(syscallSpace, entry.getKey(), entry.getValue());
+			Address target = syscallSpace.getAddress(entry.getKey());
+			String name = entry.getValue();
+			Function syscall = createFunction(target, name);
+			if (syscall == null) {
+				Msg.warn(this, "Unable to create function at %s".formatted(target));
+				continue;
+			}
+			syscall.setCallingConvention(callingConvention);
+			if (noreturnSyscalls.contains(name)) {
+				syscall.setNoReturn(true);
+			}
+		}
+
 		//get all of the functions that contain system calls
 		//note that this will not find system call instructions that are not in defined functions
 		Map<Function, Set<Address>> funcsToCalls = getSyscallsInFunctions(currentProgram, monitor);
@@ -165,10 +187,6 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			return;
 		}
 
-		//get the map from system call numbers to system call names
-		//you might have to create this yourself!
-		Map<Long, String> syscallNumbersToNames = getSyscallNumberMap();
-
 		//at each system call call site where a constant could be determined, create
 		//the system call (if not already created), then add the appropriate overriding reference
 		//use syscallNumbersToNames to name the created functions
@@ -179,21 +197,8 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			Address callTarget = syscallSpace.getAddress(offset);
 			Function callee = currentProgram.getFunctionManager().getFunctionAt(callTarget);
 			if (callee == null) {
-				String funcName = "syscall_" + String.format("%08X", offset);
-				if (syscallNumbersToNames.get(offset) != null) {
-					funcName = syscallNumbersToNames.get(offset);
-				}
-				callee = createFunction(callTarget, funcName);
-				if (callee == null) {
-					Msg.warn(this, "Unable to create function at "+callTarget);
-					continue;
-				}
-				callee.setCallingConvention(callingConvention);
-
-				//check if the function name is one of the non-returning syscalls
-				if (noreturnSyscalls.contains(funcName)) {
-					callee.setNoReturn(true);
-				}
+				String funcName = "syscall_%08X".formatted(offset);
+				createSyscallFunction(syscallSpace, offset, funcName);
 			}
 			Reference ref = currentProgram.getReferenceManager()
 					.addMemoryReference(callSite, callTarget, overrideType, SourceType.USER_DEFINED,
@@ -213,6 +218,21 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			new AddressSet(syscallSpace.getMinAddress(), syscallSpace.getMaxAddress()),
 			SourceType.USER_DEFINED, false, false);
 		cmd.applyTo(currentProgram);
+	}
+
+	private Function createSyscallFunction(AddressSpace syscallSpace, long number, String name)
+			throws InvalidInputException {
+		Address target = syscallSpace.getAddress(number);
+		Function syscall = createFunction(target, name);
+		if (syscall == null) {
+			Msg.warn(this, "Unable to create function at %s".formatted(target));
+			return null;
+		}
+		syscall.setCallingConvention(callingConvention);
+		if (noreturnSyscalls.contains(name)) {
+			syscall.setNoReturn(true);
+		}
+		return syscall;
 	}
 
 	//TODO: better error checking!

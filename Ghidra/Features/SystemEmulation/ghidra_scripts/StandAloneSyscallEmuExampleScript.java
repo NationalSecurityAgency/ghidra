@@ -22,6 +22,7 @@
 //@toolbar
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
@@ -46,7 +47,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 
 public class StandAloneSyscallEmuExampleScript extends GhidraScript {
-	private final static Charset UTF8 = Charset.forName("utf8");
+	private final static Charset UTF8 = StandardCharsets.UTF_8;
 
 	Program program = null;
 

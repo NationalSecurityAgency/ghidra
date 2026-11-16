@@ -16,6 +16,7 @@
 package mdemangler;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -531,8 +532,8 @@ public class MDMang {
 	/******************************************************************************/
 	/******************************************************************************/
 	// SPECIALIZATION METHODS
-	private static final Charset UTF8 = Charset.forName("UTF-8");
-	private static final Charset UTF16 = Charset.forName("UTF-16");
+	private static final Charset UTF8 = StandardCharsets.UTF_8;
+	private static final Charset UTF16 = StandardCharsets.UTF_16;
 
 	// private static final Charset WIN1252 = Charset.forName("windows-1252");
 	public void insert(StringBuilder builder, MDString mdstring) {

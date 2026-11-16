@@ -27,6 +27,7 @@ import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.symbol.Symbol;
 
 /**
  */
@@ -122,7 +123,14 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 		if (rtti0Address == null) {
 			invalid("Invalid TypeDescriptor reference (pTypeDescriptor)."); // throws Exception
 		}
-		rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
+		Symbol rtti0Symbol = program.getSymbolTable().getPrimarySymbol(rtti0Address);
+		if (rtti0Symbol != null && rtti0Symbol.getName().equals("RTTI_Type_Descriptor")) {
+			rtti0Model = new TypeDescriptorModel(program, rtti0Address,
+				rtti0Symbol.getParentNamespace(), validationOptions);
+		}
+		else {
+			rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
+		}
 		if (validateReferredToData) {
 			try {
 				rtti0Model.validate();

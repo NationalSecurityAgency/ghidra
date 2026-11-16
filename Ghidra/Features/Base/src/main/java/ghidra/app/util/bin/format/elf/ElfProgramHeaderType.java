@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,33 +25,33 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class ElfProgramHeaderType {
 
-	private static Map<Integer, ElfProgramHeaderType> defaultElfProgramHeaderTypeMap =
+	private static final Map<Integer, ElfProgramHeaderType> defaultElfProgramHeaderTypeMap =
 		new HashMap<Integer, ElfProgramHeaderType>();
 
-	public static ElfProgramHeaderType PT_NULL = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_NULL = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_NULL, "PT_NULL", "Unused/Undefined segment");
-	public static ElfProgramHeaderType PT_LOAD = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_LOAD = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_LOAD, "PT_LOAD", "Loadable segment");
-	public static ElfProgramHeaderType PT_DYNAMIC = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_DYNAMIC = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_DYNAMIC, "PT_DYNAMIC", "Dynamic linking information");
-	public static ElfProgramHeaderType PT_INTERP = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_INTERP = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_INTERP, "PT_INTERP", "Interpreter path name");
-	public static ElfProgramHeaderType PT_NOTE = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_NOTE = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_NOTE, "PT_NOTE", "Auxiliary information location");
-	public static ElfProgramHeaderType PT_SHLIB =
+	public static final ElfProgramHeaderType PT_SHLIB =
 		addDefaultProgramHeaderType(ElfProgramHeaderConstants.PT_SHLIB, "PT_SHLIB", "");
-	public static ElfProgramHeaderType PT_PHDR = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_PHDR = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_PHDR, "PT_PHDR", "Program header table");
-	public static ElfProgramHeaderType PT_TLS = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_TLS = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_TLS, "PT_TLS", "Thread-Local Storage template");
 
 	// OS-specific range: 0x60000000 - 0x6fffffff
 
-	public static ElfProgramHeaderType PT_GNU_EH_FRAME = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_GNU_EH_FRAME = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_GNU_EH_FRAME, "PT_GNU_EH_FRAME", "GCC .eh_frame_hdr segment");
-	public static ElfProgramHeaderType PT_GNU_STACK = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_GNU_STACK = addDefaultProgramHeaderType(
 		ElfProgramHeaderConstants.PT_GNU_STACK, "PT_GNU_STACK", "Indicates stack executability");
-	public static ElfProgramHeaderType PT_GNU_RELRO = addDefaultProgramHeaderType(
+	public static final ElfProgramHeaderType PT_GNU_RELRO = addDefaultProgramHeaderType(
 			ElfProgramHeaderConstants.PT_GNU_RELRO, "PT_GNU_RELRO", "Specifies segments which may be read-only post-relocation");
 
 	// Processor-specific range: 0x70000000 - 0x7fffffff

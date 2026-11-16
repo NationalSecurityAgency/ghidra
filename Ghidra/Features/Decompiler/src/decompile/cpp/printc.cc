@@ -2350,7 +2350,8 @@ void PrintC::emitLocalVarDecls(const Funcdata *fd)
   enditer = fd->getScopeLocal()->childrenEnd();
   while(iter!=enditer) {
     Scope *l1 = (*iter).second;
-    if (emitScopeVarDecls(l1,Symbol::no_category))
+    // Skip namespaces placed under the function (like switchD_...), their symbols are global
+    if (!l1->isGlobal() && emitScopeVarDecls(l1,Symbol::no_category))
       notempty = true;
     ++iter;
   }
@@ -2472,8 +2473,7 @@ bool PrintC::checkPrintNegation(const Varnode *vn)
   if (!vn->isImplied()) return false;
   if (!vn->isWritten()) return false;
   const PcodeOp *op = vn->getDef();
-  bool reorder = false;
-  OpCode opc = get_booleanflip(op->code(),reorder); // This is the set of ops that can be negated as a token
+  OpCode opc = op->getOpcode()->getBooleanFlip(); // Check if op can be negated as a token
   if (opc == CPUI_MAX)
     return false;
   return true;

@@ -15,11 +15,12 @@
  */
 package docking.widgets.gtreetable;
 
-import javax.swing.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import javax.swing.Icon;
 
 public class GTreeTableNode implements Serializable {
 	private class EachAncestorIterator implements Iterator<GTreeTableNode> {
@@ -90,7 +91,7 @@ public class GTreeTableNode implements Serializable {
 
 	protected final String name;
 	protected Icon icon;
-	protected boolean expanded;
+	protected volatile boolean expanded;
 
 	protected GTreeTableNode parent;
 
@@ -120,8 +121,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Add new child to this node's children
 	 *
-	 * @param newChild
-	 * 		New child to add
+	 * @param newChild New child to add
 	 */
 	public void add(GTreeTableNode newChild) {
 		if ((newChild != null) && (newChild.getParent() == this)) {
@@ -192,8 +192,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Find nodes in descendants that match a certain condition
 	 *
-	 * @param condition
-	 * 		Predicate to match nodes on
+	 * @param condition Predicate to match nodes on
 	 * @return List of nodes matching the condition
 	 */
 	public List<GTreeTableNode> find(Predicate<GTreeTableNode> condition) {
@@ -216,8 +215,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Perform an action on each ancestor of this node
 	 *
-	 * @param action
-	 * 		To perform on each ancestor
+	 * @param action To perform on each ancestor
 	 */
 	public void forEachAncestor(final Consumer<GTreeTableNode> action) {
 		GTreeTableNode curNode = getParent();
@@ -230,8 +228,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Perform an action on each descendant of this node
 	 *
-	 * @param action
-	 * 		To perform on each descendant
+	 * @param action To perform on each descendant
 	 */
 	public void forEachDescendant(final Consumer<GTreeTableNode> action) {
 		final List<GTreeTableNode> nodes = new ArrayList<>(children);
@@ -261,8 +258,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Perform an action on each expanded descendant of this node
 	 *
-	 * @param action
-	 * 		To perform on each expanded descendant
+	 * @param action To perform on each expanded descendant
 	 */
 	public void forEachExpanded(final Consumer<GTreeTableNode> action) {
 		final List<GTreeTableNode> nodes = new ArrayList<>(children);
@@ -391,11 +387,10 @@ public class GTreeTableNode implements Serializable {
 	}
 
 	/**
-	 * Check if another node is in this node's ancestry, the current node will return true as
-	 * being in its own ancestry
+	 * Check if another node is in this node's ancestry, the current node will return true as being
+	 * in its own ancestry
 	 *
-	 * @param anotherNode
-	 * 		Node to check for in the current nodes ancestry
+	 * @param anotherNode Node to check for in the current nodes ancestry
 	 * @return true/false if other node is in the ancestry
 	 */
 	public boolean hasNodeInItsAncestry(GTreeTableNode anotherNode) {
@@ -423,10 +418,8 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Insert a new node into the children of this node
 	 *
-	 * @param newChild
-	 * 		New child to insert
-	 * @param childIndex
-	 * 		Index to insert child at
+	 * @param newChild New child to insert
+	 * @param childIndex Index to insert child at
 	 */
 	public void insert(GTreeTableNode newChild, int childIndex) {
 		if (hasNodeInItsAncestry(Objects.requireNonNull(newChild))) {
@@ -474,7 +467,7 @@ public class GTreeTableNode implements Serializable {
 	}
 
 	/**
-	 * @return
+	 * {@return true if visible}
 	 */
 	public boolean isVisible() {
 		return visible;
@@ -483,8 +476,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Remove child from list of children
 	 *
-	 * @param aChild
-	 * 		Child to remove
+	 * @param aChild Child to remove
 	 */
 	public void remove(GTreeTableNode aChild) {
 		children.remove(aChild);
@@ -494,8 +486,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Remove child from list of children
 	 *
-	 * @param childIndex
-	 * 		Index of child to remove
+	 * @param childIndex Index of child to remove
 	 */
 	public void remove(int childIndex) {
 		final GTreeTableNode child = children.get(childIndex);
@@ -515,8 +506,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Change node expanded state
 	 *
-	 * @param expanded
-	 * 		Expanded state
+	 * @param expanded Expanded state
 	 */
 	public void setExpanded(boolean expanded) {
 		this.expanded = expanded;
@@ -525,8 +515,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Set parent of node
 	 *
-	 * @param newParent
-	 * 		Parent to set
+	 * @param newParent Parent to set
 	 */
 	public void setParent(GTreeTableNode newParent) {
 		parent = newParent;
@@ -535,8 +524,7 @@ public class GTreeTableNode implements Serializable {
 	/**
 	 * Change node visibility state
 	 *
-	 * @param visible
-	 * 		Node visibility
+	 * @param visible Node visibility
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;

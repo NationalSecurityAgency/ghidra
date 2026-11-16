@@ -1,13 +1,12 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,28 +15,37 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
-import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
-import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
-import ghidra.app.plugin.core.symboltree.nodes.ImportsCategoryNode;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeRootNode;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
-
 import javax.swing.tree.TreePath;
 
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.symboltree.*;
+import ghidra.app.plugin.core.symboltree.nodes.ImportsCategoryNode;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeRootNode;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.Msg;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 
 public class CreateLibraryAction extends SymbolTreeContextAction {
 
+	private SymbolTreePlugin plugin;
+
 	public CreateLibraryAction(SymbolTreePlugin plugin) {
 		super("Create Library", plugin.getName());
+		this.plugin = plugin;
 		setPopupMenuData(new MenuData(new String[] { "Create Library" }, "0External"));
 		setEnabled(false);
+	}
+
+	@Override
+	public void dispose() {
+		this.plugin = null;
+		super.dispose();
 	}
 
 	@Override
@@ -69,34 +77,31 @@ public class CreateLibraryAction extends SymbolTreeContextAction {
 		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
 
 		Program program = context.getProgram();
-		Namespace parent = program.getGlobalNamespace();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
 
 		if (node instanceof SymbolTreeRootNode) {
 			node = node.getChild("Imports");
 		}
 
-		String newExternalLibraryName = createExternalLibrary(program, parent);
+		String newExternalLibraryName = createExternalLibrary(program);
 		if (newExternalLibraryName == null) {
 			return;
 		}
 
-		program.flushEvents();
-		context.getSymbolTree().startEditing(node, newExternalLibraryName);
+		SymbolTreeProvider provider = plugin.getProvider();
+		provider.editNode(node, newExternalLibraryName);
 	}
 
-	private String createExternalLibrary(Program program, Namespace parent) {
+	private String createExternalLibrary(Program program) {
 
-		String importName = "NewLibrary";
-		int transactionID = program.startTransaction("Create Library");
-		try {
+		return program.withTransaction("Create Library", () -> {
 			SymbolTable symbolTable = program.getSymbolTable();
 			int oneUp = 0;
-			importName = "NewLibrary";
-			Namespace namespace = null;
-			while (namespace == null) {
+			String importName = "NewLibrary";
+			Library library = null;
+			while (library == null) {
 				try {
-					namespace =
+					library =
 						symbolTable.createExternalLibrary(importName, SourceType.USER_DEFINED);
 				}
 				catch (DuplicateNameException e) {
@@ -107,11 +112,7 @@ public class CreateLibraryAction extends SymbolTreeContextAction {
 					return null;
 				}
 			}
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-
-		return importName;
+			return importName;
+		});
 	}
 }

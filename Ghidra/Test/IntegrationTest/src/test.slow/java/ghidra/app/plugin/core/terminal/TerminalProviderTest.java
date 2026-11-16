@@ -20,7 +20,7 @@ import static org.junit.Assume.*;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.*;
@@ -68,7 +68,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		clipboardService = addPlugin(tool, ClipboardPlugin.class);
 		env.showFrontEndTool();
 
-		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+		try (Terminal term = terminalService.createNullTerminal(StandardCharsets.UTF_8, out -> {
 			out.reset();
 		})) {
 			term.injectDisplayOutput(b);
@@ -86,7 +86,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		clipboardService = addPlugin(tool, ClipboardPlugin.class);
 		env.showFrontEndTool();
 
-		try (Terminal term = terminalService.createNullTerminal(Charset.forName("utf8"), out -> {
+		try (Terminal term = terminalService.createNullTerminal(StandardCharsets.UTF_8, out -> {
 			out.reset();
 		})) {
 			term.injectDisplayOutput(b);
@@ -116,7 +116,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 			PtyParent parent = pty.getParent();
 			PtyChild child = pty.getChild();
-			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+			try (Terminal term = terminalService.createWithStreams(StandardCharsets.UTF_8,
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
@@ -150,7 +150,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 			PtyParent parent = pty.getParent();
 			PtyChild child = pty.getChild();
-			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+			try (Terminal term = terminalService.createWithStreams(StandardCharsets.UTF_8,
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
@@ -181,7 +181,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 			PtyParent parent = pty.getParent();
 			PtyChild child = pty.getChild();
-			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+			try (Terminal term = terminalService.createWithStreams(StandardCharsets.UTF_8,
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
@@ -211,7 +211,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				pty.getChild().session(new String[] { "C:\\Windows\\system32\\cmd.exe" }, env);
 
 			PtyParent parent = pty.getParent();
-			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
+			try (Terminal term = terminalService.createWithStreams(StandardCharsets.UTF_8,
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.setFixedSize(80, 25);
 				session.waitExited();
@@ -233,7 +233,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -265,7 +265,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -297,7 +297,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -326,7 +326,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -358,7 +358,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -387,7 +387,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -425,7 +425,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -463,7 +463,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -495,7 +495,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -527,7 +527,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -565,7 +565,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 			term.injectDisplayOutput(TEST_CONTENTS);
@@ -599,7 +599,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(40, 25);
 
@@ -627,7 +627,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(40, 25);
 
@@ -654,7 +654,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(40, 25);
 
@@ -680,7 +680,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(40, 25);
 
@@ -706,7 +706,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
-				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				.createNullTerminal(StandardCharsets.UTF_8, buf -> {
 				})) {
 			term.setFixedSize(80, 25);
 

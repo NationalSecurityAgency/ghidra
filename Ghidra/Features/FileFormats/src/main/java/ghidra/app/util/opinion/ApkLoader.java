@@ -18,14 +18,13 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.jdom2.*;
 import org.jdom2.input.SAXBuilder;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.recognizer.PkzipRecognizer;
-import ghidra.app.util.recognizer.Recognizer;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.file.formats.android.dex.format.DexHeader;
@@ -124,9 +123,9 @@ public class ApkLoader extends DexLoader {
 	 */
 	private boolean isZip(ByteProvider provider) {
 		try {
-			Recognizer recog = new PkzipRecognizer();
-			byte[] bytes = provider.readBytes(0, recog.numberOfBytesRequired());
-			return recog.recognize(bytes) != null;
+			final int MIN_BYTES_REQUIRED = 4;
+			byte[] bytes = provider.readBytes(0, MIN_BYTES_REQUIRED);
+			return ZipArchiveInputStream.matches(bytes, bytes.length);
 		}
 		catch (Exception e) {
 			//ignore

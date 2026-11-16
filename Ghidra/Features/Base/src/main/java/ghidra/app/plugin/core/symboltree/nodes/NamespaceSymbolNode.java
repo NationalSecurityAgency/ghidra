@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,9 @@ import ghidra.program.model.symbol.Symbol;
 import resources.ResourceManager;
 
 public class NamespaceSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Namespaces");
-	static final DataFlavor GLOBAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Namespaces");
 
-	public static final Icon NAMESPACE_ICON = new GIcon("icon.plugin.symboltree.node.namespace");
-	public static final Icon DISABLED_NAMESPACE_ICON =
+	static final Icon NAMESPACE_ICON = new GIcon("icon.plugin.symboltree.node.namespace");
+	static final Icon DISABLED_NAMESPACE_ICON =
 		ResourceManager.getDisabledIcon(NAMESPACE_ICON);
 
 	NamespaceSymbolNode(Program program, Symbol symbol) {
@@ -50,7 +46,7 @@ public class NamespaceSymbolNode extends SymbolNode {
 
 	@Override
 	public DataFlavor getNodeDataFlavor() {
-		return symbol.isGlobal() ? GLOBAL_DATA_FLAVOR : LOCAL_DATA_FLAVOR;
+		return NAMESPACE_DATA_FLAVOR;
 	}
 
 	@Override

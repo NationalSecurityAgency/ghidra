@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1300,8 +1300,8 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program,
-						new String[] { "user32.dll", "OriginalNamespace", "Foo" },
+					createExternalFunction(program, "user32.dll",
+						new String[] { "OriginalNamespace", "Foo" },
 						addr(program, "77db1020"));
 				}
 				catch (Exception e) {
@@ -1312,10 +1312,11 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Namespace externalNamespace = getExternalNamespace(program,
-						new String[] { "user32.dll", "OriginalNamespace" });
-					externalNamespace.getSymbol().setName("ChangedNamespace",
-						SourceType.USER_DEFINED);
+					Namespace externalNamespace =
+						getNamespace(program, new String[] { "OriginalNamespace" });
+					externalNamespace.getSymbol()
+							.setName("ChangedNamespace",
+								SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -1325,8 +1326,8 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					createExternalFunction(program,
-						new String[] { "user32.dll", "ChangedNamespace" },
+					createExternalFunction(program, "user32.dll",
+						new String[] { "ChangedNamespace" },
 						addr(program, "77db1130"));
 				}
 				catch (Exception e) {
@@ -1346,23 +1347,23 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 		assertTrue(externalLocation.getSymbol() instanceof FunctionSymbol);
 		assertEquals("ChangedNamespace", externalLocation.getLabel());
 		Namespace namespace =
-			getExternalNamespace(resultProgram, new String[] { "user32.dll", "ChangedNamespace" });
+			getNamespace(resultProgram, new String[] { "ChangedNamespace" });
 		assertNotNull(namespace);
 
 	}
 
 	@Test
 	public void testExternalLabelChangeVersusNamespaceRename() throws Exception {
-
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "Blue" };
-		final String[] namespacePath = new String[] { "user32.dll", "Class1" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "Blue" };
+		String[] namespacePath = new String[] { "Class1" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, applesPath, addr(program, "77db1020"),
+					createExternalLabel(program, library, applesPath, addr(program, "77db1020"),
 						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1373,7 +1374,8 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					externalLocation.setLocation("pink", externalLocation.getAddress(),
 						SourceType.USER_DEFINED);
 				}
@@ -1381,22 +1383,22 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 				ExternalLocation externalLocation =
-					getExternalLocation(program, new String[] { "user32.dll", "Class1", "pink" });
+					getExternalLocation(program, "user32.dll", new String[] { "Class1", "pink" });
 				assertNotNull(externalLocation);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				try {
-					Namespace externalNamespace = getExternalNamespace(program, namespacePath);
-					externalNamespace.getSymbol().setName("OtherNamespace",
-						SourceType.USER_DEFINED);
+					Namespace externalNamespace = getNamespace(program, namespacePath);
+					externalNamespace.getSymbol()
+							.setName("OtherNamespace", SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "OtherNamespace", "Blue" });
+				ExternalLocation externalLocation = getExternalLocation(program, "user32.dll",
+					new String[] { "OtherNamespace", "Blue" });
 				assertNotNull(externalLocation);
 			}
 		});
@@ -1404,22 +1406,22 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		ExternalLocation externalLocation = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "OtherNamespace", "pink" });
+		ExternalLocation externalLocation = getExternalLocation(resultProgram, "user32.dll",
+			new String[] { "OtherNamespace", "pink" });
 		assertNotNull(externalLocation);
 	}
 
 	@Test
 	public void testExternalLabelMoveToDifferentNamespacesPickLatest() throws Exception {
-
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "Blue" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "Blue" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, applesPath, addr(program, "77db1020"),
+					createExternalLabel(program, library, applesPath, addr(program, "77db1020"),
 						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1430,34 +1432,36 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "NamespaceAA" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "NamespaceAA" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "NamespaceAA", "Blue" });
+				ExternalLocation externalLocation = getExternalLocation(program, library,
+					new String[] { "NamespaceAA", "Blue" });
 				assertNotNull(externalLocation);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "NamespaceBB" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "NamespaceBB" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "NamespaceBB", "Blue" });
+				ExternalLocation externalLocation = getExternalLocation(program, library,
+					new String[] { "NamespaceBB", "Blue" });
 				assertNotNull(externalLocation);
 			}
 		});
@@ -1468,13 +1472,13 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ExternalLocation externalLocation1 =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "Class1", "Blue" });
+			getExternalLocation(resultProgram, library, new String[] { "Class1", "Blue" });
 		assertNull(externalLocation1);
-		ExternalLocation externalLocationAA = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "NamespaceAA", "Blue" });
+		ExternalLocation externalLocationAA = getExternalLocation(resultProgram, library,
+			new String[] { "NamespaceAA", "Blue" });
 		assertNotNull(externalLocationAA);
-		ExternalLocation externalLocationBB = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "NamespaceBB", "Blue" });
+		ExternalLocation externalLocationBB = getExternalLocation(resultProgram, library,
+			new String[] { "NamespaceBB", "Blue" });
 		assertNull(externalLocationBB);
 		assertEquals(addr(resultProgram, "77db1020"), externalLocationAA.getAddress());
 		assertEquals(SourceType.USER_DEFINED, externalLocationAA.getSource());
@@ -1482,15 +1486,15 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalLabelMoveToDifferentNamespacesPickMy() throws Exception {
-
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "Blue" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "Blue" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, applesPath, addr(program, "77db1020"),
+					createExternalLabel(program, library, applesPath, addr(program, "77db1020"),
 						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1501,34 +1505,36 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "NamespaceAA" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "NamespaceAA" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "NamespaceAA", "Blue" });
+				ExternalLocation externalLocation = getExternalLocation(program, library,
+					new String[] { "NamespaceAA", "Blue" });
 				assertNotNull(externalLocation);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "NamespaceBB" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "NamespaceBB" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "NamespaceBB", "Blue" });
+				ExternalLocation externalLocation = getExternalLocation(program, library,
+					new String[] { "NamespaceBB", "Blue" });
 				assertNotNull(externalLocation);
 			}
 		});
@@ -1539,13 +1545,13 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ExternalLocation externalLocation1 =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "Class1", "Blue" });
+			getExternalLocation(resultProgram, library, new String[] { "Class1", "Blue" });
 		assertNull(externalLocation1);
-		ExternalLocation externalLocationAA = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "NamespaceAA", "Blue" });
+		ExternalLocation externalLocationAA = getExternalLocation(resultProgram, library,
+			new String[] { "NamespaceAA", "Blue" });
 		assertNull(externalLocationAA);
-		ExternalLocation externalLocationBB = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "NamespaceBB", "Blue" });
+		ExternalLocation externalLocationBB = getExternalLocation(resultProgram, library,
+			new String[] { "NamespaceBB", "Blue" });
 		assertNotNull(externalLocationBB);
 		assertEquals(addr(resultProgram, "77db1020"), externalLocationBB.getAddress());
 		assertEquals(SourceType.USER_DEFINED, externalLocationBB.getSource());
@@ -1555,14 +1561,15 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 	public void testExternalLabelMoveToDifferentNamespacesAndLocationConflictsWithNamespacePickMy()
 			throws Exception {
 
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "Blue" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "Blue" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalLabel(program, applesPath, addr(program, "77db1020"),
+					createExternalLabel(program, library, applesPath, addr(program, "77db1020"),
 						SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1573,39 +1580,41 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
 				try {
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "AA" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "AA" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
 				ExternalLocation externalLocation =
-					getExternalLocation(program, new String[] { "user32.dll", "AA", "Blue" });
+					getExternalLocation(program, library, new String[] { "AA", "Blue" });
 				assertNotNull(externalLocation);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
 				try {
-					createExternalLabel(program, new String[] { "user32.dll", "AA" }, null,
+					createExternalLabel(program, library, new String[] { "AA" }, null,
 						SourceType.USER_DEFINED);
-					ExternalLocation externalLocation = getExternalLocation(program, applesPath);
+					ExternalLocation externalLocation =
+						getExternalLocation(program, library, applesPath);
 					Symbol symbol = externalLocation.getSymbol();
-					Namespace namespaceAA = createExternalNamespace(program,
-						new String[] { "user32.dll", "NamespaceBB" }, SourceType.USER_DEFINED);
+					Namespace namespaceAA = createNamespace(program, new String[] { "NamespaceBB" },
+						SourceType.USER_DEFINED);
 					symbol.setNamespace(namespaceAA);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
 				ExternalLocation externalLocationAA =
-					getExternalLocation(program, new String[] { "user32.dll", "AA" });
+					getExternalLocation(program, library, new String[] { "AA" });
 				assertNotNull(externalLocationAA);
 				ExternalLocation externalLocation = getExternalLocation(program,
-					new String[] { "user32.dll", "NamespaceBB", "Blue" });
+					library, new String[] { "NamespaceBB", "Blue" });
 				assertNotNull(externalLocation);
 			}
 		});
@@ -1616,16 +1625,16 @@ public class ExternalMergerChangeTest extends AbstractExternalMergerTest {
 		waitForMergeCompletion();
 
 		ExternalLocation externalLocation1 =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "Class1", "Blue" });
+			getExternalLocation(resultProgram, library, new String[] { "Class1", "Blue" });
 		assertNull(externalLocation1);
 		ExternalLocation externalLocationAA =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "AA" });
+			getExternalLocation(resultProgram, library, new String[] { "AA" });
 		assertNull(externalLocationAA);
 		ExternalLocation externalLocationAABlue =
-			getExternalLocation(resultProgram, new String[] { "user32.dll", "AA", "Blue" });
+			getExternalLocation(resultProgram, library, new String[] { "AA", "Blue" });
 		assertNull(externalLocationAABlue);
-		ExternalLocation externalLocationBB = getExternalLocation(resultProgram,
-			new String[] { "user32.dll", "NamespaceBB", "Blue" });
+		ExternalLocation externalLocationBB = getExternalLocation(resultProgram, library,
+			new String[] { "NamespaceBB", "Blue" });
 		assertNotNull(externalLocationBB);
 		assertEquals(addr(resultProgram, "77db1020"), externalLocationBB.getAddress());
 		assertEquals(SourceType.USER_DEFINED, externalLocationBB.getSource());

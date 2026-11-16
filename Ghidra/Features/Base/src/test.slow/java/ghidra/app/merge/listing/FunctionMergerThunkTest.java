@@ -200,8 +200,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, new DWordDataType());
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, new DWordDataType());
 
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -682,8 +682,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -705,8 +705,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, new DWordDataType());
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, new DWordDataType());
 
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -734,7 +734,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1130"), externalLocation.getAddress());
 	}
@@ -748,8 +749,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1020"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -771,8 +772,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -802,7 +803,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
 	}
@@ -816,8 +818,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1020"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -839,8 +841,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -870,7 +872,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1130"), externalLocation.getAddress());
 	}
@@ -884,8 +887,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1020"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -907,8 +910,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -940,7 +943,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
 
@@ -959,8 +963,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1020"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -982,8 +986,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -1014,7 +1018,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
 	}
@@ -1028,8 +1033,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1020"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1020"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -1051,8 +1056,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -1083,7 +1088,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1130"), externalLocation.getAddress());
 	}
@@ -1097,8 +1103,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -1120,8 +1126,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "scanf" }, new DWordDataType());
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "scanf" }, new DWordDataType());
 
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1150,7 +1156,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::printf", thunkedFunction.getName(true));
+		assertEquals("printf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertEquals(addr(resultProgram, "77db1130"), externalLocation.getAddress());
 	}
@@ -1164,8 +1171,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "printf" }, addr(program, "77db1130"),
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "printf" }, addr(program, "77db1130"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 
 					// Create a thunk to the function with no params.
@@ -1187,8 +1194,8 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function externalFunction = createExternalFunction(program,
-						new String[] { "user32.dll", "scanf" }, new DWordDataType());
+					Function externalFunction = createExternalFunction(program, "user32.dll",
+						new String[] { "scanf" }, new DWordDataType());
 
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1217,7 +1224,9 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		Function thunkedFunction = thunkFunction.getThunkedFunction(false);
 		assertNotNull(thunkedFunction);
 		assertTrue(thunkedFunction.isExternal());
-		assertEquals("user32.dll::scanf", thunkedFunction.getName(true));
+		assertEquals("scanf", thunkedFunction.getName(true));
+		assertEquals("user32.dll", thunkedFunction.getSymbol().getLibrary().getName());
+
 		ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 		assertNull(externalLocation.getAddress());
 	}

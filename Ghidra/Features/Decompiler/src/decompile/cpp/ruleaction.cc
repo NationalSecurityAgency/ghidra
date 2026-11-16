@@ -1381,12 +1381,25 @@ int4 RuleRangeMeld::applyOp(PcodeOp *op,Funcdata &data)
     if (A2 == (Varnode *)0) return 0;
   }
   if (!functionalEquality(A1,A2)) {
-    if (A2->getSize() == A1->getSize()) return 0;
-    if ((A1->getSize() < A2->getSize())&&(A2->isWritten()))
-      A2 = range2.pullBack(A2->getDef(),&markup,false);
-    else if (A1->isWritten())
+    bool success = false;
+    if (A1->isWritten()) {
+      CircleRange range1orig = range1;
+      Varnode *A1orig = A1;
       A1 = range1.pullBack(A1->getDef(),&markup,false);
-    if (A1 != A2) return 0;
+      if (A1 == A2)
+	success = true;
+      else {
+	range1 = range1orig;
+	A1 = A1orig;
+      }
+    }
+    if (!success) {
+      if (A2->isWritten()) {
+	A2 = range2.pullBack(A2->getDef(),&markup,false);
+      }
+      if (A1 != A2)
+	return 0;
+    }
   }
   if (!A1->isHeritageKnown()) return 0;
 
@@ -5445,7 +5458,6 @@ int4 RuleBoolNegate::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn;
   PcodeOp *flip_op;
   OpCode opc;
-  bool flipyes;
 
   vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
@@ -5457,8 +5469,9 @@ int4 RuleBoolNegate::applyOp(PcodeOp *op,Funcdata &data)
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter)
     if ((*iter)->code() != CPUI_BOOL_NEGATE) return 0;
 
-  opc = get_booleanflip(flip_op->code(),flipyes);
+  opc = flip_op->getOpcode()->getBooleanFlip();
   if (opc == CPUI_MAX) return 0;
+  bool flipyes = flip_op->getOpcode()->isBooleanFlipReorder();
   data.opSetOpcode(flip_op,opc); // Set the negated opcode
   if (flipyes)			// Do we need to reverse the two operands
     data.opSwapInput(flip_op,0,1);
@@ -7595,7 +7608,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleAndStructure
-/// \brief Convert `and(x,#mask) => zext(sub(x,#c)` when the mask corresponds to a field access
+/// \brief Convert `x & #mask => zext(sub(x,#c))` when the mask corresponds to a field access
 void RuleAndStructure::getOpList(vector<uint4> &oplist) const
 
 {
@@ -7621,6 +7634,9 @@ int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
   Datatype *ct = baseType->findSmallestContainer(structOff, size, &structOff);
   if (ct->getSize() >= vn->getSize() || structOff != 0)
     return 0;
+  if (ct->getMetatype() == TYPE_UNKNOWN && ct->getSize() == 1 &&
+      meta == TYPE_ARRAY && ((TypeArray *)baseType)->getBase() == ct)
+    return 0;		// Don't apply to undefined array
   PcodeOp *subOp = data.newOp(2, op->getAddr());
   data.opSetOpcode(subOp, CPUI_SUBPIECE);
   data.opSetInput(subOp,data.newConstant(4, 0),1);
@@ -7631,17 +7647,20 @@ int4 RuleAndStructure::applyOp(PcodeOp *op,Funcdata &data)
   addr.renormalize(vn->getSize());		// Allow for possible join address
   Varnode *outvn = data.newVarnodeOut(ct->getSize(), addr, subOp);
   outvn->updateType(ct);
-  if (calc_mask(size) == off) {
+  if (calc_mask(size) == off && size == ct->getSize()) {	// Field is not modified by the INT_AND
     data.opRemoveInput(op, 1);
     data.opSetInput(op, outvn, 0);
-    data.opSetOpcode(op, CPUI_INT_ZEXT);
+    data.opSetOpcode(op, CPUI_INT_ZEXT);	// SUBPIECE truncates everything, so INT_AND is not needed anymore
     data.opSetInput(subOp,vn,0);
     data.opInsertBefore(subOp, op);
   }
-  else {
+  else {					// INT_AND zeroes out bits in the field
     PcodeOp *newZext = data.newOp(1, op->getAddr());
-    data.opSetOpcode(newZext, CPUI_INT_ZEXT);
+    data.opSetOpcode(newZext, CPUI_INT_ZEXT);	// Create new INT_ZEXT but keep original INT_AND
     Varnode *outzext = data.newUniqueOut(vn->getSize(), newZext);
+    Datatype *outct = op->getOut()->getTypeDefFacing();
+    if (outct->getMetatype() == TYPE_UINT)
+      outzext->updateType(outct);
     data.opSetInput(op, outzext, 0);
     data.opSetInput(subOp, vn, 0);
     data.opSetInput(newZext,outvn,0);
@@ -9116,6 +9135,12 @@ Varnode *RulePtrFlow::truncatePointer(AddrSpace *spc,PcodeOp *op,Varnode *vn,int
 
 {
   Varnode *newvn;
+  if (vn->isConstant()) {
+    uintb val = vn->getOffset() & calc_mask(spc->getAddrSize());
+    newvn = data.newConstant(spc->getAddrSize(),val);
+    data.opSetInput(op,newvn,slot);
+    return newvn;
+  }
   PcodeOp *truncop = data.newOp(2,op->getAddr());
   data.opSetOpcode(truncop,CPUI_SUBPIECE);
   data.opSetInput(truncop,data.newConstant(vn->getSize(),0),1);

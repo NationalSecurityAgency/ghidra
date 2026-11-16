@@ -18,12 +18,8 @@ package sarif.managers;
 import java.io.IOException;
 import java.util.*;
 
-import javax.swing.Icon;
-
 import com.google.gson.JsonArray;
 
-import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
@@ -60,9 +56,9 @@ public class FunctionsSarifMgr extends SarifMgr {
 		super(KEY, program, log);
 	}
 
-	////////////////////////////
+	//////////////////////////
 	// SARIF READ CURRENT DTD //
-	////////////////////////////
+	//////////////////////////
 
 	@Override
 	protected void readResults(List<Map<String, Object>> list, SarifProgramOptions options,
@@ -279,9 +275,6 @@ public class FunctionsSarifMgr extends SarifMgr {
 					return;
 				}
 			}
-			if (path.getName().contains(Library.UNKNOWN)) {
-				ns = getExternalNamespace();
-			}
 			if (ns.getParentNamespace() == null) {
 				symbol.setName(name, getSourceType("DEFAULT"));
 			}
@@ -296,16 +289,6 @@ public class FunctionsSarifMgr extends SarifMgr {
 
 	private String setProperties(Map<String, Object> result, Function func, Address entryPoint)
 			throws InvalidInputException {
-		boolean isLibrary = (boolean) result.get("isLibrary");
-		if (isLibrary) {
-			BookmarkManager bm = program.getBookmarkManager();
-			BookmarkType bt = bm.getBookmarkType("IMPORTED");
-			if (bt == null) {
-				Icon icon = new GIcon("icon.base.util.xml.functions.bookmark");
-				bt = bm.defineType("IMPORTED", icon, Palette.DARK_GRAY, 0);
-			}
-			bm.setBookmark(entryPoint, "IMPORTED", LIB_BOOKMARK_CATEGORY, "Library function");
-		}
 
 		String callingConvention = (String) result.get("callingConvention");
 		if (callingConvention != null) {
@@ -654,9 +637,9 @@ public class FunctionsSarifMgr extends SarifMgr {
 		return results;
 	}
 
-	/////////////////////////////
+	///////////////////////////
 	// SARIF WRITE CURRENT DTD //
-	/////////////////////////////
+	///////////////////////////
 
 	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor)
 			throws IOException, CancelledException {

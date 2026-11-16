@@ -932,7 +932,10 @@ Datatype *ScoreUnionFields::scoreTruncation(Datatype *ct,Varnode *vn,int4 offset
 
 {
   int4 score;
-  if (ct->getMetatype() == TYPE_UNION) {
+  if (vn->getSize() + offset > ct->getSize()) {
+    score = -10;		// Data-type does not cover the Varnode
+  }
+  else if (ct->getMetatype() == TYPE_UNION) {
     TypeUnion *unionDt = (TypeUnion *)ct;
     ct = (Datatype *)0;			// Don't recurse a data-type from truncation of a union
     score = -10;			// Negative score if the union has no field matching the size
@@ -1181,6 +1184,8 @@ ScoreUnionFields::ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset
     run();
   computeBestIndex();
   result.resolve = typegrp.getExactPiece(result.resolve, offset, vn->getSize());
+  if (result.resolve == (Datatype *)0)
+    result.resolve = typegrp.getBase(vn->getSize(),TYPE_UNKNOWN);
 }
 
 /// \brief Score a union data-type against data-flow, where there is an implied truncation
@@ -1220,6 +1225,8 @@ ScoreUnionFields::ScoreUnionFields(Funcdata &fd,TypeUnion *unionType,int4 offset
     run();
   computeBestIndex();
   result.resolve = typegrp.getExactPiece(result.resolve, offset, vn->getSize());
+  if (result.resolve == (Datatype *)0)
+    result.resolve = typegrp.getBase(vn->getSize(),TYPE_UNKNOWN);
 }
 
 /// If a resolution for the data-type exists along the given edge, it is cached.  Otherwise there is no change.

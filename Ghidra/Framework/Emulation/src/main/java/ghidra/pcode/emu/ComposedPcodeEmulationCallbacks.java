@@ -208,6 +208,22 @@ public class ComposedPcodeEmulationCallbacks<T> implements PcodeEmulationCallbac
 	}
 
 	@Override
+	public <A, U> void dataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			AddressSpace space, A offset, int length, U value, Reason reason) {
+		for (PcodeEmulationCallbacks<T> d : delegates) {
+			d.dataRead(thread, piece, space, offset, length, value, reason);
+		}
+	}
+
+	@Override
+	public <A, U> void dataRead(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
+			Address address, int length, U value, Reason reason) {
+		for (PcodeEmulationCallbacks<T> d : delegates) {
+			d.dataRead(thread, piece, address, length, value, reason);
+		}
+	}
+
+	@Override
 	public <A, U> int readUninitialized(PcodeThread<T> thread, PcodeExecutorStatePiece<A, U> piece,
 			AddressSpace space, A offset, int length, Reason reason) {
 		/**

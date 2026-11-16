@@ -60,7 +60,9 @@ public class TransientSymbolTableModel extends AbstractSymbolTableModel {
 						.any(SYMBOL_REMOVED) 
 							.call(() -> symbolChanged())
 						.any(CODE_ADDED, CODE_REMOVED,
-							 SYMBOL_RENAMED, SYMBOL_SCOPE_CHANGED, SYMBOL_DATA_CHANGED,
+							 SYMBOL_RENAMED, SYMBOL_SCOPE_CHANGED, 
+							 SYMBOL_LIBRARY_CHANGED,
+							 SYMBOL_DATA_CHANGED,
 							 SYMBOL_SOURCE_CHANGED,
 							 SYMBOL_PRIMARY_STATE_CHANGED,
 							 REFERENCE_ADDED, REFERENCE_REMOVED,

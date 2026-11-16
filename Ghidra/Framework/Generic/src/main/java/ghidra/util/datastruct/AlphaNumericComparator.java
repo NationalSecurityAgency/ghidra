@@ -22,14 +22,12 @@ import java.util.Comparator;
  * based on their parsed value, not their ASCII value. 
  */
 public class AlphaNumericComparator implements Comparator<String> {
+	public static Comparator<String> CI = new AlphaNumericComparator(false);
+	public static Comparator<String> CS = new AlphaNumericComparator(true);
 
 	private boolean caseSensitive;
 
-	public AlphaNumericComparator() {
-		this.caseSensitive = true;
-	}
-
-	public AlphaNumericComparator(boolean caseSensitive) {
+	private AlphaNumericComparator(boolean caseSensitive) {
 		this.caseSensitive = caseSensitive;
 	}
 
@@ -106,7 +104,11 @@ public class AlphaNumericComparator implements Comparator<String> {
 			return lengthCompare;
 		}
 
-		// Default to a string compare
+		// The algorithm above ignores spaces.  If they are the same in that case, use the full text
+		// as a tie-breaker.
+		if (!caseSensitive) {
+			return s1.compareToIgnoreCase(s2);
+		}
 		return s1.compareTo(s2);
 	}
 

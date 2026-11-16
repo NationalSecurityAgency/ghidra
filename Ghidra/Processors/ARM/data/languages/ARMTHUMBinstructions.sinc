@@ -2021,7 +2021,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
    goto [pc];
 }
 
-:ldm^ItCond^".w"    Rn0003,thldrlist_inc           is TMode=1 & ItCond & op11=0x1d & thc0910=0 & sop0608=2 & thwbit=1 & thc0404=1 & Rn0003; thc1515=1 & thc1313=0 & thldrlist_inc
+:ldm^ItCond^".w"    Rn0003!,thldrlist_inc           is TMode=1 & ItCond & op11=0x1d & thc0910=0 & sop0608=2 & thwbit=1 & thc0404=1 & Rn0003; thc1515=1 & thc1313=0 & thldrlist_inc
 {
    build ItCond;
    mult_addr = Rn0003;
@@ -2056,7 +2056,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
    goto [pc];
 }
 
-:ldmdb^ItCond    Rn0003,thldrlist_dec           is TMode=1 & ItCond & op4=0xe93 & Rn0003; thc1515=1 & thc1313=0 & thldrlist_dec
+:ldmdb^ItCond    Rn0003!,thldrlist_dec           is TMode=1 & ItCond & op4=0xe93 & Rn0003; thc1515=1 & thc1313=0 & thldrlist_dec
 {
    build ItCond;
    mult_addr = Rn0003-4;

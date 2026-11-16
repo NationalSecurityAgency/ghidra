@@ -16,8 +16,7 @@
 package ghidra.program.model.symbol;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -237,7 +236,9 @@ public interface Symbol {
 	public boolean isDynamic();
 
 	/**
-	 * Returns true if this an external symbol.
+	 * Returns true if this an external symbol. Note: only function and labels symbols can
+	 * be external. Also, all external symbols will have an associated 
+	 * Library (See {@link #getLibrary()}
 	 *
 	 * @return true if this an external symbol.
 	 * @see Address#isExternalAddress()
@@ -299,4 +300,11 @@ public interface Symbol {
 	 * @return true if symbol has been deleted, false if not.
 	 */
 	public boolean isDeleted();
+
+	/**
+	 * Returns the library containing this symbol. Note: only external functions or labels can
+	 * have an associated Library.
+	 * @return the library containing this symbol, or null if the symbol is not external
+	 */
+	public Library getLibrary();
 }

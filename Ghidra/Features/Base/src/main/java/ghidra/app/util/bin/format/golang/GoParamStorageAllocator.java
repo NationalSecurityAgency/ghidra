@@ -226,13 +226,17 @@ public class GoParamStorageAllocator {
 	}
 
 	public void alignStackFor(DataType dt) {
-		int alignmentSize = callspecInfo.getAlignmentForType(dt);
-		stackOffset = NumericUtilities.getUnsignedAlignedValue(stackOffset, alignmentSize);
+		alignStack(callspecInfo.getAlignmentForType(dt));
 	}
 
 	public void alignStack() {
-		stackOffset =
-			NumericUtilities.getUnsignedAlignedValue(stackOffset, callspecInfo.getMaxAlign());
+		alignStack(callspecInfo.getMaxAlign());
+	}
+
+	private void alignStack(int alignment) {
+		// Go aligns relative to the start of the stack arguments, not to absolute stack offsets
+		long base = callspecInfo.getStackInitialOffset();
+		stackOffset = base + NumericUtilities.getUnsignedAlignedValue(stackOffset - base, alignment);
 	}
 
 	public Register getClosureContextRegister() {
@@ -261,6 +265,12 @@ public class GoParamStorageAllocator {
 		}
 		if (dt instanceof AbstractFloatDataType) {
 			return allocateReg(1, FLOATREG, dt, result);
+		}
+		if (dt instanceof AbstractComplexDataType) {
+			// Go passes a complex number as two floats
+			DataType part = AbstractFloatDataType.getFloatDataType(dt.getLength() / 2, null);
+			return allocateReg(1, FLOATREG, part, result) &&
+				allocateReg(1, FLOATREG, part, result);
 		}
 		if (dt instanceof Array array) {
 			int numElements = array.getNumElements();

@@ -18,7 +18,10 @@
     Manager</A> and provides actions for launching emulated traces from programs, i.e., without
     requiring a connected debugger. Please note that "pure emulation" of a target program, while it
     doesn't require a platform to execute the target natively, it typically does require
-    significant state initialization and dependency stubbing, except in limited circumstances.</P>
+    significant state initialization and dependency stubbing, except in limited circumstances.
+	Control of the mode of emulation is governed by the <A 
+	href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#control_mode">control-mode plugin</A>
+	and may be set to one of a variety of emulators. </P>
 
     <H2>Actions</H2>
 
@@ -39,6 +42,20 @@
     without modifying the emulator's memory map. Note that customizing the stack initialization may
     prevent you from adding a second thread.</P>
 
+	<H3><A name="emulate_target"></A> Emulate Target</H3>
+
+	<P>This action is available whenever a trace is active. It derives the emulator state from 
+	the current trace, switches the control mode to the default p-code emulator. The debugger controls
+    then dictate the emulation until the control mode is returned to target mode. This is basically
+	a convenience option and has the same affects as switching the control mode during an active
+    debugging session.</P>
+
+	<H3><A name="emulate_function"></A> Emulate Function</H3>
+
+	<P>This action is available whenever the cursor is within a function in the Static Listing. It
+	displays a <A href="#emulate_function_dialog">dialog</A> for harnessing and emulating the
+	current function.</P>
+
     <H3><A name="add_emulated_thread"></A> Add Emulated Thread</H3>
 
     <P>This action is available whenever a "pure emulation" trace is active. It spawns a new thread
@@ -48,23 +65,11 @@
     Optionally, other registers can be initialized via the UI or a script. The new thread is
     activated so that control actions will affect it by default.</P>
 
-    <H3><A name="emulate_function"></A> Emulate Function</H3>
-
-    <P>This action is available whenever the cursor is within a function in the Static Listing. It
-    displays a <A href="#emulate_function_dialog">dialog</A> for harnessing and emulating the
-    current function.</P>
-
-    <H3><A name="configure_emulator"></A> Configure Emulator</H3>
-
-    <P>This action is always available. It lists emulators available for configuration. Selecting
-    one will set it as the current emulator. The next time emulation is activated, it will use the
-    selected emulator.</P>
-
     <H3><A name="invalidate_cache"></A> Invalidate Emulator Cache</H3>
 
     <P>This action is available whenever a trace is active. It invalidates all the scratch
     snapshots in the current trace, which are used for caching emulated machine states. This is
-    recommended when you change the emulator configuration, when you change the Sleigh code of an
+    recommended when you change the emulator, when you change the Sleigh code of an
     emulated breakpoint, or when you patch the trace database. If you do not invalidate the cache,
     the effects of your change may not appear, since the trace manager may recall a cached snapshot
     instead of actually emulating.</P>

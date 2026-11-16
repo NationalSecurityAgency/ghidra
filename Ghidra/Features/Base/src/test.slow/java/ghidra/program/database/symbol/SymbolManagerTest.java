@@ -25,6 +25,7 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -1114,6 +1115,45 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testGetSymbolsByLibrary() throws Exception {
+		ExternalManagerDB extMgr = program.getExternalManager();
+		extMgr.addExtLocation("lib1", "bob", null, SourceType.USER_DEFINED);
+		extMgr.addExtLocation("lib1", "joe", null, SourceType.USER_DEFINED);
+		extMgr.addExtFunction("lib2", "alpha", null, SourceType.USER_DEFINED);
+		extMgr.addExtLocation("lib2", "beta", null, SourceType.USER_DEFINED);
+
+		Symbol librarySymbol = st.getLibrarySymbol("lib1");
+		Library lib1 = (Library) librarySymbol.getObject();
+		SymbolIterator it = st.getSymbols(lib1);
+		assertTrue(it.hasNext());
+		assertEquals("bob", it.next().getName());
+		assertTrue(it.hasNext());
+		assertEquals("joe", it.next().getName());
+		assertFalse(it.hasNext());
+
+		librarySymbol = st.getLibrarySymbol("lib2");
+		Library lib2 = (Library) librarySymbol.getObject();
+		it = st.getSymbols(lib2);
+		assertTrue(it.hasNext());
+		assertEquals("alpha", it.next().getName());
+		assertTrue(it.hasNext());
+		assertEquals("beta", it.next().getName());
+		assertFalse(it.hasNext());
+
+	}
+
+	@Test
+	public void testGetExtSymbolByNameNamespaceAddress() throws Exception {
+		ExternalManagerDB extMgr = program.getExternalManager();
+		ExternalLocation extFunction =
+			extMgr.addExtFunction((Library) null, null, addr(0), SourceType.IMPORTED);
+
+		Symbol symbol =
+			st.getSymbol("EXT_FUN_00000000", extFunction.getExternalSpaceAddress(), null);
+		assertEquals(extFunction.getSymbol(), symbol);
+	}
+
+	@Test
 	public void testSymbolSearcherIterator() throws Exception {
 		createLabel(addr(100), "Four");
 		createLabel(addr(100), "Five");
@@ -1276,11 +1316,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		// External space before memory space
 		Symbol s = it.next();
 		assertNotNull(s);
-		assertEquals("Test::7", s.getName(true));
+		assertEquals("7", s.getName(true));
 		assertEquals(extAddr(1), s.getAddress());
 		s = it.next();
 		assertNotNull(s);
-		assertEquals("Test::8", s.getName(true));
+		assertEquals("8", s.getName(true));
 		assertEquals(extAddr(2), s.getAddress());
 
 		s = it.next();
@@ -1301,12 +1341,12 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(it.hasNext());
 		s = it.next();
 		assertNotNull(s);
-		assertEquals("Test::7", s.getName(true));
+		assertEquals("7", s.getName(true));
 
 		assertTrue(it.hasNext());
 		s = it.next();
 		assertNotNull(s);
-		assertEquals("Test::8", s.getName(true));
+		assertEquals("8", s.getName(true));
 
 		for (int i = 1; i <= 6; i++) {
 			assertTrue(it.hasNext());
@@ -1839,15 +1879,12 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCreateLibScope() throws Exception {
-		Namespace scope = st.createExternalLibrary("TestScope", SourceType.USER_DEFINED);
-		assertNotNull(scope);
-		assertEquals("TestScope", scope.getName());
-		assertTrue(scope.getBody().isEmpty());
-		assertTrue(scope instanceof Library);
-		assertEquals(globalScope, scope.getParentNamespace());
+		Library library = st.createExternalLibrary("TestScope", SourceType.USER_DEFINED);
+		assertNotNull(library);
+		assertEquals("TestScope", library.getName());
 
-		Symbol symbol = scope.getSymbol();
-		assertEquals(scope.getName(), symbol.getName());
+		Symbol symbol = library.getSymbol();
+		assertEquals(library.getName(), symbol.getName());
 		assertEquals(globalScope, symbol.getParentNamespace());
 	}
 
@@ -2286,9 +2323,6 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Namespace scope = st.createClass(null, "TestScope", SourceType.USER_DEFINED);
 		assertTrue(s.isValidParent(scope));
-
-		scope = st.createExternalLibrary("ExtLib", SourceType.USER_DEFINED);
-		assertTrue(!s.isValidParent(scope));
 	}
 
 	@Test
@@ -2382,7 +2416,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			// good
 		}
 
-		Namespace scope = st.createClass(lib, "TestClass", SourceType.USER_DEFINED);
+		Namespace scope = st.createClass(null, "TestClass", SourceType.USER_DEFINED);
 		assertTrue(extSym.isValidParent(scope));
 		extFunc.setParentNamespace(scope);
 

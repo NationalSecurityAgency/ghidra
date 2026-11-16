@@ -430,20 +430,22 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			waitForPass(
 				() -> assertEquals(node, Unique.assertOne(provider.tree.getSelectedNodes())));
 
-			controlService.setCurrentMode(target.getTrace(), ControlMode.RO_TRACE);
+			controlService.setCurrentMode(target.getTrace(), ControlMode.TRACE, false);
 			waitForSwing();
 			traceManager.activateSnap(0);
 			waitForPass(() -> {
 				assertEquals(0, traceManager.getCurrentSnap());
-				assertEquals(ControlMode.RO_TRACE,
-					controlService.getCurrentMode(target.getTrace()));
+				ControlMode currentMode = controlService.getCurrentMode(target.getTrace());
+				assertEquals(ControlMode.TRACE, currentMode);
+				assertFalse(currentMode.isEditable());
 			});
 
 			triggerEnter(provider.tree);
 			waitForPass(() -> {
 				assertEquals(1, traceManager.getCurrentSnap());
-				assertEquals(ControlMode.RO_TARGET,
-					controlService.getCurrentMode(target.getTrace()));
+				ControlMode currentMode = controlService.getCurrentMode(target.getTrace());
+				assertEquals(ControlMode.TARGET, currentMode);
+				assertFalse(currentMode.isEditable());
 			});
 		}
 	}

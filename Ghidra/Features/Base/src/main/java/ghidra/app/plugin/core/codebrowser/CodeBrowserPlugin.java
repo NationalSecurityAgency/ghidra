@@ -39,6 +39,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.Msg;
 
 //@formatter:off
 @PluginInfo(
@@ -196,6 +197,10 @@ public class CodeBrowserPlugin extends AbstractCodeBrowserPlugin<CodeViewerProvi
 
 	@Override
 	public void restoreTransientState(final CodeBrowserTransientState state) {
+		if (currentProgram != state.location.getProgram()) {
+			Msg.warn(this, "Transient state is not for the current program. Ignoring.");
+			return;
+		}
 		setView(state.view);
 		if (state.location != null) {
 			connectedProvider.setLocation(state.location);

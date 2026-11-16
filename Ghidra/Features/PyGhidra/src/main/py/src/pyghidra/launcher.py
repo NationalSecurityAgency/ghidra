@@ -291,6 +291,8 @@ class PyGhidraLauncher:
         launch_properties = root / "support" / "launch.properties"
 
         for line in Path(launch_properties).read_text().splitlines():
+            if line.lstrip().startswith(("#", "//")):
+                continue
             _, _, override = line.partition("JAVA_HOME_OVERRIDE=")
             if override:
                 if override.startswith('"') and override.endswith('"'):

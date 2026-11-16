@@ -30,11 +30,12 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Instruction;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.DateUtils;
-import ghidra.util.Radix;
+import ghidra.util.*;
+import ghidra.util.formatter.InstructionHtmlFormatter;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
@@ -114,6 +115,17 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 				return false;
 			}
 		},
+		INSTRUCTION("Instruction", Instruction.class, SnapshotRow::getInstruction) {
+			@Override
+			public int getPreferredWidth() {
+				return 20;
+			}
+
+			@Override
+			public boolean isVisible() {
+				return true;
+			}
+		},
 		DESCRIPTION("Description", String.class, SnapshotRow::getDescription,
 				SnapshotRow::setDescription) {
 			@Override
@@ -173,12 +185,17 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	static class StyleCurrentSnapRenderer extends AbstractGColumnRenderer<Object>
 			implements GTableAccess {
-
+		private static final InstructionHtmlFormatter INSTRUCTION_FMT =
+			new InstructionHtmlFormatter();
 		SnapshotTableModel model;
 
 		Font lastFixedWidthFont;
 		Font fixedWidthBoldFont;
 		Font fixedWidthItalicFont;
+
+		public StyleCurrentSnapRenderer() {
+			setHTMLRenderingEnabled(true);
+		}
 
 		protected Radix getTimeRadix() {
 			Trace trace = model == null ? null : model.getTrace();
@@ -196,12 +213,13 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 
 		@Override
-		protected String getText(Object value) {
+		protected String getText(GTableCellRenderingData data) {
+			Object value = data.getValue();
+			Settings settings = data.getColumnSettings();
 			return switch (value) {
 				case null -> "";
-				case Date date -> DateUtils.formatDateTimestamp(date);
-				case TraceSchedule schedule -> schedule.toString(getTimeRadix());
-				default -> value.toString();
+				case Instruction instruction -> INSTRUCTION_FMT.formatInstruction(instruction);
+				default -> HTMLUtilities.escapeHTML(getFilterString(value, settings));
 			};
 		}
 
@@ -212,12 +230,19 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 				// SNAP is the only column with Long type
 				case Long snap -> getTimeRadix().format(snap);
 				case Number n -> formatNumber(n, settings);
-				default -> getText(t);
+				case Date date -> DateUtils.formatDateTimestamp(date);
+				case TraceSchedule schedule -> schedule.toString(getTimeRadix());
+				default -> t.toString();
 			};
 		}
 
+		boolean isFixedWidth(GTableCellRenderingData data) {
+			Object value = data.getValue();
+			return value instanceof Address || value instanceof Instruction;
+		}
+
 		Font computePlainFont(GTableCellRenderingData data) {
-			return data.getValue() instanceof Address ? getFixedWidthFont() : getDefaultFont();
+			return isFixedWidth(data) ? getFixedWidthFont() : getDefaultFont();
 		}
 
 		void checkDeriveNewFonts() {
@@ -230,7 +255,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 
 		Font computeBoldFont(GTableCellRenderingData data) {
-			if (data.getValue() instanceof Address) {
+			if (isFixedWidth(data)) {
 				checkDeriveNewFonts();
 				return fixedWidthBoldFont;
 			}
@@ -238,7 +263,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 
 		Font computeItalicFont(GTableCellRenderingData data) {
-			if (data.getValue() instanceof Address) {
+			if (isFixedWidth(data)) {
 				checkDeriveNewFonts();
 				return fixedWidthItalicFont;
 			}

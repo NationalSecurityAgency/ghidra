@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * the ClassSearcher will not find them.
  *
  */
+@Deprecated(forRemoval = true, since = "12.3")
 public interface Recognizer extends ExtensionPoint {
 
     /**
@@ -31,7 +32,8 @@ public interface Recognizer extends ExtensionPoint {
      * @return the maximum number of bytes needed to send to this recognizer in
      *         the recognize(...) method
      */
-    public int numberOfBytesRequired();
+    @Deprecated(forRemoval = true, since = "12.3")
+	public int numberOfBytesRequired();
 
     /**
      * Ask the recognizer to recognize some bytes. Return a description String
@@ -43,7 +45,8 @@ public interface Recognizer extends ExtensionPoint {
      * @return a String description of the recognition, or null if it is not
      *         recognized
      */
-    public String recognize(byte[] bytes);
+    @Deprecated(forRemoval = true, since = "12.3")
+	public String recognize(byte[] bytes);
 
     /**
      * Return the recognizer priority; for instance, a GZIP/TAR recognizer
@@ -55,5 +58,6 @@ public interface Recognizer extends ExtensionPoint {
      * 
      * @return the recognizer priority
      */
-    public int getPriority();
+    @Deprecated(forRemoval = true, since = "12.3")
+	public int getPriority();
 }

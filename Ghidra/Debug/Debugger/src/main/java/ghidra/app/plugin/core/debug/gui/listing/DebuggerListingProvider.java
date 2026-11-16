@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -87,6 +87,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
+import ghidra.util.datastruct.Counter;
 import ghidra.util.datastruct.ListenerSet;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
@@ -241,7 +242,8 @@ public class DebuggerListingProvider extends CodeViewerProvider implements Debug
 			}
 
 			@Override
-			protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+			protected boolean hasEnoughSpace(Program program, Address address, int byteCount,
+					Counter bytesAvailable) {
 				return doHasEnoughSpace(program, address, byteCount);
 			}
 

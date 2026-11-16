@@ -462,7 +462,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
-		SymbolicPropogator prop = new SymbolicPropogator(program,false);
+		SymbolicPropogator prop = new SymbolicPropogator(program, false);
 
 		// try to compute the thunk by flowing constants from the start of the block
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
@@ -702,7 +702,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 			Symbol externalSymbol = null;
 			for (Symbol symbol : symbolTable.getSymbols(s.getName())) {
 				// Only consider external symbols directly in a Library root Namespace
-				if (!symbol.isExternal() || !symbol.getParentNamespace().isLibrary()) {
+				if (!symbol.isExternal() || !symbol.getParentNamespace().isGlobal()) {
 					continue;
 				}
 				if (externalSymbol != null) {
@@ -766,21 +766,21 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 
 		// conditional jumps/call terminators can't be thunks,
 		// unless not checkingForSideEffects and just trying to get possible thunk address.
-		
+
 		boolean isJump = flowType.isJump();
 		boolean isCall = flowType.isCall();
 		boolean isConditional = flowType.isConditional();
-		
+
 		// only jump/call are allowed
 		if (!(isJump || isCall)) {
 			return null;
 		}
-		
+
 		// no conditional jumps allowed
 		if (isJump && isConditional) {
 			return null;
 		}
-		
+
 		if (isCall) {
 			// Any conditional call considered as having side-effects
 			if (isConditional && checkForSideEffects) {
@@ -797,7 +797,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 				}
 			}
 		}
-		
+
 		// program counter should be assumed to be used
 		// assume PC is used when considering registers that have been set
 		Register PC = program.getLanguage().getProgramCounter();
@@ -818,12 +818,12 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 
 		Address flowingAddr = null;
-		
+
 		// if not checking for sideEffect registers set, or there are no side-effects
 		if (!checkForSideEffects || setRegisters.size() == 0) {
 			flowingAddr = getFlowingAddress(program, instr);
 		}
-		
+
 		return flowingAddr;
 	}
 

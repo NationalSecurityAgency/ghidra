@@ -38,7 +38,8 @@ import ghidra.util.task.TaskMonitor;
  */
 @ServiceInfo(
 	defaultProvider = GoToServicePlugin.class,
-	description = "Navigate to a program location")
+	description = "Navigate to a program location"
+)
 public interface GoToService {
 
 	/**
@@ -189,8 +190,8 @@ public interface GoToService {
 	 *
 	 * @param fromAddr The address used to determine the scope of the query
 	 * @param queryData the query input data
-	 * @param listener the listener that will be notified when the query completes
-	 * @param monitor the task monitor
+	 * @param listener the listener that will be notified when the query completes; may be null
+	 * @param monitor the task monitor; may be null
 	 * @return true if the queryInput is found or appears to be a wildcard search
 	 */
 	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
@@ -208,8 +209,8 @@ public interface GoToService {
 	 * @param navigatable the destination for the go to event
 	 * @param fromAddr The address used to determine the scope of the query
 	 * @param queryData the query input data
-	 * @param listener the listener that will be notified when the query completes
-	 * @param monitor the task monitor
+	 * @param listener the listener that will be notified when the query completes; may be null
+	 * @param monitor the task monitor; may be null
 	 * @return true if the queryInput is found or appears to be a wildcard search
 	 */
 	public boolean goToQuery(Navigatable navigatable, Address fromAddr, QueryData queryData,

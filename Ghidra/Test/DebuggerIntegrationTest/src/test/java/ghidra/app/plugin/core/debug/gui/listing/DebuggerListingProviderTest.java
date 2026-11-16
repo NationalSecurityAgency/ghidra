@@ -971,7 +971,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		TraceObject process = tb.obj("Processes[1]");
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TARGET);
+		controlService.setCurrentMode(tb.trace, ControlMode.TARGET, false);
 		waitForSwing();
 		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());
 
@@ -990,7 +990,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerInt
 		rmiCx.setLastSnapshot(tb.trace, 1);
 		traceManager.activateSnap(1);
 		waitForSwing();
-		controlService.setCurrentMode(tb.trace, ControlMode.RO_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, false);
 		traceManager.activateSnap(0);
 		waitForSwing();
 		assertFalse(listingProvider.actionRefreshSelectedMemory.isEnabled());

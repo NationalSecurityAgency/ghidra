@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.program.model;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Variable;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -67,7 +68,7 @@ public class ReferenceManagerTestDouble implements ReferenceManager {
 	}
 
 	@Override
-	public Reference addExternalReference(Address fromAddr, Namespace extNamespace,
+	public Reference addExternalReference(Address fromAddr, Library library, Namespace extNamespace,
 			String extLabel, Address extAddr, SourceType source, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException {
 		throw new UnsupportedOperationException();
@@ -180,7 +181,8 @@ public class ReferenceManagerTestDouble implements ReferenceManager {
 	}
 
 	@Override
-	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet, boolean forward) {
+	public AddressIterator getReferenceDestinationIterator(AddressSetView addrSet,
+			boolean forward) {
 		throw new UnsupportedOperationException();
 	}
 

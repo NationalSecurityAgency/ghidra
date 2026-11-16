@@ -414,6 +414,13 @@ public interface SymbolTable {
 	public SymbolIterator getSymbols(Namespace namespace);
 
 	/**
+	 * Return an iterator over all symbols in the given library. 
+	 * @param library the library to get symbols for
+	 * @return an iterator over all symbols in the given library
+	 */
+	public SymbolIterator getSymbols(Library library);
+
+	/**
 	 * Get an iterator over all the symbols in the given namespace
 	 * <p>
 	 * <b>NOTE:</b> The resulting iterator will not return default thunks (i.e., thunk function
@@ -514,8 +521,14 @@ public interface SymbolTable {
 
 	/**
 	 * Get the external symbol with the given name.  The first occurrence of the named symbol found
-	 * within any external namespace will be returned.  If all matching symbols need to be
+	 * within any library or namespace will be returned.  If all matching symbols need to be
 	 * considered the {@link #getExternalSymbols(String)} should be used.
+	 * <p>
+	 * NOTE: This does not consider the original import name for a demangled external
+	 * symbol which must be searched for separately (see {@link #getExternalSymbolByOriginalImportName(Library, String)}).
+	 * <p>
+	 * NOTE: Use {@link ExternalManager} API for my flexible external location searching
+	 * (see {@link Program#getExternalManager()}).
 	 * 
 	 * @param name the name of the symbol
 	 * @return the symbol, or null if no external symbol has that name
@@ -523,12 +536,28 @@ public interface SymbolTable {
 	public Symbol getExternalSymbol(String name);
 
 	/**
-	 * Get all the external symbols with the given name
+	 * Get all the external symbols with the given name within any library or namespace.
+	 * <p>
+	 * NOTE: This does not consider the original import name for a demangled external
+	 * symbol which must be searched for separately (see {@link #getExternalSymbolByOriginalImportName(Library, String)}).
+	 * <p>
+	 * NOTE: Use {@link ExternalManager} API for my flexible external location searching
+	 * (see {@link Program#getExternalManager()}).
 	 * 
 	 * @param name the name of symbols
 	 * @return an iterator over the symbols
 	 */
 	public SymbolIterator getExternalSymbols(String name);
+
+	/**
+	 * Get all external symbols whose original import name matches the specified extLabel with an
+	 * optional constraint on a matching Library.
+	 * 
+	 * @param library optional Library constraint (may be null to ignore).
+	 * @param extLabel external original import name
+	 * @return external symbol iterator
+	 */
+	public SymbolIterator getExternalSymbolByOriginalImportName(Library library, String extLabel);
 
 	/**
 	 * Get all defined external symbols in no particular order

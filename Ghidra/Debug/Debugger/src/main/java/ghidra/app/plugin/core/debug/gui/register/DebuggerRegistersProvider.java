@@ -32,7 +32,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import db.Transaction;
 import docking.*;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.widgets.AbstractGCellRenderer;
@@ -150,12 +151,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
-		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, r -> true,
-				SortDirection.DESCENDING),
+		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, r -> true, SortDirection.DESCENDING),
 		NUMBER("#", 1, Integer.class, RegisterRow::getNumber),
 		NAME("Name", 40, String.class, RegisterRow::getName),
-		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue,
-				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
+		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, RegisterRow::isValueEditable, SortDirection.ASCENDING) {
 
 			@Override
 			public GColumnRenderer<BigInteger> getRenderer() {
@@ -172,16 +171,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				return VALUE_DEFS;
 			}
 		},
-		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType,
-				r -> true, SortDirection.ASCENDING) {
+		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, r -> true, SortDirection.ASCENDING) {
 			@Override
 			public TableCellEditor getEditor() {
 				return TYPE_EDITOR;
 			}
 		},
-		REPR("Repr", 100, String.class, RegisterRow::getRepresentation,
-				RegisterRow::setRepresentation, RegisterRow::isRepresentationEditable,
-				SortDirection.ASCENDING);
+		REPR("Repr", 100, String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, RegisterRow::isRepresentationEditable, SortDirection.ASCENDING);
 
 		private final String header;
 		private final int width;
@@ -554,7 +550,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	DockingAction actionSelectRegisters;
 	DockingAction actionCreateSnapshot;
-	ToggleDockingAction actionEnableEdits;
 	DockingAction actionClearDataType;
 	DockingAction actionDataTypeSettings;
 
@@ -742,11 +737,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 					.onAction(c -> cloneWindowActivated())
 					.buildAndInstallLocal(this);
 		}
-		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
-				.enabledWhen(c -> current.getThread() != null)
-				.onAction(c -> {
-				})
-				.buildAndInstallLocal(this);
 		actionClearDataType = ClearRegisterType.builder(plugin)
 				.enabledWhen(c -> current.getThread() != null)
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0))
@@ -842,7 +832,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (currentTrace == trace) {
 			return;
 		}
-		actionEnableEdits.setSelected(false);
 		removeOldTraceListener();
 		this.currentTrace = trace;
 		addNewTraceListener();
@@ -1121,7 +1110,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	private boolean isEditsEnabled() {
-		return actionEnableEdits.isSelected();
+		return controlService.getCurrentMode(currentTrace).isEditable();
 	}
 
 	/**

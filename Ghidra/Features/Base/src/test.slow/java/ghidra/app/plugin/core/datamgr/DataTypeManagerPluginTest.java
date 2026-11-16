@@ -212,10 +212,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		// select "New Category" action
 		DataTypeTestUtils.performAction(action, tree, false);
+		waitForEditing();
 
 		runSwing(() -> jTree.stopEditing());
-		waitForSwing();
-
 		waitForTree();
 
 		// verify that  the tree opens a new node with the default
@@ -1700,6 +1699,14 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	private void waitForTree() {
 		waitForTree(tree);
+	}
+
+	private void waitForEditing() throws Exception {
+		int cnt = 0;
+		while (!tree.isEditing()) {
+			Thread.sleep(100);
+			assertTrue("Timed-out waiting for tree to edit", ++cnt < 50);
+		}
 	}
 
 	private class SpyAction extends AbstractAction {

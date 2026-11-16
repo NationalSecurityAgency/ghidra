@@ -19,7 +19,7 @@ import java.awt.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.UIDefaults;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
 
 import generic.theme.*;
 
@@ -70,6 +70,24 @@ public class MacLookAndFeelManager extends LookAndFeelManager {
 			map.addColor(
 				new ColorValue("CheckBoxMenuItem.selectionBackground", menuSelectionColor));
 
+			/*
+			 	When using the 'system' appearance on a Mac, with the native OS using dark mode, 
+			 	tab text becomes hard to read. The colors we use here to fix the issue are the Max 
+			 	OSX Laf colors used when not using the 'system' appearance.
+			 */
+			if (isNativeOrDarkMode()) {
+
+				Color color = new Color(0, 0, 0, 216);
+				map.addColor(new ColorValue("TabbedPane.selectedTabTitleNormalColor", color));
+				map.addColor(new ColorValue("TabbedPane.selectedTabTitlePressedColor", color));
+
+				// In light mode, the selected tab has a lighter background. In dark mode, the 
+				// background is the same. Update the foreground to differentiate the selected from
+				// non-selected tabs.
+				color = new Color(0, 0, 0, 100);
+				map.addColor(new ColorValue("TabbedPane.nonSelectedTabTitleNormalColor", color));
+			}
+
 			return map;
 		}
 
@@ -89,23 +107,48 @@ public class MacLookAndFeelManager extends LookAndFeelManager {
 				new BackgroundBorder(new GColor("laf.color.MenuBar.selectionBackground")));
 			defaults.put("MenuItem.selectedBackgroundPainter",
 				new BackgroundBorder(new GColor("laf.color.MenuItem.selectionBackground")));
+
+			/*
+			 	When using the 'system' appearance on a Mac, with the native OS using dark mode, 
+			 	the table headers become black and hard to read.  The color comes from the AquaUI
+			 	'painter' system, which uses a border painter to control the background.  This 
+			 	bypasses our theming.  We work around that issue here by using a simple line border,
+			 	which allows our renderer to paint its background color.
+			 */
+			if (isNativeOrDarkMode()) {
+
+				Border innerBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
+				Border outerBorder =
+					BorderFactory.createLineBorder(new GColor("system.color.bg.border"));
+				CompoundBorder compoundBorder =
+					BorderFactory.createCompoundBorder(outerBorder, innerBorder);
+				defaults.put("TableHeader.cellBorder", compoundBorder);
+			}
+
 		}
+	}
+
+	private static boolean isNativeOrDarkMode() {
+		// The user may not be in dark mode when 'system' is set, but the way we change the colors
+		// is acceptable in light mode.
+		String appearance = System.getProperty("apple.awt.application.appearance", "");
+		return "system".equals(appearance) || "NSAppearanceNameDarkAqua".equals(appearance);
 	}
 
 	/**
 	 * Background painter for selected menu items. 
 	 */
 	private static class BackgroundBorder extends EmptyBorder {
-		private GColor selectedMenuBacgroundColor;
+		private GColor color;
 
 		public BackgroundBorder(GColor color) {
 			super(0, 0, 0, 0);
-			this.selectedMenuBacgroundColor = color;
+			this.color = color;
 		}
 
 		@Override
 		public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-			g.setColor(selectedMenuBacgroundColor);
+			g.setColor(color);
 			g.fillRect(x, y, width, height);
 		}
 	}

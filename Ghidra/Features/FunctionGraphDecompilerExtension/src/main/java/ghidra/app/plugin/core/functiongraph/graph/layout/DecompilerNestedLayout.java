@@ -1478,9 +1478,9 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 			case COPY:
 				return new PlainBlock(parent, block);
 			case GOTO:
-				return new DecompilerBlockGraph(parent, block);
+				return new GotoBlock(parent, block);
 			case MULTIGOTO:
-				return new DecompilerBlockGraph(parent, block);
+				return new MultiGotoBlock(parent, block);
 			case LIST:
 				return new ListBlock(parent, block);
 			case CONDITION:
@@ -1658,4 +1658,29 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		}
 	}
 
+	private class GotoBlock extends DecompilerBlockGraph {
+
+		GotoBlock(DecompilerBlockGraph parent, BlockGraph blockGraph) {
+			super(parent, blockGraph);
+		}
+
+		@Override
+		String getName() {
+			return "Goto";
+		}
+
+	}
+
+	private class MultiGotoBlock extends DecompilerBlockGraph {
+
+		MultiGotoBlock(DecompilerBlockGraph parent, BlockGraph blockGraph) {
+			super(parent, blockGraph);
+		}
+
+		@Override
+		String getName() {
+			return "Multi-Goto";
+		}
+
+	}
 }

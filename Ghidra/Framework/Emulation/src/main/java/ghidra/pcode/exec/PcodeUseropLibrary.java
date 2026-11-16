@@ -23,7 +23,6 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.symbol.UseropSymbol;
-import ghidra.lifecycle.Internal;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.OpOutput;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.PcodeUserop;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
@@ -122,17 +121,13 @@ public interface PcodeUseropLibrary<T> {
 	}
 
 	/**
-	 * A cache of symbols per library
-	 */
-	@Internal
-	Map<PcodeUseropLibrary<?>, SymbolsCache> SYMBOL_CACHE = new WeakHashMap<>();
-
-	/**
 	 * The class of the empty userop library.
 	 * 
 	 * @see PcodeUseropLibrary#nil()
 	 */
 	final class EmptyPcodeUseropLibrary implements PcodeUseropLibrary<Object> {
+		final SymbolsCache symbolsCache = new SymbolsCache(this);
+
 		@Override
 		public Map<String, PcodeUseropDefinition<Object>> getUserops() {
 			return Map.of();
@@ -141,6 +136,11 @@ public interface PcodeUseropLibrary<T> {
 		@Override
 		public PcodeUseropLibrary<Object> compose(PcodeUseropLibrary<Object> lib) {
 			return lib;
+		}
+
+		@Override
+		public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+			return symbolsCache.getSymbols(language);
 		}
 	}
 
@@ -442,11 +442,5 @@ public interface PcodeUseropLibrary<T> {
 	 * @return a map of new userop indices to extra userop symbols
 	 * @implNote implementors would be wise to cache these by language
 	 */
-	default PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
-		SymbolsCache cache;
-		synchronized (SYMBOL_CACHE) {
-			cache = SYMBOL_CACHE.computeIfAbsent(this, SymbolsCache::new);
-		}
-		return cache.getSymbols(language);
-	}
+	PcodeUseropSymbolMap getSymbols(SleighLanguage language);
 }

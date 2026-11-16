@@ -82,7 +82,7 @@ public interface PcodeStateCallbacks {
 	}
 
 	/**
-	 * Data was written into the given state piece (abstract addressing.)
+	 * Data was written into the given state piece (abstract addressing).
 	 * 
 	 * @param <A> the piece's address domain
 	 * @param <T> the piece's value domain
@@ -147,6 +147,78 @@ public interface PcodeStateCallbacks {
 			int length, T value) {
 		dataWritten(piece, address.getAddressSpace(),
 			piece.getAddressArithmetic().fromConst(address), length, value);
+	}
+
+	/**
+	 * Data was read from the given state piece (abstract addressing).
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <T> the piece's value domain
+	 * @param piece the state piece
+	 * @param space the address space of the operand
+	 * @param offset the offset of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, T> void dataRead(PcodeExecutorStatePiece<A, T> piece, AddressSpace space, A offset,
+			int length, T value, Reason reason) {
+	}
+
+	/**
+	 * Typically used from within
+	 * {@link #dataRead(PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)} to
+	 * forward the call to the callback for concrete addressing
+	 * {@link #dataRead(PcodeExecutorStatePiece, Address, int, Object, Reason)}.
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <T> the piece's value domain
+	 * @param piece the state piece
+	 * @param space the address space of the operand
+	 * @param offset the offset of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, T> void delegateDataRead(PcodeExecutorStatePiece<A, T> piece, AddressSpace space,
+			A offset, int length, T value, Reason reason) {
+		dataRead(piece, piece.getAddressArithmetic().toAddress(offset, space, Purpose.LOAD), length,
+			value, reason);
+	}
+
+	/**
+	 * Data was read from the given state piece (concrete addressing).
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <T> the piece's value domain
+	 * @param piece the state piece
+	 * @param address the address of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, T> void dataRead(PcodeExecutorStatePiece<A, T> piece, Address address, int length,
+			T value, Reason reason) {
+	}
+
+	/**
+	 * Typically used from within
+	 * {@link #dataRead(PcodeExecutorStatePiece, Address, int, Object, Reason)} to forward the call
+	 * to the callback for abstract addressing
+	 * {@link #dataRead(PcodeExecutorStatePiece, AddressSpace, Object, int, Object, Reason)}.
+	 * 
+	 * @param <A> the piece's address domain
+	 * @param <T> the piece's value domain
+	 * @param piece the state piece
+	 * @param address the address of the operand
+	 * @param length the size of the operand
+	 * @param value the value read
+	 * @param reason the reason for reading
+	 */
+	default <A, T> void delegateDataRead(PcodeExecutorStatePiece<A, T> piece, Address address,
+			int length, T value, Reason reason) {
+		dataRead(piece, address.getAddressSpace(), piece.getAddressArithmetic().fromConst(address),
+			length, value, reason);
 	}
 
 	/**

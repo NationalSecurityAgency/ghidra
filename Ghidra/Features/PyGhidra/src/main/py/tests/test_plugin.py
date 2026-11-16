@@ -149,15 +149,15 @@ class TestValidPlugin(PluginTest):
     
     @classmethod
     def prelaunch(cls):
-        DummyTestRecognizer = jpype.JClass("ghidra.pyghidra.test.DummyTestRecognizer")
-        DummyTestRecognizer.preLaunchInitialized = True
+        DummyTestModuleInitializer = jpype.JClass("ghidra.pyghidra.test.DummyTestModuleInitializer")
+        DummyTestModuleInitializer.preLaunchInitialized = True
     
     @classmethod
     def test_extension_point(cls):
         from ghidra.app.util.recognizer import Recognizer
         from ghidra.util.classfinder import ClassSearcher
-        DummyTestRecognizer = jpype.JClass("ghidra.pyghidra.test.DummyTestRecognizer")
-        assert DummyTestRecognizer in ClassSearcher.getClasses(Recognizer)
+        DummyTestModuleInitializer = jpype.JClass("ghidra.pyghidra.test.DummyTestModuleInitializer")
+        assert DummyTestModuleInitializer in ClassSearcher.getClasses(ModuleInitializer)
 
 
 class TestBadPlugin(PluginTest):

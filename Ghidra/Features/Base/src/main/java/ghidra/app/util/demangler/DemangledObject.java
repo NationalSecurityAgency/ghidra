@@ -641,7 +641,7 @@ public abstract class DemangledObject implements Demangled {
 			catch (DuplicateNameException e) {
 				Msg.error(DemangledObject.class,
 					"Failed to create namespace due to name conflict: " +
-						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName, false));
+						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName));
 				break;
 			}
 			catch (InvalidInputException e) {
@@ -659,7 +659,7 @@ public abstract class DemangledObject implements Demangled {
 
 				Msg.error(DemangledObject.class,
 					"Bad namespace type - must be one of: " + allowedTypes +
-						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName, false));
+						NamespaceUtils.getNamespaceQualifiedName(namespace, namespaceName));
 				break;
 			}
 		}

@@ -1044,7 +1044,8 @@ public class DebuggerEmulateFunctionDialog extends DialogComponentProvider {
 						}
 
 						if (controlService != null) {
-							controlService.setCurrentMode(harness.trace, ControlMode.RW_EMULATOR);
+							controlService.setCurrentMode(harness.trace, ControlMode.EMULATOR,
+								true);
 						}
 					}
 				}

@@ -17,11 +17,11 @@ package ghidra.framework.options;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.jdom2.Element;
 
 import ghidra.util.xml.XmlUtilities;
-import utilities.util.FileUtilities;
 
 /**
  * A convenience class for creating a GProperties object from a file containing XML data
@@ -42,7 +42,7 @@ public class XmlProperties extends GProperties {
 	}
 
 	private static Element getXmlElement(File file) throws IOException {
-		byte[] bytes = FileUtilities.getBytesFromFile(file);
+		byte[] bytes = Files.readAllBytes(file.toPath());
 		return XmlUtilities.byteArrayToXml(bytes);
 	}
 

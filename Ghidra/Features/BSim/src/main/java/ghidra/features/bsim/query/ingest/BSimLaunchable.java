@@ -44,6 +44,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
+/**
+ * NOTE: This class does not initialize logging, therefore the use of stdin, stdout, and stderr is
+ * acceptable for this console application.
+ */
 public class BSimLaunchable implements GhidraLaunchable {
 
 	// BSim log4j config file resides at root of resource directory

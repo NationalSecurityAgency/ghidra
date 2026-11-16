@@ -70,8 +70,8 @@ import ghidra.util.Swing;
  * Tests for target control and state editing
  * 
  * <p>
- * In these and other control service integration tests, we use {@link ControlMode#RW_EMULATOR} as a
- * stand-in for any mode. We also use {@link ControlMode#RO_TARGET} just to verify the mode is
+ * In these and other control service integration tests, we use {@link ControlMode#EMULATOR} as a
+ * stand-in for any mode. We also use {@link ControlMode#TARGET} just to verify the mode is
  * heeded. Other modes may be tested if bugs crop up in various combinations.
  */
 public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerIntegrationTest {
@@ -278,7 +278,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateResumeAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -301,7 +301,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateResumeActionAfterPcodeStep() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		traceManager.activateTime(TraceSchedule.parse("0:.t%d-2".formatted(thread.getKey())));
@@ -319,7 +319,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateInterruptAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -341,7 +341,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateStepBackAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -360,7 +360,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateStepIntoAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -374,7 +374,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testEmulateSkipOverAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.EMULATOR, true);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -396,7 +396,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testTraceSnapBackwardAction() throws Throwable {
 		create2SnapTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -413,7 +413,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	@Test
 	public void testTraceSnapForwardAction() throws Throwable {
 		create2SnapTrace();
-		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.TRACE, true);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -428,8 +428,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	public void testPatchInstructionActionInDynamicListingEmu() throws Throwable {
 		DebuggerDisassemblerPlugin disassemblerPlugin =
 			addPlugin(tool, DebuggerDisassemblerPlugin.class);
-
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -455,14 +453,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
-		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.TARGET));
+		assertEquals(ControlMode.TARGET, controlService.getCurrentMode(tb.trace));
 		assertFalse(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
-		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.EMULATOR));
+		assertEquals(ControlMode.EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -485,8 +483,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 	public void testPatchDataActionInDynamicListingEmu() throws Throwable {
 		DebuggerDisassemblerPlugin disassemblerPlugin =
 			addPlugin(tool, DebuggerDisassemblerPlugin.class);
-
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -511,13 +507,13 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
-		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.TARGET));
+		assertEquals(ControlMode.TARGET, controlService.getCurrentMode(tb.trace));
 		assertFalse(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
-		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.EMULATOR));
+		assertEquals(ControlMode.EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -547,8 +543,6 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
 		DockingActionIf pasteAction = getLocalAction(listingProvider, "Paste");
 
-		assertFalse(controlPlugin.actionControlMode.isEnabled());
-
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
 		try (Transaction tx = tb.startTransaction()) {
@@ -567,15 +561,15 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerInteg
 		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
-		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.TARGET));
+		assertEquals(ControlMode.TARGET, controlService.getCurrentMode(tb.trace));
 		ctx = listingProvider.getActionContext(null);
 		assertTrue(pasteAction.isAddToPopup(ctx));
 		assertFalse(pasteAction.isEnabledForContext(ctx));
 
 		runSwing(() -> controlPlugin.actionControlMode
-				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
-		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(ControlMode.EMULATOR));
+		assertEquals(ControlMode.EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		goTo(listingPlugin.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		ctx = listingProvider.getActionContext(null);

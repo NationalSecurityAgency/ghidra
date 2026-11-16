@@ -23,7 +23,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropSymbolMap;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.sleigh.grammar.Location;
 
-class SymbolsCache {
+public class SymbolsCache {
 	private final PcodeUseropLibrary<?> library;
 	private final Map<SleighLanguage, PcodeUseropSymbolMap> cache = new HashMap<>();
 
@@ -31,7 +31,7 @@ class SymbolsCache {
 		this.library = library;
 	}
 
-	PcodeUseropSymbolMap computeSymbols(SleighLanguage language) {
+	private PcodeUseropSymbolMap computeSymbols(SleighLanguage language) {
 		Map<Integer, UserOpSymbol> symbols = new HashMap<>();
 		Set<String> allNames = new HashSet<>();
 		int langOpCount = language.getNumberOfUserDefinedOpNames();
@@ -56,7 +56,7 @@ class SymbolsCache {
 		return new PcodeUseropSymbolMap(language, Collections.unmodifiableMap(symbols));
 	}
 
-	PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+	public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
 		synchronized (cache) {
 			return cache.computeIfAbsent(language, this::computeSymbols);
 		}

@@ -76,8 +76,8 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 		assertNull(extLoc.getFunction());
 
 		Namespace parentNamespace = extLoc.getParentNameSpace();
-		assertEquals(SymbolType.LIBRARY, parentNamespace.getSymbol().getSymbolType());
-		assertTrue(parentNamespace.isExternal());
+		assertTrue(parentNamespace.isGlobal());
+		assertTrue(extSym.isExternal());
 
 		assertNull(functionManager.getFunction(extSym.getID()));
 
@@ -225,11 +225,10 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testCodeSymbolRestore() throws Exception {
 		Function f = createExternalFunction("foo");
-		Namespace parentNamespace = f.getSymbol().getParentNamespace();
-
+		Library library = f.getSymbol().getLibrary();
 		program.getFunctionManager().removeFunction(f.getEntryPoint());
 		ExternalLocation externalLocation =
-			program.getExternalManager().getUniqueExternalLocation(parentNamespace, "foo");
+			program.getExternalManager().getUniqueExternalLocation(library, null, "foo");
 		assertNotNull(externalLocation);
 		assertTrue(!externalLocation.isFunction());
 		assertEquals(SymbolType.LABEL, externalLocation.getSymbol().getSymbolType());
@@ -241,11 +240,11 @@ public class ExternalFunctionDBTest extends AbstractGhidraHeadedIntegrationTest 
 			extMgr.addExtLocation("TestLibrary", null, addr(0x1000), SourceType.USER_DEFINED);
 		Function f = extLoc.createFunction();
 
-		Namespace parentNamespace = f.getSymbol().getParentNamespace();
+		Library library = f.getSymbol().getLibrary();
 
 		program.getFunctionManager().removeFunction(f.getEntryPoint());
 		ExternalLocation externalLocation =
-			program.getExternalManager().getUniqueExternalLocation(parentNamespace, "EXT_00001000");
+			program.getExternalManager().getUniqueExternalLocation(library, null, "EXT_00001000");
 		assertNotNull(externalLocation);
 		assertTrue(!externalLocation.isFunction());
 		assertEquals(SymbolType.LABEL, externalLocation.getSymbol().getSymbolType());

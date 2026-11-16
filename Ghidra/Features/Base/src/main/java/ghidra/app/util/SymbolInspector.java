@@ -489,14 +489,8 @@ public class SymbolInspector implements OptionsChangeListener {
 		if (s.getSymbolType() == SymbolType.LIBRARY) {
 			return s.getName();
 		}
-		Symbol parent = s.getParentSymbol();
-		while (parent.getSymbolType() != SymbolType.GLOBAL) {
-			if (parent.getSymbolType() == SymbolType.LIBRARY) {
-				return parent.getName();
-			}
-			parent = parent.getParentSymbol();
-		}
-		return null;
+		Library library = s.getLibrary();
+		return library != null ? library.getName() : null;
 	}
 
 	private static ToolOptions getOptions(ServiceProvider serviceProvider) {

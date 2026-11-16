@@ -42,7 +42,9 @@ dependencies {
 	api "org.apache.commons:commons-lang3:3.20.0"
 	api "org.apache.commons:commons-text:1.10.0"
 	api "commons-io:commons-io:2.19.0"	
-	api "com.google.code.gson:gson:2.13.2"
+	api ("com.google.code.gson:gson:2.13.2") {
+		exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+	}
 	api "org.bouncycastle:bcpkix-jdk18on:1.86" // requires bcutil and bcprov
 	api "org.bouncycastle:bcprov-jdk18on:1.86"
 	api "org.bouncycastle:bcutil-jdk18on:1.86"

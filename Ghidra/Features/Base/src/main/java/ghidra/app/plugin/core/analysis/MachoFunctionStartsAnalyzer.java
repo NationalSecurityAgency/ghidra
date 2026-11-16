@@ -278,7 +278,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 		for (FunctionStartsCommand cmd : commands) {
 			for (Address addr : cmd.findFunctionStartAddrs(textSegmentAddr)) {
 				monitor.checkCancelled();
-				if (!set.contains(textSegmentAddr)) {
+				if (!set.contains(addr)) {
 					continue;
 				}
 

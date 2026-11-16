@@ -19,10 +19,15 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import db.DBRecord;
+import db.Field;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock.Closeable;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
@@ -338,24 +343,21 @@ public abstract class MemorySymbol extends SymbolDB {
 	 * @param externalProgramAddress the external Program Address which corresponds to the
 	 * externally linked location (may be null).
 	 * @param notify if true, a program change notification will be generated
-	 * @throws UnsupportedOperationException if symbol is neither an external {@link SymbolType#LABEL}
-	 * or {@link SymbolType#FUNCTION}.
+	 * @throws InvalidInputException if invalid external program address specified
+	 * @throws UnsupportedOperationException if symbol is not external.
 	 */
-	public final void setExternalProgramAddress(Address externalProgramAddress, boolean notify) {
-		SymbolType type = getSymbolType();
-		if (!getAddress().isExternalAddress() ||
-			(type != SymbolType.LABEL && type != SymbolType.FUNCTION)) {
+	public final void setExternalProgramAddress(Address externalProgramAddress, boolean notify)
+			throws InvalidInputException {
+		if (!isExternal()) {
 			throw new javax.help.UnsupportedOperationException(
 				"Symbol does not support: external program address");
 		}
-		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
-			throw new IllegalArgumentException("Memory address required for external program");
-		}
+
 		try (Closeable c = lock.write()) {
 			checkDeleted();
-			if (record == null) {
-				return;
-			}
+
+			symbolMgr.checkExternalAddress(externalProgramAddress);
+
 			String addrStr =
 				externalProgramAddress != null ? externalProgramAddress.toString() : null;
 			String oldData = record.getString(SymbolDatabaseAdapter.SYMBOL_EXTERNAL_PROG_ADDR_COL);
@@ -369,9 +371,46 @@ public abstract class MemorySymbol extends SymbolDB {
 		}
 	}
 
-	static void setExternalFields(DBRecord record, String originalImportName,
+	public void setLibrary(Library newLibrary) {
+		try (Closeable _ = lock.write()) {
+			if (!isExternal()) {
+				throw new UnsupportedOperationException("Can't set libary on non-external symbols");
+			}
+			symbolMgr.checkValidLibrary(newLibrary);
+			Library oldLibrary = getLibrary();
+			if (Objects.equals(newLibrary, oldLibrary)) {
+				return;
+			}
+			checkDeleted();
+			record.setLongValue(SymbolDatabaseAdapter.SYMBOL_LIBRARY_ID_COL, newLibrary.getID());
+			updateRecord();
+			ProgramDB program = symbolMgr.getProgram();
+			program.symbolChanged(this, ProgramEvent.SYMBOL_LIBRARY_CHANGED, getAddress(), this,
+				oldLibrary, newLibrary);
+		}
+	}
+
+	@Override
+	public Library getLibrary() {
+		try (Closeable _ = lock.read()) {
+			refreshIfNeeded();
+			if (record == null) {
+				return null;
+			}
+			Field field = record.getFieldValue(SymbolDatabaseAdapter.SYMBOL_LIBRARY_ID_COL);
+			if (field.isNull()) {
+				return null;
+			}
+			long libraryId = field.getLongValue();
+			Symbol symbol = symbolMgr.getSymbol(libraryId);
+			return (Library) symbol.getObject();
+		}
+	}
+
+	static void setExternalFields(DBRecord record, Library library, String originalImportName,
 			Address externalProgramAddress) {
 		String addrStr = externalProgramAddress != null ? externalProgramAddress.toString() : null;
+		record.setLongValue(SymbolDatabaseAdapter.SYMBOL_LIBRARY_ID_COL, library.getID());
 		record.setString(SymbolDatabaseAdapter.SYMBOL_EXTERNAL_PROG_ADDR_COL, addrStr);
 		record.setString(SymbolDatabaseAdapter.SYMBOL_ORIGINAL_IMPORTED_NAME_COL,
 			originalImportName);

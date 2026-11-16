@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,11 @@ package ghidra.app.util.demangler.swift.datatypes;
 import java.util.List;
 
 import ghidra.app.util.demangler.*;
+import ghidra.app.util.sourcelanguage.SwiftSourceLanguageSpecExtension;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
 /**
  * A Swift function
@@ -51,5 +56,15 @@ public class SwiftFunction extends DemangledFunction {
 			}
 			addParameter(param);
 		}
+	}
+
+	@Override
+	protected Structure maybeCreateClassStructure(Program program, Function function,
+			String convention) {
+		// __swift_thiscall has a this pointer, like __thiscall: the namespace must become a class
+		if (SwiftSourceLanguageSpecExtension.SWIFT_THISCALL.equals(convention)) {
+			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
+		}
+		return super.maybeCreateClassStructure(program, function, convention);
 	}
 }

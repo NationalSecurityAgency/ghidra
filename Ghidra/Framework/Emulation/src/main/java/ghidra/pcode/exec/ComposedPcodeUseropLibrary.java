@@ -17,6 +17,8 @@ package ghidra.pcode.exec;
 
 import java.util.*;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+
 /**
  * A p-code userop library composed of other libraries
  * 
@@ -51,6 +53,7 @@ public class ComposedPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
 	}
 
 	private final Map<String, PcodeUseropDefinition<T>> userops;
+	private final SymbolsCache symbolsCache = new SymbolsCache(this);
 
 	/**
 	 * Construct a composed userop library from the given libraries
@@ -69,5 +72,10 @@ public class ComposedPcodeUseropLibrary<T> implements PcodeUseropLibrary<T> {
 	@Override
 	public Map<String, PcodeUseropDefinition<T>> getUserops() {
 		return userops;
+	}
+
+	@Override
+	public PcodeUseropSymbolMap getSymbols(SleighLanguage language) {
+		return symbolsCache.getSymbols(language);
 	}
 }

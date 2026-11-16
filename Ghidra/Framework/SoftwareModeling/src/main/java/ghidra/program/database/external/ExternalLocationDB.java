@@ -60,14 +60,10 @@ public class ExternalLocationDB implements ExternalLocation {
 		Library library = getLibrary();
 		return library != null ? library.getAssociatedProgramPath() : null;
 	}
-	
-	private Library getLibrary() {
-		Namespace parent = symbol.getParentNamespace();
-		while (parent != null && !(parent instanceof Library)) {
-			parent = parent.getParentNamespace();
-		}
-		return (Library) parent;
 
+	@Override
+	public Library getLibrary() {
+		return symbol.getLibrary();
 	}
 
 	@Override
@@ -111,7 +107,11 @@ public class ExternalLocationDB implements ExternalLocation {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder(symbol.getName(true));
+
+		StringBuilder builder = new StringBuilder(getLibraryName());
+		builder.append("::");
+		builder.append(symbol.getName(true));
+
 		if (getOriginalImportedName() != null) {
 			builder.append(" (").append(getOriginalImportedName()).append(")");
 		}
@@ -151,6 +151,7 @@ public class ExternalLocationDB implements ExternalLocation {
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			return getFunction();
 		}
+
 		Function function = extMgr.createFunction(this);
 		symbol = (FunctionSymbol) function.getSymbol();
 		return function;
@@ -169,7 +170,7 @@ public class ExternalLocationDB implements ExternalLocation {
 	 */
 	void setLabel(String label, SourceType source) throws InvalidInputException {
 		if (label == null) {
-			setName(getLibrary(), null, SourceType.DEFAULT);
+			setName(null, null, SourceType.DEFAULT);
 		}
 		else if (label.indexOf(Namespace.DELIMITER) < 0) {
 			// if label does not include namespace keep current namespace
@@ -178,7 +179,7 @@ public class ExternalLocationDB implements ExternalLocation {
 		else {
 			SymbolPath symbolPath = new SymbolPath(label);
 			Namespace namespace = NamespaceUtils.createNamespaceHierarchy(
-				symbolPath.getParentPath(), getLibrary(), extMgr.getProgram(), source);
+				symbolPath.getParentPath(), null, extMgr.getProgram(), source);
 			setName(namespace, symbolPath.getName(), source);
 		}
 	}
@@ -200,6 +201,11 @@ public class ExternalLocationDB implements ExternalLocation {
 	}
 
 	@Override
+	public void setLibrary(Library library) {
+		symbol.setLibrary(library);
+	}
+
+	@Override
 	public void setAddress(Address address) throws InvalidInputException {
 		if (address == null && getSource() == SourceType.DEFAULT) {
 			throw new InvalidInputException("Either an external label or address is required");
@@ -207,17 +213,14 @@ public class ExternalLocationDB implements ExternalLocation {
 		symbol.setExternalProgramAddress(address, true);
 	}
 
-	public void saveOriginalNameIfNeeded(Namespace oldNamespace, String oldName,
-			SourceType oldSource) {
-
-		boolean wasInLibrary = (oldNamespace instanceof Library);
+	public void saveOriginalNameIfNeeded(String oldName, SourceType oldSource) {
 
 		// if we don't have an original already set and it is an imported symbol, save it
 		String originalImportedName = getOriginalImportedName();
 		if (getLabel().equals(originalImportedName)) {
 			symbol.setExternalOriginalImportedName(null, false);
 		}
-		else if (wasInLibrary && getSource() != SourceType.DEFAULT &&
+		else if (getSource() != SourceType.DEFAULT &&
 			oldSource == SourceType.IMPORTED && originalImportedName == null) {
 			symbol.setExternalOriginalImportedName(oldName, false);
 		}
@@ -228,15 +231,12 @@ public class ExternalLocationDB implements ExternalLocation {
 			throws InvalidInputException {
 
 		try {
-			if (!namespace.isExternal()) {
-				throw new IllegalArgumentException("external namespace required");
-			}
 			if (newName == null || newName.length() == 0) {
 				sourceType = SourceType.DEFAULT;
 				String originalName = getOriginalImportedName();
 				if (originalName != null) {
 					newName = originalName;
-					namespace = NamespaceUtils.getLibrary(namespace);
+					namespace = null;
 					sourceType = SourceType.IMPORTED;
 				}
 				else if (getAddress() == null) {
@@ -244,14 +244,18 @@ public class ExternalLocationDB implements ExternalLocation {
 						"Either an external label or address is required");
 				}
 			}
-			else if (namespace instanceof Library && newName.equals(getOriginalImportedName())) {
+			else if ((namespace == null || namespace.isGlobal()) &&
+				newName.equals(getOriginalImportedName())) {
 				// preserve imported source if new name matches original imported name
 				sourceType = SourceType.IMPORTED;
+			}
+			if (namespace == null) {
+				namespace = symbol.getProgram().getGlobalNamespace();
 			}
 			symbol.setNameAndNamespace(newName, namespace, sourceType);
 		}
 		catch (DuplicateNameException | CircularDependencyException e) {
-			// Duplicate names are permitted and external locations do not support namespace behavior
+			// Duplicate names are permitted
 			throw new AssertException("Unexpected exception", e);
 		}
 	}
@@ -263,9 +267,8 @@ public class ExternalLocationDB implements ExternalLocation {
 			return;
 		}
 		try {
-			Library library = NamespaceUtils.getLibrary(symbol.getParentNamespace());
 			symbol.setExternalOriginalImportedName(null, false); // clear orig imported name
-			symbol.setNameAndNamespace(originalName, library, SourceType.IMPORTED);
+			symbol.setNameAndNamespace(originalName, null, SourceType.IMPORTED);
 		}
 		catch (CircularDependencyException | DuplicateNameException | InvalidInputException e) {
 			throw new AssertException("Can't happen here", e);
@@ -310,6 +313,11 @@ public class ExternalLocationDB implements ExternalLocation {
 		String originalImportName = getOriginalImportedName();
 		String otherName = other.getLabel();
 		String otherOriginalImportName = other.getOriginalImportedName();
+		String libraryName = getLibraryName();
+		String otherLibraryName = other.getLibraryName();
+		if (!libraryName.equals(otherLibraryName)) {
+			return false;
+		}
 
 		// if the original import names are not null and they match, this is probably the one since
 		// the original import names are most likely mangled names and should be unique.

@@ -255,6 +255,40 @@ class SymbolMerger extends AbstractListingMerger {
 	}
 
 	/**
+	 * This method allows other listing merge managers to resolve a library
+	 * via the symbol merge manager. This is because the symbol merge manager
+	 * actually merges libraries and best knows how to resolve them.
+	 * It also keeps track of how they have been resolved.
+	 * @param srcProgram the program version that the namespace to be resolved is coming from.
+	 * @param srcLibrary the namespace to be resolved
+	 * @return the namespace from the result program version
+	 * @throws DuplicateNameException if the name space can't be resolved due
+	 * to a name conflict that can't be dealt with.
+	 * @throws InvalidInputException if the name space is not validly named
+	 * for the result program.
+	 */
+	Library resolveLibrary(Program srcProgram, Library srcLibrary) throws DuplicateNameException,
+			InvalidInputException {
+		Library resolvedLibrary = null;
+		SymbolTable resolveSymTab = resultPgm.getSymbolTable();
+		Symbol srcLibSymbol = srcLibrary.getSymbol();
+		String name = srcLibrary.getName();
+		long srcLibID = srcLibSymbol.getID();
+		SourceType sourceType = srcLibrary.getSymbol().getSource();
+		long resolveLibID = resolveSymbolID(srcProgram, srcLibID);
+		if (resolveLibID >= 0) { // Found the corresponding library symbol ID in result program.
+			Symbol resolveSym = resolveSymTab.getSymbol(resolveLibID);
+			resolvedLibrary = (Library) resolveSym.getObject();
+		}
+		else { // Didn't find the corresponding namespace symbol ID in result program.
+				// Try to resolve the parent's ID and use it to get/create a namespace.
+			resolvedLibrary = createLibrary(resultPgm, name, srcProgram, srcLibID, sourceType);
+		}
+		return resolvedLibrary;
+
+	}
+
+	/**
 	 * This method allows other listing merge managers to resolve a namespace
 	 * via the symbol merge manager. This is because the symbol merge manager
 	 * actually merges namespaces and best knows how to resolve them.
@@ -297,6 +331,13 @@ class SymbolMerger extends AbstractListingMerger {
 				srcProgram, srcNsSymbol.getID(), srcNsSymbol.getSource());
 		}
 		return resolvedNamespace;
+	}
+
+	private Library createLibrary(Program resultProgram, String name, Program srcPgm, long srcSymID,
+			SourceType source) throws DuplicateNameException, InvalidInputException {
+		Symbol symbol =
+			createSymbol(name, SymbolType.LIBRARY, null, null, srcPgm, srcSymID, source);
+		return (Library) symbol.getObject();
 	}
 
 	/**
@@ -2505,11 +2546,14 @@ class SymbolMerger extends AbstractListingMerger {
 		SymbolType symType = originalSymbol.getSymbolType();
 		String symbolName = originalSymbol.getName();
 		SourceType source = originalSymbol.getSource();
+
 		if (symType == SymbolType.LABEL) {
 			if (originalSymbol.isExternal()) {
+				Library library = originalSymbol.getLibrary();
 				ExternalManager resultExternalManager = resultPgm.getExternalManager();
 				ExternalLocation resultExtLocation =
-					resultExternalManager.addExtLocation(namespace, symbolName, address, source);
+					resultExternalManager.addExtLocation(library, namespace, symbolName, address,
+						source);
 				resultSymbol = resultExtLocation.getSymbol();
 			}
 			else {

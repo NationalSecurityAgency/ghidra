@@ -315,10 +315,11 @@ public class ModelingScript extends GhidraScript {
 				byte[] aOffset =
 					piece.getAddressArithmetic().fromConst(offset, space.getPointerSize());
 				if (cb.readUninitialized(piece, space, aOffset, size, reason) != 0) {
-					return map.get(offset);
+					expr = map.get(offset);
 				}
 			}
-			return null;
+			cb.dataRead(piece, space.getAddress(offset), size, expr, reason);
+			return expr;
 		}
 
 		public Entry<Long, Expr> getNextEntry(long offset) {

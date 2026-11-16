@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,16 @@
  */
 package ghidra.app.util.viewer.field;
 
+import static ghidra.util.StringUtilities.*;
+
 import java.awt.event.MouseEvent;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.QueryData;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.*;
-import ghidra.util.StringUtilities;
 
 /**
  * A handler to process {@link CommentFieldLocation} clicks.
@@ -31,8 +33,8 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	private final static Class<?>[] SUPPORTED_CLASSES =
 		new Class[] { CommentFieldLocation.class, EolCommentFieldLocation.class,
-			PlateFieldLocation.class, AutomaticCommentFieldLocation.class,
-			MemoryBlockStartFieldLocation.class };
+			PlateFieldLocation.class, PostCommentFieldLocation.class,
+			AutomaticCommentFieldLocation.class, MemoryBlockStartFieldLocation.class };
 
 	@Override
 	public Class<?>[] getSupportedProgramLocations() {
@@ -54,13 +56,13 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 
 		if (commentRow < 0) {
-			return false; // Plate field locations can return negative values when clicking above 
-							// the border
+			// Plate field locations can return negative values when clicking above the border
+			return false;
+
 		}
 
-		String clickedWord =
-			StringUtilities.findWord(StringUtilities.convertTabsToSpaces(comments[commentRow]),
-				column, GoToService.VALID_GOTO_CHARS);
+		String converted = convertTabsToSpaces(comments[commentRow]);
+		String clickedWord = findWord(converted, column, GoToService.VALID_GOTO_CHARS);
 
 		return checkWord(clickedWord, serviceProvider, sourceNavigatable);
 	}
@@ -69,11 +71,11 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		if (programLocation instanceof PlateFieldLocation) {
 			return ((PlateFieldLocation) programLocation).getCommentRow();
 		}
-		return ((CommentFieldLocation) programLocation).getRow();
+		return programLocation.getRow();
 	}
 
 	protected int getCommentColumn(ProgramLocation programLocation) {
-		return ((CommentFieldLocation) programLocation).getCharOffset();
+		return programLocation.getCharOffset();
 	}
 
 	protected String[] getComment(ProgramLocation programLocation) {
@@ -86,14 +88,15 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		if (wordString == null) {
 			return false;
 		}
-		ProgramLocation location = sourceNavigatable.getLocation();
+
 		GoToService goToService = serviceProvider.getService(GoToService.class);
 		if (goToService == null) {
 			return false;
 		}
 		QueryData queryData = new QueryData(wordString, false);
-		return goToService.goToQuery(sourceNavigatable, location.getAddress(), queryData, null,
-			null);
+		ProgramLocation location = sourceNavigatable.getLocation();
+		Address fromAddr = location.getAddress();
+		return goToService.goToQuery(sourceNavigatable, fromAddr, queryData, null, null);
 
 	}
 }

@@ -449,10 +449,11 @@ public class SimpleDiffUtility {
 
 	private static class ExternalReferenceCount implements Comparable<ExternalReferenceCount> {
 
-		static final int ADDRESS_RANK = 3;
+		static final int MANGLED_NAME_RANK = 4;
+		static final int ADDRESS_RANK = 2; // penalty for mismatch
 		static final int NAME_RANK = 2;
-		static final int NAMESPACE_RANK = 1;
-		static final int MANGLED_NAME_RANK = NAME_RANK + NAMESPACE_RANK;
+		static final int NAMESPACE_RANK = 2; // penalty for mismatch (considered with name match only)
+		static final int LIBRARY_RANK = 1; // considered with name and namespace match only, or mangled name match
 
 		final ExternalLocation extLoc;
 		final ExternalMatchType matchType;
@@ -502,20 +503,55 @@ public class SimpleDiffUtility {
 			return getSymbol().getName(true).compareTo(other.getSymbol().getName(true));
 		}
 
+		private boolean hasMatchingLibrary() {
+			return false;
+		}
+
 		/**
 		 * Generate relative rank when a non-default name match occurs.
 		 * Method should not be invoked when either location symbol has a default source type.
+		 * 
+		 * Rank values and match criteria
+		 * 
+		 * NOTE: (-) indicates with sub-criteria mismatch
+		 *       (+) indicates with sub-criteria match
+		 * 
+		 * 2: ADDRESS (only consider if one has default name)
+		 * 3: ADDRESS+LIBRARY (only consider if one has default name)
+		 * 
+		 * 2: MANGLED-ADDRESS
+		 * 3: MANGLED-ADDRESS+LIBRARY
+		 * 4: MANGLED (either has no address)
+		 * 5: MANGLED+LIBRARY (either has no address)
+		 * 6: MANGLED+ADDRESS
+		 * 7: MANGLED+ADDRESS+LIBRARY
+		 * 
+		 * -1: NAME-ADDRESS-NAMESPACE (forced value)
+		 * -1: NAME+ADDRESS-NAMESPACE (forced value)
+		 * 
+		 * 2: NAME-ADDRESS+NAMESPACE
+		 * 3: NAME-ADDRESS+NAMESPACE+LIBRARY
+		 * 4: NAME+NAMESPACE (either has no address)
+		 * 5: NAME+NAMESPACE+LIBRARY (either has no address)
+		 * 6: NAME+ADDRESS+NAMESPACE
+		 * 7: NAME+ADDRESS+NAMESPACE+LIBRARY
+		 * 
 		 * @param targetAddr
 		 * @param targetNamespace
 		 * @param targetName
 		 * @param targetOrigImportedName
+		 * @param targetLibraryName
 		 */
 		void setRelativeRank(Address targetAddr, String targetNamespace, String targetName,
-				String targetOrigImportedName) {
+				String targetOrigImportedName, String targetLibraryName) {
 			rank = 0;
 
 			if (matchType == ExternalMatchType.ADDRESS) {
+				// Failed to match on name - address match only
 				rank = ADDRESS_RANK;
+				if (hasMatchingLibrary()) {
+					rank += LIBRARY_RANK;
+				}
 				return;
 			}
 
@@ -539,18 +575,13 @@ public class SimpleDiffUtility {
 				return;
 			}
 
-			// Impose mangled name mismatch penalty
-			String myOrigImportedName = extLoc.getOriginalImportedName();
-			if (targetOrigImportedName != null && myOrigImportedName != null) {
-				rank -= MANGLED_NAME_RANK;
-				return;
-			}
-
-			// assume NAME match
 			rank += NAME_RANK;
 
-			if (targetNamespace != null && targetNamespace.equals(getFullNamespaceName())) {
-				rank += NAMESPACE_RANK; // non-default namespace match improves name match
+			if (targetNamespace.equals(getFullNamespaceName())) {
+				rank += NAMESPACE_RANK; // namespace match improves name match
+			}
+			else {
+				rank = -1; // NAME-NAMESPACE (forced rank) 
 			}
 		}
 
@@ -583,9 +614,6 @@ public class SimpleDiffUtility {
 		if (isDefaul1 || isDefaul2) {
 			return ExternalMatchType.NONE;
 		}
-		if (!extLoc1.getLibraryName().equals(extLoc2.getLibraryName())) {
-			return ExternalMatchType.NONE; // assume this prevails over Namespace
-		}
 
 		String name1 = extLoc1.getLabel();
 		String name2 = extLoc2.getLabel();
@@ -597,15 +625,18 @@ public class SimpleDiffUtility {
 				return origName1.equals(origName2) ? ExternalMatchType.MANGLED_NAME
 						: ExternalMatchType.NONE;
 			}
-			// mangled name must be in root namespace of library
-			if (extLoc2.getSymbol().getParentNamespace().isLibrary() && origName1.equals(name2)) {
-				return ExternalMatchType.MANGLED_NAME;
+			if (extLoc2.getSymbol().getParentNamespace().isGlobal()) {
+				// extLoc1 was demangled - extLoc2 was not (treat name2 as mangled if in global namespace)
+				return origName1.equals(name2) ? ExternalMatchType.MANGLED_NAME
+						: ExternalMatchType.NONE;
 			}
 		}
-		else if (origName2 != null && extLoc1.getSymbol().getParentNamespace().isLibrary() &&
-			origName2.equals(name1)) {
-			return ExternalMatchType.MANGLED_NAME;
+		else if (origName2 != null && extLoc1.getSymbol().getParentNamespace().isGlobal()) {
+			// extLoc2 was demangled - extLoc1 was not (treat name1 as mangled if in global namespace)
+			return origName2.equals(name1) ? ExternalMatchType.MANGLED_NAME
+					: ExternalMatchType.NONE;
 		}
+		// neither has been demangled, but may not be mangled names
 		return name1.equals(name2) ? ExternalMatchType.NAME : ExternalMatchType.NONE;
 	}
 
@@ -636,7 +667,7 @@ public class SimpleDiffUtility {
 		}
 		SymbolType type = symbol.getSymbolType();
 		if ((type != SymbolType.FUNCTION && type != SymbolType.LABEL) || !symbol.isExternal()) {
-			return null;
+			return null; // this is really a programming error
 		}
 
 		if (allowInferredMatch) {
@@ -650,11 +681,13 @@ public class SimpleDiffUtility {
 		ExternalLocation extLoc = extMgr.getExternalLocation(symbol);
 
 		String targetName = symbol.getSource() != SourceType.DEFAULT ? symbol.getName() : null;
+		Namespace targetNamespace = symbol.getParentNamespace();
+		String targetNamespaceName = targetNamespace.getName(true);
 		String targetOrigImportedName = extLoc.getOriginalImportedName();
-		String targetNamespace = symbol.getParentNamespace().getName(true);
-		if (targetNamespace.startsWith(Library.UNKNOWN)) {
-			targetNamespace = null;
-		}
+
+		Library targetLibrary = symbol.getLibrary();
+		String targetLibraryName = targetLibrary != null ? targetLibrary.getName() : null; // null is unexpected
+
 		Address targetAddr = extLoc.getAddress();
 
 		SymbolTable otherSymbMgr = otherProgram.getSymbolTable();
@@ -662,29 +695,47 @@ public class SimpleDiffUtility {
 
 		HashMap<Address, ExternalReferenceCount> matchesMap = new HashMap<>();
 
-		// Search by name
-		if (symbol.getSource() != SourceType.DEFAULT) {
+		// Search by name across all other libraries
 
-			// TODO: Need to improve support for lookup based upon other fields
-			// Need separate Symbol DB indexing of ExternalLocation fields (address,originalImportName)
+		if (targetOrigImportedName != null) {
+			// Handle case where target symbol has been demangled
+			for (Symbol otherSym : otherSymbMgr.getExternalSymbols(targetOrigImportedName)) {
+				ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
+				if (otherExtLoc != null && otherExtLoc.getParentNameSpace().isGlobal() &&
+					otherExtLoc.getOriginalImportedName() == null) {
+					ExternalReferenceCount refMatch =
+						new ExternalReferenceCount(otherExtLoc, ExternalMatchType.MANGLED_NAME);
+					refMatch.setRelativeRank(targetAddr, targetNamespaceName, targetName,
+						targetOrigImportedName, targetLibraryName);
+					// minimum rank of 2 expected: MANGLED+...
+					matchesMap.put(otherExtLoc.getExternalSpaceAddress(), refMatch);
+				}
+			}
+		}
 
+		Namespace otherNamespace = null;
+		if (targetName != null) {
+			// Only perform name search if non-default target name is used and corresponding
+			// namespace exists in other program
 			Symbol otherParent = getSymbol(symbol.getParentSymbol(), otherProgram);
 			if (otherParent != null) {
-				SymbolIterator symbols =
-					otherProgram.getSymbolTable().getExternalSymbols(symbol.getName());
-				for (Symbol otherSym : symbols) {
-					ExternalLocation otherExtLoc = otherExtMgr.getExternalLocation(otherSym);
-					if (otherExtLoc != null) {
-						ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
-						if (matchType == ExternalMatchType.NONE) {
-							continue;
-						}
-						ExternalReferenceCount refMatch =
-							new ExternalReferenceCount(otherExtLoc, matchType);
-						refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-							targetOrigImportedName);
-						matchesMap.put(otherSym.getAddress(), refMatch);
-					}
+				otherNamespace = (Namespace) otherParent.getObject();
+			}
+		}
+		
+		if (otherNamespace != null) {
+			for (ExternalLocation otherExtLoc : otherExtMgr.getExternalLocations(null, otherNamespace, targetName)) {
+				ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
+				if (matchType == ExternalMatchType.NONE) {
+					continue; // skip if no match
+				}
+				ExternalReferenceCount refMatch =
+					new ExternalReferenceCount(otherExtLoc, matchType);
+				refMatch.setRelativeRank(targetAddr, targetNamespaceName, targetName,
+					targetOrigImportedName, targetLibraryName);
+				// minimum rank of 2 expected: MANGLED+...
+				if (refMatch.rank >= 0) {
+					matchesMap.put(otherExtLoc.getExternalSpaceAddress(), refMatch);
 				}
 			}
 		}
@@ -714,8 +765,8 @@ public class SimpleDiffUtility {
 					ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
 					refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
 					if (matchType != ExternalMatchType.NONE) {
-						refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-							targetOrigImportedName);
+						refMatch.setRelativeRank(targetAddr, targetNamespaceName, targetName,
+							targetOrigImportedName, targetLibraryName);
 					}
 					matchesMap.put(otherExtAddr, refMatch);
 				}
@@ -754,8 +805,9 @@ public class SimpleDiffUtility {
 							ExternalMatchType matchType = testExternalMatch(otherExtLoc, extLoc);
 							refMatch = new ExternalReferenceCount(otherExtLoc, matchType);
 							if (matchType != ExternalMatchType.NONE) {
-								refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-									targetOrigImportedName);
+								refMatch.setRelativeRank(targetAddr, targetNamespaceName,
+									targetName,
+									targetOrigImportedName, targetLibraryName);
 							}
 							matchesMap.put(otherThunkedFunc.getEntryPoint(), refMatch);
 						}
@@ -769,7 +821,7 @@ public class SimpleDiffUtility {
 
 		if (matchesMap.isEmpty()) {
 			// Brute force search for match candidates using address/name
-			// This will occur anytime an external add occurs on program and not otherProgram
+			// This will occur any time an external add occurs on program and not otherProgram
 			for (Symbol otherSym : otherSymbMgr.getExternalSymbols()) {
 				if (otherRestrictedSymbolIds != null &&
 					!otherRestrictedSymbolIds.contains(otherSym.getID())) {
@@ -783,8 +835,8 @@ public class SimpleDiffUtility {
 					}
 					ExternalReferenceCount refMatch =
 						new ExternalReferenceCount(otherExtLoc, matchType);
-					refMatch.setRelativeRank(targetAddr, targetNamespace, targetName,
-						targetOrigImportedName);
+					refMatch.setRelativeRank(targetAddr, targetNamespaceName, targetName,
+						targetOrigImportedName, targetLibraryName);
 					matchesMap.put(otherSym.getAddress(), refMatch);
 				}
 			}

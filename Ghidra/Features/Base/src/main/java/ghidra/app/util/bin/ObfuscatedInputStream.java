@@ -20,7 +20,9 @@ import java.io.*;
 
 /**
  * An {@link InputStream} wrapper that de-obfuscates the bytes being read from the underlying
- * stream. 
+ * stream.
+ * <p>
+ * NOTE: The use of stdin, stdout, and stderr is acceptable for this console application.
  */
 public class ObfuscatedInputStream extends InputStream {
 

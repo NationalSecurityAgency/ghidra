@@ -68,8 +68,7 @@ public class GTreeTable<T extends GTreeTableNode> extends JPanel {
 	 * Sort of a hack to allow extending classes the ability to add any wrappers around the GTable
 	 * if desired
 	 *
-	 * @param table
-	 * 		Table to add to the panel
+	 * @param table Table to add to the panel
 	 */
 	protected void addTableToPanel(GTable table) {
 		add(new JScrollPane(table));

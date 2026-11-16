@@ -148,29 +148,14 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	/**
-	 * Transform an existing external symbol into an external function.
-	 * This method should only be invoked by the Function Manager.
-	 * The {@link ExternalLocation#getOriginalImportedName() original imported name} will initially 
-	 * be null.
+	 * Create the associated function record for the given function symbol that was just created.
 	 * 
-	 * @param extSpaceAddr the external space address to use when creating this external.  Any 
-	 * other symbol using this address must first be deleted.  Results are unpredictable if this is 
-	 * not done.
-	 * @param name the external function name
-	 * @param nameSpace the external function namespace
-	 * @param externalProgramAddress the external program address (may be null)
-	 * @param originalImportName the original imported name if different from name (may be null)
-	 * @param source the source of this external.
-	 * @return external function
-	 * @throws InvalidInputException if the name is invalid
+	 * @param symbol the function symbol that was created for the function. 
+	 * @return the new function
 	 */
-	public FunctionDB createExternalFunction(Address extSpaceAddr, String name, Namespace nameSpace,
-			String originalImportName, Address externalProgramAddress, SourceType source)
-			throws InvalidInputException {
-
-		try (Closeable c = lock.write()) {
-			FunctionSymbol symbol = symbolMgr.createExternalFunctionSymbol(extSpaceAddr, name,
-				nameSpace, source, originalImportName, externalProgramAddress);
+	public FunctionDB createExternalFunction(FunctionSymbol symbol) {
+		lock.expectWriteLock();
+		try {
 
 			long returnDataTypeId = program.getDataTypeManager().getResolvedID(DataType.DEFAULT);
 
@@ -178,7 +163,8 @@ public class FunctionManagerDB implements FunctionManager {
 			FunctionDB function = new FunctionDB(this, addrMap, rec);
 			cache.add(function);
 
-			program.setObjChanged(ProgramEvent.FUNCTION_ADDED, extSpaceAddr, function, null, null);
+			Address extAddress = symbol.getAddress();
+			program.setObjChanged(ProgramEvent.FUNCTION_ADDED, extAddress, function, null, null);
 			return function;
 		}
 		catch (IOException e) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2733,7 +2733,6 @@ const IdentRec PcodeLexer::idents[]= { // Sorted list of identifiers
   { ">=", OP_GREATEQUAL },
   { ">>", OP_RIGHT },
   { "^^", OP_BOOL_XOR },
-  { "||", OP_BOOL_OR },
   { "abs", OP_ABS },
   { "borrow", OP_BORROW },
   { "call", CALL_KEY },
@@ -2770,10 +2769,11 @@ const IdentRec PcodeLexer::idents[]= { // Sorted list of identifiers
   { "sext", OP_SEXT },
   { "sqrt", OP_SQRT },
   { "trunc", OP_TRUNC },
-  { "zext", OP_ZEXT }
+  { "zext", OP_ZEXT },
+  { "||", OP_BOOL_OR }
 };
 
-int4 PcodeLexer::findIdentifier(const string &str) const
+int4 PcodeLexer::findIdentifier(const string &str)
 
 {
   int4 low = 0;

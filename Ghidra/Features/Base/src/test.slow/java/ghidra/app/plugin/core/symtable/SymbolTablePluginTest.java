@@ -640,9 +640,8 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSetPinnedActionNotEnabledForExternalSymbols() throws Exception {
 		openProgram("sample");
 
-		int row1 = findRow("CharLowerW", "USER32.dll");
-		int row2 = findRow("CharLowerZ", "USER32.dll");
-		selectRows(row1, row2);
+		int row = findRow("CharLowerZ");
+		selectRows(row, row);
 
 		ActionContext actionContext = provider.getActionContext(null);
 		int[] selectedRows = symbolTable.getSelectedRows();

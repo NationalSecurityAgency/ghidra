@@ -15,6 +15,7 @@
  */
 package ghidra.debug.api.emulation;
 
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.exec.trace.TraceEmulationIntegration.Writer;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -23,7 +24,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * A factory for configuring and creating a Debugger-integrated emulator
  */
 public interface EmulatorFactory extends ExtensionPoint {
-	// TODO: Config options, use ModelFactory as a model
+	// LATER: Config options?
 
 	/**
 	 * Get the title, to appear in menus and dialogs
@@ -32,6 +33,11 @@ public interface EmulatorFactory extends ExtensionPoint {
 	 */
 	String getTitle();
 
+	default PcodeMachine<?> create(ServiceProvider serviceProvider, PcodeDebuggerAccess access,
+			Writer writer) {
+		return create(access, writer);
+	}
+
 	/**
 	 * Create the emulator
 	 * 
@@ -39,5 +45,6 @@ public interface EmulatorFactory extends ExtensionPoint {
 	 * @param writer the Debugger's emulation callbacks for UI integration
 	 * @return the emulator with callbacks installed
 	 */
+	@Deprecated(forRemoval = true)
 	PcodeMachine<?> create(PcodeDebuggerAccess access, Writer writer);
 }

@@ -117,7 +117,6 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 	private CompletableFuture<List<AbstractDebuggerVariableViewerVarValue>> currentFuture;
 	private DebuggerVariableActionContext myActionContext;
 
-	ToggleDockingAction actionEnableEdits;
 	MultiStateDockingAction<VariableViewerStates> actionShowVariables;
 
 	@SuppressWarnings("unused")
@@ -169,14 +168,6 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 		panel.add(filterPanel, BorderLayout.SOUTH);
 
 		component = panel;
-
-		actionEnableEdits = DebuggerResources.EnableEditsAction.builder(plugin)
-				.enabledWhen(
-						c -> currentCoordinates != null && currentCoordinates.getTrace() != null)
-				.onAction(c -> {
-				})
-				.helpLocation(new HelpLocation("DebuggerVariableViewerPlugin", "enable_edits"))
-				.buildAndInstallLocal(this);
 
 		actionShowVariables =
 				new MultiStateActionBuilder<VariableViewerStates>("Show/hide variables",
@@ -453,5 +444,9 @@ public class DebuggerVariableViewerProvider extends ComponentProviderAdapter
 					dl.requestFocus();
 				})
 				.build());
+	}
+
+	public boolean isEditable() {
+		return controlService.getCurrentMode(currentCoordinates.getTrace()).isEditable();
 	}
 }

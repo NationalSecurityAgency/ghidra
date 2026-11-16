@@ -39,7 +39,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	},
 	servicesProvided = {
 		MemviewService.class
-	})
+	}
+)
 public class DebuggerMemviewPlugin extends BentoServicePlugin implements MemviewService {
 
 	private DebuggerMemviewTraceListener listener;
@@ -51,8 +52,8 @@ public class DebuggerMemviewPlugin extends BentoServicePlugin implements Memview
 	@Override
 	protected void init() {
 		codeViewerService = tool.getService(DebuggerListingService.class);
-		defaultProvider = new MemviewProvider(getTool(), this);
-		listener = new DebuggerMemviewTraceListener((MemviewProvider) defaultProvider);
+		MemviewProvider memviewProvider = new MemviewProvider(getTool(), this);
+		listener = new DebuggerMemviewTraceListener(memviewProvider);
 	}
 
 	@Override

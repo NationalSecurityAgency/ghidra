@@ -17,10 +17,14 @@ package ghidra.app.merge.listing;
 
 import static org.junit.Assert.*;
 
+import java.util.Iterator;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import ghidra.program.database.*;
+import ghidra.program.database.references.ReferenceDBManager;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -64,10 +68,6 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	protected static final Reference ExternalReference = null;
 
-	/**
-	 *
-	 * @param arg0
-	 */
 	public ExternalFunctionMerger1Test() {
 		super();
 	}
@@ -103,7 +103,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					ExternalManager externalManager = program.getExternalManager();
 					ExternalLocation externalLocation = externalManager.addExtFunction(
 						externalLibrary, "mangled", addr(program, "77db1020"), SourceType.IMPORTED);
-					externalLocation.setName(externalLibrary, "apples", SourceType.USER_DEFINED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+					externalLocation.setLibrary(externalLibrary);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -114,12 +115,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 //		Symbol mangled = getUniqueSymbol(resultProgram, "mangled", externalLibrary);
 //		assertNotNull(mangled);
-		Symbol apples = getUniqueSymbol(resultProgram, "apples", externalLibrary);
+		Symbol apples = getUniqueSymbol(resultProgram, "apples", null);
 		assertNotNull(apples);
 		ExternalLocation externalLocation =
 			resultProgram.getExternalManager().getExternalLocation(apples);
@@ -140,7 +141,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					ExternalManager externalManager = program.getExternalManager();
 					ExternalLocation externalLocation = externalManager.addExtFunction(
 						externalLibrary, "mangled", addr(program, "77db1020"), SourceType.IMPORTED);
-					externalLocation.setName(externalLibrary, "apples", SourceType.USER_DEFINED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+					externalLocation.setLibrary(externalLibrary);
 
 				}
 				catch (Exception e) {
@@ -168,11 +170,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 
-		Symbol apples = getUniqueSymbol(resultProgram, "apples", externalLibrary);
+		Symbol apples = getUniqueSymbol(resultProgram, "apples", null);
 		assertNotNull(apples);
 		ExternalLocation externalLocation =
 			resultProgram.getExternalManager().getExternalLocation(apples);
@@ -180,7 +182,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 	}
 
 	@Test
-	public void testAddDifferentNamedExternalFunctionInBothDemangleBoth() throws Exception {
+	public void testExternalFunctionAddDiffAddrConflictPickMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			@Override
@@ -191,10 +193,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
 
 					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation =
-						externalManager.addExtFunction(externalLibrary, "mangled1",
+					externalManager.addExtFunction(externalLibrary, "mangled1",
 							addr(program, "77db1020"), SourceType.IMPORTED);
-					externalLocation.setName(externalLibrary, "apples", SourceType.USER_DEFINED);
 
 				}
 				catch (Exception e) {
@@ -211,9 +211,131 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 					ExternalManager externalManager = program.getExternalManager();
 					ExternalLocation externalLocation =
-						externalManager.addExtFunction(externalLibrary, "mangled2",
+						externalManager.addExtFunction(externalLibrary, "mangled1",
+							addr(program, "77db1022"), SourceType.IMPORTED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+		});
+
+		executeMerge(ASK_USER);
+		chooseButtonAndApply("Resolve External Add Conflict",
+			ExternalFunctionMerger.CHECKED_OUT_BUTTON_NAME);
+
+		waitForMergeCompletion();
+
+		SymbolTable symbolTable = resultProgram.getSymbolTable();
+		Library externalLibrary =
+			(Library) symbolTable.getLibrarySymbol("user32.dll").getObject();
+		assertNotNull(externalLibrary);
+
+		Set<ExternalLocation> extLocations =
+			resultProgram.getExternalManager().getExternalLocations("user32.dll", "apples");
+		assertEquals(1, extLocations.size());
+
+		ExternalLocation extLoc = extLocations.iterator().next();
+
+		assertEquals("mangled1", extLoc.getOriginalImportedName());
+		assertEquals(addr("77db1022"), extLoc.getAddress());
+	}
+
+	@Test
+	public void testExternalFunctionAddDiffAddrConflictPickLatest() throws Exception {
+		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(externalLibrary, "mangled1",
 							addr(program, "77db1020"), SourceType.IMPORTED);
-					externalLocation.setName(externalLibrary, "oranges", SourceType.USER_DEFINED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.IMPORTED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					externalManager.addExtFunction(externalLibrary, "mangled1",
+						addr(program, "77db1022"), SourceType.IMPORTED);
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+		});
+
+		executeMerge(ASK_USER);
+		chooseButtonAndApply("Resolve External Add Conflict",
+			ExternalFunctionMerger.LATEST_BUTTON_NAME);
+
+		waitForMergeCompletion();
+
+		SymbolTable symbolTable = resultProgram.getSymbolTable();
+		Library externalLibrary =
+			(Library) symbolTable.getLibrarySymbol("user32.dll").getObject();
+		assertNotNull(externalLibrary);
+
+		Set<ExternalLocation> extLocations =
+			resultProgram.getExternalManager().getExternalLocations("user32.dll", "apples");
+		assertEquals(1, extLocations.size());
+
+		ExternalLocation extLoc = extLocations.iterator().next();
+
+		assertEquals("mangled1", extLoc.getOriginalImportedName());
+		assertEquals(addr("77db1020"), extLoc.getAddress());
+	}
+
+	@Test
+	public void testExternalFunctionAddDiffAddrConflictPickBoth() throws Exception {
+		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(externalLibrary, "mangled1",
+							addr(program, "77db1020"), SourceType.IMPORTED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.IMPORTED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					externalManager.addExtFunction(externalLibrary, "mangled1",
+							addr(program, "77db1022"), SourceType.IMPORTED);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
@@ -227,23 +349,181 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		SymbolTable symbolTable = resultProgram.getSymbolTable();
+		Library externalLibrary =
+			(Library) symbolTable.getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 
-		Symbol apples = getUniqueSymbol(resultProgram, "apples", externalLibrary);
+		ExternalManager extMgr = resultProgram.getExternalManager();
+		Set<ExternalLocation> extLocations =
+			extMgr.getExternalLocations("user32.dll", "mangled1");
+		assertEquals(2, extLocations.size());
+
+		Iterator<ExternalLocation> extLocIt = extLocations.iterator();
+		ExternalLocation extLoc = extLocIt.next();
+
+		assertEquals("apples", extLoc.getLabel());
+		assertEquals("mangled1", extLoc.getOriginalImportedName());
+		assertEquals(addr("77db1020"), extLoc.getAddress());
+
+		extLoc = extLocIt.next();
+
+		assertEquals("mangled1", extLoc.getLabel());
+		assertNull(extLoc.getOriginalImportedName());
+		assertEquals(addr("77db1022"), extLoc.getAddress());
+	}
+
+	@Test
+	public void testAddExternalFunctionOneDemangled() throws Exception {
+		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(externalLibrary, "mangled1",
+							addr(program, "77db1020"), SourceType.IMPORTED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+					externalManager.addExtFunction(externalLibrary, "mangled2",
+						addr(program, "77db1022"), SourceType.IMPORTED);
+
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.IMPORTED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					externalManager.addExtFunction(externalLibrary, "mangled1",
+						addr(program, "77db1020"), SourceType.IMPORTED);
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(externalLibrary, "mangled2",
+							addr(program, "77db1022"), SourceType.IMPORTED);
+					externalLocation.setName(null, "oranges", SourceType.ANALYSIS);
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+		});
+
+		executeMerge(ASK_USER); // no conflict expected
+
+		waitForMergeCompletion();
+
+		SymbolTable symbolTable = resultProgram.getSymbolTable();
+		Library externalLibrary =
+			(Library) symbolTable.getLibrarySymbol("user32.dll").getObject();
+		assertNotNull(externalLibrary);
+
+		Symbol apples = getUniqueSymbol(resultProgram, "apples", null);
 		assertNotNull(apples);
 
-		Symbol oranges = getUniqueSymbol(resultProgram, "oranges", externalLibrary);
+		Symbol oranges = getUniqueSymbol(resultProgram, "oranges", null);
 		assertNotNull(oranges);
 
 		ExternalLocation externalLoc1 =
 			resultProgram.getExternalManager().getExternalLocation(apples);
 		assertEquals("mangled1", externalLoc1.getOriginalImportedName());
+		assertEquals(addr("77db1020"), externalLoc1.getAddress());
 
 		ExternalLocation externalLoc2 =
 			resultProgram.getExternalManager().getExternalLocation(oranges);
 		assertEquals("mangled2", externalLoc2.getOriginalImportedName());
+		assertEquals(addr("77db1022"), externalLoc2.getAddress());
+	}
+
+	@Test
+	public void testAddExternalFunctionOneHasAddressOnly() throws Exception {
+		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
+
+			private ReferenceDBManager refManager;
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(externalLibrary, "mangled1",
+							addr(program, "77db1020"), SourceType.IMPORTED);
+					externalLocation.setName(null, "apples", SourceType.USER_DEFINED);
+					externalManager.addExtFunction(externalLibrary, null,
+						addr(program, "77db1022"), SourceType.IMPORTED);
+
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				try {
+					SymbolTable symbolTable = program.getSymbolTable();
+					Library externalLibrary =
+						symbolTable.createExternalLibrary("user32.dll", SourceType.IMPORTED);
+
+					ExternalManager externalManager = program.getExternalManager();
+					ExternalLocation externalLocation1 =
+						externalManager.addExtFunction(externalLibrary, null,
+							addr(program, "77db1020"), SourceType.IMPORTED);
+					ExternalLocation externalLocation2 =
+						externalManager.addExtFunction(externalLibrary, "mangled2",
+							addr(program, "77db1022"), SourceType.IMPORTED);
+					externalLocation2.setName(null, "oranges", SourceType.ANALYSIS);
+
+					refManager = program.getReferenceManager();
+					refManager.addExternalReference(addr(program, "0x1234"), 0, externalLocation1,
+						SourceType.USER_DEFINED, RefType.DATA);
+					refManager.addExternalReference(addr(program, "0x2345"), 0, externalLocation2,
+						SourceType.USER_DEFINED, RefType.DATA);
+
+				}
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+			}
+		});
+
+		executeMerge(ASK_USER); // no conflict expected
+
+		waitForMergeCompletion();
+
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		assertNotNull(externalLibrary);
+
+		Symbol apples = getUniqueSymbol(resultProgram, "apples", null);
+		assertNotNull(apples);
+
+		Symbol oranges = getUniqueSymbol(resultProgram, "oranges", null);
+		assertNotNull(oranges);
+
+		ExternalLocation externalLoc1 =
+			resultProgram.getExternalManager().getExternalLocation(apples);
+		assertEquals("mangled1", externalLoc1.getOriginalImportedName());
+		assertEquals(addr("77db1020"), externalLoc1.getAddress());
+
+		ExternalLocation externalLoc2 =
+			resultProgram.getExternalManager().getExternalLocation(oranges);
+		assertEquals("mangled2", externalLoc2.getOriginalImportedName());
+		assertEquals(addr("77db1022"), externalLoc2.getAddress());
 	}
 
 	@Test
@@ -254,14 +534,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
-					Library externalLibrary =
+					Library library =
 						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
-					Namespace myNamespace = symbolTable.createNameSpace(externalLibrary,
+					Namespace myNamespace = symbolTable.createNameSpace(null,
 						"MyNamespace", SourceType.USER_DEFINED);
 
 					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation = externalManager.addExtFunction(myNamespace,
-						"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(library, myNamespace,
+							"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
@@ -278,14 +559,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			public void modifyPrivate(ProgramDB program) {
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
-					Library externalLibrary =
+					Library library =
 						symbolTable.createExternalLibrary("user32.dll", SourceType.USER_DEFINED);
-					Namespace myNamespace = symbolTable.createNameSpace(externalLibrary,
+					Namespace myNamespace = symbolTable.createNameSpace(null,
 						"MyNamespace", SourceType.USER_DEFINED);
 
 					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation = externalManager.addExtFunction(myNamespace,
-						"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
+					ExternalLocation externalLocation =
+						externalManager.addExtFunction(library, myNamespace,
+							"apples", addr(program, "77db1020"), SourceType.USER_DEFINED);
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
@@ -303,11 +585,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseButtonAndApply("Resolve External Add Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		Namespace externalLibrary =
-			(Namespace) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
+		Library externalLibrary =
+			(Library) resultProgram.getSymbolTable().getLibrarySymbol("user32.dll").getObject();
 		assertNotNull(externalLibrary);
 		Namespace myNamespace =
-			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", externalLibrary).getObject();
+			(Namespace) getUniqueSymbol(resultProgram, "MyNamespace", null).getObject();
 		assertNotNull(myNamespace);
 		Symbol apples = getUniqueSymbol(resultProgram, "apples", myNamespace);
 		Symbol applesConflict = getUniqueSymbol(resultProgram, "apples_conflict1", myNamespace);
@@ -325,15 +607,16 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionChangeVsRemoveConflict() throws Exception {
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "apples" };
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.ll";
+		String[] applesPath = new String[] { "Class1", "apples" };
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function applesFunction = createExternalFunction(program, applesPath,
+					Function applesFunction = createExternalFunction(program, library, applesPath,
 						addr(program, "77db1234"), new FloatDataType(), SourceType.IMPORTED);
 					applesFunction.setCustomVariableStorage(true);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -343,7 +626,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					parameter2.setComment("Other Comment");
 					applesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -354,11 +637,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					applesFunction.setComment("Once upon a time...");
 					applesFunction.setNoReturn(true);
 
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 =
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					parameter1.setComment("Long ago in a land far, far away");
@@ -368,14 +651,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertTrue(applesLocation.isFunction());
 				Function applesFunction = applesLocation.getFunction();
 				assertEquals(2, applesFunction.getParameterCount());
 				assertEquals("Once upon a time...", applesFunction.getComment());
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -386,19 +670,20 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					applesFunction.getSymbol().delete();// Remove the function, but not the external location.
 
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.getSymbol().delete();// Remove the function, but not the external location.
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertEquals(false, applesLocation.isFunction());
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertEquals(false, orangesLocation.isFunction());
 			}
@@ -409,7 +694,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton(MY_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation applesLocation = getExternalLocation(resultProgram, applesPath);
+		ExternalLocation applesLocation = getExternalLocation(resultProgram, library, applesPath);
 		assertNotNull(applesLocation);
 		assertTrue(applesLocation.isFunction());
 		Function applesFunction = applesLocation.getFunction();
@@ -427,21 +712,22 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		assertEquals("P2", parameter2.getName());
 		assertEquals(8, parameter2.getStackOffset());
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertEquals(false, orangesLocation.isFunction());
 	}
 
 	@Test
 	public void testExternalFunctionChangeParameterDetailsConflictPickLatest() throws Exception {
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "apples" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "apples" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function applesFunction = createExternalFunction(program, applesPath,
+					Function applesFunction = createExternalFunction(program, library, applesPath,
 						addr(program, "77db1234"), new FloatDataType(), SourceType.IMPORTED);
 					applesFunction.setCustomVariableStorage(true);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -459,7 +745,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					Parameter applesParameter1 = applesFunction.getParameter(0);
 					applesParameter1.setComment("Once upon a time...");
 				}
@@ -467,7 +753,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertTrue(applesLocation.isFunction());
 				Function applesFunction = applesLocation.getFunction();
@@ -479,7 +765,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					Parameter applesParameter1 = applesFunction.getParameter(0);
 					applesParameter1.setComment("This is a sample parameter comment.");
 				}
@@ -487,7 +773,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertTrue(applesLocation.isFunction());
 				Function applesFunction = applesLocation.getFunction();
@@ -503,7 +789,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			new int[] { INFO_ROW, KEEP_LATEST });
 		waitForMergeCompletion();
 
-		ExternalLocation applesLocation = getExternalLocation(resultProgram, applesPath);
+		ExternalLocation applesLocation = getExternalLocation(resultProgram, library, applesPath);
 		assertNotNull(applesLocation);
 		assertTrue(applesLocation.isFunction());
 		Function applesFunction = applesLocation.getFunction();
@@ -524,14 +810,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionChangeParameterDetailsConflictPickMy() throws Exception {
-		final String[] applesPath = new String[] { "user32.dll", "Class1", "apples" };
+		String library = "user32.dll";
+		String[] applesPath = new String[] { "Class1", "apples" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function applesFunction = createExternalFunction(program, applesPath,
+					Function applesFunction = createExternalFunction(program, library, applesPath,
 						addr(program, "77db1234"), new FloatDataType(), SourceType.IMPORTED);
 					applesFunction.setCustomVariableStorage(true);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
@@ -549,7 +836,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					Parameter applesParameter1 = applesFunction.getParameter(0);
 					applesParameter1.setComment("Once upon a time...");
 				}
@@ -557,7 +844,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertTrue(applesLocation.isFunction());
 				Function applesFunction = applesLocation.getFunction();
@@ -569,7 +856,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function applesFunction = getExternalFunction(program, applesPath);
+					Function applesFunction = getExternalFunction(program, library, applesPath);
 					Parameter applesParameter1 = applesFunction.getParameter(0);
 					applesParameter1.setComment("This is a sample parameter comment.");
 				}
@@ -577,7 +864,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
+				ExternalLocation applesLocation = getExternalLocation(program, library, applesPath);
 				assertNotNull(applesLocation);
 				assertTrue(applesLocation.isFunction());
 				Function applesFunction = applesLocation.getFunction();
@@ -593,7 +880,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			new int[] { INFO_ROW, KEEP_MY });
 		waitForMergeCompletion();
 
-		ExternalLocation applesLocation = getExternalLocation(resultProgram, applesPath);
+		ExternalLocation applesLocation = getExternalLocation(resultProgram, library, applesPath);
 		assertNotNull(applesLocation);
 		assertTrue(applesLocation.isFunction());
 		Function applesFunction = applesLocation.getFunction();
@@ -614,14 +901,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddDiffParameterConflictPickLatest() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -632,7 +920,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 =
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					parameter1.setComment("Long ago in a land far, far away");
@@ -642,7 +930,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -653,7 +942,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 = new ParameterImpl("value",
 						new PointerDataType(new ByteDataType()), 4, program);
 					parameter1.setComment("Four score and seven years ago...");
@@ -663,7 +952,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -679,7 +969,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			new int[] { INFO_ROW, KEEP_LATEST, KEEP_LATEST, KEEP_LATEST });
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -695,14 +985,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddDiffParameterConflictPickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -713,7 +1004,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 =
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					parameter1.setComment("Long ago in a land far, far away");
@@ -723,7 +1014,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -734,7 +1026,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 = new ParameterImpl("value",
 						new PointerDataType(new ByteDataType()), 4, program);
 					parameter1.setComment("Four score and seven years ago...");
@@ -744,7 +1036,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -760,7 +1053,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			new int[] { INFO_ROW, KEEP_MY, KEEP_LATEST, KEEP_MY });
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -776,14 +1069,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddDiffParameterDetailsConflictPickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -794,7 +1088,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 =
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					parameter1.setComment("Long ago in a land far, far away");
@@ -804,7 +1098,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -815,7 +1110,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter1 =
 						new ParameterImpl("value", new ByteDataType(), 4, program);
 					parameter1.setComment("Four score and seven years ago...");
@@ -825,7 +1120,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -841,7 +1137,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			new int[] { INFO_ROW, KEEP_MY, KEEP_MY });// Name, comment
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -857,14 +1153,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddDiffRegParameterSigConflictPickLatest() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -875,7 +1172,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -890,7 +1187,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -900,7 +1198,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -915,7 +1213,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -927,7 +1226,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -947,14 +1246,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddDiffRegParameterSigConflictPickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -965,7 +1265,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -980,7 +1280,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -990,7 +1291,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1005,7 +1306,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1017,7 +1319,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1037,14 +1339,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionChangeNonVsCustomStorageConflictPickLatest() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1055,7 +1358,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1070,7 +1373,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1080,7 +1384,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("r0l")), program);
@@ -1094,7 +1398,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1106,7 +1411,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1126,14 +1431,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionChangeNonVsCustomStorageConflictPickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1144,7 +1450,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1159,7 +1465,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1169,7 +1476,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("r0l")), program);
@@ -1183,7 +1490,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1195,7 +1503,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1213,14 +1521,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddSameStackParamsNoConflict() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1231,7 +1540,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("r0l")), program);
@@ -1245,7 +1554,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1255,7 +1565,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("r0l")), program);
@@ -1269,7 +1579,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1280,7 +1591,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1298,14 +1609,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddNonVsCustomStoragePickLatest() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1316,7 +1628,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(false);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1331,7 +1643,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1341,7 +1654,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1356,7 +1669,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1368,7 +1682,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1386,14 +1700,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddNonVsCustomStoragePickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1404,7 +1719,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(false);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1419,7 +1734,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1429,7 +1745,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1444,7 +1760,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1456,7 +1773,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1477,14 +1794,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddNonVsCustomStorage() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1496,7 +1814,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			public void modifyLatest(ProgramDB program) {
 				AddressSpace stackSpace = program.getAddressFactory().getStackSpace();
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(false);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1511,7 +1829,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1522,7 +1841,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			public void modifyPrivate(ProgramDB program) {
 				AddressSpace stackSpace = program.getAddressFactory().getStackSpace();
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1537,7 +1856,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1548,7 +1868,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1570,14 +1890,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionAddSameCustomParamsNoConflict() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
+					createExternalFunction(program, library, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
 				}
 				catch (Exception e) {
@@ -1588,7 +1909,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1603,7 +1924,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1613,7 +1935,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1628,7 +1950,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1639,7 +1962,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1659,14 +1982,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionDynamicVsCustomStorageChangePickLatest() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function fun = createExternalFunction(program, orangesPath,
+					Function fun = createExternalFunction(program, library, orangesPath,
 						addr(program, "00cc5566"), new DWordDataType(), SourceType.USER_DEFINED);
 					fun.setCustomVariableStorage(true);
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1681,14 +2005,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(false);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1698,7 +2023,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter = orangesFunction.getParameter(0);
 					parameter.setDataType(new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), true,
@@ -1708,7 +2033,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1720,7 +2046,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", LATEST_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
@@ -1736,14 +2062,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 
 	@Test
 	public void testExternalFunctionDynamicVsCustomStorageChangePickMy() throws Exception {
-		final String[] orangesPath = new String[] { "user32.dll", "NamespaceA", "oranges" };
+		String library = "user32.dll";
+		String[] orangesPath = new String[] { "NamespaceA", "oranges" };
 
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				try {
-					Function fun = createExternalFunction(program, orangesPath,
+					Function fun = createExternalFunction(program, library, orangesPath,
 						addr(program, "00cc5566"), new DWordDataType(), SourceType.USER_DEFINED);
 					fun.setCustomVariableStorage(true);
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
@@ -1758,14 +2085,15 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					orangesFunction.setCustomVariableStorage(false);
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1775,7 +2103,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				try {
-					Function orangesFunction = getExternalFunction(program, orangesPath);
+					Function orangesFunction = getExternalFunction(program, library, orangesPath);
 					Parameter parameter = orangesFunction.getParameter(0);
 					parameter.setDataType(new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), true,
@@ -1785,7 +2113,8 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Assert.fail(e.getMessage());
 				}
 
-				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
+				ExternalLocation orangesLocation =
+					getExternalLocation(program, library, orangesPath);
 				assertNotNull(orangesLocation);
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
@@ -1797,7 +2126,7 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		chooseRadioButton("Resolve Function Parameters Conflict", MY_BUTTON);
 		waitForMergeCompletion();
 
-		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
+		ExternalLocation orangesLocation = getExternalLocation(resultProgram, library, orangesPath);
 		assertNotNull(orangesLocation);
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();

@@ -35,6 +35,7 @@ import ghidra.program.model.util.MemoryByteIterator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
+import ghidra.util.datastruct.Counter;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -445,24 +446,24 @@ public abstract class ByteCopier {
 		public boolean applyTo(Program program) {
 			String validString = string;
 			if (!isOnlyAsciiBytes(string)) {
-				tool.setStatusInfo("Pasted string contained non-text ascii bytes. " +
-					"Only the ascii will be used.", true);
+				status = "Pasted string contained non-text ascii bytes. " +
+					"Only the ascii will be used.";
 				validString = keepOnlyAsciiBytes(string);
 			}
 
 			byte[] bytes = getBytes(validString);
 			if (bytes == null) {
 				status = "Improper data format. Expected sequence of hex bytes";
-				tool.beep();
 				return false;
 			}
 
 			// Ensure that we are not writing over instructions
+			Counter available = new Counter();
 			Address address = currentLocation.getAddress();
-			if (!hasEnoughSpace(program, address, bytes.length)) {
+			if (!hasEnoughSpace(program, address, bytes.length, available)) {
 				status =
-					"Not enough space to paste all bytes.  Encountered data or instructions.";
-				tool.beep();
+					"Not enough space. %s bytes pasted; space for %s bytes".formatted(bytes.length,
+						available.count());
 				return false;
 			}
 
@@ -474,8 +475,7 @@ public abstract class ByteCopier {
 
 			boolean pastedAllBytes = pasteBytes(program, bytes);
 			if (!pastedAllBytes) {
-				tool.setStatusInfo("Not all bytes were pasted due to memory access issues",
-					true);
+				status = "Not all bytes were pasted due to memory access issues";
 			}
 
 			return true;
@@ -513,23 +513,21 @@ public abstract class ByteCopier {
 			return result != OptionDialog.NO_OPTION;
 		}
 
-		protected boolean hasEnoughSpace(Program program, Address address, int byteCount) {
+		protected boolean hasEnoughSpace(Program program, Address address, int byteCount,
+				Counter bytesAvailable) {
 			Listing listing = program.getListing();
 			for (int i = 0; i < byteCount;) {
 				if (address == null) {
-					status = "Not enough addresses to paste bytes";
-					tool.beep();
 					return false;
 				}
 				CodeUnit codeUnit = listing.getCodeUnitContaining(address);
 				if (!(codeUnit instanceof Data data) || data.isDefined()) {
-					status = "Cannot paste on top of defined instructions/data";
-					tool.beep();
 					return false;
 				}
 				int length = codeUnit.getLength();
 				i += length;
 				address = codeUnit.getMaxAddress().next();
+				bytesAvailable.setValue(i);
 			}
 			return true;
 		}

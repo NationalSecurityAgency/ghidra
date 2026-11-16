@@ -38,11 +38,13 @@ import ghidra.framework.main.ProgramFileChooser;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 
@@ -91,7 +93,7 @@ class EditExternalLocationPanel extends JPanel {
 			externalManager.getExternalLibraryPath(startingExternalLibraryName);
 		Symbol s = externalLocation.getSymbol();
 		this.startingLocationName = NamespaceUtils.getNamespaceQualifiedName(s.getParentNamespace(),
-			externalLocation.getLabel(), true);
+			externalLocation.getLabel());
 		this.startingLocationAddress = externalLocation.getAddress();
 		this.startingOriginalName = externalLocation.getOriginalImportedName();
 		buildPanel();
@@ -511,20 +513,8 @@ class EditExternalLocationPanel extends JPanel {
 		boolean success = false;
 		try {
 			Library library = getOrCreateExternalLibrary(libraryName, libraryProgramPathname);
-
-			// If the external location is not in the chosen library then move it.
-			Symbol symbol = extLocation.getSymbol();
-			Namespace parentNamespace = symbol.getParentNamespace();
-			if (parentNamespace != library) {
-				try {
-					symbol.setNamespace(library);
-				}
-				catch (CircularDependencyException e) {
-					throw new AssertException("Unexpected error", e);
-				}
-			}
-
 			// Update the location.
+			extLocation.setLibrary(library);
 			extLocation.setLocation(label, addr, SourceType.USER_DEFINED);
 
 			success = true;

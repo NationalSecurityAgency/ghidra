@@ -26,6 +26,7 @@ import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Symbol;
 
 /**
  * Model for run-time type information about the RTTI4 data type, which represents a 
@@ -104,7 +105,15 @@ public class Rtti4Model extends AbstractCreateRttiDataModel {
 			throw new InvalidDataTypeException(getName() + " data type at " + getAddress() +
 				" doesn't refer to a valid location " + rtti0Address + " for the Type Descriptor.");
 		}
-		rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
+
+		Symbol rtti0Symbol = program.getSymbolTable().getPrimarySymbol(rtti0Address);
+		if (rtti0Symbol != null && rtti0Symbol.getName().equals("RTTI_Type_Descriptor")) {
+			rtti0Model = new TypeDescriptorModel(program, rtti0Address,
+				rtti0Symbol.getParentNamespace(), validationOptions);
+		}
+		else {
+			rtti0Model = new TypeDescriptorModel(program, rtti0Address, validationOptions);
+		}
 		if (validateReferredToData) {
 			rtti0Model.validate();
 		}

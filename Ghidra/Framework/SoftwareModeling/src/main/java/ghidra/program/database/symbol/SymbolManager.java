@@ -837,40 +837,41 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		if (namespace == null) {
 			namespace = program.getGlobalNamespace();
 		}
-
-		if (isDeletedNamespace(namespace)) {
-			return null;
-		}
-		checkValidNamespaceArgument(namespace);
-
-		long namespaceId = namespace.getID();
-
 		try (Closeable c = lock.read()) {
-			DBRecord record = adapter.getSymbolRecord(address, name, namespaceId);
+			if (isDeletedNamespace(namespace)) {
+				return null;
+			}
+			checkValidNamespaceArgument(namespace);
+
+			DBRecord record = adapter.getSymbolRecord(address, name, namespace.getID());
 			if (record != null) {
 				return cache.getCachedInstance(record);
+			}
+
+			// also check for possible default parameter or local variable symbol
+			if (namespace instanceof Function &&
+				SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
+				return searchNamespaceForSymbol(namespace, name, address);
+			}
+
+			// check for default external symbol
+			if (address.isExternalAddress() &&
+				SymbolUtilities.isPossibleDefaultExternalName(name)) {
+				Symbol s = searchNamespaceForSymbol(namespace, name, address);
+				if (s != null) {
+					return s;
+				}
+			}
+
+			// check if name is a default name
+			Symbol symbol = getSymbolForDynamicName(name);
+			if (symbol != null && address.equals(symbol.getAddress()) &&
+				namespace.equals(symbol.getParentNamespace())) {
+				return symbol;
 			}
 		}
 		catch (IOException e) {
 			program.dbError(e);
-		}
-
-		// check for default external symbol
-		if (namespace.isExternal() && SymbolUtilities.isPossibleDefaultExternalName(name)) {
-			return searchNamespaceForSymbol(namespace, name, address);
-		}
-
-		// also check for possible default parameter or local variable symbol
-		if (namespace instanceof Function &&
-			SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
-			return searchNamespaceForSymbol(namespace, name, address);
-		}
-
-		// check if name is a default name
-		Symbol symbol = getSymbolForDynamicName(name);
-		if (symbol != null && address.equals(symbol.getAddress()) &&
-			namespace.equals(symbol.getParentNamespace())) {
-			return symbol;
 		}
 		return null;
 	}
@@ -918,38 +919,42 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		}
 
 		List<Symbol> list = new ArrayList<>();
-		if (isDeletedNamespace(namespace)) {
-			return list;
-		}
-		checkValidNamespaceArgument(namespace);
-
-		// if name is possible default parameter or local variable name, must do brute force search
-		if (namespace instanceof Function &&
-			SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
-			return searchNamespaceForSymbols(name, namespace);
-		}
-
-		// if the name is a possible default external name, do brute force search
-		if (namespace.isExternal() && SymbolUtilities.isPossibleDefaultExternalName(name)) {
-			return searchNamespaceForSymbols(name, namespace);
-		}
-
 		try (Closeable c = lock.read()) {
+
+			if (isDeletedNamespace(namespace)) {
+				return list;
+			}
+
+			checkValidNamespaceArgument(namespace);
+
+			// if name is possible default parameter or local variable name, must do brute force search
+			if (namespace instanceof Function &&
+				SymbolUtilities.isPossibleDefaultLocalOrParamName(name)) {
+				return searchNamespaceForSymbols(name, namespace);
+			}
+
+			// if the name is a possible default external name, do brute force search
+			if (SymbolUtilities.isPossibleDefaultExternalName(name)) {
+				List<Symbol> symbols = searchNamespaceForSymbols(name, namespace);
+				if (!symbols.isEmpty()) {
+					return symbols;
+				}
+			}
+
 			RecordIterator it = adapter.getSymbolsByNameAndNamespace(name, namespace.getID());
 			while (it.hasNext()) {
 				list.add(cache.getCachedInstance(it.next()));
+			}
+
+			// also check if the given name could be a default symbol
+			Symbol symbol = getSymbolForDynamicName(name);
+			if (symbol != null && symbol.getParentNamespace().equals(namespace)) {
+				list.add(symbol);
 			}
 		}
 		catch (IOException e) {
 			program.dbError(e);
 		}
-
-		// also check if the given name could be a default symbol
-		Symbol symbol = getSymbolForDynamicName(name);
-		if (symbol != null && symbol.getParentNamespace().equals(namespace)) {
-			list.add(symbol);
-		}
-
 		return list;
 	}
 
@@ -1004,8 +1009,11 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		}
 
 		// if the name is a possible default external name, do brute force search
-		if (namespace.isExternal() && SymbolUtilities.isPossibleDefaultExternalName(name)) {
-			return searchNamespaceForFirstSymbol(name, namespace, test);
+		if (SymbolUtilities.isPossibleDefaultExternalName(name)) {
+			Symbol s = searchNamespaceForFirstSymbol(name, namespace, test);
+			if (s != null) {
+				return s;
+			}
 		}
 
 		try (Closeable c = lock.read()) {
@@ -1036,16 +1044,17 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	 * @param extLabel external original import name
 	 * @return external symbol iterator
 	 */
+	@Override
 	public SymbolIterator getExternalSymbolByOriginalImportName(Library library, String extLabel) {
-		if (library != null) {
-			checkValidNamespaceArgument(library);
-		}
 		try (Closeable c = lock.read()) {
+			if (library != null) {
+				checkValidLibrary(library);
+			}
 			long matchLibraryId = library != null ? library.getID() : -1;
 			RecordIterator recordIter = adapter.getExternalSymbolsByOriginalImportName(extLabel);
 			return new SymbolRecordConstraintIterator(recordIter, rec -> {
 				if (matchLibraryId > 0) {
-					long parentId = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_ID_COL);
+					long parentId = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_LIBRARY_ID_COL);
 					if (parentId == matchLibraryId) {
 						return true;
 					}
@@ -1073,10 +1082,10 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		if (extProgAddr == null || !extProgAddr.isLoadedMemoryAddress()) {
 			return SymbolIterator.EMPTY_ITERATOR;
 		}
-		if (library != null) {
-			checkValidNamespaceArgument(library);
-		}
 		try (Closeable c = lock.read()) {
+			if (library != null) {
+				checkValidLibrary(library);
+			}
 			long matchLibraryId = library != null ? library.getID() : -1;
 			RecordIterator recordIter = adapter.getExternalSymbolsByMemoryAddress(extProgAddr);
 			return new SymbolRecordConstraintIterator(recordIter, rec -> {
@@ -1100,11 +1109,13 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 	@Override
 	public Namespace getNamespace(String name, Namespace namespace) {
-		List<Symbol> symbols = getSymbols(name, namespace);
-		for (Symbol symbol : symbols) {
-			SymbolType symbolType = symbol.getSymbolType();
-			if (symbolType.isNamespace() && !symbolType.allowsDuplicates()) {
-				return (Namespace) symbol.getObject();
+		try (Closeable c = lock.read()) {
+			List<Symbol> symbols = getSymbols(name, namespace);
+			for (Symbol symbol : symbols) {
+				SymbolType symbolType = symbol.getSymbolType();
+				if (symbolType.isNamespace() && !symbolType.allowsDuplicates()) {
+					return (Namespace) symbol.getObject();
+				}
 			}
 		}
 		return null;
@@ -1112,16 +1123,30 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 	@Override
 	public SymbolIterator getSymbols(Namespace namespace) {
-		if (isDeletedNamespace(namespace)) {
-			return SymbolIterator.EMPTY_ITERATOR;
+		try (Closeable c = lock.read()) {
+			if (isDeletedNamespace(namespace)) {
+				return SymbolIterator.EMPTY_ITERATOR;
+			}
+			checkValidNamespaceArgument(namespace);
+			return getSymbols(namespace.getID());
 		}
-		checkValidNamespaceArgument(namespace);
-		return getSymbols(namespace.getID());
+	}
+
+	@Override
+	public SymbolIterator getSymbols(Library library) {
+		try (Closeable c = lock.read()) {
+			RecordIterator it = adapter.getSymbolsByLibrary(library.getID());
+			return new SymbolRecordIterator(it, false, true);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+		return null;
 	}
 
 	@Override
 	public SymbolIterator getSymbols(long namespaceID) {
-		try {
+		try (Closeable c = lock.read()) {
 			RecordIterator it = adapter.getSymbolsByNamespace(namespaceID);
 			return new SymbolRecordIterator(it, false, true);
 		}
@@ -1215,7 +1240,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	 * @param space address space
 	 * @return maximum symbol address within space or null if none are found.
 	 */
-	public Address getMaxSymbolAddress(AddressSpace space) {
+	private Address getMaxSymbolAddress(AddressSpace space) {
 		try {
 			return adapter.getMaxSymbolAddress(space);
 		}
@@ -1230,7 +1255,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	 * 
 	 * @return the address
 	 */
-	public Address getNextExternalSymbolAddress() {
+	private Address getNextExternalSymbolAddress() {
 		int extID = 1;
 		Address maxAddr = getMaxSymbolAddress(AddressSpace.EXTERNAL_SPACE);
 		if (maxAddr != null) {
@@ -2611,9 +2636,8 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 			throw new IllegalArgumentException("Invalid symbol type for variable: " + type);
 		}
 
-		checkValidNamespaceArgument(function);
-
 		try (Closeable c = lock.write()) {
+			checkValidNamespaceArgument(function);
 			source = adjustSourceTypeIfNecessary(name, type, source, storage);
 			Address varAddr = variableStorageMgr.getVariableStorageAddress(storage, true);
 			DBRecord record =
@@ -2678,7 +2702,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 			checkValidNamespaceArgument(namespace);
 
-			if (namespace.isGlobal() || namespace.isLibrary()) {
+			if (namespace.isGlobal()) {
 				throw new IllegalArgumentException(
 					"May not convert namespace to class: " + namespace.getName(true));
 			}
@@ -2763,14 +2787,14 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		try (Closeable c = lock.write()) {
 			DBRecord record = doCreateBasicSymbolRecord(name, null, Address.NO_ADDRESS,
 				SymbolType.LIBRARY, false, source, true);
-			
+
 			List<LibrarySymbol> librarySymbolList = new ArrayList<>(getLibrarySymbolList());
 			int ordinal = librarySymbolList.size();
-			if (Library.UNKNOWN.equals(name)) { 
+			if (Library.UNKNOWN.equals(name)) {
 				// UNKNOWN Library always assigned ordinal of 0
 				ordinal = 0;
 			}
-			
+
 			LibrarySymbol newLibSymbol = new LibrarySymbol(this, record);
 			LibrarySymbol.setRecordFields(record, ordinal, pathname);
 			adapter.updateSymbolRecord(record);
@@ -2778,7 +2802,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 			librarySymbolList.add(ordinal, newLibSymbol);
 			assignLibraryOrdinals(librarySymbolList, true);
-			
+
 			symbolAdded(newLibSymbol);
 			return newLibSymbol;
 		}
@@ -2860,7 +2884,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		}
 		assignLibraryOrdinals(libSymList, false);
 	}
-	
+
 	/**
 	 * Update library symbol ordinal to reflect current placement within ordered list.
 	 * The cached {@code libSymbolList} will be updated to refer to the list instance provided.
@@ -3038,11 +3062,12 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	}
 
 	/**
-	 * Internal method for creating external data/code symbol.
+	 * Internal method for creating external data/code symbol using the next available external
+	 * address. This method is used to create a completely new external location.
 	 * <p>
 	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
+	 * @param library the library containing with this external symbol
 	 * 
-	 * @param addr the address for the new symbol
 	 * @param name the name of the new symbol
 	 * @param namespace the namespace for the new symbol (null may be specified for global
 	 *            namespace)
@@ -3053,25 +3078,51 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	 * @throws IOException if IO error occurs
 	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
 	 */
-	public CodeSymbol createExternalCodeSymbol(Address addr, String name, Namespace namespace,
-			SourceType source, String originalImportName, Address externalProgramAddress)
-			throws IOException, InvalidInputException {
-		if (!addr.isExternalAddress()) {
+	public CodeSymbol createExternalCodeSymbol(Library library, String name,
+			Namespace namespace, SourceType source, String originalImportName,
+			Address externalProgramAddress) throws IOException, InvalidInputException {
+		lock.expectWriteLock();
+		Address externalSpaceAddress = getNextExternalSymbolAddress();
+		return createExternalCodeSymbol(library, externalSpaceAddress, name, namespace, source,
+			originalImportName, externalProgramAddress);
+	}
+
+	/**
+	 * Internal method for creating external data/code symbol using a given external address.
+	 * <p>
+	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
+	 * @param library the library containing with this external symbol
+	 * 
+	 * @param externalSpaceAddress the address for the new symbol
+	 * @param name the name of the new symbol
+	 * @param namespace the namespace for the new symbol (null may be specified for global
+	 *            namespace)
+	 * @param source the SourceType of the new symbol
+	 * @param externalProgramAddress associated external program memory address (may be null) 
+	 * @param originalImportName  original imported name (i.e., mangled name)
+	 * @return the new symbol
+	 * @throws IOException if IO error occurs
+	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
+	 */
+	public CodeSymbol createExternalCodeSymbol(Library library, Address externalSpaceAddress,
+			String name, Namespace namespace, SourceType source, String originalImportName,
+			Address externalProgramAddress) throws IOException, InvalidInputException {
+		lock.expectWriteLock();
+		checkValidLibrary(library);
+		if (!externalSpaceAddress.isExternalAddress()) {
 			throw new IllegalArgumentException("External address required");
 		}
-		if (!namespace.isExternal()) {
-			throw new IllegalArgumentException("External namespace required");
-		}
-		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
-			throw new IllegalArgumentException("Memory address required for external program");
-		}
+		checkExternalAddress(externalProgramAddress);
 		try {
-			DBRecord record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.LABEL,
-				true, source, false);
-			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
+			DBRecord record =
+				doCreateBasicSymbolRecord(name, namespace, externalSpaceAddress, SymbolType.LABEL,
+					true, source, false);
+			MemorySymbol.setExternalFields(record, library, originalImportName,
+				externalProgramAddress);
 			adapter.updateSymbolRecord(record);
 
-			CodeSymbol newSymbol = new CodeSymbol(this, addr, record, record.getKey());
+			CodeSymbol newSymbol =
+				new CodeSymbol(this, externalSpaceAddress, record, record.getKey());
 			cache.add(newSymbol);
 
 			symbolAdded(newSymbol);
@@ -3083,11 +3134,12 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	}
 
 	/**
-	 * Internal method for creating external function symbol.
+	 * Internal method for creating external function symbol using the next available external
+	 * address.
 	 * <p>
 	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
+	 * @param library the library containing this external symbol
 	 * 
-	 * @param addr the address for the new symbol
 	 * @param name the name of the new symbol
 	 * @param namespace the namespace for the new symbol (null may be specified for global
 	 *            namespace)
@@ -3098,24 +3150,59 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 	 * @throws IOException if IO error occurs
 	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
 	 */
-	public FunctionSymbol createExternalFunctionSymbol(Address addr, String name,
-			Namespace namespace, SourceType source, String originalImportName,
+	public FunctionSymbol createExternalFunctionSymbol(Library library,
+			String name, Namespace namespace, SourceType source, String originalImportName,
 			Address externalProgramAddress) throws IOException, InvalidInputException {
-		if (!addr.isExternalAddress()) {
+		lock.expectWriteLock();
+		Address externalSpaceAddress = getNextExternalSymbolAddress();
+		return createExternalFunctionSymbol(library, externalSpaceAddress, name, namespace, source,
+			originalImportName, externalProgramAddress);
+	}
+
+	/**
+	 * Internal method for creating external function symbol using a given external address. This
+	 * methods is used when converting a label external location to a function external location
+	 * <p>
+	 * NOTE: Any name conflict concerns must be checked before invoking this method. 
+	 * @param library the library containing this external symbol
+	 * 
+	 * @param externalSpaceAddress the address for the new symbol
+	 * @param name the name of the new symbol
+	 * @param namespace the namespace for the new symbol (null may be specified for global
+	 *            namespace)
+	 * @param source the SourceType of the new symbol
+	 * @param externalProgramAddress associated external program memory address (may be null) 
+	 * @param originalImportName  original imported name (i.e., mangled name)
+	 * @return the new symbol
+	 * @throws IOException if IO error occurs
+	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
+	 */
+	public FunctionSymbol createExternalFunctionSymbol(Library library,
+			Address externalSpaceAddress, String name, Namespace namespace, SourceType source,
+			String originalImportName,
+			Address externalProgramAddress) throws IOException, InvalidInputException {
+		if (!externalSpaceAddress.isExternalAddress()) {
 			throw new IllegalArgumentException("External address required");
 		}
-		if (externalProgramAddress != null && !externalProgramAddress.isLoadedMemoryAddress()) {
-			throw new IllegalArgumentException("Memory address required for external program");
-		}
+		lock.expectWriteLock();
+		checkValidLibrary(library);
+
+		checkExternalAddress(externalProgramAddress);
 		try {
-			DBRecord record = doCreateBasicSymbolRecord(name, namespace, addr, SymbolType.FUNCTION,
+			DBRecord record = doCreateBasicSymbolRecord(name, namespace, externalSpaceAddress,
+				SymbolType.FUNCTION,
 				true, source, false);
-			MemorySymbol.setExternalFields(record, originalImportName, externalProgramAddress);
+			MemorySymbol.setExternalFields(record, library, originalImportName,
+				externalProgramAddress);
 			adapter.updateSymbolRecord(record);
 
-			FunctionSymbol newSymbol = new FunctionSymbol(this, addr, record);
+			FunctionSymbol newSymbol = new FunctionSymbol(this, externalSpaceAddress, record);
 			cache.add(newSymbol);
 			symbolAdded(newSymbol);
+
+			FunctionManagerDB functionMgr = getFunctionManager();
+			functionMgr.createExternalFunction(newSymbol);
+
 			return newSymbol;
 		}
 		catch (DuplicateNameException e) {
@@ -3186,6 +3273,7 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		if (!addr.isMemoryAddress()) {
 			throw new IllegalArgumentException("memory address required");
 		}
+		lock.expectWriteLock();
 
 		namespace = validateNamespace(namespace, addr, SymbolType.FUNCTION);
 		source = validateSource(source, name, addr, SymbolType.FUNCTION);
@@ -3371,40 +3459,38 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 			throw new IllegalArgumentException(
 				"Invalid address specified for new " + type + " symbol: " + addr);
 		}
-
-		boolean isExternal = isExternal(type, addr, parentNamespace);
-
-		if (!type.isValidParent(program, parentNamespace, addr, isExternal)) {
-			throw new InvalidInputException("Invalid parent namespace specified " + "for new " +
+		if (!type.isValidParent(program, parentNamespace, addr)) {
+			throw new InvalidInputException("Invalid parent namespace specified for new " +
 				type + " symbol: " + parentNamespace.getName(true));
 		}
 	}
 
-	private boolean isExternal(SymbolType type, Address addr, Namespace parentNamespace) {
-		if (type == SymbolType.LABEL || type == SymbolType.FUNCTION) {
-			return addr.isExternalAddress();
-		}
-		return parentNamespace.isExternal();
-	}
-
 	@Override
 	public Symbol getClassSymbol(String name, Namespace namespace) {
-		return getSpecificSymbol(name, namespace, SymbolType.CLASS);
+		try (Closeable c = lock.read()) {
+			return getSpecificSymbol(name, namespace, SymbolType.CLASS);
+		}
 	}
 
 	@Override
 	public Symbol getParameterSymbol(String name, Namespace namespace) {
-		return getSpecificSymbol(name, namespace, SymbolType.PARAMETER);
+		try (Closeable c = lock.read()) {
+			return getSpecificSymbol(name, namespace, SymbolType.PARAMETER);
+		}
 	}
 
 	@Override
 	public Symbol getLocalVariableSymbol(String name, Namespace namespace) {
-		return getSpecificSymbol(name, namespace, SymbolType.LOCAL_VAR);
+		try (Closeable c = lock.read()) {
+			return getSpecificSymbol(name, namespace, SymbolType.LOCAL_VAR);
+		}
 	}
 
 	@Override
 	public Symbol getNamespaceSymbol(String name, Namespace namespace) {
-		return getSpecificSymbol(name, namespace, SymbolType.NAMESPACE);
+		try (Closeable c = lock.read()) {
+			return getSpecificSymbol(name, namespace, SymbolType.NAMESPACE);
+		}
 	}
 
 	@Override
@@ -3439,6 +3525,19 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 		}
 	}
 
+	public void checkValidLibrary(Library library) throws IllegalArgumentException {
+		if (!isMyLibrary(library)) {
+			throw new IllegalArgumentException(
+				"Library is from a different program instance: " + library.getName());
+		}
+	}
+
+	boolean isMyLibrary(Library library) {
+		Symbol librarySymbol = library.getSymbol();
+		return librarySymbol != null && !librarySymbol.isDeleted() &&
+			(librarySymbol.getProgram() == getProgram());
+	}
+
 	boolean isMyNamespace(Namespace namespace) {
 		Symbol newNamespaceSymbol = namespace.getSymbol();
 		return newNamespaceSymbol != null && !newNamespaceSymbol.isDeleted() &&
@@ -3452,6 +3551,22 @@ public class SymbolManager implements SymbolTable, ProgramDBModule {
 
 	Symbol getSymbol(DBRecord rec) {
 		return cache.getCachedInstance(rec);
+	}
+
+	public void checkExternalAddress(Address extAddr) throws InvalidInputException {
+		if (extAddr != null) {
+			if (!extAddr.isLoadedMemoryAddress()) {
+				throw new InvalidInputException("Invalid memory address: " + extAddr);
+			}
+			AddressSpace space = extAddr.getAddressSpace();
+			if (space.isOverlaySpace()) {
+				throw new InvalidInputException("Overlay address not permitted");
+			}
+			if (!space.equals(program.getAddressFactory().getAddressSpace(space.getName()))) {
+				throw new InvalidInputException(
+					"Memory address not defined for program: " + extAddr);
+			}
+		}
 	}
 
 	private class SymbolFactory implements DbFactory<SymbolDB> {

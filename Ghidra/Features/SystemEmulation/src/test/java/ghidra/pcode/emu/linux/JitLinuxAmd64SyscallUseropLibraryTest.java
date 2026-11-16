@@ -37,14 +37,14 @@ public class JitLinuxAmd64SyscallUseropLibraryTest extends EmuLinuxAmd64SyscallU
 			syscalls = new EmuLinuxAmd64SyscallUseropLibrary<>(this, fs, program) {
 				@Override
 				public void unix_exit(long status) {
-					fail("Linux-amd64 shoud use group_exit");
+					fail("Linux-amd64 shoud use exit_group");
 					super.unix_exit(status);
 				}
 
 				@Override
-				public void unix_group_exit(long status) {
+				public void unix_exit_group(long status) {
 					checkStackIsDirect();
-					super.unix_group_exit(status);
+					super.unix_exit_group(status);
 				}
 
 				@Override

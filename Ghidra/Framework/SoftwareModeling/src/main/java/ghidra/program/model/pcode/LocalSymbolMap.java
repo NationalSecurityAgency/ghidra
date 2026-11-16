@@ -354,10 +354,7 @@ public class LocalSymbolMap {
 			encoder.writeString(ATTRIB_LABEL, altName);
 		}
 		encoder.openElement(ELEM_PARENT);
-		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
-		if (!HighFunction.collapseToGlobal(namespace)) {
-			parentid = namespace.getID();
-		}
+		long parentid = namespace == null ? Namespace.GLOBAL_NAMESPACE_ID : namespace.getID();
 		encoder.writeUnsignedInteger(ATTRIB_ID, parentid);
 		encoder.closeElement(ELEM_PARENT);
 		encoder.openElement(ELEM_RANGELIST);	// Empty address range

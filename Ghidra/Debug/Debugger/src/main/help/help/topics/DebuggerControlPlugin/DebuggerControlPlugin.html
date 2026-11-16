@@ -27,35 +27,22 @@
     <H3><A name="control_mode"></A>Control Mode</H3>
 
     <P>This action changes the mode for the active trace and, if applicable, its associated live
-    target. It is always displayed, but only available when a trace is active. The possible modes
-    are:</P>
+    target. It is always displayed, but only available when a trace is active. "Emulation Mode"
+	actions are placed in the menu for each kind of emulator known to Ghidra. These are extensible
+	and may include various system simulations and/or data models. The current baseline modes are:</P>
 
     <UL>
-      <LI><IMG alt="" src="icon.debugger.control.mode.ro.target"> <B>Control Target w/Edits
-      Disabled:</B> The default, this presents actions for controlling the live target but rejects
-      all machine-state edits. Breakpoint commands are directed to the live target. When active,
-      the UI automatically follows the latest snapshot recorded, and navigating back in time is not
-      permitted. If the target is terminated and the trace remains open, the mode is automatically
-      switched to <B>Control Trace</B>.</LI>
+      <LI><IMG alt="" src="icon.debugger.control.mode.ro.target"> <B>Target:</B> The default, 
+	  this presents actions for controlling the live target. Breakpoint commands are directed to the live target. 
+	  When active, the UI automatically follows the latest snapshot recorded, and navigating back in 
+	  time is not permitted.</LI>
 
-      <LI><IMG alt="" src="icon.debugger.control.mode.rw.target"> <B>Control Target:</B> This
-      presents actions for controlling the live target and directs edits to the live target.
-      Breakpoint commands are directed to the live target. When active, the UI automatically
-      follows the latest snapshot recorded, an navigating back in time is not permitted. If the
-      target is terminated and the trace remains open, the mode is automatically switched to
-      <B>Control Emulator</B>.</LI>
+      <LI><IMG alt="" src="icon.debugger.control.mode.ro.trace"> <B>Trace:</B> This presents 
+	  actions for navigating trace snapshots. Edits are generally always accepted, and they are applied directly 
+	  to the trace. Breakpoint commands are directed to the emulator.</LI>
 
-      <LI><IMG alt="" src="icon.debugger.control.mode.ro.trace"> <B>Control Trace w/Edits
-      Disabled:</B> This presents actions for navigating trace snapshots but rejects all
-      machine-state edits. Breakpoint commands are directed to the emulator.</LI>
-
-      <LI><IMG alt="" src="icon.debugger.control.mode.rw.trace"> <B>Control Trace:</B> This
-      presents actions for navigating trace snapshots. It directs all edits to the trace database.
-      Edits are generally always accepted, and they are applied directly to the trace. Breakpoint
-      commands are directed to the emulator.</LI>
-
-      <LI><IMG alt="" src="icon.debugger.control.mode.rw.emulator"> <B>Control Emulator:</B> This
-      presents actions for controlling the integrated emulator. Breakpoint commands are directed to
+      <LI><IMG alt="" src="icon.debugger.control.mode.rw.emulator"> <B>Default Concrete P-code Emulator:	
+	  </B> This presents actions for controlling the integrated emulator. Breakpoint commands are directed to
       the emulator. This can be used for interpolating and extrapolating execution from the current
       snapshot, without affecting the live target. It directs edits to the integrated emulator by
       generating patch steps and appending them to the emulation schedule. See the <A href=
@@ -63,7 +50,22 @@
       Essentially, the change is applied in the trace's scratch space, leaving the original
       recording in tact. Due to implementation details, a thread must be selected, even if edits
       only affect memory. Additionally, the disassembly context register cannot be modified.</LI>
+
+	  <LI><IMG alt="" src="icon.debugger.control.mode.rw.emulator"> <B>Symbolic Z3 Summary with Concrete 
+	  Emulation: </B> This presents actions for controlling the integrated emulator, but simultaneously
+      tracks the propagation of symbolic values displayed in the debugger's <B>Z3 Summary</B> window.</LI>
+	  
+	  <LI><IMG alt="" src="icon.debugger.control.mode.rw.emulator"> <B>Taint Analyzer with Concrete 
+	  Emulation: </B> This presents actions for controlling the integrated emulator, but simultaneously
+	  tracks the propagation of taint.</LI>
     </UL>
+
+	<H3><A name="enable_edits"></A><IMG alt="" src="icon.debugger.enable.edits"> Enable editing of recorded or live values</H3>
+
+	<P>This action toggles the edit state of the current control mode. In Target mode, edits
+	  are directed to the target. In Trace mode, they are applied directly to the trace.
+	  In Emulate mode, they are scheduled as patches.
+	</P>
 
     <H2>Target Control Actions</H2>
 
@@ -189,25 +191,14 @@
 
     <H2>Recommendations</H2>
 
-    <P>The default mode is <B>Control Target w/Edits Disabled</B>, because in most cases, this is
-    the desired behavior. When the target dies, the mode becomes <B>Control Trace w/Edits
-    Disabled</B>. For the most part, modifying the recorded trace itself is discouraged. There are
-    few reasons to edit a trace, perhaps including 1) Hand-generating an experimental trace; 2)
-    Generating a trace from a script, e.g., importing an event log, recording an emulated target;
-    3) Patching in state missed by the original recording. Be wary of <B>Control Trace</B> mode,
-    especially after emulating, since you could accidentally edit scratch space in the trace. It is
-    allowed but can produce non-intuitive and erroneous results, since the emulator caches its
-    snapshots in scratch space.</P>
-
-    <P>To modify state in a live target, use the <B>Control Target</B> mode. <B>NOTE:</B> Some UI
-    components will also require you to toggle a write protector. This also affects scripts that
-    use the state editing service. However, disabling edits cannot prevent a script from directly
-    accessing Ghidra's Target API to modify a target. Nor can it prevent edits via the connected
-    debugger's command-line interpreter. The following components all use the service: <A href=
-    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>, <A href=
-    "help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.html">Memory (Dynamic
-    Bytes)</A>, <A href=
-    "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A>, and <A href=
-    "help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html">Watches</A>.</P>
+    <P>The default mode is <B>Control Target</B> without edits, because in most cases, this is
+    the desired behavior. When the target dies, the mode becomes <B>Control Trace</B>. For the most
+	part, modifying the recorded trace itself is discouraged. There are few reasons to edit a trace, 
+	perhaps including 1) Hand-generating an experimental trace; 2) Generating a trace from a script, 
+	e.g., importing an event log, recording an emulated target; 3) Patching in state missed by the 
+	original recording. Be wary of <B>Control Trace</B> mode, especially after emulating, since you 
+	could accidentally edit scratch space in the trace. It is allowed but can produce non-intuitive 
+	and erroneous results, since the emulator caches its snapshots in scratch space. To modify state 
+	in a live target, use the <B>Control Target</B> mode and enable edits. </P>
   </BODY>
 </HTML>

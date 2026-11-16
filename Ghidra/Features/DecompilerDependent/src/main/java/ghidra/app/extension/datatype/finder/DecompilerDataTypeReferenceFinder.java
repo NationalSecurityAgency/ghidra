@@ -34,7 +34,6 @@ import ghidra.program.model.data.BuiltInDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
 import ghidra.util.datastruct.SetAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -317,10 +316,6 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 			ClangTokenGroup tokens = decompilation.getCCodeMarkup();
 
-// TODO delete this when the ticket settles down
-//			dumpTokens(tokens, 0);
-//			dumpTokenNames(tokens, 0);
-
 			if (tokens == null) {
 				// assume a bad function or the user cancelled the decompilation
 				Msg.trace(this, "Unable to get decompilation tokens for " + function.getName());
@@ -555,78 +550,6 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 			}
 
 			return node instanceof ClangFuncProto;
-		}
-
-		private void dumpTokens(ClangTokenGroup tokens, int depth) {
-			int n = tokens.numChildren();
-			for (int i = 0; i < n; i++) {
-				ClangNode child = tokens.Child(i);
-				doDumpTokens(child, depth);
-			}
-		}
-
-		private void doDumpTokens(ClangNode node, int depth) {
-
-			if (node instanceof ClangTokenGroup) {
-				dumpTokens((ClangTokenGroup) node, depth + 1);
-				return;
-			}
-
-			if (node instanceof ClangBreak) {
-				System.err.print("\n");
-				int tabs = depth * 4;
-				String asString = StringUtilities.pad("", ' ', tabs);
-				System.err.print(asString);
-			}
-			else {
-				String text = node.toString();
-				System.err.print(" '" + text + "' ");
-			}
-
-			ClangToken token = (ClangToken) node;
-			int n = node.numChildren();
-			for (int i = 0; i < n; i++) {
-				ClangNode child = token.Child(i);
-
-				doDumpTokens(child, depth + 1);
-			}
-		}
-
-		private void dumpTokenNames(ClangTokenGroup tokens, int depth) {
-			System.err.print(" '" + tokens.getClass().getSimpleName());
-
-			int n = tokens.numChildren();
-			for (int i = 0; i < n; i++) {
-				ClangNode child = tokens.Child(i);
-				doDumpTokenNames(child, depth);
-			}
-		}
-
-		private void doDumpTokenNames(ClangNode node, int depth) {
-
-			if (node instanceof ClangTokenGroup) {
-				dumpTokenNames((ClangTokenGroup) node, depth + 1);
-				return;
-			}
-
-			if (node instanceof ClangBreak) {
-				System.err.print("\n");
-				int tabs = depth * 4;
-				String asString = StringUtilities.pad("", ' ', tabs);
-				System.err.print(asString);
-			}
-			else {
-				System.err.print(
-					" '" + node.getClass().getSimpleName() + "' ['" + node.toString() + "'] ");
-			}
-
-			ClangToken token = (ClangToken) node;
-			int n = node.numChildren();
-			for (int i = 0; i < n; i++) {
-				ClangNode child = token.Child(i);
-
-				doDumpTokenNames(child, depth + 1);
-			}
 		}
 	}
 }

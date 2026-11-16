@@ -245,7 +245,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				"MOV RDI,RBP",
 				"SYSCALL",
 
-				"MOV RAX," + Syscall.GROUP_EXIT.number,
+				"MOV RAX," + Syscall.EXIT_GROUP.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(space.getAddress(0x00400880), "myfile\0".getBytes());

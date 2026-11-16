@@ -914,7 +914,7 @@ public class DBCachedObjectStoreFactory {
 			new SimplePrimitiveCodec<>(Long.class, ByteBuffer::getLong, ByteBuffer::putLong);
 		/** Codec for {@link String} */
 		PrimitiveCodec<String> STRING = new AbstractPrimitiveCodec<>(String.class) {
-			final Charset cs = Charset.forName("UTF-8");
+			final Charset cs = StandardCharsets.UTF_8;
 
 			@Override
 			public String decode(ByteBuffer buffer) {

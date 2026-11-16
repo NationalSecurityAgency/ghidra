@@ -55,6 +55,11 @@ public abstract class AbstractEmuUnixFileHandle<T> implements EmuUnixFileDescrip
 		this.offsetBytes = cSpec.getDataOrganization().getLongSize(); // off_t's fundamental type
 	}
 
+	@Override
+	public String toString() {
+		return "%s[file=%s,flags=%s]".formatted(getClass().getSimpleName(), file, flags);
+	}
+
 	/**
 	 * Get the file opened to this handle
 	 * 

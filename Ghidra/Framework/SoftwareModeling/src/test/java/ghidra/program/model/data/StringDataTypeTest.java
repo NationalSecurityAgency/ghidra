@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,6 +70,18 @@ public class StringDataTypeTest extends AbstractGTest {
 	private StringDataInstance mkSDI(AbstractStringDataType dt, MemBuffer buf, Settings settings,
 			int length) {
 		return new StringDataInstance(dt, settings, buf, length);
+	}
+
+	private void assertRoundTripRepr(MemBuffer mb, int length, AbstractStringDataType dt,
+			Settings settings, String expectedRepr) throws DataTypeEncodeException {
+		byte[] origBytes = new byte[length];
+		mb.getBytes(origBytes, 0);
+
+		String repr = dt.getRepresentation(mb, settings, length);
+		assertEquals(expectedRepr, repr);
+
+		byte[] roundTripBytes = dt.encodeRepresentation(repr, mb, settings, length);
+		assertArrayEquals(origBytes, roundTripBytes);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -632,6 +644,39 @@ public class StringDataTypeTest extends AbstractGTest {
 			"??...",
 			pascal255String.getRepresentation(mb(false, 5, 'h', 'e', 'l', 'l'), newset(), 5));
 
+	}
+
+	@Test
+	public void testStringReprRoundTrip() throws DataTypeEncodeException {
+		ByteMemBufferImpl buf = mb(false, 'h', 'e', 'l', 'l', 'o', 0, 'a', '\n', 'b', 255, 0);
+
+		assertRoundTripRepr(buf, buf.getLength(), fixedlenString, newset(),
+			"\"hello\\0a\\nb\",FFh");
+
+		// "ab" and 2 ideographic characters cc01 & 1202 encoded as UTF-8
+		buf = mb(false, 'a', 'b', 0xec, 0xb0, 0x81, 0xe1, 0x88, 0x82);
+		assertRoundTripRepr(buf, buf.getLength(), fixedUtf8String, newset().set(RENDER_ENUM.ALL),
+			"u8\"ab\ucc01\u1202\"");
+
+		// test "Hello " U+1f600 emoji (\ud83d \ude00) encoded as utf-8
+		buf = mb(false, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0xf0, 0x9f, 0x98, 0x80);
+		assertRoundTripRepr(buf, buf.getLength(), fixedUtf8String, newset().set(RENDER_ENUM.ALL),
+			"u8\"Hello \ud83d\ude00\"");
+
+		// test "Hello " U+1f600 emoji (\ud83d \ude00) "!" encoded as utf-16
+		// tests handling real codepoint in the repr string, not an escaped code point
+		buf = mb(false, 0x48, 0x00, 0x65, 0x00, 0x6c, 0x00, 0x6c, 0x00, 0x6f, 0x00, 0x20, 0x00,
+			0x3d, 0xd8, 0x00, 0xde, 0x21, 0x00);
+		assertRoundTripRepr(buf, buf.getLength(), fixedUtf16String, newset().set(RENDER_ENUM.ALL),
+			"u\"Hello \ud83d\ude00!\"");
+
+		// also test round tripping full escaped code point value: 
+		assertRoundTripRepr(buf, buf.getLength(), fixedUtf16String,
+			newset().set(RENDER_ENUM.ESC_SEQ), "u\"Hello \\U0001F600!\"");
+
+		// also test round tripping byte-coded code point value: 
+		assertRoundTripRepr(buf, buf.getLength(), fixedUtf16String,
+			newset().set(RENDER_ENUM.BYTE_SEQ), "u\"Hello \",3Dh,D8h,00h,DEh,\"!\"");
 	}
 
 	//-------------------------------------------------------------------------------------

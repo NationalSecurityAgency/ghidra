@@ -28,8 +28,7 @@ import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
@@ -84,9 +83,9 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 				rec = symbolMgr.getSymbolRecord(key);
 			}
 			if (rec == null) {
-				return false; 
+				return false;
 			}
-			byte currentTypeValue = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL); 
+			byte currentTypeValue = record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
 			byte newTypeValue = rec.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL);
 			if (newTypeValue != currentTypeValue) {
 				return false;
@@ -296,6 +295,9 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 			boolean checkForDuplicates)
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 
+		if (newNamespace == null) {
+			newNamespace = symbolMgr.getProgram().getGlobalNamespace();
+		}
 		try (Closeable c = lock.write()) {
 			checkDeleted();
 			checkEditOK();
@@ -369,7 +371,7 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
-						externalLocation.saveOriginalNameIfNeeded(oldNamespace, oldName, oldSource);
+						externalLocation.saveOriginalNameIfNeeded(oldName, oldSource);
 					}
 					symbolMgr.symbolRenamed(this, oldName);
 					if (dynamicallyRenamedSymbols != null) {
@@ -496,6 +498,11 @@ public abstract class SymbolDB extends DbObject implements Symbol {
 			return (Namespace) parent.getObject();
 		}
 		return symbolMgr.getProgram().getGlobalNamespace();
+	}
+
+	@Override
+	public Library getLibrary() {
+		return null;
 	}
 
 	@Override

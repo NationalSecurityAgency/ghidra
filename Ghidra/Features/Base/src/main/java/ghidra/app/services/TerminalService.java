@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,6 @@ import ghidra.framework.plugintool.ServiceInfo;
 
 /**
  * A service that provides for the creation and management of DEC VT100 terminal emulators.
- * 
  * <p>
  * These are perhaps better described as XTerm clones. It seems the term "VT100" is applied to any
  * text display that interprets some number of ANSI escape codes. While the XTerm documentation does
@@ -40,7 +39,6 @@ import ghidra.framework.plugintool.ServiceInfo;
  * terminal emulators have implemented more and more escape codes, many of which were invented by
  * XTerm, and some of which result from mis-reading documentation and/or replicating erroneous
  * implementations.
- * 
  * <p>
  * Perhaps our interpretation of the history is jaded, and as we learn more, our implementation can
  * become more disciplined, but as it stands, our {@link TerminalPlugin} takes the <em>ad hoc</em>
@@ -56,7 +54,6 @@ import ghidra.framework.plugintool.ServiceInfo;
  * pseudo-terminal (pty) file name. Then, we use Python from a separate terminal to write test
  * sequences to it and/or read sequences from it. We use the {@code sleep} command to prevent Bash
  * from reading its own terminal. This same process is applied to test our implementation.
- * 
  * <p>
  * The applications we've tested with include, without regard to version:
  * <ul>
@@ -66,7 +63,6 @@ import ghidra.framework.plugintool.ServiceInfo;
  * <li>{@code gdb -tui}</li>
  * <li>{@code termmines} (from our Debugger training exercises)</li>
  * </ul>
- * 
  * <p>
  * Some known issues:
  * <ul>
@@ -91,7 +87,6 @@ public interface TerminalService {
 
 	/**
 	 * Create a terminal not connected to any particular application.
-	 * 
 	 * <p>
 	 * To display application output, use {@link Terminal#injectDisplayOutput(java.nio.ByteBuffer)}.
 	 * Application input is delivered to the given terminal output callback. If the application is
@@ -120,9 +115,7 @@ public interface TerminalService {
 	 * 
 	 * @param helpPlugin the invoking plugin, which ought to provide a help topic for this terminal.
 	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
-	 *            been tested. So long as the bytes 0x00-0x7f map one-to-one with characters with
-	 *            the same code point, it'll probably work. Charsets that require more than one byte
-	 *            to decode those characters will almost certainly break things.
+	 *            been tested.
 	 * @param in the application's output, i.e., input for the terminal to display.
 	 * @param out the application's input, i.e., output from the terminal's keyboard and mouse.
 	 * @return the terminal
@@ -133,9 +126,7 @@ public interface TerminalService {
 	/**
 	 * @see #createWithStreams(Plugin, Charset, InputStream, OutputStream)
 	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
-	 *            been tested. So long as the bytes 0x00-0x7f map one-to-one with characters with
-	 *            the same code point, it'll probably work. Charsets that require more than one byte
-	 *            to decode those characters will almost certainly break things.
+	 *            been tested.
 	 * @param in the application's output, i.e., input for the terminal to display.
 	 * @param out the application's input, i.e., output from the terminal's keyboard and mouse.
 	 * @return the terminal
@@ -143,8 +134,34 @@ public interface TerminalService {
 	Terminal createWithStreams(Charset charset, InputStream in, OutputStream out);
 
 	/**
-	 * Remove all terminals whose sessions have terminated from the tool
+	 * A terminal with its corresponding i/o streams
 	 * 
+	 * @param terminal the terminal
+	 * @param in the input stream (from the terminal)
+	 * @param out the output stream (to the terminal)
+	 */
+	record TerminalGivingStreams(Terminal terminal, InputStream in, OutputStream out) {}
+
+	/**
+	 * Create a terminal and a pair of i/o streams to communicate with it.
+	 * 
+	 * @param helpPlugin the invoking plugin, which out to provide a help topic for this terminal.
+	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
+	 *            been tested.
+	 * @return the terminal and streams
+	 */
+	TerminalGivingStreams createGivingStreams(Plugin helpPlugin, Charset charset);
+
+	/**
+	 * @see #createGivingStreams(Plugin, Charset)
+	 * @param charset the character set for the terminal. <b>NOTE:</b> Only US-ASCII and UTF-8 have
+	 *            been tested.
+	 * @return the terminal and streams
+	 */
+	TerminalGivingStreams createGivingStreams(Charset charset);
+
+	/**
+	 * Remove all terminals whose sessions have terminated from the tool
 	 * <p>
 	 * This is done automatically when creating any new terminal.
 	 */

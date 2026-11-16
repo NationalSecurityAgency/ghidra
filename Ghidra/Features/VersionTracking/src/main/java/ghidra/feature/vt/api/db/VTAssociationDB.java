@@ -92,7 +92,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public Address getSourceAddress() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return associationDBM
 					.getSourceAddressFromLong(record.getLongValue(SOURCE_ADDRESS_COL.column()));
@@ -101,7 +101,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public Address getDestinationAddress() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return associationDBM.getDestinationAddressFromLong(
 				record.getLongValue(DESTINATION_ADDRESS_COL.column()));
@@ -110,7 +110,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public VTAssociationType getType() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			byte associationTypeOrdinal = record.getByteValue(TYPE_COL.column());
 			return VTAssociationType.values()[associationTypeOrdinal];
@@ -123,7 +123,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public VTAssociationStatus getStatus() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return VTAssociationStatus.values()[record.getByteValue(STATUS_COL.column())];
 		}
@@ -131,14 +131,14 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public VTAssociationMarkupStatus getMarkupStatus() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return new VTAssociationMarkupStatus(record.getByteValue(APPLIED_STATUS_COL.column()));
 		}
 	}
 
 	DBRecord getRecord() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return record;
 		}
@@ -174,7 +174,9 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public void clearStatus() throws VTAssociationStatusException {
-		associationDBM.clearAcceptedAssociation(this);
+		try (Closeable _ = associationDBM.lock.write()) {
+			associationDBM.clearAcceptedAssociation(this);
+		}
 	}
 
 	@Override
@@ -195,7 +197,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public int getVoteCount() {
-		try (Closeable c = associationDBM.lock.read()) {
+		try (Closeable _ = associationDBM.lock.read()) {
 			refreshIfNeeded();
 			return record.getIntValue(VOTE_COUNT_COL.column());
 		}
@@ -203,7 +205,7 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 
 	@Override
 	public void setMarkupStatus(VTAssociationMarkupStatus status) {
-		try (Closeable c = associationDBM.lock.write()) {
+		try (Closeable _ = associationDBM.lock.write()) {
 			checkDeleted();
 			VTAssociationMarkupStatus existingStatus = getMarkupStatus();
 			if (status.equals(existingStatus)) {
@@ -218,25 +220,26 @@ public class VTAssociationDB extends DbObject implements VTAssociation {
 		}
 	}
 
-	public void setStatus(VTAssociationStatus status) {
-		try (Closeable c = associationDBM.lock.write()) {
+	public void setStatus(VTAssociationStatus newStatus) {
+		try (Closeable _ = associationDBM.lock.write()) {
 			checkDeleted();
 			VTAssociationStatus existingStatus = getStatus();
-			if (status == existingStatus) {
+			if (newStatus == existingStatus) {
 				return; // no change in status
 			}
 
-			record.setByteValue(STATUS_COL.column(), (byte) status.ordinal());
+			record.setByteValue(STATUS_COL.column(), (byte) newStatus.ordinal());
 			associationDBM.updateAssociationRecord(record);
+			associationDBM.statusUpdated(record, existingStatus, newStatus);
 			associationDBM.getSession()
 					.setObjectChanged(VTEvent.ASSOCIATION_STATUS_CHANGED, this, existingStatus,
-						status);
+						newStatus);
 		}
 	}
 
 	@Override
 	public void setVoteCount(int voteCount) {
-		try (Closeable c = associationDBM.lock.write()) {
+		try (Closeable _ = associationDBM.lock.write()) {
 			checkDeleted();
 			voteCount = Math.max(0, voteCount);
 			record.setIntValue(VOTE_COUNT_COL.column(), voteCount);

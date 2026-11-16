@@ -24,6 +24,7 @@ import com.contrastsecurity.sarif.Result.Level;
 import ghidra.app.plugin.core.decompiler.taint.AbstractTaintState;
 import ghidra.app.plugin.core.decompiler.taint.TaintRule;
 import ghidra.program.model.address.Address;
+import ghidra.util.Msg;
 import sarif.SarifUtils;
 import sarif.handlers.SarifResultHandler;
 import sarif.model.SarifDataFrame;
@@ -147,7 +148,7 @@ public class SarifTaintCodeFlowResultHandler extends SarifResultHandler {
 				break;
 
 			default:
-				System.err.println(String.format("Path Kind: '%s' is unknown", kind));
+				Msg.error(this, String.format("Path Kind: '%s' is unknown", kind));
 		}
 		map.put("kind", kind);
 		map.put("operation", operation);

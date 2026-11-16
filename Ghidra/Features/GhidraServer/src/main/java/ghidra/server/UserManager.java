@@ -33,12 +33,13 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * <code>UserManager</code> manages the set of users associated with a running GhidraServer.
- * Support is also provided for managing and authenticating local user passwords when 
- * needed.
+ * <code>UserManager</code> manages the set of users associated with a running GhidraServer. Support
+ * is also provided for managing and authenticating local user passwords when needed.
  * <p>
  * User names are managed in a case-sensitive manner, however user lookups occur in a
- * case-insensitive manner.  Duplicate names with different case are not supported. 
+ * case-insensitive manner. Duplicate names with different case are not supported.
+ * <p>
+ * NOTE: The use of stdin, stdout, and stderr is acceptable for this console application.
  */
 public class UserManager {
 

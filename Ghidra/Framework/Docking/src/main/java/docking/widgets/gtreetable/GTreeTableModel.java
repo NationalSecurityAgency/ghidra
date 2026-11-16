@@ -23,28 +23,11 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
 
 public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableModelStub<T> {
-	protected class TreeColumn extends AbstractDynamicTableColumnStub<T, GTreeTableNode> {
-		private final String columnName;
-		private final GTreeTableCellRenderer<GTreeTableNode> renderer;
-
-		public TreeColumn(String columnName) {
-			this.columnName = columnName;
-			renderer = new GTreeTableCellRenderer<>();
-		}
-
-		@Override
-		public String getColumnName() {
-			return columnName;
-		}
-
-		@Override
-		public GColumnRenderer<GTreeTableNode> getColumnRenderer() {
-			return renderer;
-		}
+	public abstract static class AbstractTreeColumn<T extends GTreeTableNode>
+			extends AbstractDynamicTableColumnStub<T, GTreeTableNode> {
 
 		@Override
 		public GTreeTableNode getValue(T rowObject, Settings settings, ServiceProvider provider)
@@ -55,6 +38,27 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 		@Override
 		public Comparator<GTreeTableNode> getComparator() {
 			return Comparator.comparingInt(GTreeTableNode::getIndex);
+		}
+
+		@Override
+		public abstract GTreeTableCellRenderer<GTreeTableNode> getColumnRenderer();
+	}
+
+	public static class TreeColumn<T extends GTreeTableNode> extends AbstractTreeColumn<T> {
+		private final GTreeTableCellRenderer<GTreeTableNode> renderer;
+
+		public TreeColumn() {
+			this.renderer = new GTreeTableCellRenderer<>();
+		}
+
+		@Override
+		public String getColumnName() {
+			return "Tree";
+		}
+
+		@Override
+		public GTreeTableCellRenderer<GTreeTableNode> getColumnRenderer() {
+			return renderer;
 		}
 	}
 
@@ -73,7 +77,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	@Override
 	protected TableColumnDescriptor<T> createTableColumnDescriptor() {
 		final TableColumnDescriptor<T> descriptor = new TableColumnDescriptor<>();
-		descriptor.addVisibleColumn(new TreeColumn(treeColumnName()), 0, true);
+		descriptor.addVisibleColumn(new TreeColumn<>(), 0, true);
 
 		return descriptor;
 	}
@@ -84,6 +88,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	 * <p>
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected List<T> doFilter(List<T> data, TableSortingContext<T> lastSortingContext,
 			TaskMonitor monitor) throws CancelledException {
@@ -123,6 +128,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 		return returnFilteredList;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doLoad(Accumulator<T> accumulator, TaskMonitor monitor)
 			throws CancelledException {
@@ -140,8 +146,7 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 	/**
 	 * Set the root node of this model
 	 *
-	 * @param node
-	 * 		Root node to set
+	 * @param node Root node to set
 	 * @return True if node is different, false otherwise
 	 */
 	public boolean setRootNode(GTreeTableNode node) {
@@ -149,14 +154,5 @@ public class GTreeTableModel<T extends GTreeTableNode> extends ThreadedTableMode
 		rootNode = node;
 		reload();
 		return ret;
-	}
-
-	/**
-	 * Name of the tree column, allows extending classes the ability to change the name
-	 *
-	 * @return Tree column name
-	 */
-	protected String treeColumnName() {
-		return "Tree";
 	}
 }
