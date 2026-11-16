@@ -373,7 +373,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	}
 
 	@Test
-	public void testNoSignatureInfoFunc_SignatureNotLocked()
+	public void testNoSignatureInfoFunc_ASM_SignatureNotLocked()
 			throws CancelledException, IOException, DWARFException {
 		// A subprogram DIE with no formal parameters, no DW_AT_prototyped flag and a
 		// DW_TAG_unspecified_type return type carries no information about the function's
@@ -381,7 +381,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		// Test that the signature is not committed as an IMPORTED "void foo(void)", which
 		// would lock parameter storage and prevent later analyzers from recovering the
 		// real parameters and return value.
-		ensureCompUnit();
+		addCompUnit(DW_LANG_Mips_Assembler);
 		DebugInfoEntry unspecifiedDIE =
 			new DIECreator(dwarfProg, DW_TAG_unspecified_type).create();
 		newSubprogram("foo", unspecifiedDIE, 0x410, 10).create();
@@ -394,6 +394,30 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		assertEquals(SourceType.DEFAULT, fooFunc.getSignatureSource());
 		assertEquals(0, fooFunc.getParameterCount());
 		assertEquals("undefined", fooFunc.getReturnType().getName());
+	}
+
+	@Test
+	public void testNoSignatureInfoFunc_ASM_func_C_prototype()
+			throws CancelledException, IOException, DWARFException {
+		// Test matching a C func prototype that matches (by name) an ASM func with no signature
+		// info.
+		addCompUnit(DW_LANG_Mips_Assembler);
+		DebugInfoEntry unspecifiedDIE = new DIECreator(dwarfProg, DW_TAG_unspecified_type).create();
+		newSubprogram("foo", unspecifiedDIE, 0x410, 10).create();
+
+		addCompUnit();
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newFuncPrototype("foo", intDIE).create();
+		newFormalParam(fooDIE, "param1", intDIE).create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+		assertEquals("foo", fooFunc.getName());
+		assertEquals(SourceType.IMPORTED, fooFunc.getSignatureSource());
+		assertEquals(1, fooFunc.getParameterCount());
+		assertEquals("int", fooFunc.getReturnType().getName());
 	}
 
 	@Test

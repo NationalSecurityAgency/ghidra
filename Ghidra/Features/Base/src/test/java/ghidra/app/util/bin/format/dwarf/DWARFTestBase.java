@@ -361,6 +361,14 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 				.addUInt(DW_AT_high_pc, length);
 	}
 
+	protected DIECreator newFuncPrototype(String name, DebugInfoEntry returnType) {
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_subprogram) //
+				.addString(DW_AT_name, name)
+				.addRef(DW_AT_type, returnType)
+				.addBoolean(DW_AT_declaration, true);
+	}
+
 	protected DIECreator newFormalParam(DebugInfoEntry subprogram, String paramName,
 			DebugInfoEntry paramDataType, byte[] locationExpr) {
 		ensureCompUnit();

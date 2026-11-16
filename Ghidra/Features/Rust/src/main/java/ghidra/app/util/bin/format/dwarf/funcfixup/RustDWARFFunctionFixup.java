@@ -39,7 +39,7 @@ public class RustDWARFFunctionFixup implements DWARFFunctionFixup {
 		int cuLang = diea.getCompilationUnit().getLanguage();
 		if (cuLang == DWARFSourceLanguage.DW_LANG_Rust) {
 			dfunc.callingConventionName = getRustCC(dfunc.getProgram().getGhidraProgram());
-			if (dfunc.params.isEmpty() && dfunc.diea.getTypeRef() == null) {
+			if (dfunc.isBlankSignature() && DWARFFunction.hasNoSignatureInformation(dfunc.diea)) {
 				// if there were no defined parameters and return type specified, don't force
 				// an empty param signature for this function. (Rust can emit these kind of stub
 				// DIEs when compiled without -g)

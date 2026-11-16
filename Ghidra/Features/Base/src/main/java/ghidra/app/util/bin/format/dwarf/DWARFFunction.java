@@ -123,46 +123,55 @@ public class DWARFFunction {
 
 		int paramOrdinal = 0;
 		for (DIEAggregate paramDIEA : diea.getFunctionParamList()) {
-			DWARFVariable param = DWARFVariable.readParameter(paramDIEA, dfunc, paramOrdinal++);
+			DWARFVariable param =
+				DWARFVariable.readParameter(paramDIEA, dfunc, paramOrdinal++, true);
 			dfunc.params.add(param);
 		}
 		dfunc.varArg = !diea.getChildren(DW_TAG_unspecified_parameters).isEmpty();
-
-		if (hasNoSignatureInformation(dfunc, diea)) {
-			// The DIE carries no usable signature information.  Committing it as-is
-			// would lock an incorrect "void f(void)" signature (SourceType.IMPORTED)
-			// and prevent later analyzers from recovering the real parameters,
-			// making the result worse than for the same binary without debug info.
-			dfunc.signatureCommitMode = CommitMode.NO_PARAMS;
-		}
 
 		return dfunc;
 	}
 
 	/**
-	 * Detects subprogram DIEs that provide no signature information: no formal
-	 * parameters, no DW_AT_prototyped flag, and a DW_TAG_unspecified_type return type.
-	 * <p>
-	 * Assemblers emit this shape for functions defined in assembly source (e.g. gas
-	 * with --gdwarf only records name, address range and an unspecified return type),
-	 * where the parameters and return value are genuinely unknown rather than absent.
-	 *
-	 * @param dfunc {@link DWARFFunction} being built
+	 * Create a prototype-only function instance from the information found in the specified DIEA.
+	 * 
 	 * @param diea DW_TAG_subprogram {@link DIEAggregate}
-	 * @return true if the DIE asserts nothing about the function's signature
+	 * @return new {@link DWARFFunction} 
 	 */
-	private static boolean hasNoSignatureInformation(DWARFFunction dfunc, DIEAggregate diea) {
-		DIEAggregate typeRef = diea.getTypeRef();
-		return dfunc.params.isEmpty() && !dfunc.varArg &&
-			!diea.getBool(DW_AT_prototyped, false) &&
-			typeRef != null && typeRef.getTag() == DW_TAG_unspecified_type;
+	public static DWARFFunction readPrototype(DIEAggregate diea) {
+		DWARFProgram prog = diea.getProgram();
+		DWARFDataTypeManager dwarfDTM = prog.getDwarfDTM();
+
+		DWARFFunction dfunc = new DWARFFunction(diea, prog.getName(diea), DWARFRangeList.EMTPY);
+
+		dfunc.namespace = dfunc.name.getParentNamespace(prog.getGhidraProgram());
+		dfunc.sourceInfo = DWARFSourceInfo.create(diea);
+
+		// Check if the function is an external function
+		dfunc.isExternal = diea.getBool(DW_AT_external, false);
+		dfunc.noReturn = diea.getBool(DW_AT_noreturn, false);
+
+		dfunc.retval =
+			DWARFVariable.fromDataType(dfunc, dwarfDTM.getDataTypeForVariable(diea.getTypeRef()));
+
+		int paramOrdinal = 0;
+		for (DIEAggregate paramDIEA : diea.getFunctionParamList()) {
+			DWARFVariable param =
+				DWARFVariable.readParameter(paramDIEA, dfunc, paramOrdinal++, false);
+			dfunc.params.add(param);
+		}
+		dfunc.varArg = !diea.getChildren(DW_TAG_unspecified_parameters).isEmpty();
+
+		return dfunc;
 	}
 
 	private DWARFFunction(DIEAggregate diea, DWARFName dni, DWARFRangeList dwarfBody) {
 		this.diea = diea;
 		this.name = dni;
 		this.dwarfBody = dwarfBody;
-		this.address = diea.getProgram().getCodeAddress(dwarfBody.getFirstAddress());
+		this.address = !dwarfBody.isEmpty()
+				? diea.getProgram().getCodeAddress(dwarfBody.getFirstAddress())
+				: null;
 	}
 
 	public DWARFProgram getProgram() {
@@ -364,32 +373,6 @@ public class DWARFFunction {
 		}
 	}
 
-	//---------------------------------------------------------------------------------------------
-
-	public static AddressRange getFuncBody(DIEAggregate diea, boolean flattenDisjoint)
-			throws IOException {
-		// TODO: dw_at_entry_pc is also sometimes available, typically in things like inlined_subroutines
-		DWARFProgram dprog = diea.getProgram();
-		DWARFRangeList bodyRangeList = getFuncBodyRanges(diea);
-		if (bodyRangeList.isEmpty()) {
-			return null;
-		}
-		DWARFRange bodyRange =
-			flattenDisjoint ? bodyRangeList.getFlattenedRange() : bodyRangeList.getFirst();
-		return dprog.getAddressRange(bodyRange, true);
-	}
-
-	public static DWARFRangeList getFuncBodyRanges(DIEAggregate diea) throws IOException {
-		DWARFRange body = diea.getPCRange();
-		if (!body.isEmpty()) {
-			return new DWARFRangeList(body);
-		}
-		if (diea.hasAttribute(DW_AT_ranges)) {
-			return diea.getRangeList(DW_AT_ranges);
-		}
-		return DWARFRangeList.EMTPY;
-	}
-
 	public boolean syncWithExistingGhidraFunction(boolean createIfMissing) {
 		try {
 			Program currentProgram = getProgram().getGhidraProgram();
@@ -552,11 +535,87 @@ public class DWARFFunction {
 		return funcDef;
 	}
 
+	/**
+	 * Modify this instance using information from the other prototype function definition.
+	 * 
+	 * @param protoFunc function information found in a prototype decl
+	 */
+	public void setInfoFromPrototypeFunc(DWARFFunction protoFunc) {
+		isExternal = protoFunc.isExternal;
+		noReturn = protoFunc.noReturn;
+		retval = protoFunc.retval;
+		params = List.copyOf(protoFunc.params);
+		varArg = protoFunc.varArg;
+	}
+
+	/**
+	 * {@return boolean true if this function's signature lacks param and return info, false if
+	 * it has some info.  This is slightly different than #hasNoSignatureInformation(DIEAggregate)}
+	 */
+	public boolean isBlankSignature() {
+		return params.isEmpty() && !varArg && retval.isVoidType();
+	}
+
 	@Override
 	public String toString() {
 		return String.format(
 			"DWARFFunction [name=%s, address=%s, sourceInfo=%s, retval=%s, params=%s, function=%s, diea=%s, signatureCommitMode=%s]",
 			name, address, sourceInfo, retval, params, function, diea, signatureCommitMode);
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	/**
+	 * @param diea {@link DIEAggregate} for a subprogram (ie. function)
+	 * {@return boolean true if the specified DIE is a prototype func definition, otherwise false}
+	 */
+	public static boolean isPrototypeFuncdecl(DIEAggregate diea) {
+		return diea.getTag() == DW_TAG_subprogram && diea.isDanglingDeclaration();
+	}
+
+	/**
+	 * Detects when the raw DIE info indicate that no signature information is present: 
+	 * no formal parameters, no DW_AT_prototyped flag, and a DW_TAG_unspecified_type return type
+	 * (or no return type at all).
+	 * <p>
+	 * Assemblers emit this shape for functions defined in assembly source (e.g. gas
+	 * with --gdwarf only records name, address range and an unspecified return type),
+	 * where the parameters and return value are genuinely unknown rather than absent.
+	 * 
+	 * @param diea {@link DIEAggregate} of a func 
+	 * @return true if the DIE asserts nothing about the function's signature
+	 */
+	public static boolean hasNoSignatureInformation(DIEAggregate diea) {
+		DIEAggregate typeRef = diea.getTypeRef();
+		return diea.getFunctionParamList().isEmpty() // no params
+			&& diea.getChildren(DW_TAG_unspecified_parameters).isEmpty() // not varargs
+			&& !diea.getBool(DW_AT_prototyped, false) // not prototyped
+			&& (typeRef == null // completely missing a return type value 
+				|| typeRef.getTag() == DW_TAG_unspecified_type); // or an unspecified type
+	}
+
+	public static AddressRange getFuncBody(DIEAggregate diea, boolean flattenDisjoint)
+			throws IOException {
+		// TODO: dw_at_entry_pc is also sometimes available, typically in things like inlined_subroutines
+		DWARFProgram dprog = diea.getProgram();
+		DWARFRangeList bodyRangeList = getFuncBodyRanges(diea);
+		if (bodyRangeList.isEmpty()) {
+			return null;
+		}
+		DWARFRange bodyRange =
+			flattenDisjoint ? bodyRangeList.getFlattenedRange() : bodyRangeList.getFirst();
+		return dprog.getAddressRange(bodyRange, true);
+	}
+
+	public static DWARFRangeList getFuncBodyRanges(DIEAggregate diea) throws IOException {
+		DWARFRange body = diea.getPCRange();
+		if (!body.isEmpty()) {
+			return new DWARFRangeList(body);
+		}
+		if (diea.hasAttribute(DW_AT_ranges)) {
+			return diea.getRangeList(DW_AT_ranges);
+		}
+		return DWARFRangeList.EMTPY;
 	}
 
 }

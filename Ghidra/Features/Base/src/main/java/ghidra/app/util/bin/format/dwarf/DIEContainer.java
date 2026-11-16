@@ -561,6 +561,23 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	}
 
 	/**
+	 * Returns iterable that traverses all {@link DIEAggregate}s in the program that match the
+	 * specified tag.
+	 *  
+	 * @param tag eg. {@link DWARFTag#DW_TAG_base_type}
+	 * @return sequence of {@link DIEAggregate}es
+	 */
+	public Iterable<DIEAggregate> allAggregates(DWARFTag tag) {
+		DIEAggregateIterator it = new DIEAggregateIterator();
+		it.tagFilter = tag.getId();
+		return it;
+	}
+
+	public int getDIECount() {
+		return dieOffsets.length;
+	}
+
+	/**
 	 * Returns the total number of {@link DIEAggregate} objects in the entire program.
 	 *
 	 * @return the total number of {@link DIEAggregate} objects in the entire program.
@@ -1056,17 +1073,26 @@ public class DIEContainer implements Iterable<DebugInfoEntry> {
 	private class DIEAggregateIterator implements Iterator<DIEAggregate>, Iterable<DIEAggregate> {
 
 		private int index = -1;
+		private Integer tagFilter;
 
 		private int findNext() {
 			int i = index;
 			if (i < dieOffsets.length) {
 				for (i = i + 1; i < dieOffsets.length; i++) {
-					if (!indexHasRef.get(i)) {
+					if (!indexHasRef.get(i) && matchesTagFilter(i)) {
 						return i;
 					}
 				}
 			}
 			return i;
+		}
+
+		private boolean matchesTagFilter(int dieIndex) {
+			if (tagFilter != null) {
+				DebugInfoEntry die = getDIEByIndex(dieIndex);
+				return die != null && die.getTag().getId() == tagFilter.intValue();
+			}
+			return true;
 		}
 
 		@Override
