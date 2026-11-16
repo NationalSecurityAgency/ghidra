@@ -693,14 +693,25 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
 
 /// For each jump-table, for each address, the corresponding basic block index is computed.
 /// This also calculates the \e default branch for each jump-table.
+/// A jump-table override whose BRANCHIND was never reached by the flow has no PcodeOp to
+/// work from, and is discarded.
 /// \param flow is the flow object (mapping addresses to p-code ops)
 void Funcdata::switchOverJumpTables(const FlowInfo &flow)
 
 {
+  vector<JumpTable *> remain;
   vector<JumpTable *>::iterator iter;
 
-  for(iter=jumpvec.begin();iter!=jumpvec.end();++iter)
-    (*iter)->switchOver(flow);
+  for(iter=jumpvec.begin();iter!=jumpvec.end();++iter) {
+    JumpTable *jt = *iter;
+    if (jt->getIndirectOp() == (PcodeOp *)0) {	// Override that the flow never linked to a BRANCHIND
+      delete jt;
+      continue;
+    }
+    jt->switchOver(flow);
+    remain.push_back(jt);
+  }
+  jumpvec = remain;
 }
 
 void Funcdata::installSwitchDefaults(void)
