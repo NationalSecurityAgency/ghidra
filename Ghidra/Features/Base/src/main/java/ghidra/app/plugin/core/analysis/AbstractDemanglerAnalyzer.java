@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -131,6 +134,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		// Note: iterator will continually need to reinitialize due to symbol changes
 		//       consider copying primary symbols to alt storage for iteration
 		SymbolTable symbolTable = program.getSymbolTable();
+		Set<Address> processedAddresses = new HashSet<>();
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
 			monitor.checkCancelled();
@@ -140,25 +144,51 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			}
 
 			Symbol primarySymbol = it.next();
+			Address address = primarySymbol.getAddress();
+			if (!processedAddresses.add(address)) {
+				// the iterator may revisit an address after demangling changed the symbols
+				// there (e.g., the demangled name becoming the new primary symbol)
+				continue;
+			}
+
+			String primaryMangledName = null;
 			if (!skipSymbol(primarySymbol)) {
 
 				MangledContext mangledContext =
 					createMangledContext(program, options, primarySymbol);
 				DemangledObject demangled = demangle(mangledContext, log);
 				if (demangled != null) {
+					// capture the mangled name before applying the demangled name, which
+					// renames the primary symbol and leaves the mangled name behind as a
+					// non-primary symbol
+					primaryMangledName = primarySymbol.getName();
 					apply(mangledContext, demangled, true, log, monitor);
 				}
 			}
 
-			Address address = primarySymbol.getAddress();
-			demangleNonPrimarySymbols(program, address, options, log, monitor);
+			demangleNonPrimarySymbols(program, address, primaryMangledName, options, log, monitor);
 		}
 
 		return count;
 	}
 
+	/**
+	 * Demangles the non-primary symbols at the given address, skipping the mangled name that
+	 * was just demangled from the primary symbol (if any).  Applying the demangled name to the
+	 * program renames the primary symbol and leaves the mangled name behind as a non-primary
+	 * symbol; re-demangling that same mangled name is what this method avoids.
+	 *
+	 * @param program the program
+	 * @param address the address of the primary symbol that was just demangled
+	 * @param primaryMangledName the mangled name of the primary symbol before it was demangled,
+	 * 		  or null if the primary symbol was not demangled
+	 * @param options the demangler options
+	 * @param log the error log
+	 * @param monitor the task monitor
+	 */
 	private void demangleNonPrimarySymbols(Program program, Address address,
-			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
+			String primaryMangledName, DemanglerOptions options, MessageLog log,
+			TaskMonitor monitor)
 			throws CancelledException {
 
 		SymbolTable symbolTable = program.getSymbolTable();
@@ -166,6 +196,12 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			monitor.checkCancelled();
 
 			if (symbol.isPrimary() || skipSymbol(symbol)) {
+				continue;
+			}
+
+			// the mangled name of the demangled primary symbol is not a distinct symbol;
+			// it was left behind when the demangled name became primary
+			if (primaryMangledName != null && primaryMangledName.equals(symbol.getName())) {
 				continue;
 			}
 

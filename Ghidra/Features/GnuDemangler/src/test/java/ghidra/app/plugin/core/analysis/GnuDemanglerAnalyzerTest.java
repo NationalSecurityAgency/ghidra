@@ -31,6 +31,9 @@ import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.BookmarkManager;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -78,6 +81,29 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTes
 		assertDemangled(addr, "globalVariableFoo");
 		assertDemangled(addr, "__gthread_active_ptr");
 		assertDemangled(addr, "dot");
+	}
+
+	@Test
+	public void testMangledFunctionNameNotDemangledTwice() {
+
+		// '__Z1fIiET_S0_' demangles to 'int f<int>(int)'.  Applying the demangled name
+		// renames the function symbol, which leaves the mangled name behind as a
+		// non-primary symbol.  The non-primary pass must not demangle that same mangled
+		// name again, which would bookmark a parameter mismatch with the signature that
+		// was just applied (see GitHub issue #10212).
+
+		Address addr = addr("0x110");
+		createSymbol(addr, "__Z1fIiET_S0_");
+
+		analyze();
+
+		assertDemangled(addr, "f<int>");
+
+		Function function = program.getFunctionManager().getFunctionAt(addr);
+		assertNotNull(function);
+		assertEquals(1, function.getParameterCount());
+
+		assertNoMismatchBookmark(addr);
 	}
 
 	@Test
@@ -188,6 +214,19 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTes
 		for (Symbol s : symbols) {
 			if (s.getName().equals(name)) {
 				fail("Symbol should not have been demangled '" + name + "'");
+			}
+		}
+	}
+
+	private void assertNoMismatchBookmark(Address addr) {
+
+		BookmarkManager bm = program.getBookmarkManager();
+		Bookmark[] bookmarks = bm.getBookmarks(addr);
+		for (Bookmark bookmark : bookmarks) {
+			String comment = bookmark.getComment();
+			if (comment != null && comment.contains("mismatch")) {
+				fail("Unexpected demangler bookmark at " + addr + ": " +
+					bookmark.getCategory() + " " + comment);
 			}
 		}
 	}

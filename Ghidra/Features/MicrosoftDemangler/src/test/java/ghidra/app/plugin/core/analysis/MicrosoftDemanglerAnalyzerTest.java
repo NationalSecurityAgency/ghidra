@@ -122,12 +122,50 @@ public class MicrosoftDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrat
 			function.getSignature().toString());
 	}
 
+	@Test
+	public void testMangledFunctionNameNotDemangledTwice() throws Exception {
+
+		// '?sum@@YAHHH@Z' demangles to 'int __cdecl sum(int, int)'.  Applying the
+		// demangled name renames the function symbol, which leaves the mangled name
+		// behind as a non-primary symbol.  The non-primary pass must not demangle that
+		// same mangled name again, which would bookmark a parameter mismatch with the
+		// signature that was just applied (see GitHub issue #10212).
+
+		String mangled = "?sum@@YAHHH@Z";
+
+		Address addr = addr("0x110");
+		createSymbol(addr, mangled);
+
+		analyze();
+
+		FunctionManager fm = program.getFunctionManager();
+		Function function = fm.getFunctionAt(addr);
+		assertNotNull(function);
+		assertEquals("sum", function.getName());
+		assertEquals(2, function.getParameterCount());
+
+		assertNoMismatchBookmark(addr);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
 
 	private void analyze() {
 		tx(program, () -> analyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, log));
+	}
+
+	private void assertNoMismatchBookmark(Address addr) {
+
+		BookmarkManager bm = program.getBookmarkManager();
+		Bookmark[] bookmarks = bm.getBookmarks(addr);
+		for (Bookmark bookmark : bookmarks) {
+			String comment = bookmark.getComment();
+			if (comment != null && comment.contains("mismatch")) {
+				fail("Unexpected demangler bookmark at " + addr + ": " +
+					bookmark.getCategory() + " " + comment);
+			}
+		}
 	}
 
 	private void setApplySignatureOption(boolean doUse) {
