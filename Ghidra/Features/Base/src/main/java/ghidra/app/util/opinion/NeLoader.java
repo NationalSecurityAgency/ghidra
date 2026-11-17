@@ -580,7 +580,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 					log.appendMsg("NE - constant entry point...");
 				}
 				else {
-					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
+					seg = st.getSegments()[Byte.toUnsignedInt(bundle.getType()) - 1].getSegmentID();
 				}
 				int off = Short.toUnsignedInt(pt.getOffset());
 				Address addr = space.getAddress(seg, off);
