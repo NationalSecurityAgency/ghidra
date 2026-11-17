@@ -505,13 +505,7 @@ class RootNode extends WindowNode {
 		frame.setBounds(bounds);
 		windowWrapper.setLastBounds(bounds);
 
-		Swing.runLater(() -> {
-			// On some systems setting the bounds will interfere with setting the extended state. 
-			// Run this later to ensure the extended state is applied after setting the bounds.  
-			// Executing in this order allows the bounds we set above to be used when the user
-			// transitions out of the maximized state.
-			frame.setExtendedState(extendedState);
-		});
+		setExtendedState(frame, extendedState);
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
 		for (Element elem : rootNodeElement.getChildren()) {
@@ -528,6 +522,30 @@ class RootNode extends WindowNode {
 		}
 
 		return restoredPlaceholders;
+	}
+
+	private void setExtendedState(JFrame frame, int extendedState) {
+
+		// Some OS window managers do not support the iconified state. We should be able to check
+		// that with this call:
+		// 		Toolkit.getDefaultToolKit().isFrameStateSupported(Frame.ICONIFIED))
+		// However, it seems that does not always work correctly. For now, disable our support for
+		// minimized here. We can revisit as requested.
+		//
+		// It seems simple enough to just check for the ICONIFIED state directly, rather that 
+		// checking for a compound state.
+		if (extendedState == Frame.ICONIFIED) {
+			extendedState = Frame.NORMAL;
+		}
+
+		int state = extendedState;
+		Swing.runLater(() -> {
+			// On some systems setting the bounds will interfere with setting the extended state. 
+			// Run this later to ensure the extended state is applied after setting the bounds.  
+			// Executing in this order allows the bounds we set above to be used when the user
+			// transitions out of the maximized state.
+			frame.setExtendedState(state);
+		});
 	}
 
 	private void detachChild() {
