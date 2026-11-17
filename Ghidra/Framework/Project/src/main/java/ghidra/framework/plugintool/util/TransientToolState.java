@@ -17,11 +17,11 @@ package ghidra.framework.plugintool.util;
 
 import java.util.*;
 
-import ghidra.framework.plugintool.PluginWithTransientState;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginWithTransientState;
 
 public class TransientToolState {
-	private List<PluginState<?>> states;
+	private List<PluginState<?>> states = new ArrayList<>();
 
 	/**
 	 * Construct a TransientPluginState
@@ -29,15 +29,12 @@ public class TransientToolState {
 	 * @param plugins array of plugins to get transient state for
 	 */
 	public TransientToolState(List<Plugin> plugins) {
-		states = new ArrayList<>();
 		for (Plugin plugin : plugins) {
 			if (!(plugin instanceof PluginWithTransientState<?> hasState)) {
 				continue;
 			}
+
 			PluginState<?> state = PluginState.gather(hasState);
-			if (state == null) {
-				continue;
-			}
 			if (state != null) {
 				states.add(state);
 			}

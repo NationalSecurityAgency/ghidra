@@ -629,17 +629,10 @@ public class AddressSet implements AddressSetView {
 	@Override
 	public final String toString() {
 		int size = getNumAddressRanges();
-
 		if (size == 0) {
-			return ("[empty]\n");
+			return "[empty]";
 		}
-		//else if (size == 1) {
 		return printRanges();
-//		}
-//
-//		AddressRange startRange = getRange(rbTree.getFirst());
-//		AddressRange endRange = getRange(rbTree.getLast());
-//		return "[" + startRange + "..." + endRange + "]";
 	}
 
 	@Override

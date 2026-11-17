@@ -17,20 +17,24 @@ package ghidra.app.events;
 
 import java.lang.ref.WeakReference;
 
+import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
 /**
- * Plugin event class for notification of programs being created, opened, or
- * closed.
- *
+ * Plugin event class for notification of programs being activated.
+ * <P>
+ * The framework may fire this event with a {@code null} program. This symbolizes a program 
+ * de-actived event. A de-activate event is not fired symmetrically with an activated event. It is
+ * up to plugins to handle receiving an activated event without receiving a de-activated event.
+ * See {@link ProgramPlugin}.
  */
 public class ProgramActivatedPluginEvent extends PluginEvent {
 
-	static final String NAME = "Program Activated";
+	private static final String NAME = "Program Activated";
 
-	private WeakReference<Program> newProgramRef;
+	protected WeakReference<Program> newProgramRef;
 
 	/**
 	 * Construct a new plugin event.
@@ -40,16 +44,22 @@ public class ProgramActivatedPluginEvent extends PluginEvent {
 	 *             be using {@link ProgramManager#setCurrentProgram(Program)}.
 	 */
 	@Deprecated(since = "12.3")
+
 	public ProgramActivatedPluginEvent(String source, Program activeProgram) {
 		super(source, NAME);
 		this.newProgramRef = new WeakReference<Program>(activeProgram);
 	}
 
+	protected ProgramActivatedPluginEvent(String source, String name, Program activeProgram) {
+		super(source, name);
+		this.newProgramRef = new WeakReference<Program>(activeProgram);
+	}
+
 	/**
-	 * Returns the {@link Program} that has is being activated. This method
-	 * can return null, but it is unlikely. It will only return null if the program has been closed
-	 * and is no longer in use.
-	 * @return the {@link Program} that has just been analyzed for the first time.
+	 * Returns the {@link Program} that has is being activated. This method may return null for an 
+	 * activated event, but it is unlikely. In this case, it will only return null if the program 
+	 * has been closed and is no longer in use. 
+	 * @return the {@link Program} that has just been activated
 	 */
 	public Program getActiveProgram() {
 		return newProgramRef.get();

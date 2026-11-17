@@ -30,6 +30,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
+import utility.function.Callback;
 
 /**
  * Plugins are a basic building block in Ghidra, used to bundle features or capabilities
@@ -469,8 +470,8 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Fire the given plugin event; the tool notifies all other plugins
-	 * who are interested in receiving the given event type.
+	 * Fire the given plugin event; the tool notifies all other plugins that are interested in 
+	 * receiving the given event type.
 	 * @param event event to fire
 	 */
 	public void firePluginEvent(PluginEvent event) {
@@ -478,6 +479,18 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 			event.setSourceName(getName());
 			tool.firePluginEvent(event);
 		}
+	}
+
+	/**
+	 * Fire the given plugin event; the tool notifies all other plugins that are interested in 
+	 * receiving the given event type.
+	 * @param event event to fire
+	 * @param postEventCallback an optional callback that gets called when this event has been 
+	 * processed, before any follow-up events are processed.
+	 */
+	public void firePluginEvent(PluginEvent event, Callback postEventCallback) {
+		event.setPostEventCallback(postEventCallback);
+		firePluginEvent(event);
 	}
 
 	Class<?>[] getServiceClasses() {

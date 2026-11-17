@@ -74,13 +74,13 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 
 	@Override
 	public void processEvent(PluginEvent event) {
+
 		super.processEvent(event);
 
 		if (event instanceof FirstTimeAnalyzedPluginEvent ev) {
 			Program program = ev.getProgram();
 			if (program != null) {
-				// call firstAnalysisCompleted() in its own swing thread so we don't block
-				// the event broadcast thread with a GUI modal popup
+				// call later so we don't block the event broadcast thread with a GUI modal popup
 				Swing.runLater(() -> firstAnalysisCompleted(program));
 			}
 		}
