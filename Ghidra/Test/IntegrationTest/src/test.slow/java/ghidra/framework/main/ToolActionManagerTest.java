@@ -212,23 +212,91 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		removePreferences();
 		initializeToolChestToJustCodeBrowser();
 
+		createProgram("notepad");
+
 		//
-		// verify that double-clicking a program launches its default tool (the CodeBrowser)
+		// Verify that double-clicking a program launches its default tool (the CodeBrowser)
 		//
+		doubleClickFrontEndFile("notepad");
 		Project project = frontEndTool.getProject();
-		DataTree tree = findComponent(frontEndTool.getToolFrame(), DataTree.class);
+		PluginTool tool = waitForTool("CodeBrowser", project);
+		close(tool);
+		waitForSwing();
 
-// TODO: move to method
+		//
+		// Change the Program association to be with the Version Tracking tool
+		//
+		changeProgramAssociationToVersionTrackingTool();
+		assertToolInToolChest("Version Tracking"); // VT tool has been imported by the association
+
+		doubleClickFrontEndFile("notepad");
+		tool = waitForTool("Version Tracking", project);
+		closeVersionTrackingTool(tool);
+
+		//
+		// Restore the default association
+		// 
+		restoreDefaultAssociation();
+
+		// Verify the restored association
+		doubleClickFrontEndFile("notepad");
+		tool = waitForTool("CodeBrowser", project);
+		close(tool);
+		waitForSwing();
+	}
+
+	private void closeVersionTrackingTool(PluginTool tool) {
+
+		// close the VT tool
+		// we first have to close the wizard...
+		WizardDialog wizard = waitForDialogComponent(WizardDialog.class);
+		runSwing(() -> wizard.close());
+
+		// ...then the tool
+		close(tool);
+		waitForSwing();
+
+	}
+
+	private void assertToolInToolChest(String string) {
+		ToolServices toolServices = frontEndTool.getToolServices();
+		ToolChest toolChest = toolServices.getToolChest();
+		ToolTemplate toolTemplate = toolChest.getToolTemplate("Version Tracking");
+		assertNotNull("Default tool not imported when chosen as the associated tool", toolTemplate);
+	}
+
+	private void createProgram(String programName) throws Exception {
+		Project project = frontEndTool.getProject();
+
+		// build the program
 		DomainFolder rootFolder = project.getProjectData().getRootFolder();
-		Program p = buildProgram("notepad");
-		rootFolder.createFile("notepad", p, TaskMonitor.DUMMY);
+		Program p = buildProgram(programName);
+		rootFolder.createFile(programName, p, TaskMonitor.DUMMY);
 		env.release(p);
+	}
 
+	private void changeProgramAssociationToVersionTrackingTool() {
+		DockingActionIf setAssociationsAction = getAction("Set Tool Associations");
+		performAction(setAssociationsAction, false);
+		SetToolAssociationsDialog associationDialog =
+			waitForDialogComponent(SetToolAssociationsDialog.class);
+
+		editProgramAssociation(associationDialog);
+
+		PickToolDialog pickToolDialog = waitForDialogComponent(PickToolDialog.class);
+
+		pickVersionTrackingTool(pickToolDialog);
+		verifyProgramToVersionTrackingToolAssociation(associationDialog);
+		pressButtonByText(associationDialog, "OK");
+	}
+
+	private void doubleClickFrontEndFile(String programName) throws Exception {
+		DataTree tree = findComponent(frontEndTool.getToolFrame(), DataTree.class);
 		GTreeNode rootNode = tree.getViewRoot();
 		waitForTree(tree);
 		waitForSwing();
 
-		GTreeNode node = rootNode.getChild("notepad");
+		GTreeNode node = rootNode.getChild(programName);
 		Rectangle bounds = tree.getPathBounds(node.getTreePath());
 
 		tree.setSelectedNode(node);
@@ -237,31 +305,21 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		JTree jTree = (JTree) invokeInstanceMethod("getJTree", tree);
 		clickMouse(jTree, MouseEvent.BUTTON1, bounds.x + 5, bounds.y + 5, 2, 0);
 		waitForSwing();
+	}
 
-		PluginTool tool = waitForTool("CodeBrowser", project);
+	private void restoreDefaultAssociation() {
 
-		// close the CodeBrowser tool
-		close(tool);
-		waitForSwing();
-
-		//
-		// edit the association
-		//
 		DockingActionIf setAssociationsAction = getAction("Set Tool Associations");
 		performAction(setAssociationsAction, false);
-
 		SetToolAssociationsDialog associationDialog =
 			waitForDialogComponent(SetToolAssociationsDialog.class);
 
-		//
-		// edit the association
-		//
 		// find the 'Program' entry
 		GTable associationTable = findComponent(associationDialog.getComponent(), GTable.class);
 		int rowCount = associationTable.getRowCount();
 		int programRow = -1;
 		for (int i = 0; i < rowCount; i++) {
-			ContentHandler handler = (ContentHandler) associationTable.getValueAt(i, 0);
+			ContentHandler<?> handler = (ContentHandler<?>) associationTable.getValueAt(i, 0);
 			if ("Program".equals(handler.getContentType())) {
 				programRow = i;
 				break;
@@ -271,20 +329,38 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			programRow != -1);
 
 		// select the program entry in the table
-		final int finalProgramRow = programRow;
+		int finalProgramRow = programRow;
 		runSwing(() -> associationTable.selectRow(finalProgramRow));
 
-		// click the edit button
-		JButton editButton = findButtonByText(associationDialog, "Edit");
-		pressButton(editButton, false);
+		pressButtonByText(associationDialog, "Restore Default");
+		pressButtonByText(associationDialog, "OK");
+	}
 
-		// grab the new dialog
-		PickToolDialog pickToolDialog = waitForDialogComponent(PickToolDialog.class);
+	private void verifyProgramToVersionTrackingToolAssociation(
+			SetToolAssociationsDialog associationDialog) {
 
-		// select the VT tool
+		GTable associationTable = findComponent(associationDialog.getComponent(), GTable.class);
+		int rowCount = associationTable.getRowCount();
+		int programRow = -1;
+		for (int i = 0; i < rowCount; i++) {
+			ContentHandler<?> handler = (ContentHandler<?>) associationTable.getValueAt(i, 0);
+			if ("Program".equals(handler.getContentType())) {
+				programRow = i;
+				break;
+			}
+		}
+
+		int finalProgramRow = programRow;
+		ToolTemplate template = (ToolTemplate) associationTable.getValueAt(finalProgramRow, 1);
+		assertEquals("Version Tracking tool not made the association for Program",
+			"Version Tracking", template.getName());
+	}
+
+	private void pickVersionTrackingTool(PickToolDialog pickToolDialog) {
+
 		String VTToolName = "Version Tracking";
 		final GTable pickTable = findComponent(pickToolDialog.getComponent(), GTable.class);
-		rowCount = pickTable.getRowCount();
+		int rowCount = pickTable.getRowCount();
 		int toolRow = -1;
 		for (int i = 0; i < rowCount; i++) {
 			ToolTemplate template = (ToolTemplate) pickTable.getValueAt(i, 0);
@@ -296,94 +372,38 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue("Unable to find the 'Version Tracking' entry in the pick tool table",
 			toolRow != -1);
 
-		final int finalToolRow = toolRow;
+		int finalToolRow = toolRow;
 		runSwing(() -> pickTable.selectRow(finalToolRow));
 
 		// press OK
 		JButton okButton = findButtonByText(pickToolDialog.getComponent(), "OK");
 		pressButton(okButton);
 		waitForSwing();
+	}
 
-		// verify the new association is the VT tool
-		ToolTemplate template = (ToolTemplate) associationTable.getValueAt(finalProgramRow, 1);
-		assertEquals(VTToolName + " tool not made the association for Program", VTToolName,
-			template.getName());
+	private void editProgramAssociation(SetToolAssociationsDialog associationDialog) {
 
-		// close the dialog
-		final JButton associationDialogOKButton =
-			findButtonByText(associationDialog.getComponent(), "OK");
-		pressButton(associationDialogOKButton);
-
-		//
-		// Verify the new association
-		//
-
-		// verify the VT tool is now in the tool chest (has been imported as a result of the user
-		// choice)
-		ToolServices toolServices = frontEndTool.getToolServices();
-		ToolChest toolChest = toolServices.getToolChest();
-		ToolTemplate toolTemplate = toolChest.getToolTemplate(VTToolName);
-		assertNotNull("Default tool not imported when chosen as the associated tool", toolTemplate);
-
-		// double-click a program in the Front End
-		clickMouse(jTree, MouseEvent.BUTTON1, bounds.x + 5, bounds.y + 5, 2, 0);
-		waitForSwing();
-
-		// make sure the VT tool is launched
-		tool = waitForTool(VTToolName, project);
-
-		// close the VT tool
-		// we first have to close the wizard...
-		WizardDialog wizard = waitForDialogComponent(WizardDialog.class);
-		runSwing(() -> wizard.close());
-
-		// ...then the tool
-		close(tool);
-		waitForSwing();
-
-		//
-		// edit the association
-		//
-		// find the 'Program' entry
-		rowCount = associationTable.getRowCount();
-		programRow = -1;
+		GTable associationTable = findComponent(associationDialog.getComponent(), GTable.class);
+		int rowCount = associationTable.getRowCount();
+		int programRow = -1;
 		for (int i = 0; i < rowCount; i++) {
-			ContentHandler handler = (ContentHandler) associationTable.getValueAt(i, 0);
+			ContentHandler<?> handler = (ContentHandler<?>) associationTable.getValueAt(i, 0);
 			if ("Program".equals(handler.getContentType())) {
 				programRow = i;
 				break;
 			}
 		}
+
 		assertTrue("Unable to find the 'Program' entry in the associations table",
 			programRow != -1);
 
 		// select the program entry in the table
-		final int newFinalProgramRow = programRow;
-		runSwing(() -> associationTable.selectRow(newFinalProgramRow));
+		int finalProgramRow = programRow;
+		runSwing(() -> associationTable.selectRow(finalProgramRow));
 
-		// click the restore button
-		JButton restoreButton =
-			findButtonByText(associationDialog.getComponent(), "Restore Default");
-		pressButton(restoreButton);
-
-		// press OK
-		JButton associationDialogOKButton2 =
-			findButtonByText(associationDialog.getComponent(), "OK");
-		pressButton(associationDialogOKButton2);
-
-		//
-		// Verify the new association
-		//
-		// double-click a program in the Front End
-		clickMouse(jTree, MouseEvent.BUTTON1, bounds.x + 5, bounds.y + 5, 2, 0);
-		waitForSwing();
-
-		// make sure the 'CodeBrowser' tool is launched
-		tool = waitForTool("CodeBrowser", project);
-
-		// close the 'CodeBrowser' tool
-		close(tool);
-		waitForSwing();
+		// click the edit button
+		JButton editButton = findButtonByText(associationDialog, "Edit");
+		pressButton(editButton, false);
 	}
 
 	@Test
