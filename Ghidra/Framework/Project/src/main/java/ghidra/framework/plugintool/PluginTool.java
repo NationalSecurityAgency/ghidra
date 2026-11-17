@@ -1066,7 +1066,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void addSaveAllDataAction() {
 
-		new ActionBuilder("Save All Tool Data", getName())
+		new ActionBuilder("Save All Tool Data", ToolConstants.TOOL_OWNER)
 				.menuPath(ToolConstants.MENU_FILE, "Save All...")
 				.menuGroup(ToolConstants.MENU_GROUP_FILE_SAVE)
 				.description("Save All Tool Data")

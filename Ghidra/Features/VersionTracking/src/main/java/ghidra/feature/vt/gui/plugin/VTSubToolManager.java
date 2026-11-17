@@ -864,6 +864,11 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	}
 
 	public List<PluginTool> getSubordinateTools() {
+
+		if (sourceTool == null || destinationTool == null) {
+			return List.of(); // may happen in the test environment
+		}
+
 		return List.of(sourceTool, destinationTool);
 	}
 }
