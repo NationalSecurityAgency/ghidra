@@ -79,9 +79,11 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			if (additionalProperties != null) {
 				for (Entry<String, Object> entry : additionalProperties.entrySet()) {
 					map.put(entry.getKey(), entry.getValue());
-					if (entry.getKey().equals("taintLabels")) {
+					if (entry.getKey().equals("taintLabels") && entry.getValue() != null) {
 						label = entry.getValue().toString();
-						label = label.substring(1, label.length()-1);
+						if (label.length() >= 2 && label.startsWith("[") && label.endsWith("]")) {
+							label = label.substring(1, label.length() - 1);
+						}
 					}
 				}
 			}
@@ -322,6 +324,9 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			for (int row : selected) {
 				Map<String, Object> r = tableProvider.getRow(row);
 				String kind = (String) r.get("kind");
+				if (kind == null) {
+					continue;
+				}
 				if (kind.equals("member")) {
 					removeTaintedInstruction(map, r);
 				}
@@ -390,12 +395,12 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 			provider.filterTable.getTable().selectAll();
 			TaskLauncher.launch(new ApplyDeltaViaVarnodesTask(provider));
 		}
-
+	
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			return isEnabled;
 		}
-
+	
 		@Override
 		public boolean isAddToPopup(ActionContext context) {
 			return isEnabled;
@@ -404,18 +409,18 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 	applyDelta.setDescription("Apply delta");
 	applyDelta.setToolBarData(new ToolBarData(Icons.COLLAPSE_ALL_ICON));
 	provider.addLocalAction(applyDelta);
-
+	
 	DockingAction initDelta = new DockingAction("Set base for delta", getKey()) {
 		@Override
 		public void actionPerformed(ActionContext context) {
 			TaskLauncher.launch(new SetDeltaBaseTask(provider));
 		}
-
+	
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			return isEnabled;
 		}
-
+	
 		@Override
 		public boolean isAddToPopup(ActionContext context) {
 			return isEnabled;
@@ -445,5 +450,5 @@ public class SarifTaintResultHandler extends SarifResultHandler {
 		
 	}
 	*/
-	
+
 }

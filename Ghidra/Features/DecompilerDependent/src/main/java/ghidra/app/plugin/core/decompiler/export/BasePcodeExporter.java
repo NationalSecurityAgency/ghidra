@@ -29,7 +29,25 @@ public class BasePcodeExporter {
 
 	public BasePcodeExporter(String directory) throws IOException {
 		this.directory = directory;
+		deleteStaleFactsDirectory(directory);
 		debug = new BufferedWriter(new FileWriter(new File(directory, "PcodeOps.facts")));
+	}
+
+	/**
+	 * Facts files are opened in append mode so that incremental flushes within a single
+	 * export accumulate.  Without cleaning the output directory first, a re-export into
+	 * the same directory would append to (and corrupt) the facts from the previous run.
+	 * @param dirName where the facts go
+	 */
+	private void deleteStaleFactsDirectory(String dirName) {
+		File dir = new File(dirName);
+		File[] stale = dir.listFiles((_, nm) -> nm.endsWith(".facts"));
+		if (stale == null) {
+			return;
+		}
+		for (File f : stale) {
+			f.delete();
+		}
 	}
 
 	public void writeFacts(boolean writeAll) {

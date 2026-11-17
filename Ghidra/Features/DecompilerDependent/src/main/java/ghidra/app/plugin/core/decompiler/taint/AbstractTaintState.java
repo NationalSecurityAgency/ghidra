@@ -504,7 +504,7 @@ public abstract class AbstractTaintState implements TaintState {
 					set.addAll(A);
 				}
 				Set<TaintQueryResult> B = deltaVarnodeMap.get(key);
-				if (A != null) {
+				if (B != null) {
 					set.removeAll(B);
 				}
 			}

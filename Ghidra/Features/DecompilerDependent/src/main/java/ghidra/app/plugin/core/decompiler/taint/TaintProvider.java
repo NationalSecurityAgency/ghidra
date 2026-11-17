@@ -303,7 +303,11 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 			return false;
 		}
 
-		HighFunction hf = token.getClangFunction().getHighFunction();
+		ClangFunction clangFunction = token.getClangFunction();
+		if (clangFunction == null) {
+			return false;
+		}
+		HighFunction hf = clangFunction.getHighFunction();
 
 		if (hf == null) {
 			log.info("\tHighlighter> HighFunction null -- not associated with a function.");
@@ -349,9 +353,9 @@ public class TaintProvider extends ComponentProviderAdapter implements OptionsCh
 	private boolean matchNodeHighVariable(ClangToken token, HighFunction hf,
 			Set<TaintQueryResult> taintSet) {
 		for (TaintQueryResult taintedVarnode : taintSet) {
-			addHighlightColor(taintedVarnode);
 			String match = taintedVarnode.matches(token);
 			if (match != null) {
+				addHighlightColor(taintedVarnode);
 				log.info("\t\tHighlighter> LOC Match on {}", match);
 				return true;
 			}
