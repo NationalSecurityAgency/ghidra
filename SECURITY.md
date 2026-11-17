@@ -1,5 +1,43 @@
 # Security Policy
 
+## What Should Be Reported Privately
+Use GitHub’s [private vulnerability reporting feature](https://github.com/NationalSecurityAgency/ghidra/security/advisories/new)
+to report Ghidra vulnerabilities that could allow an attacker to compromise systems or data 
+**beyond the locally running Ghidra process**, including all modes of operation (the Ghidra Server, 
+headless, PyGhidra, etc). Examples of issues that are appropriate for private disclosure include:
+
+* Vulnerabilities in network-facing components, such as the Ghidra Server, that could allow 
+  unauthorized access, privilege escalation, or remote code execution.
+* Flaws that allow a user of a shared Ghidra Server repository to read or modify data they are not
+  authorized to access.
+* Weaknesses in authentication, encryption, or other security mechanisms protecting communication
+  between Ghidra components across a network.
+* Imported or processed data that causes Ghidra to read, write, or execute files outside of its 
+  expected area of the filesystem (for example, via path traversal or unintended invocation of
+  external programs).
+* Imported or processed data that causes irreversible corruption to Ghidra a project, outside the
+  footprint of data being imported or processed (for example, import or analysis of a binary that 
+  deletes unrelated files from the project).
+
+## What May Be Reported Publicly
+Bugs whose effects are limited to disrupting the locally running Ghidra process on data limited
+to what was requested to be processed may be reported publicly as regular 
+[GitHub issues](https://github.com/NationalSecurityAgency/ghidra/issues). Examples include crashes,
+hangs, exceptions, memory exhaustion, and incorrect analysis results triggered by importing, 
+analyzing, or otherwise processing a malformed or malicious file, provided the issue does not also 
+have an impact described above. 
+
+Scripts, extensions, and plugins run with the user’s full privileges by design. Issues arising 
+solely from the actions of code the user intentionally chooses to run may also be reported publicly.
+This exclusion does not cover vulnerabilities that cause code to execute without the user’s intent.
+
+Issues reported publicly may still be labeled or described as security issues. Public reporting
+allows them to be tracked, discussed, and fixed in the open.
+
+If you are unsure whether an issue warrants private disclosure, please report it privately. If the
+privately reported security issue is determined to be better suited for public disclosure, the
+reviewer may close the GHSA and request that it be reported publicly as a regular issue.
+
 ## Reporting a Vulnerability
 To report a security vulnerability in Ghidra, please use GitHub's private vulnerability reporting:
 
