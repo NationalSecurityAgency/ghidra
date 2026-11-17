@@ -63,7 +63,8 @@ public class VersionExceptionHandler {
 		if (userChoice != OptionDialog.OPTION_ONE) {
 			return false;
 		}
-		if (domainFile.isCheckedOut()) {
+		// A checked-out file without a shared URL is assumed to be a private versioned file
+		if (domainFile.isCheckedOut() && domainFile.getSharedProjectURL(null) != null) {
 			userChoice = showWarningDialog(parent, filename, contentType, actionName);
 			if (userChoice != OptionDialog.OPTION_ONE) {
 				return false;
