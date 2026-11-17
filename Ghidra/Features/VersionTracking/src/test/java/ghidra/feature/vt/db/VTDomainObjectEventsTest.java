@@ -30,7 +30,6 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
-import ghidra.util.Msg;
 
 public class VTDomainObjectEventsTest extends VTBaseTestCase {
 
@@ -40,13 +39,10 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	private DomainObjectListener listener = new DomainObjectListener() {
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			Msg.debug(this,
-				"domainObjectChanged(): from thread " + Thread.currentThread().getName());
 			for (DomainObjectChangeRecord record : ev) {
-				Msg.debug(this, "\tadding record: " + record.getEventType());
 				events.add(record);
 			}
-			Msg.debug(this, "\tfinished adding records");
+
 		}
 	};
 
@@ -54,7 +50,6 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		Msg.debug(this, "\n\nsetUp(): " + testName.getMethodName());
 		transactionID = db.startTransaction("Test");
 
 		db.addListener(listener);
@@ -78,7 +73,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	@Override
 	@After
 	public void tearDown() throws Exception {
-		Msg.debug(this, "tearDown()\n");
+
 		db.endTransaction(transactionID, false);
 		db.release(VTTestUtils.class);
 	}
@@ -209,26 +204,25 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 
 	@Test
 	public void testMarkupDestinationAddressChangedEvent() throws Exception {
-		Msg.debug(this, "\tcalling getManualMatchSet()");
+
 		VTMatchSet manualMatchSet = db.getManualMatchSet();
-		Msg.debug(this, "\tcalling clrearEvents()");
+
 		clearEvents();
-		Msg.debug(this, "\tcalling createRandomMatch()");
+
 		VTMatchInfo matchInfo = VTTestUtils.createRandomMatch(sourceProgram, destinationProgram);
-		Msg.debug(this, "\tcalling addMatch()");
+
 		VTMatch match = manualMatchSet.addMatch(matchInfo);
-		Msg.debug(this, "\tcalling setAccepted()");
+
 		match.getAssociation().setAccepted();
-		Msg.debug(this, "\tcalling createRandomMarkupItemStub()");
+
 		VTMarkupItem markupItem = VTTestUtils.createRandomMarkupItemStub(match);
 
 		Address destinationAddress = addr();
-		Msg.debug(this, "\tcalling clearEvents()");
+
 		clearEvents();
 
-		Msg.debug(this, "\tcalling setDestinationAddress()");
 		markupItem.setDestinationAddress(destinationAddress);
-		Msg.debug(this, "\t\tafter setDestinationAddress()");
+
 		assertEquals(destinationAddress, markupItem.getDestinationAddress());
 
 		assertEventCount(1);
@@ -332,11 +326,10 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	}
 
 	private void clearEvents() {
-		Msg.debug(this, "clearEvents() - event count: " + events.size());
 		db.flushEvents();
-		Msg.debug(this, "\tafter flushEvents");
+
 		events.clear();
-		Msg.debug(this, "\tafter clear");
+
 	}
 
 	private VTMatchSet createMatchSet() {

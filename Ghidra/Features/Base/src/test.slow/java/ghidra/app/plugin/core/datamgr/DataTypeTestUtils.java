@@ -91,8 +91,6 @@ public class DataTypeTestUtils {
 		archive.saveAs(scratchFile, TaskMonitor.DUMMY);
 		archive.release(consumer);
 
-		Msg.debug(DataTypeTestUtils.class, "Created test archive: " + scratchFile);
-
 		return scratchFile;
 	}
 

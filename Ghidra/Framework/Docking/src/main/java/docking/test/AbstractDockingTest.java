@@ -62,7 +62,6 @@ import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.worker.Worker;
 import junit.framework.AssertionFailedError;
 import resources.icons.UrlImageIcon;
-import sun.awt.AppContext;
 import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 
@@ -837,73 +836,6 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			"Timed-out waiting for ComponentProvider of class: " + clazz);
 	}
 
-	/** These providers are those that appear in dialogs outside of the main frame **/
-	private static <T extends ComponentProvider> T getDetachedWindowProvider(
-			final Class<T> providerClass, final DockingWindowManager windowManager) {
-
-		Objects.requireNonNull(windowManager, "DockingWindowManager cannot be null");
-
-		AtomicReference<T> ref = new AtomicReference<>();
-
-		runSwing(() -> {
-			Object rootNode = getInstanceField("root", windowManager);
-			List<?> windowNodeList = (List<?>) invokeInstanceMethod("getDetachedWindows", rootNode);
-			for (Object windowNode : windowNodeList) {
-				Object childNode = getInstanceField("child", windowNode);
-				ComponentProvider provider = getComponentProviderFromNode(childNode, providerClass);
-
-				if (provider != null) {
-					ref.set(providerClass.cast(provider));
-				}
-			}
-		});
-
-		return ref.get();
-	}
-
-	/**
-	 * A recursive method to get the first encountered ComponentProvider instance of the give
-	 * component provider class.
-	 * <p>
-	 * Note: this method assumes the given node is not a RootNode, but a child thereof
-	 *
-	 * @param node The <code>Node</code> instance that contains the desired <code>ComponentProvider</code>
-	 *        or other nodes.
-	 * @param providerClass The <code>ComponentProvider</code> class for which to search.
-	 */
-	private static ComponentProvider getComponentProviderFromNode(Object node,
-			Class<? extends ComponentProvider> providerClass) {
-		Class<?> nodeClass = node.getClass();
-		String className = nodeClass.getName();
-
-		if (className.indexOf("ComponentNode") != -1) {
-			List<ComponentPlaceholder> infoList = CollectionUtils.asList(
-				(List<?>) getInstanceField("windowPlaceholders", node), ComponentPlaceholder.class);
-			for (ComponentPlaceholder info : infoList) {
-				ComponentProvider provider = info.getProvider();
-				if ((provider != null) && providerClass.isAssignableFrom(provider.getClass())) {
-					return provider;
-				}
-			}
-		}
-		else if (className.indexOf("WindowNode") != -1) {
-			Object childNode = getInstanceField("child", node);
-			return getComponentProviderFromNode(childNode, providerClass);// recurse
-		}
-		else if (className.indexOf("SplitNode") != -1) {
-			Object leftNode = getInstanceField("child1", node);
-			ComponentProvider leftProvider = getComponentProviderFromNode(leftNode, providerClass);// recurse
-			if (leftProvider != null) {
-				return leftProvider;
-			}
-
-			Object rightNode = getInstanceField("child2", node);
-			return getComponentProviderFromNode(rightNode, providerClass);// recurse
-		}
-
-		return null;
-	}
-
 	/**
 	 * Searches for the first occurrence of a {@link ComponentProvider} that is an instance of
 	 * the given <code>providerClass</code>.  This method will repeat the search every
@@ -1538,14 +1470,23 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 *
 	 * @param tc the text component
 	 */
-	private static void forceTextComponentFocus(JTextComponent tc) {
+	private static void workAroundTextComponentFocusIssue(JTextComponent tc) {
 
 		runSwing(() -> {
 
-			// Update Swing's notion of the focused component
-			Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
-			AppContext context = AppContext.getAppContext();
-			context.put(contextKey, tc);
+			/*
+			 	Posterity Note: we used to avoid text typing focus issues with multiple windows 
+			 	from multiple tests running at the same time by forcing the given text component to
+			 	be the focused component. This would force Java's 'NotifyAction' class to deliver
+			 	the event. The method we used below is no longer supported, as AppContext has been
+			 	removed. If we find tests failing due to focus issues, then we need to find a 
+			 	different way to force key event delivery.
+			 	
+			 	// "JTextComponent_FocusedComponent"
+				Object contextKey = getInstanceField("FOCUSED_COMPONENT", tc);
+				AppContext context = AppContext.getAppContext();
+				context.put(contextKey, tc);
+			 */
 
 			/*
 			 	The FlatLaf will select all text in a text field when it gains focus.  This will 
@@ -1788,6 +1729,8 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			triggerKey(destination, mods, keyCode, c, consumer);
 		}
+
+		waitForSwing();
 	}
 
 	/**
@@ -1828,7 +1771,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		Objects.requireNonNull(consumer);
 
 		if (c instanceof JTextComponent tf) {
-			forceTextComponentFocus(tf);
+			workAroundTextComponentFocusIssue(tf);
 		}
 
 		KeyEvent pressedKE = new KeyEvent(c, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
@@ -1853,7 +1796,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 		runSwing(() -> {
 			if (TestKeyEventDispatcher.dispatchKeyEvent(e)) {
-				return; // already handled
+				return; // already handled by the application's dispatcher
 			}
 
 			dispatchKeyEventDirectlyToComponent(c, e);
@@ -1864,8 +1807,13 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	}
 
 	private static void dispatchKeyEventDirectlyToComponent(Component c, KeyEvent e) {
-		// we have to call the method directly, but it is restricted, so use some magic
-		invokeInstanceMethod("processEvent", c, new Class[] { AWTEvent.class }, new Object[] { e });
+
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		kfm.redispatchEvent(c, e);
+
+		// This is the call we used to make. It requires testing in the IDE to allow access, which
+		// is annoying for developers.
+		// invokeInstanceMethod("processEvent", c, new Class[] { AWTEvent.class }, new Object[] { e });
 	}
 
 	/**

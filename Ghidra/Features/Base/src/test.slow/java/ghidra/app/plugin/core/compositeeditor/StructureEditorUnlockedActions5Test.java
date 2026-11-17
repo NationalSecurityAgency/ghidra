@@ -126,7 +126,7 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 
 		assertEquals("complexStructure", model.getCompositeName()); // no change yet
 
-		triggerActionKey(nameField, 0, KeyEvent.VK_ENTER);
+		triggerEnter(nameField);
 
 		assertFalse(panel.hasInvalidEntry());
 		assertFalse(panel.hasUncomittedEntry());
@@ -257,8 +257,8 @@ public class StructureEditorUnlockedActions5Test extends AbstractStructureEditor
 		Component component = findComponentByName(provider.editorPanel, "Total Length");
 		assertNotNull(component);
 		assertTrue(component instanceof JTextField);
-		((JTextField) component).setText(Integer.toString(newLength));
-		triggerActionKey(component, 0, KeyEvent.VK_ENTER);
+		setText((JTextField) component, Integer.toString(newLength));
+		triggerEnter(component);
 
 		waitForSwing();
 		assertEquals(newLength, model.getLength());

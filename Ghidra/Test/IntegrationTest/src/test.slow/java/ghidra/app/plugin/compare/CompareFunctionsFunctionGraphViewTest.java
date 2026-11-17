@@ -182,6 +182,7 @@ public class CompareFunctionsFunctionGraphViewTest extends AbstractGhidraHeadedI
 		provider = waitForComponentProvider(FunctionComparisonProvider.class);
 		selectFgPanel(provider);
 		fgProvider = getFgComparisonProvider(provider);
+		waitForFunctionGraph(fgProvider);
 		FGLayoutProvider updatedLayout = getLayout(fgProvider);
 		assertEquals(newLayout.getLayoutName(), updatedLayout.getLayoutName());
 	}

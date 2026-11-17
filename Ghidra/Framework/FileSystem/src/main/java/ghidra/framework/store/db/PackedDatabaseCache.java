@@ -308,15 +308,6 @@ public class PackedDatabaseCache {
 		return false;
 	}
 
-	/**
-	 * Get cached packed database
-	 * @param packedDbFile
-	 * @param isReadOnly
-	 * @param monitor
-	 * @return
-	 * @throws CancelledException
-	 * @throws IOException
-	 */
 	PackedDatabase getCachedDB(ResourceFile packedDbFile, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		if (!isEnabled()) {
