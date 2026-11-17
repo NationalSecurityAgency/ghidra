@@ -21,12 +21,12 @@ import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.channels.UnresolvedAddressException;
-import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.net.HttpClients;
+import ghidra.net.UriUtil;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
@@ -71,9 +71,7 @@ public class HttpDebugInfoDProvider implements DebugStreamProvider {
 	 * @param serverURI URI / URL of the symbol server 
 	 */
 	public HttpDebugInfoDProvider(URI serverURI) {
-		String path = serverURI.getPath();
-		this.serverURI =
-			path.endsWith("/") ? serverURI : serverURI.resolve(serverURI.getPath() + "/");
+		this.serverURI = serverURI;
 	}
 
 	@Override
@@ -93,16 +91,16 @@ public class HttpDebugInfoDProvider implements DebugStreamProvider {
 
 	private HttpRequest.Builder request(BuildIdDebugInfo id) throws IOException {
 		try {
-			String extra = "";
-			if (id.getObjectType() == ObjectType.SOURCE) {
-				extra = "/" + Objects.requireNonNullElse(id.getExtra(), "");
-			}
-			String requestPath = "buildid/%s/%s%s".formatted(id.getBuildIdHexString(),
-				id.getObjectType().getPathString(), extra);
-			return HttpRequest.newBuilder(serverURI.resolve(requestPath))
-					.setHeader("User-Agent", GHIDRA_USER_AGENT);
+			// serverURL/buildid/<hexhash>/debuginfo
+			// serverURL/buildid/<hexhash>/source/path/to/../../sourcefile.h  - could have relative path components
+			URI requestURI = UriUtil.appendPath(serverURI, // path elements are: 
+				"buildid",                                 // "buildid"
+				id.getBuildIdHexString(),                  // hex hash string
+				id.getObjectType().getPathString(),        // "debuginfo", "source", "executable"
+				id.getObjectType() == ObjectType.SOURCE ? id.getExtra() : null); // optional path string
+			return HttpRequest.newBuilder(requestURI).setHeader("User-Agent", GHIDRA_USER_AGENT);
 		}
-		catch (IllegalArgumentException e) {
+		catch (IllegalArgumentException | URISyntaxException e) {
 			throw new IOException(e);
 		}
 	}
@@ -133,7 +131,7 @@ public class HttpDebugInfoDProvider implements DebugStreamProvider {
 				Msg.debug(this, logPrefix() + ": Http response: " + response.statusCode());
 				switch (statusCode) {
 					case HTTP_STATUS_OK: {
-						// TODO: typical response headers from debuginfod that we may want to make 
+						// Future: typical response headers from debuginfod that we may want to make 
 						// use of in the future:
 						// x-debuginfod-size: 245872
 						// x-debuginfod-archive: /path/to/somepackagefile.packagetype_ext

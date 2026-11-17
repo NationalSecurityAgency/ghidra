@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.string.translate.libretranslate;
 import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
+import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
@@ -37,6 +36,7 @@ import docking.widgets.SelectFromListDialog;
 import ghidra.app.plugin.core.string.translate.libretranslate.LibreTranslatePlugin.SOURCE_LANGUAGE_OPTION;
 import ghidra.app.services.StringTranslationService;
 import ghidra.net.HttpClients;
+import ghidra.net.UriUtil;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Data;
@@ -79,8 +79,7 @@ public class LibreTranslateStringTranslationService implements StringTranslation
 	public LibreTranslateStringTranslationService(URI serverURI, String apiKey,
 			SOURCE_LANGUAGE_OPTION sourceLanguageOption, String targetLanguageCode, int batchSize,
 			int httpTimeout, int httpTimeoutPerString) {
-		String path = serverURI.getPath();
-		this.serverURI = path.endsWith("/") ? serverURI : serverURI.resolve(path + "/");
+		this.serverURI = serverURI;
 		this.apiKey = Objects.requireNonNullElse(apiKey, "");
 		this.sourceLanguageOption = sourceLanguageOption;
 		this.targetLanguageCode = targetLanguageCode;
@@ -439,11 +438,12 @@ public class LibreTranslateStringTranslationService implements StringTranslation
 
 	private HttpRequest.Builder request(String str, long timeoutMS) throws IOException {
 		try {
-			return HttpRequest.newBuilder(serverURI.resolve(str))
+			URI requestURI = UriUtil.appendPath(serverURI, str);
+			return HttpRequest.newBuilder(requestURI)
 					.timeout(Duration.ofMillis(timeoutMS))
 					.setHeader("User-Agent", GHIDRA_USER_AGENT);
 		}
-		catch (IllegalArgumentException e) {
+		catch (IllegalArgumentException | URISyntaxException e) {
 			throw new IOException(e);
 		}
 	}

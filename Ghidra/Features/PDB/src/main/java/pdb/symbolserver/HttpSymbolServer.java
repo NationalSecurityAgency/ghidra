@@ -17,8 +17,7 @@ package pdb.symbolserver;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
+import java.net.*;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
@@ -29,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.net.HttpClients;
+import ghidra.net.UriUtil;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.CancelledListener;
@@ -114,9 +114,7 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 	 * @param isTrusted flag, if true the http server can be trusted when querying and downloading
 	 */
 	public HttpSymbolServer(URI serverURI, boolean isTrusted) {
-		String path = serverURI.getPath();
-		this.serverURI =
-			path.endsWith("/") ? serverURI : serverURI.resolve(serverURI.getPath() + "/");
+		this.serverURI = serverURI;
 		this.trusted = isTrusted;
 	}
 
@@ -144,10 +142,10 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 
 	private HttpRequest.Builder request(String str) throws IOException {
 		try {
-			return HttpRequest.newBuilder(serverURI.resolve(str))
-					.setHeader("User-Agent", GHIDRA_USER_AGENT);
+			URI requestURI = UriUtil.appendPath(serverURI, str);
+			return HttpRequest.newBuilder(requestURI).setHeader("User-Agent", GHIDRA_USER_AGENT);
 		}
-		catch (IllegalArgumentException e) {
+		catch (IllegalArgumentException | URISyntaxException e) {
 			throw new IOException(e);
 		}
 	}
@@ -224,7 +222,12 @@ public class HttpSymbolServer extends AbstractSymbolServer implements MutableTru
 
 	@Override
 	public String getFileLocation(String filename) {
-		return serverURI.resolve(filename).toString();
+		try {
+			return UriUtil.appendPath(serverURI, filename).toString();
+		}
+		catch (URISyntaxException e) {
+			return filename;
+		}
 	}
 
 	@Override
