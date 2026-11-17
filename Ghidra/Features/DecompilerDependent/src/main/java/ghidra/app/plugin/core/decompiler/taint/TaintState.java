@@ -153,6 +153,9 @@ public interface TaintState extends ExtensionPoint {
 				return tokenText;
 			}
 			HighVariable hv = vtoken.getHighVariable();
+			if (hv == null || hv.getRepresentative() == null) {
+				return tokenText;
+			}
 			Varnode rep = hv.getRepresentative();
 			return rep.getAddress().toString();
 		}

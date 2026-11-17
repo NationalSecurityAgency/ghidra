@@ -77,7 +77,7 @@ import sarif.SarifService;
 //@formatter:on
 
 public class TaintPlugin extends ProgramPlugin implements TaintService {
-	
+
 	public final static String HELP_LOCATION = "DecompilerTaint";
 
 	private Function currentFunction;
@@ -111,8 +111,8 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	public static enum TaintFormat {
-		ALL("all", "sarif+all"), 
-		GRAPHS("graphs", "sarif+graphs"), 
+		ALL("all", "sarif+all"),
+		GRAPHS("graphs", "sarif+graphs"),
 		INSTS("insts", "sarif+instructions"),
 		PATHS("paths", "sarif"),
 		NONE("none", "none");
@@ -136,7 +136,10 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	public static enum TaintDirection {
-		BOTH("all", "both"), FORWARD("fwd", "forward"), BACKWARD("bwd", "backward"), DEFAULT("auto", "auto");
+		BOTH("all", "both"),
+		FORWARD("fwd", "forward"),
+		BACKWARD("bwd", "backward"),
+		DEFAULT("auto", "auto");
 
 		private String label;
 		private String optionString;
@@ -355,7 +358,8 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				GhidraScript exportScript = state.getExportScript(consoleService, false);
 				if (exportScript != null) {
 					RunPCodeExportScriptTask export_task =
-						new RunPCodeExportScriptTask(tool, exportScript, ghidraState, consoleService);
+						new RunPCodeExportScriptTask(tool, exportScript, ghidraState,
+							consoleService);
 					tool.execute(export_task);
 				}
 			}
@@ -528,7 +532,11 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				return null;
 			}
 
-			HighFunction highFunction = token.getClangFunction().getHighFunction();
+			ClangFunction clangFunction = token.getClangFunction();
+			if (clangFunction == null) {
+				return null;
+			}
+			HighFunction highFunction = clangFunction.getHighFunction();
 			if (highFunction == null) {
 				return null;
 			}
@@ -551,6 +559,7 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 
 	private class TaintLabelHighlighter implements CTokenHighlightMatcher {
 
+		// Expects null if the token has no highlight
 		@Override
 		public Color getTokenHighlight(ClangToken token) {
 			if (currentFunction == null || token == null) {
@@ -558,9 +567,18 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 				return null;
 			}
 
-			assert (currentFunction.getEntryPoint()
-					.equals(
-						token.getClangFunction().getHighFunction().getFunction().getEntryPoint()));
+			ClangFunction clangFunction = token.getClangFunction();
+			if (clangFunction == null) {
+				return null;
+			}
+			HighFunction highFunction = clangFunction.getHighFunction();
+			if (highFunction == null) {
+				return null;
+			}
+			if (currentFunction.getEntryPoint()
+					.equals(highFunction.getFunction().getEntryPoint())) {
+				return null;
+			}
 
 			if (taintProvider.matchOn(token)) {
 				log.info("Highlighter> MATCHED Token: '{}'", token.getText());
@@ -695,7 +713,8 @@ public class TaintPlugin extends ProgramPlugin implements TaintService {
 	}
 
 	@Override
-	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear, TaskType delta) {
+	public void setVarnodeMap(Map<Address, Set<TaintQueryResult>> vmap, boolean clear,
+			TaskType delta) {
 		if (clear) {
 			taintProvider.clearTaint();
 		}
