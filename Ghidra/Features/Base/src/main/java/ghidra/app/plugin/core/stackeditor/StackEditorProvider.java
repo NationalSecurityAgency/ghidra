@@ -103,6 +103,11 @@ public class StackEditorProvider
 	}
 
 	@Override
+	public DomainObject getDomainObject() {
+		return program;
+	}
+
+	@Override
 	protected Plugin getPlugin() {
 		return plugin;
 	}

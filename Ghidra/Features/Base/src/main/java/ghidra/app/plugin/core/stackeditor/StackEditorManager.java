@@ -98,9 +98,8 @@ public class StackEditorManager implements EditorListener {
 	}
 
 	/**
-	 * Check for any data types being edited for the given data
-	 * type manager that is being closed.
-	 * if pgm is null then all editors will be checked.
+	 * Check for any data types being edited for the given data type manager that is being closed.
+	 * if program is null then all editors will be checked.
 	 * @param program the program whose stack editors are to be checked for changes. 
 	 * If null, then check all editors for save.
 	 * @return true if all stack editors were resolved and can close now; return
@@ -137,8 +136,34 @@ public class StackEditorManager implements EditorListener {
 		return checkEditors((Program) dObj);
 	}
 
-	protected boolean canClose() {
-		return checkEditors(null);
+	boolean hasChangedEditors() {
+		Iterator<Function> it = editorMap.keySet().iterator();
+		while (it.hasNext()) {
+			Function function = it.next();
+
+			StackEditorProvider editor = editorMap.get(function);
+			if (editor.needsSave()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	List<StackEditorProvider> getChangedEditors() {
+
+		List<StackEditorProvider> results = new ArrayList<>();
+
+		Iterator<Function> it = editorMap.keySet().iterator();
+		while (it.hasNext()) {
+			Function function = it.next();
+
+			StackEditorProvider editor = editorMap.get(function);
+			if (editor.needsSave()) {
+				results.add(editor);
+			}
+		}
+
+		return results;
 	}
 
 	protected void close() {

@@ -34,6 +34,7 @@ public class DataTypeArchiveSaveTask extends Task {
 	private static final String CONTENT_NAME = "Data Type Archive";
 	private PersistentDataTypeArchive archive;
 	private PluginTool tool;
+	private boolean didSave;
 
 	DataTypeArchiveSaveTask(PersistentDataTypeArchive archive, PluginTool tool) {
 		super("Save " + archive.getName(), true, true, true);
@@ -47,15 +48,12 @@ public class DataTypeArchiveSaveTask extends Task {
 		if (acquireSaveLock(archive)) {
 			try {
 				archive.save(null, monitor);
+				didSave = true;
 			}
 			catch (CancelledException e) {
 				// O.K., expected
 			}
-			catch (NotConnectedException e) {
-				ClientUtil.promptForReconnect(tool.getProject().getRepository(),
-					tool.getToolFrame());
-			}
-			catch (ConnectException e) {
+			catch (NotConnectedException | ConnectException e) {
 				ClientUtil.promptForReconnect(tool.getProject().getRepository(),
 					tool.getToolFrame());
 			}
@@ -67,6 +65,11 @@ public class DataTypeArchiveSaveTask extends Task {
 				archive.unlock();
 			}
 		}
+		didSave = false;
+	}
+
+	public boolean didSave() {
+		return didSave;
 	}
 
 	private boolean acquireSaveLock(DomainObject domainObject) {

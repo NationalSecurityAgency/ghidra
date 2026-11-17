@@ -26,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.action.*;
 import docking.widgets.OptionDialog;
@@ -174,8 +176,22 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		}
 		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item.isChanged) {
-			processItemChanged(item);
+			promptAndSave(item);
 		}
+	}
+
+	boolean hasChanges() {
+		if (initialBuild) {
+			return false;
+		}
+
+		ComboBoxItem item = comboBox.getSelectedItem();
+		return item.isChanged;
+	}
+
+	boolean saveChanges() {
+		ComboBoxItem item = comboBox.getSelectedItem();
+		return promptAndSave(item);
 	}
 
 	@Override
@@ -423,43 +439,41 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			return;
 		}
 
-		if (item.isUserDefined) {
-			if (OptionDialog.showOptionDialog(rootPanel, "Save Changes to Profile?",
-				"Profile " + item.file.getName() +
-					" has changed.\nDo you want to save your changes?",
-				"Yes", OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
-				save(item);
-			}
-		}
-		else {
-			if (OptionDialog.showOptionDialog(rootPanel, "Save Changes to Another Profile?",
-				"You have made changes to the default profile " + item.file.getName() +
-					",\nhowever, updating default profiles is not allowed." +
-					"\nDo you want to save your changes to another profile?",
-				"Yes", OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
-				saveAs(item);
-			}
-		}
+		promptAndSave(item);
 	}
 
-	private void processItemChanged(ComboBoxItem item) {
+	private boolean promptAndSave(ComboBoxItem item) {
+
 		if (item.isUserDefined) {
-			if (OptionDialog.showOptionDialog(rootPanel, "Save Changes to Profile?",
+			int choice = OptionDialog.showOptionDialog(rootPanel, "Save Changes to Profile?",
 				"Profile " + item.file.getName() +
 					" has changed.\nDo you want to save your changes?",
-				"Yes", OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
-				save(item);
+				"Yes", OptionDialog.QUESTION_MESSAGE);
+
+			if (choice == OptionDialog.CANCEL_OPTION) {
+				return false;
 			}
-		}
-		else {
-			if (OptionDialog.showOptionDialog(rootPanel, "Save Changes to Another Profile?",
-				"You have made changes to the default profile " + item.file.getName() +
-					",\nhowever, updating default profiles is not allowed." +
-					"\nDo you want to save your changes to another profile?",
-				"Yes", OptionDialog.QUESTION_MESSAGE) == OptionDialog.OPTION_ONE) {
-				saveAs(item);
+			if (choice != OptionDialog.OPTION_ONE) {
+				return true; // chose not to save; no failure
 			}
+
+			return save(item);
 		}
+
+		int choice = OptionDialog.showOptionDialog(rootPanel, "Save Changes to Another Profile?",
+			"You have made changes to the default profile " + item.file.getName() +
+				",\nhowever, updating default profiles is not allowed." +
+				"\nDo you want to save your changes to another profile?",
+			"Yes", OptionDialog.QUESTION_MESSAGE);
+
+		if (choice == OptionDialog.CANCEL_OPTION) {
+			return false;
+		}
+		if (choice != OptionDialog.OPTION_ONE) {
+			return true; // chose not to save; no failure
+		}
+
+		return saveAs(item);
 	}
 
 	private void addDocumentListener() {
@@ -592,8 +606,9 @@ class ParseDialog extends ReusableDialogComponentProvider {
 	private void refresh() {
 		ComboBoxItem item = comboBox.getSelectedItem();
 		if (item.isChanged) {
-			processItemChanged(item);
+			promptAndSave(item);
 		}
+
 		comboBox.removeItemListener(comboItemListener);
 		itemList.clear();
 		comboModel.removeAllElements();
@@ -614,65 +629,72 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		item.isChanged = true;
 	}
 
-	private void save(ComboBoxItem item) {
+	private boolean save(ComboBoxItem item) {
 		if (!item.isUserDefined) {
-			saveAs(item);
+			return saveAs(item);
 		}
-		else {
-			writeProfile(item.file);
-			item.isChanged = false;
-			notifyContextChanged();
-		}
+
+		writeProfile(item.file);
+		item.isChanged = false;
+		notifyContextChanged();
+		return true;
 	}
 
-	private void saveAs(ComboBoxItem item) {
+	// returns false if the operation was cancelled
+	private boolean saveAs(ComboBoxItem item) {
 
 		InputDialog d = new InputDialog("Enter Profile Name", "Profile Name");
 		plugin.getTool().showDialog(d, getComponent());
 
 		String name = d.getValue();
-		if (name != null && name.length() > 0) {
-			if (!name.endsWith(FILE_EXTENSION)) {
-				name = name + FILE_EXTENSION;
-			}
-			ResourceFile file = new ResourceFile(parentUserFile, name);
-			if (file.equals(item.file)) {
-				save(item);
-				return;
+		if (StringUtils.isBlank(name)) {
+			return false;
+		}
+
+		if (!name.endsWith(FILE_EXTENSION)) {
+			name = name + FILE_EXTENSION;
+		}
+		ResourceFile file = new ResourceFile(parentUserFile, name);
+		if (file.equals(item.file)) {
+			save(item);
+			return true;
+		}
+
+		if (file.exists()) {
+			int choice = OptionDialog.showOptionDialog(rootPanel, "Overwrite Existing File?",
+				"The file " + file.getAbsolutePath() +
+					" already exists.\nDo you want to overwrite it?",
+				"Yes", OptionDialog.QUESTION_MESSAGE);
+			if (choice != OptionDialog.OPTION_ONE) {
+				return false;
 			}
 
-			if (file.exists()) {
-				if (OptionDialog.showOptionDialog(rootPanel, "Overwrite Existing File?",
-					"The file " + file.getAbsolutePath() +
-						" already exists.\nDo you want to overwrite it?",
-					"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
-					return;
-				}
-				file.delete();
-			}
-			saveAsInProgress = true;
-			ComboBoxItem newItem = new ComboBoxItem(file, true);
-			if (itemList.contains(newItem)) {
-				itemList.remove(newItem);
-				comboModel.removeElement(newItem);
-			}
-			int index = Collections.binarySearch(itemList, newItem, comparator);
-			if (index < 0) {
-				index = -index - 1;
-			}
-			itemList.add(index, newItem);
-			writeProfile(newItem.file);
-			newItem.isChanged = false;
-			item.isChanged = false;
-			try {
-				comboModel.insertElementAt(newItem, index);
-				comboBox.setSelectedIndex(index);
-			}
-			finally {
-				saveAsInProgress = false;
-			}
-			notifyContextChanged();
+			file.delete();
 		}
+
+		saveAsInProgress = true;
+		ComboBoxItem newItem = new ComboBoxItem(file, true);
+		if (itemList.contains(newItem)) {
+			itemList.remove(newItem);
+			comboModel.removeElement(newItem);
+		}
+		int index = Collections.binarySearch(itemList, newItem, comparator);
+		if (index < 0) {
+			index = -index - 1;
+		}
+		itemList.add(index, newItem);
+		writeProfile(newItem.file);
+		newItem.isChanged = false;
+		item.isChanged = false;
+		try {
+			comboModel.insertElementAt(newItem, index);
+			comboBox.setSelectedIndex(index);
+		}
+		finally {
+			saveAsInProgress = false;
+		}
+		notifyContextChanged();
+		return true;
 	}
 
 	private void loadProfile() {

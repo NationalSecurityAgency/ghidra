@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +43,7 @@ import ghidra.util.task.*;
  * If the project has changed, then the first checkbox displayed will be
  * for saving the project configuration.
  */
+@Deprecated(forRemoval = true, since = "12.3")
 public class SaveDataDialog extends DialogComponentProvider {
 
 	private ListPanel<JCheckBox> listPanel;
@@ -61,6 +62,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 	 * Construct new SaveDataDiaog
 	 * @param tool front end tool
 	 */
+	@Deprecated(forRemoval = true, since = "12.3")
 	public SaveDataDialog(PluginTool tool) {
 
 		super("Save Modified Files", true);
@@ -93,6 +95,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 	 * @return true if the user hit the 'Save' or 'Don't Save' option; return false if the
 	 *         user cancelled the operation
 	 */
+	@Deprecated(forRemoval = true, since = "12.3")
 	public boolean showDialog(List<DomainFile> domainFiles) {
 		clearStatusText();
 		operationCompleted = false;
@@ -114,6 +117,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 	/**
 	 * Gets called when the user clicks on the OK Action for the dialog.
 	 */
+	@Deprecated(forRemoval = true, since = "12.3")
 	@Override
 	protected void okCallback() {
 
@@ -138,6 +142,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 	/**
 	 * Gets called when the user clicks on the Cancel Action for the dialog.
 	 */
+	@Deprecated(forRemoval = true, since = "12.3")
 	@Override
 	protected void cancelCallback() {
 		close();
@@ -235,7 +240,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 			}
 
 		}
-		listPanel.refreshList(checkboxes);
+		listPanel.setListData(checkboxes);
 		setFocusComponent(yesButton);
 	}
 

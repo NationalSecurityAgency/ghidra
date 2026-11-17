@@ -27,7 +27,6 @@ import docking.DockingWindowManager;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
-import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -56,7 +55,6 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.xml.GenericXMLOutputter;
 
 public class VTSubToolManager implements VTControllerListener, OptionsChangeListener {
@@ -339,11 +337,6 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		return action;
 	}
 
-	private void closeSessionLater() {
-		SystemUtilities.runSwingLater(() -> controller.closeVersionTrackingSession());
-
-	}
-
 	private List<DomainFile> getChangedPrograms(PluginTool subTool) {
 		List<DomainFile> domainFiles = new ArrayList<>();
 		if (subTool != null) {
@@ -559,14 +552,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 				return false;
 			}
 
-			int resp = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Version Tracking",
-				"Closing this tool will terminate the active Version " +
-					"Tracking Session.\nContinue closing tool?");
-
-			if (resp != OptionDialog.NO_OPTION) {
-				closeSessionLater();
-			}
-			return false;
+			return true;
 		}
 
 		@Override
@@ -576,13 +562,10 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			if (dObj != sourceProgram && dObj != destintationProgram) {
 				return true;
 			}
-			int resp = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Version Tracking",
-				"Closing this program will terminate " +
-					"the active Version Tracking Session.\nContinue?");
 
-			if (resp != OptionDialog.NO_OPTION) {
-				closeSessionLater();
-			}
+			// This method is called by various actions in each sub tool.  For now, don't let any
+			// of the non-VT sub tool actions close the source and destination program.  If we find
+			// a use case for this to be allowed, then handle that case specifically.
 			return false;
 		}
 
@@ -878,5 +861,9 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	public ColorizingService getDestinationColorizingService() {
 		return destinationTool.getService(ColorizingService.class);
+	}
+
+	public List<PluginTool> getSubordinateTools() {
+		return List.of(sourceTool, destinationTool);
 	}
 }

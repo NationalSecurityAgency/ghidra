@@ -90,6 +90,7 @@ public class GhidraTool extends PluginTool {
 	@Override
 	protected void initActions() {
 		addSaveToolAction();
+		addSaveAllDataAction();
 		addExportToolAction();
 		addCloseAction();
 		addExitAction();

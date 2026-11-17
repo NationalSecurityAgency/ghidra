@@ -37,6 +37,7 @@ import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -65,10 +66,16 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	private final static Icon DELETE_ICON = new GIcon("icon.plugin.enum.editor.delete");
 	private final static String HELP_TOPIC = "DataTypeEditors";
 
-	private final static int CANCEL = 0;
-	private final static int SAVE = 1;
-	private final static int NO_SAVE = 2;
-	private final static int ERROR = 3;
+	private enum SaveResult {
+		CANCELLED,
+		SAVED,
+		NOT_SAVED,
+		ERRORS;
+
+		boolean isSuccessful() {
+			return this == SAVED || this == NOT_SAVED;
+		}
+	}
 
 	private DataTypeManagerPlugin plugin;
 	private EnumEditorPanel editorPanel;
@@ -143,8 +150,8 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
-		int result = saveChangesForCloseEvent(true);
-		if (result == SAVE || result == NO_SAVE) {
+		SaveResult result = saveChangesForCloseEvent(true);
+		if (result.isSuccessful()) {
 			dispose();
 		}
 	}
@@ -174,8 +181,8 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public boolean checkForSave(boolean allowCancel) {
-		int result = saveChangesForCloseEvent(allowCancel);
-		if (result == CANCEL || result == ERROR) {
+		SaveResult result = saveChangesForCloseEvent(allowCancel);
+		if (!result.isSuccessful()) {
 			if (allowCancel) {
 				return false;
 			}
@@ -192,6 +199,11 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			el.closed(this);
 		}
 		dataTypeManager.removeDataTypeManagerListener(catListener);
+	}
+
+	@Override
+	public DomainObject getDomainObject() {
+		return dataTypeManager.getDataStore();
 	}
 
 	@Override
@@ -496,33 +508,49 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
-	 * @return CANCEL (0) if the user canceled;
-	 *   SAVE (1) if the user saved changes;
-	 *   NO_SAVE (2) if the user did not save changes or no save was required;
-	 *   ERROR (3) if there was an error when the changes were applied.
+	 * @return 
+	 *  CANCELLED if the user canceled;  <BR>
+	 *  SAVE if the user saved changes; <BR>
+	 *  NO_SAVE if the user did not save changes or no save was required; <BR>
+	 *  ERROR if there was an error when the changes were applied.
 	 */
-	private int saveChangesForCloseEvent(boolean allowCancel) {
-		// Check for changes and prompt user to check if saving them.
-		if (hasChanges()) {
-			String question = "The Enum Editor is closing.\n" + "Save the changes to " +
-				editorPanel.getEnum().getDisplayName() + "?";
-			String title = "Save Enum Editor Changes?";
-			int response;
-			if (allowCancel) {
-				response = OptionDialog.showYesNoCancelDialog(editorPanel, title, question);
-			}
-			else {
-				response = OptionDialog.showYesNoDialog(editorPanel, title, question);
-			}
-			if (response == OptionDialog.OPTION_ONE) {
-				// YES selected.
-				if (!applyChanges()) {
-					return ERROR;
-				}
-			}
-			return response;
+	private SaveResult saveChangesForCloseEvent(boolean allowCancel) {
+
+		if (!hasChanges()) {
+			return SaveResult.NOT_SAVED;
 		}
-		return NO_SAVE; // no save required, or No selected
+
+		String question = "The Enum Editor is closing.\n" + "Save the changes to " +
+			editorPanel.getEnum().getDisplayName() + "?";
+		String title = "Save Enum Editor Changes?";
+		int choice;
+		if (allowCancel) {
+			choice = OptionDialog.showYesNoCancelDialog(editorPanel, title, question);
+		}
+		else {
+			choice = OptionDialog.showYesNoDialog(editorPanel, title, question);
+		}
+
+		if (choice == OptionDialog.CANCEL_OPTION) {
+			return SaveResult.CANCELLED;
+		}
+
+		if (choice == OptionDialog.NO_OPTION) {
+			return SaveResult.NOT_SAVED;
+		}
+
+		if (applyChanges()) {
+			return SaveResult.SAVED;
+		}
+		return SaveResult.ERRORS;
+	}
+
+	@Override
+	public boolean save() {
+		if (hasChanges()) {
+			return applyChanges();
+		}
+		return false;
 	}
 
 	public boolean hasChanges() {
@@ -591,7 +619,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 				return;
 			}
 			if (!hasChanges()) {
-				editorPanel.enumChanged((EnumDataType) ((Enum) currentDataType).copy(dtm));
+				editorPanel.enumChanged((EnumDataType) currentDataType.copy(dtm));
 			}
 			applyAction.setEnabled(hasChanges());
 		}

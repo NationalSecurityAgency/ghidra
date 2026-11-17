@@ -455,7 +455,6 @@ src/main/help/help/topics/FrontEndPlugin/images/ProjectWindow.png||GHIDRA||||END
 src/main/help/help/topics/FrontEndPlugin/images/ReopenProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/RepositoryNamePanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/RestoreProjectFilledIn.png||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/images/SaveFiles.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/SaveReadOnly.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/SelectProjectLocation.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/SelectProjectType.png||GHIDRA||||END|
@@ -750,6 +749,7 @@ src/main/help/help/topics/Tool/images/ModalTaskDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/PickTool.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/Progress.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/RestoreDefaults.png||GHIDRA||||END|
+src/main/help/help/topics/Tool/images/SaveAllDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/SaveChangesDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/SaveTool.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/SetKeyBindings.png||GHIDRA||||END|

@@ -20,16 +20,14 @@ import static ghidra.framework.main.DataTreeDialogType.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.rmi.ConnectException;
-import java.util.*;
+import java.util.List;
 
 import docking.widgets.OptionDialog;
-import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.main.SaveDataDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -71,36 +69,6 @@ class ProgramSaveManager {
 		return false;
 	}
 
-	boolean saveAll() {
-		Program[] programs = programMgr.getAllOpenPrograms();
-		List<Program> saveList = new ArrayList<>();
-		List<Program> lockList = new ArrayList<>();
-		try {
-			for (Program program : programs) {
-				if (isOnlyToolConsumer(program)) {
-					if (!acquireSaveLock(program, "Close")) {
-						return false;
-					}
-					lockList.add(program);
-					saveList.add(program);
-				}
-				else if (isAnalysisTool(program)) {
-					if (!acquireSaveLock(program, "Close")) {
-						return false;
-					}
-					lockList.add(program);
-				}
-			}
-
-			return saveChangedPrograms(saveList);
-		}
-		finally {
-			for (Program p : lockList) {
-				p.unlock();
-			}
-		}
-	}
-
 	private boolean isOnlyToolConsumer(Program program) {
 		List<?> consumers = program.getDomainFile().getConsumers();
 		for (Object consumer : consumers) {
@@ -109,76 +77,6 @@ class ProgramSaveManager {
 			}
 		}
 		return true;
-	}
-
-	private boolean isAnalysisTool(Program program) {
-		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
-		return tool == analysisManager.getAnalysisTool();
-	}
-
-	/**
-	 * Saves all programs that have changes
-	 *
-	 */
-	public void saveChangedPrograms() {
-		int saveCnt = 0;
-		int unsavedCnt = 0;
-		Program[] programs = programMgr.getAllOpenPrograms();
-		for (Program program : programs) {
-			if (program.isChanged()) {
-				if (program.canSave()) {
-					save(program);
-					++saveCnt;
-				}
-				else {
-					++unsavedCnt;
-				}
-			}
-		}
-		if (saveCnt != 0) {
-			Msg.showInfo(getClass(), tool.getToolFrame(), "Save All...",
-				"Saved " + saveCnt + " modified programs.");
-		}
-		if (unsavedCnt != 0) {
-			Msg.showWarn(getClass(), tool.getToolFrame(), "Save All...",
-				"Unable to save " + unsavedCnt + " read-only programs!");
-		}
-	}
-
-	/**
-	 * Prompt user for programs to be saved.
-	 * Caller must already have lock on all programs contained within the list.
-	 * @return true if it is safe to close tool
-	 */
-	private boolean saveChangedPrograms(List<Program> openProgramList) {
-		SaveDataDialog saveDataDialog = new SaveDataDialog(tool);
-
-		// don't modify the original list, as it is used by the caller to perform cleanup
-		List<Program> saveProgramsList = new ArrayList<>(openProgramList);
-
-		// make sure we have some files to save
-		List<DomainFile> domainFilesToSaveList = new ArrayList<>();
-		Iterator<Program> iter = saveProgramsList.iterator();
-		while (iter.hasNext()) {
-			Program program = iter.next();
-			DomainFile domainFile = program.getDomainFile();
-			if (!domainFile.isChanged()) {
-				iter.remove();
-			}
-			else {
-				domainFilesToSaveList.add(domainFile);
-			}
-		}
-
-		if (saveProgramsList.size() == 0) {
-			return true;
-		}
-		// calling can close here ensures that we use the same dialog for single files
-		else if (saveProgramsList.size() == 1) {
-			return canClose(saveProgramsList.get(0));
-		}
-
-		return saveDataDialog.showDialog(domainFilesToSaveList);
 	}
 
 	void saveProgram(Program program) {
@@ -193,18 +91,32 @@ class ProgramSaveManager {
 		}
 	}
 
-	private void save(Program program) {
+	private void save(Program p) {
+		save(p, null);
+	}
+
+	boolean save(Program program, TaskMonitor monitor) {
 
 		tool.prepareToSave(program);
-		if (acquireSaveLock(program, "Save")) {
+		if (!acquireSaveLock(program, "Save")) {
+			return false;
+		}
 
-			try {
-				SaveFileTask task = new SaveFileTask(program.getDomainFile());
-				new TaskLauncher(task, tool.getToolFrame());
+		try {
+			DomainFile df = program.getDomainFile();
+			SaveFileTask task = new SaveFileTask(df);
+
+			if (monitor != null) {
+				task.run(monitor);
 			}
-			finally {
-				program.unlock();
+			else {
+				TaskLauncher.launch(task);
 			}
+
+			return task.getSuccess();
+		}
+		finally {
+			program.unlock();
 		}
 	}
 
@@ -256,10 +168,9 @@ class ProgramSaveManager {
 		if (!currentProgram.isChanged()) {
 			return true;
 		}
+
 		DomainFile df = currentProgram.getDomainFile();
-
 		String filename = df.getName();
-
 		if (!df.isInWritableProject()) {
 			return OptionDialog.showOptionDialog(tool.getToolFrame(), "Program Changed",
 				HTMLUtilities.lineWrapWithHTMLLineBreaks(
@@ -277,91 +188,21 @@ class ProgramSaveManager {
 
 		}
 
-		int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
+		int choice = OptionDialog.showOptionDialog(tool.getToolFrame(), "Save Program?",
 			HTMLUtilities.lineWrapWithHTMLLineBreaks("<html>" + HTMLUtilities.escapeHTML(filename) +
 				" has changed.\nDo you want to save it?"),
 			"&Save", "Do&n't Save", OptionDialog.QUESTION_MESSAGE);
 
-		if (result == OptionDialog.CANCEL_OPTION) {
+		if (choice == OptionDialog.CANCEL_OPTION) {
 			return false;
 		}
-		if (result == OptionDialog.OPTION_ONE) {
+		if (choice == OptionDialog.OPTION_ONE) {
 			SaveFileTask task = new SaveFileTask(currentProgram.getDomainFile());
 			new TaskLauncher(task, tool.getToolFrame());
 		}
 		return true;
 	}
 
-//	public boolean askUserToAbort(Program currentProgram) {
-//		String title = "Save "+currentProgram.getName();
-//		String closeItem = closingProgram ? "program" : "tool";
-//		String filename = currentProgram.getDomainFile().getPathname();
-//		StringBuffer buf = new StringBuffer();
-//		buf.append("The program ("+filename+") is currently being modified by the\n");
-//		buf.append("the following actions:\n \n");
-//		ProgramDB program = (ProgramDB)currentProgram;
-//		Transaction t = program.getCurrentTransaction();
-//		ArrayList list = t.getOpenSubTransactions();
-//		Iterator it = list.iterator();
-//		while(it.hasNext()) {
-//			buf.append("\n     ");
-//			buf.append((String)it.next());
-//		}
-//		buf.append("\n \n");
-//		buf.append("In order to close the ");
-//		buf.append(closeItem);
-//		buf.append(", all actions must be aborted.\n");
-//		buf.append("If you abort the actions, all changes made by those actions\n");
-//		buf.append("will be lost!.\n \n");
-//		buf.append("Do you want to abort the actions and continue to close the ");
-//		buf.append(closeItem);
-//		buf.append("?");
-//
-//		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),title , buf.toString(),
-//				"Abort Actions", OptionDialog.WARNING_MESSAGE);
-//
-//		return result == OptionDialog.OPTION_ONE;
-//	}
-//	private boolean checkForSave(Program currentProgram) {
-//		DomainFile df = currentProgram.getDomainFile();
-//
-//		String filename = df.getName();
-//
-//		if (!df.isInProject()) {
-//			return  OptionDialog.showOptionDialog(tool.getToolFrame(),
-//					   "Program Changed",
-//					   "Viewed file "+filename +
-//					   " has been changed.  \n"+
-//					   "If you continue, your changes will be lost!",
-//					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
-//		}
-//
-//		if (df.isReadOnly()) {
-//			return OptionDialog.showOptionDialog(tool.getToolFrame(),
-//					   "Program Changed",
-//					   "Read-only file "+filename +
-//					   " has been changed.  \n"+
-//					   "If you continue, your changes will be lost!",
-//					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
-//
-//		}
-//
-//
-//		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),
-//				   "Save Program?",
-//				   filename +
-//				   " has changed. Do you want to save it?",
-//				   "&Save", "Do&n't Save",
-//				   OptionDialog.QUESTION_MESSAGE);
-//
-//		if (result == OptionDialog.CANCEL_OPTION) {
-//			return false;
-//		}
-//		if (result == OptionDialog.OPTION_ONE) {
-//			save(currentProgram);
-//		}
-//		return true;
-//	}
 	private boolean acquireSaveLock(Program program, String actionName) {
 		if (!program.lock(null)) {
 			String title = actionName + " Program" + " (Busy)";
@@ -466,13 +307,18 @@ class ProgramSaveManager {
 		return dialog;
 	}
 
-	class SaveFileTask extends Task {
+	private class SaveFileTask extends Task {
 
 		private DomainFile domainFile;
+		private volatile boolean success;
 
 		SaveFileTask(DomainFile df) {
 			super("Save Program", true, true, true);
 			this.domainFile = df;
+		}
+
+		boolean getSuccess() {
+			return success;
 		}
 
 		@Override
@@ -480,6 +326,7 @@ class ProgramSaveManager {
 			monitor.setMessage("Saving Program...");
 			try {
 				domainFile.save(monitor);
+				success = true;
 			}
 			catch (CancelledException e) {
 				// ignore
@@ -499,7 +346,7 @@ class ProgramSaveManager {
 		}
 	}
 
-	class SaveAsTask extends Task {
+	private class SaveAsTask extends Task {
 
 		private DomainFolder parentFolder;
 		private String newName;

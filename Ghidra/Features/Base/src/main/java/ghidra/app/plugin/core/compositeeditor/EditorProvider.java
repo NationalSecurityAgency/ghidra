@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
+import javax.swing.Icon;
+
 import docking.ComponentProvider;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypePath;
 
@@ -48,6 +51,11 @@ public interface EditorProvider {
 	public DataTypeManager getDataTypeManager();
 
 	/**
+	 * {@return the domain object associated with the data type being edited}
+	 */
+	public DomainObject getDomainObject();
+
+	/**
 	 * Return whether this editor is editing the data type with the given path.
 	 * @param dtPath path of a data type
 	 * @return true if the data type for the pathname is being edited
@@ -74,12 +82,23 @@ public interface EditorProvider {
 	/**
 	  * Prompt the user if this editor has changes that need saving.
 	  * @param allowCancel true means that the user can cancel the edits
-	  * @return true if the user doesn't cancel.
+	  * @return true if user choose save or don't save; false if cancelled or there were errors
 	  */
 	public boolean checkForSave(boolean allowCancel);
+
+	/**
+	 * Saves the contents of the editor. 
+	 * @return false when the editor had changed but there was an error saving
+	 */
+	public boolean save();
 
 	/**
 	 * Dispose of resource that this editor may be using.
 	 */
 	public void dispose();
+
+	/**
+	 * {@return the icon for this editor}
+	 */
+	public Icon getIcon();
 }

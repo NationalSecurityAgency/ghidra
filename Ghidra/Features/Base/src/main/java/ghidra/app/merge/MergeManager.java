@@ -114,14 +114,9 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 	}
 
 	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.data.DomainObjectMergeManager#merge()
-	 * 
 	 * Begin the merge process by displaying a modal tool.
 	 * The dialog's component is updated for each part of the 
 	 * merge process that requires user input.
-	 * 
-	 *
 	 */
 	@Override
 	public boolean merge(TaskMonitor taskMonitor) throws CancelledException {
@@ -187,19 +182,16 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 				}
 			});
 		}
-		catch (InterruptedException e) {
-		}
-		catch (InvocationTargetException e) {
-			e.printStackTrace();
+		catch (InterruptedException | InvocationTargetException e) {
+			Msg.error(this, "Unexpected exception", e);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
 			throw new CancelledException();
 		}
 		finally {
 			mergeCompleted = true;
-			if (mergeMonitor instanceof TaskDialog) {
-				((TaskDialog) taskMonitor).setCancelEnabled(true);
+			if (mergeMonitor instanceof TaskDialog dialog) {
+				dialog.setCancelEnabled(true);
 			}
 		}
 
@@ -222,9 +214,7 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 		return new Dimension(screenDim.width - 200, screenDim.height - 200);
 	}
 
-	/**
-	 * Convenience method for Junit tests.
-	 */
+	// Convenience method for Junit tests.
 	public boolean merge() throws CancelledException {
 		return merge(TaskMonitor.DUMMY);
 	}
@@ -377,8 +367,8 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 	}
 
 	/**
-	 * Return whether the merge process has completed. (Needed for Junit testing
-	 * only.)
+	 * {@return whether the merge process has completed. (Needed for Junit testing
+	 * only.)}
 	 */
 	public boolean processingCompleted() {
 		return mergeCompleted;
@@ -420,7 +410,7 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 
 		mergeMonitor.setProgress(currentIndex + 1);
 
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			if (currentIndex < mergeResolvers.length && !isCancelled) {
 				mergePlugin.updateMergeDescription(mergeResolvers[currentIndex].getDescription());
 			}
@@ -499,36 +489,6 @@ public abstract class MergeManager<T extends DomainObject, C extends DomainObjec
 			});
 		}
 	}
-
-//	/**
-//	 * Returns the dimensions of the current merge tool.
-//	 */
-//	public Dimension getToolSize() {
-//		if (mergeTool == null) {
-//			return null;
-//		}
-//		return mergeTool.getSize();
-//	}
-
-//	/**
-//	 * Sets the dimensions of the current merge tool.
-//	 * @param dim the new dimensions
-//	 */
-//	public void setToolSize(Dimension dim) {
-//		setToolSize(dim.width, dim.height);
-//	}
-
-//	/**
-//	 * Sets the dimensions of the current merge tool.
-//	 * @param width the new width of the merge tool.
-//	 * @param height the new height of the merge tool.
-//	 */
-//	public void setToolSize(int width, int height) {
-//		if (mergeTool == null) {
-//			return;
-//		}
-//		mergeTool.setSize(width, height);
-//	}
 
 	/**
 	 * Gets the resolve information object for the indicated standardized name.

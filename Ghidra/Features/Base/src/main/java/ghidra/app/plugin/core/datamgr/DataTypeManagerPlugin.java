@@ -52,8 +52,7 @@ import ghidra.framework.Application;
 import ghidra.framework.data.DomainFileProxy;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -137,7 +136,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		archiveManager.addArchiveManagerListener(new ArchiveManagerListener() {
 			@Override
 			public void archiveClosed(PersistentDataTypeArchive archive) {
-				editorManager.dismissEditors(archive.getDataTypeManager());
 				tool.setConfigChanged(true);
 				if (archive instanceof ProjectDataTypeArchive projectArchive) {
 					projectArchive.removeListener(DataTypeManagerPlugin.this);
@@ -495,18 +493,37 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	protected boolean canClose() {
-		if (!editorManager.checkEditors(null, true)) {
-			return false;
+	protected boolean hasUnsaveData() {
+
+		if (editorManager.hasUnsavedEditors()) {
+			return true;
 		}
-		editorManager.dismissEditors(null);
-		List<FileDataTypeArchive> archives = archiveManager.getOpenFileArchives();
-		for (FileDataTypeArchive archive : archives) {
-			if (!resolveModifiedArchive(archive)) {
-				return false;
+
+		for (PersistentDataTypeArchive archive : archiveManager.getSaveableArchives()) {
+			if (archive.isChanged()) {
+				return true;
 			}
+
 		}
-		return true;
+		return false;
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
+
+		List<PluginSaveable> results = new ArrayList<>();
+		List<PluginSaveable> saveables = editorManager.getUnsavedEditorSaveables();
+		results.addAll(saveables);
+
+		saveables = archiveManager.getUnsavedArchiveSaveables();
+		results.addAll(saveables);
+
+		return results;
+	}
+
+	@Override
+	protected PluginSaveable getSaveable(DomainObject dobj) {
+		return archiveManager.getSaveable(dobj);
 	}
 
 	/**
@@ -534,6 +551,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	protected void close() {
+		editorManager.dispose();
 		provider.dispose();
 	}
 
@@ -669,9 +687,9 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return selectionDialog.getUserChosenDataType();
 	}
 
-//**********************************************************************************************
-//	DataTypeManagerService methods
-//**********************************************************************************************
+//=================================================================================================
+// DataTypeManagerService methods
+//=================================================================================================	
 
 	@Override
 	public HelpLocation getEditorHelpLocation(DataType dataType) {
@@ -1163,36 +1181,13 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		// Program Manager will take care of programs.
 		// We need to take care of Project Data Type Archives.
 		List<DomainFile> domainFileList = new ArrayList<>();
-		List<ProjectDataTypeArchive> allArchives = archiveManager.getProjectArchives();
+		List<ProjectDataTypeArchive> allArchives = archiveManager.getOpenProjectArchives();
 		for (ProjectDataTypeArchive archive : allArchives) {
 			if ((archive instanceof ProjectDataTypeArchive pa) && archive.isChangeable()) {
 				domainFileList.add(pa.getDomainFile());
 			}
 		}
 		return domainFileList.toArray(new DomainFile[domainFileList.size()]);
-	}
-
-	@Override
-	protected boolean saveData() {
-		// Note: project archives are saved via this method and file archives are saved via
-		// the canClose() method. The reason is to prevent duplicate asks to save an archive. 
-		// 
-		// There is an inconsistency between these methods getting called depending on whether just
-		// a tool is being closed or the front-end is closing. This method is only called in the
-		// case when just a tool is closing. When the front-end is closing, this call is skipped
-		// and instead a generic dialog for any changed project domain object (which includes 
-		// programs and project datatype archives) is called.
-		// 
-		// So, if we were to try and save file archives here, they wouldn't get saved since this
-		// method isn't called when the front-end is closed. 
-
-		List<ProjectDataTypeArchive> archives = archiveManager.getProjectArchives();
-		for (ProjectDataTypeArchive archive : archives) {
-			if (!resolveModifiedArchive(archive)) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**

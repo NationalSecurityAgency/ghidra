@@ -26,14 +26,12 @@ import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
 
 /**
- * Service to provide list of cycle groups and data types identified as
- * "favorites." Favorites will show up on the popup menu for creating
- * data and defining function return types and parameters.
+ * Service that provides methods for accessing data types.
  */
 //@formatter:off
 @ServiceInfo(
 	defaultProvider = DataTypeManagerPlugin.class, 
-	description = "Service to provide list of cycle groups and data types identified as 'Favorites.'"
+	description = "Service to provide methods for accessing Data Types."
 )
 //@formatter:on
 public interface DataTypeManagerService extends DataTypeQueryService, DataTypeArchiveService {

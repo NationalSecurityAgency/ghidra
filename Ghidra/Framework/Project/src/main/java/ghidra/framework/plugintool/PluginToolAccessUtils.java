@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package ghidra.framework.plugintool;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class to provide access to non-public methods on PluginTool. There are a number of
@@ -42,7 +45,32 @@ public class PluginToolAccessUtils {
 	 * @return true if the tool can be closed
 	 */
 	public static boolean canClose(PluginTool tool) {
-		return tool.canStopTasks() && tool.canClosePlugins();
+		if (!tool.canStopTasks()) {
+			return false;
+		}
+		return tool.canClosePlugins();
 	}
 
+	/**
+	 * Returns true if the project can be closed.  This method will call 
+	 * {@link #canClose(PluginTool)} for each open tool. Also, this method will prompt the user to
+	 * save any changes mode in the application.
+	 * @param applicationTool the main application tool
+	 * @param subTools all tools belonging to the application tool
+	 * @return true if the project can be closed
+	 */
+	public static boolean canClose(PluginTool applicationTool, List<PluginTool> subTools) {
+
+		List<PluginTool> allTools = new ArrayList<>();
+		allTools.add(applicationTool);
+		allTools.addAll(subTools);
+		for (PluginTool tool : allTools) {
+			if (!canClose(tool)) {
+				return false;
+			}
+		}
+
+		SavePluginDataDialog dialog = new SavePluginDataDialog(allTools);
+		return dialog.showAndSave(applicationTool);
+	}
 }

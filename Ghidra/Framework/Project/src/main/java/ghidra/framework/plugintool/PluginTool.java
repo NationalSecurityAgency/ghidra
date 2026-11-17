@@ -932,6 +932,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 		});
 	}
 
+	/**
+	 * {@return true if the tool has unsaved data}
+	 */
 	public boolean hasUnsavedData() {
 		return pluginMgr.hasUnsavedData();
 	}
@@ -1059,6 +1062,23 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		addAction(saveAction);
 		addAction(saveAsAction);
+	}
+
+	protected void addSaveAllDataAction() {
+
+		new ActionBuilder("Save All Tool Data", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Save All...")
+				.menuGroup(ToolConstants.MENU_GROUP_FILE_SAVE)
+				.description("Save All Tool Data")
+				.helpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Save_All"))
+				.enabledWhen(c -> hasUnsavedData())
+				.onAction(c -> {
+
+					if (canStopTasks()) {
+						savePluginData();
+					}
+				})
+				.buildAndInstall(this);
 	}
 
 	/**
@@ -1206,32 +1226,41 @@ public abstract class PluginTool extends AbstractDockingTool {
 		if (!canStopTasks()) {
 			return false;
 		}
+
+		// save or ignore all changed plugin data
+		if (!savePluginData()) {
+			return false;
+		}
+
 		if (!canClosePlugins()) {
 			return false;
 		}
-		if (!pluginMgr.saveData()) {
-			return false;
-		}
+
 		return doSaveTool();
 	}
 
-	/**
-	 * Normally, tools are not allowed to close while tasks are running in that tool as it
-	 * could leave the application in an unstable state. Tools that exit the application
-	 * (such as the FrontEndTool) can override this so that the user can terminate running tasks
-	 * and not have that prevent exiting the application.
-	 * @return whether the user is allowed to terminate tasks so that the tool can be closed.
-	 */
-	protected boolean allowTerminatingTasksWhenClosing() {
-		return false;
+	private boolean savePluginData() {
+		return pluginMgr.saveData();
+	}
+
+	protected Set<PluginSaveable> getUnsavedData() {
+		return pluginMgr.getUnsavedData();
+	}
+
+	protected PluginSaveable getSaveable(DomainObject dobj) {
+		return pluginMgr.getSaveable(dobj);
 	}
 
 	/**
-	 * Checks if this tool's plugins are in a state to be closed.
+	 * Checks if this tool's plugins are in a state to be closed. This method should not trigger a
+	 * prompt to the user to save data.  This allows the Front End tool to ask plugins if they can
+	 * close without prompting to save data twice. Most plugins do not override this method.
+	 * {@link Plugin#canClose()}.
+	 * 
 	 * @return true if all the plugins in the tool can be closed without further user input.
 	 */
 	protected boolean canClosePlugins() {
-		return pluginMgr.canClose();
+		return pluginMgr.canClosePlugins();
 	}
 
 	/**

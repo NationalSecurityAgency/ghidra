@@ -37,12 +37,10 @@ import ghidra.feature.vt.gui.util.MatchInfoFactory;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.SaveDataDialog;
 import ghidra.framework.main.projectdata.actions.CheckoutsDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -193,7 +191,7 @@ public class VTControllerImpl
 		if (!VTSession.class.isAssignableFrom(domainFile.getDomainObjectClass())) {
 			throw new IllegalArgumentException("File does not correspond to a VTSession");
 		}
-		if (!checkForUnSavedChanges()) {
+		if (!saveAllData()) {
 			return false;
 		}
 		try {
@@ -279,7 +277,7 @@ public class VTControllerImpl
 	public void openVersionTrackingSession(VTSession newSession) {
 		// FIXME: new session wizard should have handled existing session before starting -
 		// should be no need for this check
-		if (!checkForUnSavedChanges()) {
+		if (!saveAllData()) {
 			return;
 		}
 		if (newSession instanceof VTSessionDB) {
@@ -294,7 +292,7 @@ public class VTControllerImpl
 
 	@Override
 	public boolean closeVersionTrackingSession() {
-		if (checkForUnSavedChanges()) {
+		if (saveAllData()) {
 			closeCurrentSessionIgnoringChanges();
 			return true;
 		}
@@ -322,8 +320,22 @@ public class VTControllerImpl
 
 	@Override
 	public void dispose() {
-		disposeSession();
+		closeCurrentSessionIgnoringChanges();
 		fireDisposed();
+	}
+
+	private void disposeSession() {
+		if (session == null) {
+			return;
+		}
+		VTSession oldSession = session;
+		session = null;
+		currentMatchInfo = null;
+		matchInfoFactory.clearCache();
+		sourceSymbolCache.clear();
+		destinationSymbolCache.clear();
+		fireSessionChanged();
+		((VTSessionDB) oldSession).release(this);
 	}
 
 	@Override
@@ -352,11 +364,19 @@ public class VTControllerImpl
 		return session.getDestinationProgram();
 	}
 
-	// returns true if the operation was not cancelled.
 	@Override
-	public boolean checkForUnSavedChanges() {
+	public boolean saveAllData() {
 		if (session == null) {
 			return true;
+		}
+
+		List<PluginTool> subTools = plugin.getSubordinateTools();
+		return PluginToolAccessUtils.canClose(getTool(), subTools);
+	}
+
+	private List<DomainFile> getChangedDomainFiles() {
+		if (session == null) {
+			return List.of();
 		}
 
 		List<DomainFile> domainFiles = new ArrayList<>();
@@ -368,26 +388,22 @@ public class VTControllerImpl
 				domainFiles.add(sessionDB.getDomainFile());
 			}
 		}
-		if (domainFiles.isEmpty()) {
-			return true;
-		}
-		SaveDataDialog saveDataDialog = new SaveDataDialog(getTool());
-
-		return saveDataDialog.showDialog(domainFiles);
+		return domainFiles;
 	}
 
-	private void disposeSession() {
-		if (session == null) {
-			return;
-		}
-		VTSession oldSession = session;
-		session = null;
-		currentMatchInfo = null;
-		matchInfoFactory.clearCache();
-		sourceSymbolCache.clear();
-		destinationSymbolCache.clear();
-		fireSessionChanged();
-		((VTSessionDB) oldSession).release(this);
+	@Override
+	public boolean hasUnsavedChanges() {
+		List<DomainFile> files = getChangedDomainFiles();
+		return !files.isEmpty();
+	}
+
+	@Override
+	public List<PluginSaveable> getUnsavedData() {
+
+		List<PluginTool> subTools = plugin.getSubordinateTools();
+		List<PluginTool> allTools = new ArrayList<>();
+		allTools.addAll(subTools);
+		return PluginSaveable.getSaveablesFromAllTools(subTools);
 	}
 
 	@Override
@@ -818,6 +834,5 @@ public class VTControllerImpl
 				VTTaskMonitor.setTaskMonitor(null);
 			}
 		}
-
 	}
 }

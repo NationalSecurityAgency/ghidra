@@ -139,6 +139,9 @@ public interface ToolConstants extends DockingToolConstants {
 	/** Used for navigation-based action */
 	public static final String MENU_GROUP_NEXT_CODE_UNIT_NAV = "NextPrevCodeUnit";
 
+	/** Group for saving open files */
+	public static final String MENU_GROUP_FILE_SAVE = "DomainObjectSave";
+
 	/**
 	 * Primary toolbar group number 1, starting from the left
 	 */
@@ -158,4 +161,5 @@ public interface ToolConstants extends DockingToolConstants {
 	 * Primary toolbar group number 4, starting from the left
 	 */
 	public static final String TOOLBAR_GROUP_FOUR = "4_Toolbar_Navigation_Group";
+
 }

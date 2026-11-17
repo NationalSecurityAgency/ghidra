@@ -15,9 +15,9 @@
  */
 package docking.widgets.list;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -28,14 +28,14 @@ import javax.swing.event.ListSelectionListener;
  * @param <T> The type for the items in this list
  */
 public class ListPanel<T> extends JPanel {
-	private static final long serialVersionUID = 1L;
 
 	private static final String DEFAULT_WARNING = "You must first select an item from the list.";
+
 	private ListSelectionListener listSelectionListener;
 	private ActionListener doubleClickActionListener;
 	private MouseListener mouseListener;
 	private KeyListener keyListener;
-	private JScrollPane scrollpane;
+	private JScrollPane scrollPane;
 	private JList<T> list;
 
 	/**
@@ -57,13 +57,13 @@ public class ListPanel<T> extends JPanel {
 			}
 		};
 
-		scrollpane = new JScrollPane(list);
+		scrollPane = new JScrollPane(list);
 
 		// the next two lines of code cause the scroll bar not to work properly
 		// list.setBorder(emptyborder);
 		// scrollpane.setBorder(compoundborder);
 
-		add(scrollpane, BorderLayout.CENTER);
+		add(scrollPane, BorderLayout.CENTER);
 
 		list.addMouseListener(new MouseAdapter() {
 			@Override
@@ -141,6 +141,15 @@ public class ListPanel<T> extends JPanel {
 	}
 
 	/**
+	 * Returns the item at the given index.
+	 * @param index the index.
+	 * @return the item.
+	 */
+	public T getValueAt(int index) {
+		return list.getModel().getElementAt(index);
+	}
+
+	/**
 	 * Get the index of the selected item in the list.
 	 * @return the index of the selected item in the list.
 	 */
@@ -172,13 +181,19 @@ public class ListPanel<T> extends JPanel {
 		return list.getSelectedValuesList();
 	}
 
-	/** 
-	 * replaces the list contents with the new list.
-	 * @param dataList the new list for the contents.
+	/**
+	 * {@return all values in the list}
 	 */
-	public void refreshList(T[] dataList) {
-		list.setListData(dataList);
-		list.clearSelection();
+	public java.util.List<T> getValues() {
+
+		java.util.List<T> results = new ArrayList<>();
+		ListModel<T> model = list.getModel();
+		int n = model.getSize();
+		for (int i = 0; i < n; i++) {
+			T t = model.getElementAt(i);
+			results.add(t);
+		}
+		return results;
 	}
 
 	/**
@@ -187,6 +202,7 @@ public class ListPanel<T> extends JPanel {
 	 */
 	public void setListData(T[] data) {
 		list.setListData(data);
+		list.clearSelection();
 	}
 
 	/**
@@ -203,7 +219,7 @@ public class ListPanel<T> extends JPanel {
 	 * @return the list model for the list.
 	 */
 	public ListModel<T> getListModel() {
-		return (list.getModel());
+		return list.getModel();
 	}
 
 	/**
@@ -292,5 +308,14 @@ public class ListPanel<T> extends JPanel {
 	 */
 	public void ensureIndexIsVisible(int index) {
 		list.ensureIndexIsVisible(index);
+	}
+
+	/**
+	 * Returns the index in the list of of the given point.
+	 * @param point the point 
+	 * @return the index
+	 */
+	public int locationToIndex(Point point) {
+		return list.locationToIndex(point);
 	}
 }

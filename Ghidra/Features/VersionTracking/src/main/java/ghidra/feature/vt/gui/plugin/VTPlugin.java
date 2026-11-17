@@ -338,8 +338,17 @@ public class VTPlugin extends Plugin {
 	}
 
 	@Override
-	protected boolean saveData() {
-		return controller.checkForUnSavedChanges();
+	protected boolean hasUnsaveData() {
+		return controller.hasUnsavedChanges();
+	}
+
+	@Override
+	protected List<PluginSaveable> getUnsavedData() {
+		// This will get all saveable data from each sub tool. This does not capture any future
+		// saveable items that the main VT tool's plugins (this VTPlugin and any other manually 
+		// added plugins) could have. At the time of writing, there are no such saveables. If we add
+		// them in the future, then they would need to be captured and returned here.
+		return controller.getUnsavedData();
 	}
 
 	@Override
@@ -354,7 +363,12 @@ public class VTPlugin extends Plugin {
 			showBusyToolMessage(destinationTool);
 			return false;
 		}
+
 		return true;
+	}
+
+	public List<PluginTool> getSubordinateTools() {
+		return toolManager.getSubordinateTools();
 	}
 
 	public AddressSetView getSelectionInSourceTool() {
@@ -423,4 +437,5 @@ public class VTPlugin extends Plugin {
 		Msg.showInfo(VTPlugin.class, toolFrame, "Tool \"" + tool.getName() + "\" Busy",
 			"You must stop all background tasks before exiting.");
 	}
+
 }

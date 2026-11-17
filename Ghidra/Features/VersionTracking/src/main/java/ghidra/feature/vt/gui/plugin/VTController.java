@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.plugintool.*;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
@@ -64,8 +63,16 @@ public interface VTController extends VTSessionSupplier {
 
 	public Program getDestinationProgram();
 
-	// returns true if the operation was not cancelled.
-	public boolean checkForUnSavedChanges();
+	/**
+	 * Called by clients that wish to close the current session outside of the normal tool closing
+	 * operation.
+	 * @return false if the user chose to cancel the save operation
+	 */
+	public boolean saveAllData();
+
+	public boolean hasUnsavedChanges();
+
+	public List<PluginSaveable> getUnsavedData();
 
 	public AddressCorrelation getCorrelator(Function source, Function destination);
 
