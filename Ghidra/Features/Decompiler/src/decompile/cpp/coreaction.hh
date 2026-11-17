@@ -791,6 +791,8 @@ public:
 /// Mark what we know of parameters and unaffected stores
 /// so that they cannot be treated as local variables.
 class ActionRestrictLocal : public Action {
+  static void collectDirectAlias(Funcdata &data,AddrSpace *spc,vector<uintb> &alias);	///< Collect constant offset pointers into the stack
+  static bool isSaveSlotAliased(PcodeOp *saveOp,const vector<uintb> &alias);	///< Check if a pointer to a saved register slot escapes
 public:
   ActionRestrictLocal(const string &g) : Action(0,"restrictlocal",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
