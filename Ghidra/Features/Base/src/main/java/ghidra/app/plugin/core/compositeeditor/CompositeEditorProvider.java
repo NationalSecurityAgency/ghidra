@@ -193,6 +193,7 @@ public abstract class CompositeEditorProvider<T extends Composite, M extends Com
 		if (force) {
 			super.closeComponent();
 			dispose();
+			return;
 		}
 
 		SaveResult result = saveChanges(true);
