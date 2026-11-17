@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,16 +40,26 @@ public class IsfConnectionHandler extends Thread {
 			InputStream inputStream = socket.getInputStream();
 			while (!socket.isClosed()) {
 				RootMessage root = RootMessage.parseDelimitedFrom(inputStream);
-				if (root != null) {
-					AbstractMessage msg = handler.processMessage(root);
-					OutputStream out = socket.getOutputStream();
-					msg.writeDelimitedTo(out);
-					out.flush();
+				if (root == null) {
+					// EOF - the client closed the connection
+					break;
 				}
+				AbstractMessage msg = handler.processMessage(root);
+				OutputStream out = socket.getOutputStream();
+				msg.writeDelimitedTo(out);
+				out.flush();
 			}
 		}
 		catch (IOException e) {
 			Msg.error(this, e);
+		}
+		finally {
+			try {
+				socket.close();
+			}
+			catch (IOException e) {
+				// ignore
+			}
 		}
 	}
 }
