@@ -122,8 +122,7 @@ public class XRefFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	protected XRefFieldFactory(String name, FieldFormatModel model,
-			ListingHighlightProvider hlProvider,
-			Options displayOptions, ToolOptions fieldOptions) {
+			ListingHighlightProvider hlProvider, Options displayOptions, ToolOptions fieldOptions) {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
 
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "XREFs_Field");
@@ -173,8 +172,7 @@ public class XRefFieldFactory extends FieldFactory {
 
 		if (!(customOption instanceof NamespaceWrappedOption)) {
 			throw new AssertException("Someone set an option for " + NAMESPACE_OPTIONS_KEY +
-				" that is not the expected " +
-				NamespaceWrappedOption.class.getName() + " type.");
+				" that is not the expected " + NamespaceWrappedOption.class.getName() + " type.");
 		}
 
 		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) customOption;
@@ -589,8 +587,11 @@ public class XRefFieldFactory extends FieldFactory {
 
 	protected AttributedString createRefTypeAttributedString(Reference reference,
 			AttributedString referenceString) {
+		RefType refType = reference.getReferenceType();
 		AttributedString fullReferenceString = referenceString;
-		if (reference.getReferenceType().isRead() && reference.getReferenceType().isWrite()) {
+
+		// Handle (RW) special case, not-indirect
+		if (!refType.isIndirect() && refType.isRead() && refType.isWrite()) {
 			AttributedString typeString = new AttributedString("(R", XrefColors.READ, getMetrics());
 			fullReferenceString = new CompositeAttributedString(
 				new AttributedString[] { fullReferenceString, typeString });
@@ -600,13 +601,16 @@ public class XRefFieldFactory extends FieldFactory {
 		}
 
 		Color displayColor = XrefColors.DEFAULT;
-		if (reference.getReferenceType().isRead() || reference.getReferenceType().isIndirect()) {
+		if (refType.isIndirect()) {
+			displayColor = XrefColors.READ; // reference refers to pointer read location
+		}
+		else if (refType.isRead()) {
 			displayColor = XrefColors.READ;
 		}
-		else if (reference.getReferenceType().isWrite()) {
+		else if (refType.isWrite()) {
 			displayColor = XrefColors.WRITE;
 		}
-		else if (reference.getReferenceType().isData()) {
+		else if (refType.isData()) {
 			displayColor = XrefColors.OTHER;
 		}
 
@@ -686,13 +690,19 @@ public class XRefFieldFactory extends FieldFactory {
 			return "(T)";
 		}
 		if (refType instanceof DataRefType) {
-			if (refType.isRead() || refType.isIndirect()) {
+			if (refType.isIndirect()) {
+				return "(R)"; // reference refers to pointer read location
+			}
+			if (refType.isRead()) {
+				if (refType.isWrite()) {
+					return "(RW)"; // relies on special split color rendering
+				}
 				return "(R)";
 			}
-			else if (refType.isWrite()) {
+			if (refType.isWrite()) {
 				return "(W)";
 			}
-			else if (refType.isData()) {
+			if (refType.isData()) {
 				return "(*)";
 			}
 		}
@@ -819,8 +829,7 @@ public class XRefFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new XRefFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
