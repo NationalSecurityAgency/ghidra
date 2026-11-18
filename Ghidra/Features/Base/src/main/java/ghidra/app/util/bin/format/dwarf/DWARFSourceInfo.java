@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.dwarf;
 import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
+import org.apache.commons.io.FilenameUtils;
+
 import ghidra.app.util.bin.format.dwarf.attribs.DWARFNumericAttribute;
 
 /**
@@ -55,6 +57,17 @@ public record DWARFSourceInfo(String filename, int lineNum) {
 	}
 
 	/**
+	 * {@return a DWARFSourceInfo instance using the name of the compilation unit file and a fake
+	 * line number}
+	 * @param cu {@link DWARFCompilationUnit}
+	 * 
+	 */
+	public static DWARFSourceInfo read(DWARFCompilationUnit cu) {
+		String name = FilenameUtils.getName(cu.getName());
+		return name != null && !name.isEmpty() ? new DWARFSourceInfo(name, 0) : null;
+	}
+
+	/**
 	 * Creates a new {@link DWARFSourceInfo} instance from the supplied {@link DIEAggregate},
 	 * falling back to the parent containing DIE record if the first record did not have any
 	 * source info.
@@ -69,6 +82,9 @@ public record DWARFSourceInfo(String filename, int lineNum) {
 			DIEAggregate declParent = diea.getDeclParent();
 			if (declParent != null) {
 				dsi = create(declParent);
+			}
+			if (dsi == null) {
+				dsi = read(diea.getCompilationUnit());
 			}
 		}
 		return dsi;

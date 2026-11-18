@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.dwarf.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf.DWARFException;
 import ghidra.app.util.bin.format.dwarf.DWARFFunction;
+import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -30,11 +31,12 @@ public class SanityCheckDWARFFunctionFixup implements DWARFFunctionFixup {
 		// if there were no defined parameters and we had problems decoding local variables,
 		// don't force the method to have an empty param signature because there are other
 		// issues afoot.
-		if (dfunc.params.isEmpty() && dfunc.localVarErrors) {
+		if (dfunc.isBlankSignature() && dfunc.localVarErrors) {
 			dfunc.getProgram()
 					.logWarningAt(dfunc.address, dfunc.name.getName(),
 						"Inconsistent function signature information, leaving undefined");
-			throw new DWARFException("Failed sanity check");
+
+			dfunc.signatureCommitMode = CommitMode.SKIP;
 		}
 	}
 

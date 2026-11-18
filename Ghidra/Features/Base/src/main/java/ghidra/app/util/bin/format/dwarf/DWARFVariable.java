@@ -52,15 +52,18 @@ public class DWARFVariable {
 	 * @param diea {@link DIEAggregate} DW_TAG_formal_parameter
 	 * @param dfunc {@link DWARFFunction} that this parameter is attached to
 	 * @param paramOrdinal ordinal in containing list
+	 * @param includeStorage boolean flag, if true, storage info for the param will be read/computed
 	 * @return new parameter, never null, possibly without storage info 
 	 */
 	public static DWARFVariable readParameter(DIEAggregate diea, DWARFFunction dfunc,
-			int paramOrdinal) {
+			int paramOrdinal, boolean includeStorage) {
 
 		DWARFVariable dvar = new DWARFVariable(dfunc, diea);
 		dvar.isOutputParameter = diea.getBool(DW_AT_variable_parameter, false);
 		dvar.isThis = paramOrdinal == 0 && DWARFUtil.isThisParam(diea);
-		dvar.readParamStorage(diea);
+		if (includeStorage) {
+			dvar.readParamStorage(diea);
+		}
 
 		return dvar;
 	}

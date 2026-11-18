@@ -557,6 +557,17 @@ public class DWARFProgram implements Closeable {
 	}
 
 	/**
+	 * Returns iterable that traverses all {@link DIEAggregate}s in the program that match the
+	 * specified tag.
+	 *  
+	 * @param tag eg. {@link DWARFTag#DW_TAG_base_type}
+	 * @return sequence of {@link DIEAggregate}es
+	 */
+	public Iterable<DIEAggregate> allAggregates(DWARFTag tag) {
+		return dieContainer.allAggregates(tag);
+	}
+
+	/**
 	 * Returns the total number of {@link DIEAggregate} objects in the entire program.
 	 *
 	 * @return the total number of {@link DIEAggregate} objects in the entire program.

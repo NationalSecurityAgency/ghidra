@@ -19,8 +19,7 @@ import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
 import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttributeId.*;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpression;
@@ -60,6 +59,7 @@ public class DWARFFunctionImporter {
 	private Set<Long> processedOffsets = new HashSet<>();
 	private Set<Address> functionsProcessed = new HashSet<>();
 	private Set<Address> variablesProcesesed = new HashSet<>();
+	private Map<DWARFName, DWARFFunction> prototypeFuncStubs = new HashMap<>();
 
 	private TaskMonitor monitor;
 
@@ -97,6 +97,8 @@ public class DWARFFunctionImporter {
 				// should not happen
 			}
 		}
+
+		indexPrototypeFuncs();
 
 		monitor.initialize(prog.getTotalAggregateCount(), "DWARF - Create Funcs & Symbols");
 		for (DIEAggregate diea : prog.allAggregates()) {
@@ -151,6 +153,21 @@ public class DWARFFunctionImporter {
 		}
 	}
 
+	private void indexPrototypeFuncs() throws CancelledException {
+		monitor.initialize(prog.getDIEContainer().getDIECount(),
+			"DWARF - Indexing Func Prototypes");
+		for (DIEAggregate diea : prog.allAggregates(DW_TAG_subprogram)) {
+			monitor.setProgress(diea.getHeadFragment().getIndex());
+			monitor.checkCancelled();
+
+			if (DWARFFunction.isPrototypeFuncdecl(diea) &&
+				DWARFFunction.readPrototype(diea) instanceof DWARFFunction dfunc &&
+				!dfunc.isBlankSignature()) {
+				prototypeFuncStubs.putIfAbsent(dfunc.name, dfunc);
+			}
+		}
+	}
+
 	private void processSubprogram(DIEAggregate diea)
 			throws IOException, InvalidInputException, DWARFExpressionException {
 
@@ -166,6 +183,12 @@ public class DWARFFunctionImporter {
 		}
 
 		FunctionDefinition origFuncDef = dfunc.asFunctionDefinition(true); // before any fixups
+
+		if (dfunc.isBlankSignature() && DWARFFunction.hasNoSignatureInformation(diea) &&
+			importOptions.isUseMatchingFuncPrototypeDecls() &&
+			prototypeFuncStubs.get(dfunc.name) instanceof DWARFFunction protoFunc) {
+			dfunc.setInfoFromPrototypeFunc(protoFunc);
+		}
 
 		if (functionsProcessed.contains(dfunc.address)) {
 			markAllChildrenAsProcessed(dfunc.diea.getHeadFragment());
@@ -222,12 +245,12 @@ public class DWARFFunctionImporter {
 			funcDefDT = prog.getGhidraProgram()
 					.getDataTypeManager()
 					.addDataType(funcDefDT, DWARFDataTypeConflictHandler.INSTANCE);
+			importSummary.funcSignaturesAdded++;
 
 			// Look for the source info in the funcdef die and fall back to its
 			// parent's source info (handles auto-generated ctors and such)
 			dwarfDTM.addDataType(diea.getOffset(), funcDefDT,
 				DWARFSourceInfo.getSourceInfoWithFallbackToParent(diea));
-
 		}
 
 	}
@@ -249,13 +272,16 @@ public class DWARFFunctionImporter {
 	
 	private void decorateFunctionWithDWARFInfo(DWARFFunction dfunc,
 			FunctionDefinition origFuncDef) {
-		if (dfunc.sourceInfo != null) {
+		DWARFSourceInfo dsi = dfunc.sourceInfo;
+		if (dsi == null) {
+			dsi = DWARFSourceInfo.getSourceInfoWithFallbackToParent(dfunc.diea);
+		}
+		if (dsi != null) {
 			// Move the function into the program tree of the file
-			moveIntoFragment(dfunc.function.getName(), dfunc.getBody(),
-				dfunc.sourceInfo.filename());
+			moveIntoFragment(dfunc.function.getName(), dfunc.getBody(), dsi.filename());
 
 			if (importOptions.isOutputSourceLocationInfo()) {
-				appendPlateComment(dfunc.address, "", dfunc.sourceInfo.getDescriptionStr());
+				appendPlateComment(dfunc.address, "", dsi.getDescriptionStr());
 			}
 		}
 		if (importOptions.isOutputDIEInfo()) {

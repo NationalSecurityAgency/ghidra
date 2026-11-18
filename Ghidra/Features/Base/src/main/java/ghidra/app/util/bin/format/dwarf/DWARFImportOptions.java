@@ -143,6 +143,7 @@ public class DWARFImportOptions {
 	private String charsetName = "";
 	private boolean showVariableStorageInfo = false;
 	private boolean useStaticStackFrameRegisterValue = true;
+	private boolean useMatchingFuncPrototypeDecls = true;
 
 	/**
 	 * Used to control which macro info entries are used to create enums.
@@ -531,6 +532,14 @@ public class DWARFImportOptions {
 		macroEnumSetting = setting;
 	}
 
+	public boolean isUseMatchingFuncPrototypeDecls() {
+		return useMatchingFuncPrototypeDecls;
+	}
+
+	public void setUseMatchingFuncPrototypeDecls(boolean useMatchingFuncPrototypeDecls) {
+		this.useMatchingFuncPrototypeDecls = useMatchingFuncPrototypeDecls;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -621,4 +630,5 @@ public class DWARFImportOptions {
 			isShowVariableStorageInfo()));
 		setMacroEnumSetting(options.getEnum(OPTION_MACRO_ENUM_NAME, getMacroEnumSetting()));
 	}
+
 }
