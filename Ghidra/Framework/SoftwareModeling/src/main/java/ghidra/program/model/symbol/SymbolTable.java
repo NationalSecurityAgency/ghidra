@@ -355,7 +355,8 @@ public interface SymbolTable {
 
 	/**
 	 * Get all the symbols at the given address.  This method will include a dynamic memory symbol
-	 * if one exists at the specified address.
+	 * if one exists at the specified address. This method will place the primary symbol at the 
+	 * first index of the array.
 	 * <p>
 	 * For a memory address the primary symbol will be returned at array index 0. <b>WARNING!</b>
 	 * Use of this method with non-memory addresses is discouraged.  Example: Variable

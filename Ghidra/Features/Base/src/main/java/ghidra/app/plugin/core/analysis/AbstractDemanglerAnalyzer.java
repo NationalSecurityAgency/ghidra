@@ -128,51 +128,38 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		int count = initialCount;
 
-		// Note: iterator will continually need to reinitialize due to symbol changes
-		//       consider copying primary symbols to alt storage for iteration
-		SymbolTable symbolTable = program.getSymbolTable();
-		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
+		SymbolAddressIterator it = new SymbolAddressIterator(program, set, 1000);
 		while (it.hasNext()) {
+
 			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
 				monitor.setMessage("%s - %s symbols".formatted(getName(), count));
 			}
 
-			Symbol primarySymbol = it.next();
-			if (!skipSymbol(primarySymbol)) {
-
-				MangledContext mangledContext =
-					createMangledContext(program, options, primarySymbol);
-				DemangledObject demangled = demangle(mangledContext, log);
-				if (demangled != null) {
-					apply(mangledContext, demangled, true, log, monitor);
-				}
-			}
-
-			Address address = primarySymbol.getAddress();
-			demangleNonPrimarySymbols(program, address, options, log, monitor);
+			Address address = it.next();
+			demangleSymbols(program, address, options, log, monitor);
 		}
 
 		return count;
 	}
 
-	private void demangleNonPrimarySymbols(Program program, Address address,
-			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
-			throws CancelledException {
+	private void demangleSymbols(Program program, Address address, DemanglerOptions options,
+			MessageLog log, TaskMonitor monitor) {
 
+		// Note: the primary symbol will be handled first, as it is first in the symbols array
 		SymbolTable symbolTable = program.getSymbolTable();
-		for (Symbol symbol : symbolTable.getSymbols(address)) {
-			monitor.checkCancelled();
+		Symbol[] symbols = symbolTable.getSymbols(address);
+		for (Symbol symbol : symbols) {
 
-			if (symbol.isPrimary() || skipSymbol(symbol)) {
-				continue;
-			}
+			if (!skipSymbol(symbol)) {
 
-			MangledContext context = createMangledContext(program, options, symbol);
-			DemangledObject demangled = demangle(context, log);
-			if (demangled != null) {
-				apply(context, demangled, false, log, monitor);
+				MangledContext mangledContext =
+					createMangledContext(program, options, symbol);
+				DemangledObject demangled = demangle(mangledContext, log);
+				if (demangled != null) {
+					apply(mangledContext, demangled, true, log, monitor);
+				}
 			}
 		}
 	}
@@ -212,15 +199,14 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		// Only demangle global or external symbols when directly parented to a Library namespace
+		// assume mangled symbols are always in the global namespace
 		Namespace parentNamespace = symbol.getParentNamespace();
 		if (!parentNamespace.isGlobal()) {
 			return true;
 		}
 
 		// Someone has already added arguments or return to the function signature.
-		// Treatment of thunks must be handled later since thunk relationship may
-		// need to be broken
+		// Thunks must be handled later since thunk relationship may need to be broken.
 		if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 			Function function = (Function) symbol.getObject();
 			if (!function.isThunk() &&
