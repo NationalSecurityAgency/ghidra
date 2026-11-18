@@ -18,8 +18,7 @@ package ghidra.util.bytesearch;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -124,16 +123,54 @@ public class MemoryBytePatternSearcher {
 		if (searchSet == null) {
 			searchSet = program.getMemory().getAllInitializedAddressSet();
 		}
+		AddressSetView extendedSet =
+			extendRangeEnds(searchSet, patternSearcher.getMaxPatternLength());
 		if (doExecutableBlocksOnly) {
-			searchSet = searchSet.intersect(program.getMemory().getExecuteSet());
+			AddressSetView executeSet = program.getMemory().getExecuteSet();
+			searchSet = searchSet.intersect(executeSet);
+			extendedSet = extendedSet.intersect(executeSet);
 		}
 
-		searcher.search(searchSet, m -> processMatch(program, m), monitor);
+		AddressSetView requestedSet = searchSet;
+		searcher.search(extendedSet, m -> processMatch(program, requestedSet, m), monitor);
 	}
 
-	private void processMatch(Program program, AddressMatch<Pattern> match) {
+	/**
+	 * Matches are reported at their mark, which follows any pre-sequence. A pattern that starts
+	 * in the search set can have its mark past the end of a range (for example a function start
+	 * pattern whose pre-sequence is the end of newly added code), so search a little past the end
+	 * of each range to find those.
+	 */
+	private static AddressSetView extendRangeEnds(AddressSetView set, int length) {
+		if (length <= 0) {
+			return set;
+		}
+		AddressSet extended = new AddressSet(set);
+		for (AddressRange range : set) {
+			Address end = range.getMaxAddress();
+			Address newEnd;
+			try {
+				newEnd = end.addNoWrap(length);
+			}
+			catch (AddressOverflowException e) {
+				newEnd = end.getAddressSpace().getMaxAddress();
+			}
+			if (newEnd.compareTo(end) > 0) {
+				extended.add(end, newEnd);
+			}
+		}
+		return extended;
+	}
+
+	private void processMatch(Program program, AddressSetView requestedSet,
+			AddressMatch<Pattern> match) {
 		Pattern pattern = match.getPattern();
 		Address addr = match.getAddress();
+		// only keep matches whose mark or pattern start is in the requested set
+		if (!requestedSet.contains(addr) &&
+			!requestedSet.contains(addr.subtractWrap(pattern.getMarkOffset()))) {
+			return;
+		}
 		// the post rules seem to work off the offset were the first pattern matched, not where
 		// its mark start is. Since the address is at the mark offset, we want to subtract that
 		// back out
