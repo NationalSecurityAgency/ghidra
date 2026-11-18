@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,13 @@
  */
 package ghidra.feature.vt.api.util;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
 import docking.widgets.table.DisplayStringProvider;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.AssertException;
@@ -134,12 +136,14 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	private static Stringable createStringable(String name) {
 		Class<? extends Stringable> clazz = getNameMap().get(name);
 		try {
-			return clazz.newInstance();
+			Constructor<? extends Stringable> ctor = clazz.getDeclaredConstructor();
+			return ctor.newInstance();
 		}
 		catch (Exception e) {
-			// handled later by null
+			Msg.error(Stringable.class, "Unable to construct stringable '%s'".formatted(name), e);
+			return null;
 		}
-		return null;
+
 	}
 
 	@Override
@@ -156,7 +160,8 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	/**
 	 * Encodes a comment string that may contain tabs, carriage returns, and linefeeds so that it 
 	 * can be saved as part of a Stringable. Tabs, carriage returns, and linefeeds are typically 
-	 * used as delimiters for separating tokens within the Stringable.
+	 * used as delimiters for separating tokens within the Stringable. Backslashes are escaped as
+	 * well, since the decoder uses backslash as its escape character.
 	 * @param unencodedComment the actual comment text containing tabs, etc.
 	 * @return the encoded comment to be saved as part of the stringable.
 	 */
@@ -184,6 +189,10 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 					startIndex = saveSubStringAndEscapedCharacter(unencodedComment, buffer,
 						startIndex, i, 'f');
 					break;
+				case '\\':
+					startIndex = saveSubStringAndEscapedCharacter(unencodedComment, buffer,
+						startIndex, i, '\\');
+					break;
 				default:
 					break;
 			}
@@ -205,20 +214,27 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 
 	/**
 	 * Decodes a encoded comment string that may contain encoded tabs, carriage returns, and 
-	 * linefeeds back to its original form where tabs, carriage returns, and linefeeds were 
+	 * line feeds back to its original form where tabs, carriage returns, and line feeds were 
 	 * not intended as delimiters for separating tokens within a Stringable.
 	 * @param encodedComment the encoded comment that was saved as part of the stringable.
-	 * @return the actual unencoded comment text containing tabs, etc.
+	 * @return the actual un-encoded comment text containing tabs, etc.
 	 */
 	protected static String decodeString(String encodedComment) {
 		if (encodedComment == null) {
 			return null;
 		}
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		int startIndex = 0;
 		int index = encodedComment.indexOf('\\', startIndex);
 		while (index != -1) {
 			buffer.append(encodedComment.substring(startIndex, index));
+			if (index + 1 == encodedComment.length()) {
+				// A trailing backslash is not a valid escape sequence, but preserve it rather
+				// than throwing an exception on data written by an older version.
+				buffer.append('\\');
+				startIndex = encodedComment.length();
+				break;
+			}
 			char charAt = encodedComment.charAt(++index);
 			switch (charAt) {
 				case 't':
@@ -233,9 +249,12 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 				case 'f':
 					buffer.append('\f');
 					break;
+				case '\\':
+					buffer.append('\\');
+					break;
 				default:
-					// TODO What should we do here? Got an unexpected escaped character.
-					buffer.append('\\' + charAt);
+					// What should we do here? Got an unexpected escaped character.
+					buffer.append('\\').append(charAt);
 					break;
 			}
 			startIndex = ++index;
