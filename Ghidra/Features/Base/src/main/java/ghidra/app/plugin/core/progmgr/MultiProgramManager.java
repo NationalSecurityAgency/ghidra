@@ -34,6 +34,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import utility.function.Callback;
 
 /**
  * Class for tracking open programs in the tool.
@@ -118,7 +119,10 @@ class MultiProgramManager implements TransactionListener {
 	}
 
 	void dispose() {
-		fireActivatedEvent(null);
+
+		if (currentInfo != null) {
+			fireDeactivatedEvent();
+		}
 
 		for (Program p : programMap.keySet()) {
 			p.removeListener(domainObjectListener);
@@ -262,6 +266,24 @@ class MultiProgramManager implements TransactionListener {
 			txMonitor.setProgram(null);
 		}
 
+		TransientToolState toolState = setCurrentInfo(info);
+		Program newProgram = info == null ? null : info.program;
+
+		// restoring tool state must happen after the activated takes place
+		Callback restoreCallback = () -> {
+
+			if (toolState != null) {
+				toolState.restoreTool();
+			}
+
+			// this must happen after tool state has been restored so that all locations are set
+			firePostActivatedEvent(newProgram);
+		};
+
+		fireActivatedEvent(newProgram, restoreCallback);
+	}
+
+	private TransientToolState setCurrentInfo(ProgramInfo info) {
 		currentInfo = info;
 		TransientToolState toolState = null;
 		if (currentInfo != null) {
@@ -272,19 +294,7 @@ class MultiProgramManager implements TransactionListener {
 				toolState = currentInfo.lastState;
 			}
 		}
-
-		Program newProgram = info == null ? null : info.program;
-		fireActivatedEvent(newProgram);
-
-		if (toolState != null) {
-			toolState.restoreTool();
-		}
-
-		// only fire the post activated event when a program is activated (we send activated with
-		// null program to represent a phantom de-activated event)
-		if (newProgram != null) {
-			firePostActivatedEvent(newProgram);
-		}
+		return toolState;
 	}
 
 	private void fireOpenEvents(Program program) {
@@ -298,12 +308,21 @@ class MultiProgramManager implements TransactionListener {
 	}
 
 	@SuppressWarnings("deprecation") // Ignore the deprecation; we are the authority of this event
-	private void fireActivatedEvent(Program newProgram) {
-		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, newProgram));
+	private void fireDeactivatedEvent() {
+		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, null));
+	}
+
+	@SuppressWarnings("deprecation") // Ignore the deprecation; we are the authority of this event
+	private void fireActivatedEvent(Program newProgram, Callback postEventCallabck) {
+		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, newProgram),
+			postEventCallabck);
 	}
 
 	private void firePostActivatedEvent(Program newProgram) {
-		plugin.firePluginEvent(new ProgramPostActivatedPluginEvent(pluginName, newProgram));
+		if (newProgram != null) {
+			// Ignore post-activate for a null program, as that represents a de-activated event
+			plugin.firePluginEvent(new ProgramPostActivatedPluginEvent(pluginName, newProgram));
+		}
 	}
 
 	private void fireVisibilityChangeEvent(Program program, boolean isVisible) {

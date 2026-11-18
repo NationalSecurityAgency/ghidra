@@ -72,7 +72,7 @@ public abstract class AbstractLocationPluginEvent extends PluginEvent {
 	@Override
 	protected String getDetails() {
 		if (location != null) {
-			return location.getClass().getName() + " addr==> " + location.getAddress() + "\n";
+			return location.getClass().getName() + " addr==> " + location.getAddress();
 		}
 		return super.getDetails();
 	}

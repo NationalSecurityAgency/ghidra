@@ -26,6 +26,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
+import utility.function.Callback;
 
 /**
  * Helper class to manage the events that plugins consume and produce. This class keeps track of the
@@ -46,7 +47,7 @@ public class EventManager {
 
 	private PluginTool tool;
 	private PluginEvent currentEvent;
-	private final Runnable sendEventsRunnable = () -> sendEvents();
+	private Runnable sendEventsRunnable = () -> sendEvents();
 	private volatile boolean sendingToolEvent;
 
 	/**
@@ -190,7 +191,7 @@ public class EventManager {
 
 	/**
 	 * Notify all plugin listeners that are registered to consume the given event. Events are fired
-	 * in the SwingThread.
+	 * in the Swing thread.
 	 * 
 	 * @param event event to fire
 	 */
@@ -200,7 +201,7 @@ public class EventManager {
 			if (currentEvent != null) {
 				if (validateEventChain(currentEvent, event)) {
 
-					// note: it is a bit odd that we assume any event passed to this method is 
+					// Note: it is a bit odd that we assume any event passed to this method is 
 					//       triggered by that event.  This may not be the case if we are on a 
 					//       background thread.
 					event.setTriggerEvent(currentEvent);
@@ -278,6 +279,7 @@ public class EventManager {
 		}
 
 		while (currentEvent != null) {
+
 			Class<? extends PluginEvent> eventClass = currentEvent.getClass();
 			lastEventsByType.put(eventClass, currentEvent);
 
@@ -293,11 +295,18 @@ public class EventManager {
 
 			sendToolEvent(currentEvent);
 
+			callPostEventCallback(currentEvent);
+
 			synchronized (eventQ) {
 				currentEvent = eventQ.poll();
 			}
 		}
 		tool.contextChanged(null);
+	}
+
+	private void callPostEventCallback(PluginEvent event) {
+		Callback callback = event.getPostEventCallback();
+		callback.call();
 	}
 
 	private Iterable<PluginEventListener> getListeners(Class<? extends PluginEvent> eventClass) {
