@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/Framework Utility/src/main/java/ghidra/Ghidra.java"/>
     </listAttribute>
@@ -29,5 +30,5 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="Framework Utility"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher -DBaseDir=&quot;${project_loc}/../../../../&quot; -i &quot;${project_loc}/build/tmp/sleighArgs.txt&quot; -a &quot;${project_loc}/data/languages&quot;"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Framework Utility"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF-8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Djava.awt.headless=true&#13;&#10;-Xdock:name=&quot;Sleigh&quot;&#13;&#10;-Dvisualvm.display.name=Sleigh&#13;&#10;-Xmx1048M"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF-8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Djava.awt.headless=true&#13;&#10;-Xdock:name=&quot;Sleigh&quot;&#13;&#10;-Dvisualvm.display.name=Sleigh&#13;&#10;-Xmx1048M&#13;&#10;-XX:-UseBASE64Intrinsics"/>
 </launchConfiguration>
