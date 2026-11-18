@@ -114,7 +114,9 @@ public class SymbolPathParser {
 				++templateLevel;
 			}
 			else if (c == '>') {
-				--templateLevel;
+				if (!isArrow(i, name)) {
+					--templateLevel;
+				}
 			}
 			else if (c == '(') {
 				++parenLevel;
@@ -162,6 +164,14 @@ public class SymbolPathParser {
 			return false;
 		}
 		return name.charAt(i) == ':' && name.charAt(i + 1) == ':';
+	}
+
+	/**
+	 * Checks for the '>' of an arrow, as in a Rust function pointer type such as
+	 * {@code fn(u8) -> u32}, which does not close a template
+	 */
+	private static boolean isArrow(int i, String name) {
+		return i > 0 && name.charAt(i - 1) == '-';
 	}
 
 	private static boolean isAngleOperator(String component) {
