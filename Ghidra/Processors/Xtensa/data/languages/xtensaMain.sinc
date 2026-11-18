@@ -261,7 +261,7 @@ r_b4const: tmp is ar = 15        [ tmp = 0x100; ]      { export *[const]:4 tmp; 
 
 # B4CONSTU(ar) (Branch Unsigned Immediate) encodings, pg. 42.
 r_b4constu: tmp is ar = 0         [ tmp = 0x8000; ] { export *[const]:4 tmp; }
-r_b4constu: tmp is ar = 1         [ tmp = 0x1000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 1         [ tmp = 0x10000; ] { export *[const]:4 tmp; }
 r_b4constu: tmp is ar = 2         [ tmp = 0x2; ]    { export *[const]:4 tmp; }
 r_b4constu: tmp is ar = 3         [ tmp = 0x3; ]    { export *[const]:4 tmp; }
 r_b4constu: tmp is ar = 4         [ tmp = 0x4; ]    { export *[const]:4 tmp; }
