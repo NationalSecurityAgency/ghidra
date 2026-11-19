@@ -570,7 +570,8 @@ import pdb_  # imports Ghidra's pdb
 __3.3.0__
 * Eliminated `KeyError` exceptions that were generated while stepping with a debugger.
 * PyGhidra now ignores commented out `JAVA_HOME_OVERRIDE` lines in `support/launch.properties`.
-* Improved resource cleanup
+* Improved resource cleanup.
+* Improved exception handling.
 
 __3.2.0__
 * PyGhidra's `help()` override can now show `public/private/protected` on Ghidra Java fields and 
