@@ -18,7 +18,7 @@ package agent.lldb.rmi;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -415,7 +415,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
 
 			String xout = extractOutSectionWithPrompt(out, "---Dump---");
-			MemDump dump = parseHexDump(xout.substring(xout.indexOf("0x")));
+			MemDump dump = parseHexDump(xout.substring(xout.indexOf("0x"), xout.lastIndexOf(0xa)));
 			Arrays.fill(dump.data(), 0, 5, (byte) 0);
 			ByteBuffer buf = ByteBuffer.allocate(dump.data().length);
 			tb.trace.getMemoryManager().getBytes(snap, tb.addr(dump.address()), buf);
