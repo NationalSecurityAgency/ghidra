@@ -569,6 +569,7 @@ import pdb_  # imports Ghidra's pdb
 ## Change History
 __3.3.0__
 * Eliminated `KeyError` exceptions that were generated while stepping with a debugger.
+* Improved exception handling.
 
 __3.2.0__
 * PyGhidra's `help()` override can now show `public/private/protected` on Ghidra Java fields and 
