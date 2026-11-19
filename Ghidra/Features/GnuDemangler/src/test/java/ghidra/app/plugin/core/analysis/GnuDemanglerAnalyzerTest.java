@@ -31,7 +31,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
@@ -169,6 +169,29 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTes
 		assertFormatAvailable(GnuDemanglerFormat.RUST, false);
 	}
 
+	@Test
+	public void testMangledFunctionNameNotDemangledTwice() {
+
+		// 
+		// '__Z1fIiET_S0_' demangles to 'int f<int>(int)'
+		//
+		// This test is for a regression that caused the demangler analyzer to process the same 
+		// address repeatedly, due to how the symbol iterator will provide primary symbols as the
+		// analyzer changes the primary symbol.
+		// See GitHub issue #10212. This test is based on code from GitHub PR #10226.
+
+		Address addr = addr("0x110");
+		createSymbol(addr, "__Z1fIiET_S0_");
+
+		analyze();
+
+		assertDemangled(addr, "f<int>");
+
+		Function function = program.getFunctionManager().getFunctionAt(addr);
+		assertEquals(1, function.getParameterCount());
+		assertNoMismatchBookmark(addr);
+	}
+
 	// things missed:
 	// -demangle error case in base class...this is OK
 	// -error case in applyTo method in base class
@@ -176,6 +199,19 @@ public class GnuDemanglerAnalyzerTest extends AbstractGhidraHeadedIntegrationTes
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void assertNoMismatchBookmark(Address addr) {
+
+		BookmarkManager bm = program.getBookmarkManager();
+		Bookmark[] bookmarks = bm.getBookmarks(addr);
+		for (Bookmark bookmark : bookmarks) {
+			String comment = bookmark.getComment();
+			if (comment != null && comment.contains("mismatch")) {
+				fail("Unexpected demangler bookmark at " + addr + ": " +
+					bookmark.getCategory() + " " + comment);
+			}
+		}
+	}
 
 	private void analyze() {
 		tx(program, () -> analyzer.added(program, program.getMemory(), TaskMonitor.DUMMY, log));

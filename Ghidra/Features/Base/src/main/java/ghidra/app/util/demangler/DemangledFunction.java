@@ -29,7 +29,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -462,19 +461,21 @@ public class DemangledFunction extends DemangledObject {
 			function.setThunkedFunction(null);
 		}
 
-		// If existing function signature is user defined - add demangled label only
+		// assume user-defined signatures should not be overridden by analysis
 		boolean makePrimary = isPrimary;
-		if (function.getSignatureSource() == SourceType.USER_DEFINED) {
+		SourceType existingSignatureSource = function.getSignatureSource();
+		if (existingSignatureSource == SourceType.USER_DEFINED) {
 			makePrimary = false;
 		}
 
-		Symbol demangledSymbol =
-			applyDemangledName(function.getEntryPoint(), makePrimary, false, program);
+		Address entry = function.getEntryPoint();
+		Symbol demangledSymbol = applyDemangledName(entry, makePrimary, false, program);
 		if (demangledSymbol == null) {
 			return false;
 		}
 
-		if (!options.applySignature() || function.getSignatureSource() == SourceType.USER_DEFINED) {
+		// we already applied the label; assume user-defined signatures should not be overridden 
+		if (!options.applySignature() || existingSignatureSource == SourceType.USER_DEFINED) {
 			return true;
 		}
 
@@ -487,15 +488,13 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		if (signatureSourceType == SourceType.DEFAULT) {
-			// Only apply calling convention if specified with DEFAULT source
 			if (hasCallingConvention) {
 				function.setCallingConvention(callingConvention);
 			}
 			return true;
 		}
 
-		Structure classStructure =
-			maybeUpdateCallingConventionAndCreateClass(program, function, options);
+		maybeUpdateCallingConventionAndCreateClass(program, function, options);
 
 		FunctionDefinitionDataType signature = new FunctionDefinitionDataType(function, true);
 
@@ -504,17 +503,23 @@ public class DemangledFunction extends DemangledObject {
 		if (hasVarArgs()) {
 			signature.setVarArgs(true);
 		}
-		if (!function.isExternal() && isParameterMismatch(function, signature)) {
-			bookmarkParameterMismatch(program, function.getEntryPoint());
+
+		FunctionSignature currentSignature = function.getSignature();
+		if (signature.equals(currentSignature)) {
+			return true; // nothing to apply or warn about
+		}
+
+		if (skipApplyingNewSignature(function, signature)) {
+			bookmarkSignatureMismatch(program, entry);
 			return true;
 		}
 
-		DataType resolvedReturnType = resolveReturnType(program, function, classStructure);
+		DataType resolvedReturnType = resolveReturnType(program, function);
 		if (resolvedReturnType != null) {
 			signature.setReturnType(resolvedReturnType);
 		}
 
-		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(),
+		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(entry,
 			signature, signatureSourceType, true, false, DataTypeConflictHandler.DEFAULT_HANDLER,
 			FunctionRenameOption.RENAME_IF_DEFAULT);
 		cmd.applyTo(program, monitor);
@@ -598,7 +603,7 @@ public class DemangledFunction extends DemangledObject {
 		return false;
 	}
 
-	private void bookmarkParameterMismatch(Program program, Address address) {
+	private void bookmarkSignatureMismatch(Program program, Address address) {
 
 		if (parameters.isEmpty()) {
 			return;
@@ -632,8 +637,7 @@ public class DemangledFunction extends DemangledObject {
 		}
 	}
 
-	private DataType resolveReturnType(Program program, Function function,
-			Structure classDataType) {
+	private DataType resolveReturnType(Program program, Function function) {
 		// If something is returned as a Union, Structure, or Class return.
 		//       It appears that is passed as an additional parameter.  Essentially, it accesses
 		//       the stack assuming there is reserved space.
@@ -724,29 +728,35 @@ public class DemangledFunction extends DemangledObject {
 		return args;
 	}
 
-	private boolean isParameterMismatch(Function func, FunctionSignature signature) {
+	private boolean skipApplyingNewSignature(Function func, FunctionSignature signature) {
 
 		// Default source types can be overridden
 		if (func.getSignatureSource() == SourceType.DEFAULT) {
 			return false;
 		}
 
+		if (func.isExternal()) {
+			// not sure why allow external functions to have their signature applied repeatedly
+			return false;
+		}
+
 		int existingParameterCount = func.getParameterCount();
 
-		// If we don't know the parameters, and have already decided on This calling
-		// convention. is not a problem.
+		// If we don't know the parameters, and have already decided on 'this' calling
+		// convention, then return false to allow the new signature to be applied.
 		String callingConventionName = func.getCallingConventionName();
 		if (existingParameterCount == 0 && THIS_CALL.equals(callingConventionName)) {
 			return false;
 		}
 
-		// are the data types already on the signature better than analysis provided ones
+		// If the data types already on the signature better than analysis provided ones, then 
+		// return true to prevent the signature from being updated.
 		if (isDefinedFunctionDataTypes(func)) {
 			return true;
 		}
 
 		// If this function is not in a namespace, we don't care if the parameters mismatch,
-		// just apply them.
+		// return false to allow the new signature to be applied.
 		if (namespace == null || namespace.getName().startsWith("__")) {
 			return false;
 		}
@@ -769,25 +779,25 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 
-		if (existingParameterCount == 0 && mangledParamterCount > 0) {
-			// if operator overloading can have up to two parameters and can detect this
-			// without full function params.
-			if (isOverloadedOperator && parameters.size() <= 2) {
-				return false;
-			}
-
-			// if there is only one compiler spec, then don't need to worry, just assign
-			// them as we see them
-			PrototypeModel[] specs = func.getProgram().getCompilerSpec().getCallingConventions();
-			if (specs == null || specs.length == 1) {
-				return false;
-			}
-
-			// no params defined, can't tell if detected is different
-			return true;
+		if (existingParameterCount == mangledParamterCount) {
+			return false;
 		}
 
-		return false;
+		// if operator overloading can have up to two parameters and can detect this
+		// without full function params.
+		if (isOverloadedOperator && parameters.size() <= 2) {
+			return false;
+		}
+
+// This doesn't make sense to me. If we have different param count, then why does the calling 
+// convention come into play?
+//		PrototypeModel[] specs = func.getProgram().getCompilerSpec().getCallingConventions();
+//		if (specs == null || specs.length == 1) {
+//			return false;
+//		}
+
+		// difference in param count
+		return true;
 	}
 
 	/**

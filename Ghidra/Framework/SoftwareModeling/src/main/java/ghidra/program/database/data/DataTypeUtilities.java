@@ -479,7 +479,7 @@ public class DataTypeUtilities {
 	 *            correspond to the DataTypeDB).
 	 * @param dataType2 second data type
 	 * @return true if types correspond to the same type from a source archive or they are
-	 *         equivelent, otherwise false
+	 *         equivalent, otherwise false
 	 */
 	public static boolean isSameOrEquivalentDataType(DataType dataType1, DataType dataType2) {
 		// if they contain datatypes that have same ids, then they represent the same dataType
