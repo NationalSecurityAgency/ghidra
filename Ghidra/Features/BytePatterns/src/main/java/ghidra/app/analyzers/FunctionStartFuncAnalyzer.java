@@ -33,6 +33,7 @@ public class FunctionStartFuncAnalyzer extends FunctionStartAnalyzer {
 		super(NAME, AnalyzerType.FUNCTION_ANALYZER);
 		setSupportsOneTimeAnalysis(false);
 		setPriority(AnalysisPriority.FUNCTION_ANALYSIS.before().before());
+		shouldExtendSearchSet = true;
 	}
 
 	@Override

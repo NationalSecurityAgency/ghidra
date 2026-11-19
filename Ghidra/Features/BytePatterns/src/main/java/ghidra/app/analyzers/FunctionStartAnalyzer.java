@@ -85,6 +85,11 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	protected AddressSet postreqFailedResult = null; // Discovered pattern, but a post req failed (not following a defined thing)
 	protected ArrayList<RegisterValue> contextValueList = null;
 
+	// For variations of this function start analyzer that get fed addresses is small pieces, it
+	// is necessary to expand these addresses by the pattern lengths to find functions that start
+	// near these addresses. For byte analyzers, entire blocks are fed, so no need to expand those.
+	protected boolean shouldExtendSearchSet = false;
+
 	private static ProgramDecisionTree initializePatternDecisionTree() {
 		if (patternDecisitionTree == null) {
 			patternDecisitionTree = Patterns.getPatternDecisionTree();
@@ -830,6 +835,12 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			};
 		memorySearcher.setSearchExecutableOnly(doExecutableBlocksOnly);
 
+		if (shouldExtendSearchSet) {
+			// extend each range in the set by the pattern length to find functions near these
+			// addresses.
+			set = extendSearchSet(searcher, set);
+		}
+
 		memorySearcher.search(program, set, monitor);
 
 		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
@@ -859,6 +870,28 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			analysisManager.createFunction(funcResult, false);
 		}
 		return true;
+	}
+
+	private AddressSetView extendSearchSet(BulkPatternSearcher<Pattern> searcher,
+			AddressSetView set) {
+		// increase each range in the set by the pattern length. 
+		int length = searcher.getMaxPatternLength();
+		AddressSet extendedSet = new AddressSet();
+		for (AddressRange range : set) {
+			Address max = range.getMaxAddress();
+			Address extendedMax = extendMax(max, length);
+			extendedSet.add(range.getMinAddress(), extendedMax);
+		}
+		return extendedSet;
+	}
+
+	private Address extendMax(Address max, int length) {
+		try {
+			return max.addNoWrap(length);
+		}
+		catch (AddressOverflowException e) {
+			return max.getAddressSpace().getMaxAddress();
+		}
 	}
 
 	/**
