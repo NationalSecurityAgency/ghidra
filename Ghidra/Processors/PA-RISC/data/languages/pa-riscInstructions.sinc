@@ -1714,11 +1714,11 @@ define pcodeop diag;
 	FPRT32 = FPR232;
 } 
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & fptsgl & freg2sgl {
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
 	fptsgl = freg2sgl;
 }
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & fptsgl & freg2sgl {
 	FPRT64 = FPR264;
 }
 
@@ -1726,14 +1726,22 @@ define pcodeop diag;
 	FPRT32 = abs(FPR232);
 } 
 
-:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt {
+:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+	fptsgl = abs(freg2sgl);
+}
+
+:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 {
 	FPRT64 = abs(FPR264);
 }
 
 :FSQRT^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=4 & freg1=0 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = sqrt(FPR232);
 } 
-:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt {
+:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+	fptsgl = sqrt(freg2sgl);
+}
+
+:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 {
 	FPRT64 = sqrt(FPR264);
 }
 
@@ -1741,7 +1749,11 @@ define pcodeop diag;
 	FPRT32 = round(FPR232);
  } 
 
-:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt {
+:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+	fptsgl = round(freg2sgl);
+}
+
+:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 {
 	FPRT64 = round(FPR264);
 }
 
