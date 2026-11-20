@@ -135,6 +135,9 @@ define register offset=0x6000 size=4 [
 # special hidden registers to support the nullify and delay slot features of PA-RISC
 define register offset=0x7000 size=1 [nullifyCond nullifyNextCond branchCond branchExecuted]; 
 define register offset=0x7100 size=4 [branchIndDest nullifyCondResult];
+# Result and digit carries of a unit operation, for the unit conditions.
+# Bit 4i of unitCarries is the carry out of the 4-bit digit at bits 4i+3..4i.
+define register offset=0x7108 size=4 [unitResult unitCarries];
 
 define register offset=0x7200 size=12   contextreg;
 define context contextreg
@@ -1482,11 +1485,12 @@ BBCond:					is c=6 & R1 & bboffset { tmp:1 = ((R1 >> (31-bboffset)) & 0x1) == 0 
 # unit conditions for checking byte ranges within a word
 #
 RegUnitCond:		is c=0 { export 0:1; } # never
-RegUnitCond:		is c=2 & RT  { tmp:1 = (RT:1 == 0) || ((RT:2 & 0xFF00) == 0) || ((RT:3 & 0xFF0000) == 0) || ((RT & 0xFF000000) == 0)   ; export tmp; } # some byte zero
-RegUnitCond:		is c=3 & RT { tmp:1 = ((RT:2 & 0xFFFF) == 0) || ((RT & 0xFFFF0000) == 0) ; export tmp; } # some halfword zero
-RegUnitCond:		is c=4  { export 0:1; } # some digit carry -- TODO FIGURE OUT BCD
-RegUnitCond:		is c=6  { export 0:1; } # some byte carry -- TODO BCD
-RegUnitCond:		is c=7  { export 0:1; } # some halfword carry -- TODO BCD
+# These test unitResult and unitCarries, which the instruction sets first.
+RegUnitCond:		is c=2 { tmp:1 = ((unitResult & 0xFF) == 0) || ((unitResult & 0xFF00) == 0) || ((unitResult & 0xFF0000) == 0) || ((unitResult & 0xFF000000) == 0); export tmp; } # some byte zero
+RegUnitCond:		is c=3 { tmp:1 = ((unitResult & 0xFFFF) == 0) || ((unitResult & 0xFFFF0000) == 0); export tmp; } # some halfword zero
+RegUnitCond:		is c=4 { tmp:1 = (unitCarries & 0x11111111) != 0; export tmp; } # some digit carry
+RegUnitCond:		is c=6 { tmp:1 = (unitCarries & 0x10101010) != 0; export tmp; } # some byte carry
+RegUnitCond:		is c=7 { tmp:1 = (unitCarries & 0x10001000) != 0; export tmp; } # some halfword carry
 
 UnitCond: ""			is RegUnitCond & fv=0 { export RegUnitCond; }
 UnitCond: ""			is RegUnitCond & fv=1 { tmp:1 = ! RegUnitCond; export tmp; }

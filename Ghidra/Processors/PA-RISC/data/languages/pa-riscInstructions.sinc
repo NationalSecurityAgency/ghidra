@@ -787,6 +787,13 @@ define pcodeop getCurrentSpace;
 #######################################
 define pcodeop trap;
 
+# Set unitResult and unitCarries for the unit conditions from the sum
+# a + b. The carry into bit i of a sum is bit i of a ^ b ^ sum.
+macro unitAdd(a, b) {
+	unitResult = a + b;
+	unitCarries = ((a ^ b ^ unitResult) >> 4) | (zext(carry(a, b)) << 28);
+}
+
 :ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x18 & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
 	pswCB = carry(R1,R2);
 	RT = R1 + R2;
@@ -1032,19 +1039,23 @@ define pcodeop trap;
 }
 
 :UXOR^UnitCondSym R1,R2,RT		is opfam=0x02 & op=0x0E & m=0 & R1 & R2 & RT & UnitCondSym & UnitCondNullify {
-	RT = R1 ^ R2;
+	unitResult = R1 ^ R2;
+	unitCarries = 0;
+	RT = unitResult;
 	build UnitCondNullify;
 }
 
 :UADDCM^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x26 & m=0 & R1 & R2 & RT & UnitCondSym & UnitCondNullify {
-	RT = R1 + ~R2;
+	unitAdd(R1, ~R2);
+	RT = unitResult;
 	build UnitCondNullify;
-	
 }
 
 :UADDCMT^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x27 & m=0 & R1 & R2 & RT & UnitCond & UnitCondSym {
+	unitAdd(R1, ~R2);
+	build UnitCond;
 	if (UnitCond) goto <TRAP>;
-	RT = R1 + ~R2;
+	RT = unitResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
