@@ -512,9 +512,9 @@ uintb OpBehaviorIntSdiv::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
   intb denom = sign_extend(in2,8*sizein-1);
   if (denom == 0)
     throw EvaluationError("Divide by 0");
-  constexpr intb INT_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
+  constexpr intb INTB_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
   intb sres;
-  if (num == INT_MIN && denom == -1)	// INT_MIN divided by -1 produces a signed overflow
+  if (num == INTB_MIN && denom == -1)	// INTB_MIN divided by -1 produces a signed overflow
     sres = num;			// Set an explicit result to avoid a possible hardware exception
   else
     sres = num/denom;		// Do the signed division
@@ -539,9 +539,9 @@ uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
   intb mod = sign_extend(in2,8*sizein-1);
   if (mod == 0)
     throw EvaluationError("Remainder by 0");
-  constexpr intb INT_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
+  constexpr intb INTB_MIN = (intb)1 << (sizeof(intb) * 8 - 1);
   intb sres;
-  if (val == INT_MIN && mod == -1)
+  if (val == INTB_MIN && mod == -1)
     sres = 0;		// Set an explicit result to avoid a possible hardware exception
   else
     sres = val % mod;	// Do the remainder
