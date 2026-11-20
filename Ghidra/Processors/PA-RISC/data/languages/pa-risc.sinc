@@ -140,6 +140,8 @@ define register offset=0x7108 size=4 [unitResult unitCarries];
 # arithmetic conditions.
 define register offset=0x7110 size=$(REGSIZE) [condResult];
 define register offset=0x7004 size=1 [condCarry condOverflow];
+# Whether the operands compare signed less than, for conditions 2 and 3
+define register offset=0x7006 size=1 [condLess];
 # The carries out of the eight 4-bit digits of an arithmetic operation,
 # and the PSW C/B bits that the last carry/borrow update left. Bit 4i
 # holds the carry out of the digit at bits 4i+3..4i, so bit 28 is the
@@ -1516,14 +1518,19 @@ UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 # An arithmetic instruction first sets condResult, condCarry and
 # condOverflow (see the arithAdd macros) and then builds the condition,
 # so the condition sees its operands even when the target is one of them.
+# Condition 2 is the leftmost bit of the result xor signed overflow, which
+# for a subtract is simply opd1 < opd2; condLess holds it in that form.
 # For subtracts, condCarry is the carry out of opd1 + ~opd2 + 1, which is
 # 1 when there is no borrow. Conditions 4 and 5 then read the same way
 # for adds and subtracts.
-# Set condResult, condCarry and condOverflow from a + b, or a + b + cin.
+
+# Set condResult, condCarry, condOverflow and condLess from a + b, or
+# a + b + cin.
 macro arithAdd(a, b) {
 	condResult = a + b;
 	condCarry = carry(a, b);
 	condOverflow = scarry(a, b);
+	condLess = (condResult s< 0) != condOverflow;
 	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
 }
 
@@ -1531,6 +1538,7 @@ macro arithSub(a, b) {
 	condResult = a - b;
 	condCarry = !(a < b);
 	condOverflow = sborrow(a, b);
+	condLess = a s< b;
 	condDigitCarries = ((a ^ ~b ^ condResult) >> 4) | (zext(condCarry) << 28);
 }
 
@@ -1538,6 +1546,7 @@ macro arithAddCarry(a, b, cin) {
 	condResult = a + b + zext(cin);
 	condCarry = carry(a, b) || carry(a + b, zext(cin));
 	condOverflow = ((a ^ condResult) & (b ^ condResult)) s< 0;
+	condLess = (condResult s< 0) != condOverflow;
 	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
 }
 
@@ -1554,6 +1563,7 @@ macro setCarryBorrow() {
 macro arithShAdd(a, k, b) {
 	arithAdd(a << k, b);
 	condOverflow = condOverflow || (((a << k) s>> k) != a);
+	condLess = (condResult s< 0) != condOverflow;
 }
 
 macro shAddCarry(a, k) {
@@ -1562,8 +1572,8 @@ macro shAddCarry(a, k) {
 
 RegArithCond:		is c=0 { export 0:1; } # never
 RegArithCond:		is c=1 { tmp:1 = condResult == 0; export tmp; } # all bits are 0
-RegArithCond:		is c=2 { tmp:1 = (condResult s< 0) != condOverflow; export tmp; } # leftmost bit xor signed overflow
-RegArithCond:		is c=3 { tmp:1 = (condResult == 0) || ((condResult s< 0) != condOverflow); export tmp; }
+RegArithCond:		is c=2 { export condLess; } # leftmost bit xor signed overflow
+RegArithCond:		is c=3 { tmp:1 = (condResult == 0) || condLess; export tmp; }
 RegArithCond:		is c=4 { tmp:1 = !condCarry; export tmp; } # no unsigned overflow (adds), borrow (subtracts)
 RegArithCond:		is c=5 { tmp:1 = (condResult == 0) || !condCarry; export tmp; }
 RegArithCond:		is c=6 { tmp:1 = condOverflow; export tmp; } # signed overflow
