@@ -4,8 +4,6 @@
 
 # Known Issues:
 #  The branch target is annotated onto the line following the branch, not the branch itself
-#  There may still be issues with condition codes and instructions like INST,=,N r2,r3,r2 that write back into one of the input argument registers.
-#    The condition uses the final value in r2, when it should use the value passed in to r2 before the operation.
 #  The implementation of space registers is incorrect. There should really be a 64 bit address space with space register in the upper 64 bits.
 #     Right now, the space register is either ignored or else just added to the base address.
 #  Some of the pcode could be simplified.
@@ -1513,11 +1511,20 @@ UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 # An arithmetic instruction first sets condResult, condCarry and
 # condOverflow (see the arithAdd macros) and then builds the condition,
 # so the condition sees its operands even when the target is one of them.
+# For subtracts, condCarry is the carry out of opd1 + ~opd2 + 1, which is
+# 1 when there is no borrow. Conditions 4 and 5 then read the same way
+# for adds and subtracts.
 # Set condResult, condCarry and condOverflow from a + b, or a + b + cin.
 macro arithAdd(a, b) {
 	condResult = a + b;
 	condCarry = carry(a, b);
 	condOverflow = scarry(a, b);
+}
+
+macro arithSub(a, b) {
+	condResult = a - b;
+	condCarry = !(a < b);
+	condOverflow = sborrow(a, b);
 }
 
 macro arithAddCarry(a, b, cin) {
@@ -1566,56 +1573,8 @@ AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
 #
 #### Compare / Subtract Instructions
 #
-RegCSCond: 		is c=0 & R1 & R2 { export 0:1; }  # never
-RegCSCond: 		is c=1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
-RegCSCond: 		is c=2 & R1 & R2 { tmp:1 = (R1 s< R2) ; export tmp; } # signed less than
-RegCSCond: 		is c=3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than equal
-RegCSCond: 		is c=4 & R1 & R2 { tmp:1 = (R1 < R2) ; export tmp; } # unsigned less than 
-RegCSCond: 		is c=5 & R1 & R2 { tmp:1 = (R1 <= R2) ; export tmp; } # unsigned less than equal
-RegCSCond: 		is c=6 & R1 & R2 { tmp:1 = sborrow(R1,R2) ; export tmp; } # signed minus overflows (borrows)
-RegCSCond: 		is c=7 & R1 & R2 { tmp:1 = ((R1 - R2) & 0x1) == 1 ; export tmp; } # odd
-
-CSCond: 	is fv=0 & RegCSCond { export RegCSCond; }
-CSCond: 	is fv=1 & RegCSCond { tmp:1 = ! RegCSCond; export tmp; }
-
-CSCondNullify:	is c=0 & fv=0 { }
-CSCondNullify:	is CSCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = CSCond;
-}
-
 CSCondSym: RegCSCondSym	is RegCSCondSym & fv=0 { }
 CSCondSym: InvCSCondSym	is InvCSCondSym & fv=1 { }
-
-# The Compare or Subtract conditions compared with 5 bit immediates
-# This is used in the COMIB[TF] instructions. The inverted versions are never used.
-RegCSCondI: 		is  c=0 & R2 & highlse5 { export 0:1; }  # never
-RegCSCondI: 		is  c=1 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val == R2) ; export tmp; } # equal
-RegCSCondI: 		is  c=2 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s< R2) ; export tmp; } # signed less than
-RegCSCondI: 		is  c=3 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
-RegCSCondI: 		is  c=5 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
-RegCSCondI: 		is  c=7 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
-
-# The Compare or Subtract conditions compared with 11 bit immediates. These are used with the SUBI[O] and COMICLR instructions. Both regular and inverted forms are used.
-RegCSCondI11: 		is  c=0 & R2 & lse11 { export 0:1; }  # never
-RegCSCondI11: 		is  c=1 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val == R2) ; export tmp; } # equal
-RegCSCondI11: 		is  c=2 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s< R2) ; export tmp; } # signed less than
-RegCSCondI11: 		is  c=3 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
-RegCSCondI11: 		is  c=5 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
-RegCSCondI11: 		is  c=7 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
-
-CSCondI11:		is RegCSCondI11 & fv=0 { export RegCSCondI11; }
-CSCondI11:		is RegCSCondI11 & fv=1 { temp:1 = ! RegCSCondI11; export temp; }
-
-CSCondI11Nullify:	is c=0 & fv=0 { }
-CSCondI11Nullify:	is CSCondI11 [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = CSCondI11;
-}
 
 #
 #### Logical Conditions
