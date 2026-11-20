@@ -1589,6 +1589,7 @@ public:
 };
 
 class RuleExpandLoad : public Rule {
+  static bool isFieldReference(Varnode *ptr);
   static bool checkAndComparison(Varnode *vn);
   static void modifyAndComparison(Funcdata &data,Varnode *oldVn,Varnode *newVn,Datatype *dt,int4 offset);
 public:
