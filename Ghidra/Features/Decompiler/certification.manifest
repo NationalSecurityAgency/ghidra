@@ -21,6 +21,7 @@ src/decompile/datatests/concatsplit.xml||GHIDRA||||END|
 src/decompile/datatests/condconst.xml||GHIDRA||||END|
 src/decompile/datatests/condconst2.xml||GHIDRA||||END|
 src/decompile/datatests/condconstsub.xml||GHIDRA||||END|
+src/decompile/datatests/condexe1.xml||GHIDRA||||END|
 src/decompile/datatests/condexesub.xml||GHIDRA||||END|
 src/decompile/datatests/condmulti.xml||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|
