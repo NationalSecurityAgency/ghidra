@@ -829,7 +829,7 @@ macro unitAdd(a, b) {
 :ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x18 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithAdd(R1, R2);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 }
 
@@ -844,7 +844,7 @@ macro unitAdd(a, b) {
 	arithAdd(R1, R2);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -855,7 +855,7 @@ macro unitAdd(a, b) {
 :ADD^",C"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1C & m=0 & R1 & R2 & RT & AddCondSym & ArithCondNullify {
 	arithAddCarry(R1, R2, pswCB);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 }
 
@@ -863,7 +863,7 @@ macro unitAdd(a, b) {
 	arithAddCarry(R1, R2, pswCB);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -873,7 +873,7 @@ macro unitAdd(a, b) {
 
 :SH1ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x19 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 1, R2);
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 1);
 	build ArithCondNullify;
 	RT = condResult;
@@ -889,7 +889,7 @@ macro unitAdd(a, b) {
 :SH1ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x39 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 1, R2);
 	if (condOverflow) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 1);
 	build ArithCondNullify;
 	RT = condResult;
@@ -901,7 +901,7 @@ macro unitAdd(a, b) {
 
 :SH2ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1A & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 2, R2);
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 2);
 	build ArithCondNullify;
 	RT = condResult;
@@ -917,7 +917,7 @@ macro unitAdd(a, b) {
 :SH2ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3A & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 2, R2);
 	if (condOverflow) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 2);
 	build ArithCondNullify;
 	RT = condResult;
@@ -929,7 +929,7 @@ macro unitAdd(a, b) {
 
 :SH3ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1B & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 3, R2);
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 3);
 	build ArithCondNullify;
 	RT = condResult;
@@ -945,7 +945,7 @@ macro unitAdd(a, b) {
 :SH3ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3B & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
 	arithShAdd(R1, 3, R2);
 	if (condOverflow) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	shAddCarry(R1, 3);
 	build ArithCondNullify;
 	RT = condResult;
@@ -958,7 +958,7 @@ macro unitAdd(a, b) {
 :SUB^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x10 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
 	arithSub(R1, R2);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 }
 
@@ -966,7 +966,7 @@ macro unitAdd(a, b) {
 	arithSub(R1, R2);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -977,7 +977,7 @@ macro unitAdd(a, b) {
 :SUB",B"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x14 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
 	arithAddCarry(R1, ~R2, pswCB);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 }
 
@@ -985,7 +985,7 @@ macro unitAdd(a, b) {
 	arithAddCarry(R1, ~R2, pswCB);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -999,7 +999,7 @@ macro unitAdd(a, b) {
 	arithSub(R1, R2);
 	build ArithCond;
 	if (ArithCond) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1012,7 +1012,7 @@ macro unitAdd(a, b) {
 	if (condOverflow) goto <TRAP>;
 	build ArithCond;
 	if (ArithCond) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1033,7 +1033,7 @@ macro unitAdd(a, b) {
 	<CONTINUE>
 
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	RT = condResult;
 
 # handle pswV -- I'm using R2 here, the book says R2, but non-restoring algorithms usually use R1, so
@@ -1104,7 +1104,7 @@ macro unitAdd(a, b) {
 :ADDI^AddCondSym lse11,R2,R1dst	is opfam=0x2D & bit11=0 & lse11 & R2 & R1dst & AddCondSym & ArithCondNullify {
 	arithAdd(lse11, R2);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 }
 
@@ -1113,7 +1113,7 @@ macro unitAdd(a, b) {
 	arithAdd(lse11, R2);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1126,7 +1126,7 @@ macro unitAdd(a, b) {
 	arithAdd(lse11, R2);
 	build ArithCond;
 	if (ArithCond) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1140,7 +1140,7 @@ macro unitAdd(a, b) {
 	build ArithCond;
 	if (ArithCond) goto <TRAP>;
 	if (condOverflow) goto <TRAP>;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1151,7 +1151,7 @@ macro unitAdd(a, b) {
 :SUBI^CSCondSym lse11,R2,R1dst		is opfam=0x25 & bit11=0 & lse11 & R2 & R1dst & ArithCondNullify & CSCondSym {
 	arithSub(lse11, R2);
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 }
 
@@ -1159,7 +1159,7 @@ macro unitAdd(a, b) {
 	arithSub(lse11, R2);
 	if (condOverflow) goto <TRAP>;
 	build ArithCondNullify;
-	pswCB = condCarry;
+	setCarryBorrow();
 	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
@@ -1336,8 +1336,22 @@ macro unitAdd(a, b) {
 
 
 # BCD instructions
-:DCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2E & R2 & reg1=0x0 & RT & UnitCond & UnitCondSym { } # TODO
-:IDCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2F & R2 & reg1=0x0 & RT & UnitCond & UnitCondSym { } # TODO
+:DCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2E & R2 & reg1=0x0 & RT & UnitCondSym & UnitCondNullify {
+	# Subtract 6 from each digit whose C/B bit is 0. The carry conditions
+	# test the digit carries of this subtraction, R2 + ~correction + 1.
+	local correction = (~pswCBDigits & 0x11111111) * 6;
+	unitResult = R2 - correction;
+	unitCarries = ((R2 ^ ~correction ^ unitResult) >> 4) | (zext(!(R2 < correction)) << 28);
+	RT = unitResult;
+	build UnitCondNullify;
+}
+
+:IDCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2F & R2 & reg1=0x0 & RT & UnitCondSym & UnitCondNullify {
+	# Add 6 to each digit whose C/B bit is 1
+	unitAdd(R2, (pswCBDigits & 0x11111111) * 6);
+	RT = unitResult;
+	build UnitCondNullify;
+}
 
 #################################################
 # System Instructions

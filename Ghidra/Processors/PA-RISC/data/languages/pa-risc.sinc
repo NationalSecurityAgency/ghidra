@@ -140,6 +140,11 @@ define register offset=0x7108 size=4 [unitResult unitCarries];
 # arithmetic conditions.
 define register offset=0x7110 size=$(REGSIZE) [condResult];
 define register offset=0x7004 size=1 [condCarry condOverflow];
+# The carries out of the eight 4-bit digits of an arithmetic operation,
+# and the PSW C/B bits that the last carry/borrow update left. Bit 4i
+# holds the carry out of the digit at bits 4i+3..4i, so bit 28 is the
+# carry out of the whole word, which pswCB holds as well.
+define register offset=0x7118 size=4 [condDigitCarries pswCBDigits];
 
 define register offset=0x7200 size=12   contextreg;
 define context contextreg
@@ -1519,18 +1524,27 @@ macro arithAdd(a, b) {
 	condResult = a + b;
 	condCarry = carry(a, b);
 	condOverflow = scarry(a, b);
+	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
 }
 
 macro arithSub(a, b) {
 	condResult = a - b;
 	condCarry = !(a < b);
 	condOverflow = sborrow(a, b);
+	condDigitCarries = ((a ^ ~b ^ condResult) >> 4) | (zext(condCarry) << 28);
 }
 
 macro arithAddCarry(a, b, cin) {
 	condResult = a + b + zext(cin);
 	condCarry = carry(a, b) || carry(a + b, zext(cin));
 	condOverflow = ((a ^ condResult) & (b ^ condResult)) s< 0;
+	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
+}
+
+# Update the PSW C/B bits from the last arithmetic operation
+macro setCarryBorrow() {
+	pswCB = condCarry;
+	pswCBDigits = condDigitCarries;
 }
 
 # In a shift and add, the shift takes part in the overflow conditions. A
