@@ -1,0 +1,15 @@
+# RV32/RV64  Zicond Integer Conditional Operations Extension
+
+# czero.eqz d,s,t 0e005033 fe00707f SIMPLE (0, 0)
+:czero.eqz rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x5 & funct7=0x7
+{
+	local cond:$(XLEN) = zext(rs2 != 0);
+	rd = rs1 * cond;
+}
+
+# czero.nez d,s,t 0e007033 fe00707f SIMPLE (0, 0)
+:czero.nez rd,rs1,rs2 is rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x7 & funct7=0x7
+{
+	local cond:$(XLEN) = zext(rs2 == 0);
+	rd = rs1 * cond;
+}
