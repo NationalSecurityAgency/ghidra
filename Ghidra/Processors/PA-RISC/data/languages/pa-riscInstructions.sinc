@@ -231,11 +231,13 @@ with : phase=1 {
 }
 
 # nullifying unconditional immediate call
-# special case that doesn't need the deferral mechanism 
-:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON) 
+# special case that doesn't need the deferral mechanism. The delay slot
+# never executes, and the call returns past it.
+:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W & afterDelaySlot & $(COMMON) 
 {
 	R2dst = inst_start+8;
 	call branchTarget3W;
+	goto afterDelaySlot;
 }
 
 ################################################################################
@@ -399,10 +401,11 @@ with : phase=1 {
 }
 
 # IP relative unconditional indirect call
-:BLR^nullifySymForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifySymForBranch & RR & IPRelativeIndexedTarget & n=1 & $(COMMON)
+:BLR^nullifySymForBranch RR,R2dst									is opfam=0x3A & c=0x2 & R2dst & nullifySymForBranch & RR & IPRelativeIndexedTarget & n=1 & afterDelaySlot & $(COMMON)
 {
 	R2dst = inst_start+8;
 	call [branchIndDest];
+	goto afterDelaySlot;
 }
 
 # vectored (offset register plus index register) unconditional indirect branch
@@ -751,12 +754,13 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:BE^",L"^nullifySymForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifySymForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & $(COMMON)
+:BE^",L"^nullifySymForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifySymForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & afterDelaySlot & $(COMMON)
 {
 	r31 = inst_next+4; # store the link/return address
 	sr0 = iasq_front; # store the link/return space ID 
 	iasq_front = SR3bit; # set the space ID to the new space ID
 	call [externalTarget];
+	goto afterDelaySlot;
 }
 
 :B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=0 & $(COMMON) 

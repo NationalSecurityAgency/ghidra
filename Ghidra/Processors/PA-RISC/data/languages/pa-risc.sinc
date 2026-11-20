@@ -1730,6 +1730,9 @@ nullifyForBranch: ",N"					is n=1 [ nullifyEnable = 1; globalset(inst_next, null
 nullifySymForBranch:					is n=0 { }
 nullifySymForBranch: ",N"				is n=1 { }
 
+# Where a call returns to, past its delay slot
+afterDelaySlot: loc						is epsilon [ loc = inst_start + 8; ] { export *:$(ADDRSIZE) loc; }
+
 # nullification as used with special function unit ops
 nullifyForSpecial:						is spn=0 { }
 nullifyForSpecial: ",N"					is spn=1 { }
