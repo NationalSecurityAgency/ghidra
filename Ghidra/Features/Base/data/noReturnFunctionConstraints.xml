@@ -17,6 +17,9 @@
 	<executable_format name="DYLD Cache">
 		<functionNamesFile>MachOFunctionsThatDoNotReturn</functionNamesFile>
 	</executable_format>
+	<executable_format name="System Object Model (SOM)">
+		<functionNamesFile>SomFunctionsThatDoNotReturn</functionNamesFile>
+	</executable_format>
 	<executable_format name="Portable Executable (PE)">
 		<compiler id="golang">
 			<functionNamesFile>GolangFunctionsThatDoNotReturn</functionNamesFile>
