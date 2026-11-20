@@ -1174,71 +1174,71 @@ FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 30 { export fr30R; }
 FPRT32: fpt^"R"					is fptx = 1 & fpt & fpthalf = 31 { export fr31R; }
 
 
-fpcmp: ",FALSE?"		is fpcond=0 { result:1 = 0; export result; }
-fpcmp: ",false"			is fpcond=1 { result:1 = 0; export result; }
-fpcmp: ",?"				is fpcond=2 { result:1 = 0; export result; }
-fpcmp: ",!<=>"			is fpcond=3 { result:1 = 0; export result; }
-fpcmp: ",="				is fpcond=4 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
-fpcmp: ",=T"			is fpcond=5 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
-fpcmp: ",?="			is fpcond=6 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
-fpcmp: ",!<>"			is fpcond=7 & FPR132 & FPR232 { result:1 = FPR232 f== FPR132; export result; }
-fpcmp: ",!?>="			is fpcond=8 & FPR132 & FPR232  { result:1 = FPR232 f< FPR132; export result; }
-fpcmp: ",<"				is fpcond=9 & FPR132 & FPR232  { result:1 = FPR232 f< FPR132; export result; }
-fpcmp: ",?<"			is fpcond=10 & FPR132 & FPR232 { result:1 = FPR232 f< FPR132; export result; }
-fpcmp: ",!>="			is fpcond=11 & FPR132 & FPR232 { result:1 = FPR232 f< FPR132; export result; }
-fpcmp: ",!?>"			is fpcond=12 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
-fpcmp: ",<="			is fpcond=13 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
-fpcmp: ",?<="			is fpcond=14 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
-fpcmp: ",!>"			is fpcond=15 & FPR132 & FPR232 { result:1 = FPR232 f<= FPR132; export result; }
-fpcmp: ",!?<="			is fpcond=16 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
-fpcmp: ",>"				is fpcond=17 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
-fpcmp: ",?>"			is fpcond=18 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
-fpcmp: ",!<="			is fpcond=19 & FPR132 & FPR232 { result:1 = FPR232 f> FPR132; export result; }
-fpcmp: ",!?<"			is fpcond=20 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
-fpcmp: ",>="			is fpcond=21 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
-fpcmp: ",?>="			is fpcond=22 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
-fpcmp: ",!<;"			is fpcond=23 & FPR132 & FPR232 { result:1 = FPR232 f>= FPR132; export result; }
-fpcmp: ",!?="			is fpcond=24 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
-fpcmp: ",<>"			is fpcond=25 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
-fpcmp: ",!="			is fpcond=26 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
-fpcmp: ",!=T"			is fpcond=27 & FPR132 & FPR232 { result:1 = FPR232 f!= FPR132; export result; }
-fpcmp: ",!?"			is fpcond=28 { result:1 = 1; export result; }
-fpcmp: ",<=>"			is fpcond=29 { result:1 = 1; export result; }
-fpcmp: ",TRUE?"			is fpcond=30 { result:1 = 1; export result; }
-fpcmp: ",TRUE"			is fpcond=31 { result:1 = 1; export result; }
+fpcmp: ",FALSE?"	is fpcond=0 { result:1 = 0; export result; }
+fpcmp: ",FALSE"	is fpcond=1 { result:1 = 0; export result; }
+fpcmp: ",?"	is fpcond=2 & FPR232 & FPR132 { result:1 = nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!<=>"	is fpcond=3 & FPR232 & FPR132 { result:1 = nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",="	is fpcond=4 & FPR232 & FPR132 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",=T"	is fpcond=5 & FPR232 & FPR132 { result:1 = FPR232 f== FPR132; export result; }
+fpcmp: ",?="	is fpcond=6 & FPR232 & FPR132 { result:1 = (FPR232 f== FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!<>"	is fpcond=7 & FPR232 & FPR132 { result:1 = (FPR232 f== FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!?>="	is fpcond=8 & FPR232 & FPR132 { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",<"	is fpcond=9 & FPR232 & FPR132 { result:1 = FPR232 f< FPR132; export result; }
+fpcmp: ",?<"	is fpcond=10 & FPR232 & FPR132 { result:1 = (FPR232 f< FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!>="	is fpcond=11 & FPR232 & FPR132 { result:1 = (FPR232 f< FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!?>"	is fpcond=12 & FPR232 & FPR132 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",<="	is fpcond=13 & FPR232 & FPR132 { result:1 = FPR232 f<= FPR132; export result; }
+fpcmp: ",?<="	is fpcond=14 & FPR232 & FPR132 { result:1 = !(FPR232 f> FPR132); export result; }
+fpcmp: ",!>"	is fpcond=15 & FPR232 & FPR132 { result:1 = !(FPR232 f> FPR132); export result; }
+fpcmp: ",!?<="	is fpcond=16 & FPR232 & FPR132 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",>"	is fpcond=17 & FPR232 & FPR132 { result:1 = FPR232 f> FPR132; export result; }
+fpcmp: ",?>"	is fpcond=18 & FPR232 & FPR132 { result:1 = (FPR232 f> FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!<="	is fpcond=19 & FPR232 & FPR132 { result:1 = (FPR232 f> FPR132) || nan(FPR232) || nan(FPR132); export result; }
+fpcmp: ",!?<"	is fpcond=20 & FPR232 & FPR132 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",>="	is fpcond=21 & FPR232 & FPR132 { result:1 = FPR232 f>= FPR132; export result; }
+fpcmp: ",?>="	is fpcond=22 & FPR232 & FPR132 { result:1 = !(FPR232 f< FPR132); export result; }
+fpcmp: ",!<"	is fpcond=23 & FPR232 & FPR132 { result:1 = !(FPR232 f< FPR132); export result; }
+fpcmp: ",!?="	is fpcond=24 & FPR232 & FPR132 { result:1 = (FPR232 f!= FPR132) && !(nan(FPR232) || nan(FPR132)); export result; }
+fpcmp: ",<>"	is fpcond=25 & FPR232 & FPR132 { result:1 = (FPR232 f!= FPR132) && !(nan(FPR232) || nan(FPR132)); export result; }
+fpcmp: ",!="	is fpcond=26 & FPR232 & FPR132 { result:1 = !(FPR232 f== FPR132); export result; }
+fpcmp: ",!=T"	is fpcond=27 & FPR232 & FPR132 { result:1 = !(FPR232 f== FPR132); export result; }
+fpcmp: ",!?"	is fpcond=28 & FPR232 & FPR132 { result:1 = !(nan(FPR232) || nan(FPR132)); export result; }
+fpcmp: ",<=>"	is fpcond=29 & FPR232 & FPR132 { result:1 = !(nan(FPR232) || nan(FPR132)); export result; }
+fpcmp: ",TRUE?"	is fpcond=30 { result:1 = 1; export result; }
+fpcmp: ",TRUE"	is fpcond=31 { result:1 = 1; export result; }
 
-fpcmp64: ",FALSE?"		is fpcond=0 { result:1 = 0; export result; }
-fpcmp64: ",false"		is fpcond=1 { result:1 = 0; export result; }
-fpcmp64: ",?"			is fpcond=2 { result:1 = 0; export result; }
-fpcmp64: ",!<=>;"		is fpcond=3 { result:1 = 0; export result; }
-fpcmp64: ",="			is fpcond=4 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
-fpcmp64: ",=T"			is fpcond=5 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
-fpcmp64: ",?="			is fpcond=6 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
-fpcmp64: ",!<>"			is fpcond=7 & FPR164 & FPR264 { result:1 = FPR264 f== FPR164; export result; }
-fpcmp64: ",!?>="		is fpcond=8 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
-fpcmp64: ",<"			is fpcond=9 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
-fpcmp64: ",?<"			is fpcond=10 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
-fpcmp64: ",!>="			is fpcond=11 & FPR164 & FPR264 { result:1 = FPR264 f< FPR164; export result; }
-fpcmp64: ",!?>"			is fpcond=12 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
-fpcmp64: ",<="			is fpcond=13 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
-fpcmp64: ",?<="			is fpcond=14 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
-fpcmp64: ",!>"			is fpcond=15 & FPR164 & FPR264 { result:1 = FPR264 f<= FPR164; export result; }
-fpcmp64: ",!?<="		is fpcond=16 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
-fpcmp64: ",>"			is fpcond=17 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
-fpcmp64: ",?>"			is fpcond=18 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
-fpcmp64: ",!<="			is fpcond=19 & FPR164 & FPR264 { result:1 = FPR264 f> FPR164; export result; }
-fpcmp64: ",!?<"			is fpcond=20 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
-fpcmp64: ",>="			is fpcond=21 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
-fpcmp64: ",?>="			is fpcond=22 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
-fpcmp64: ",!<"			is fpcond=23 & FPR164 & FPR264 { result:1 = FPR264 f>= FPR164; export result; }
-fpcmp64: ",!?="			is fpcond=24 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
-fpcmp64: ",<>"			is fpcond=25 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
-fpcmp64: ",!="			is fpcond=26 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
-fpcmp64: ",!=T"			is fpcond=27 & FPR164 & FPR264 { result:1 = FPR264 f!= FPR164; export result; }
-fpcmp64: ",!?"			is fpcond=28 { result:1 = 1; export result; }
-fpcmp64: ",<=>"			is fpcond=29 { result:1 = 1; export result; }
-fpcmp64: ",TRUE?"		is fpcond=30 { result:1 = 1; export result; }
-fpcmp64: ",TRUE"		is fpcond=31 { result:1 = 1; export result; }
+fpcmp64: ",FALSE?"	is fpcond=0 { result:1 = 0; export result; }
+fpcmp64: ",FALSE"	is fpcond=1 { result:1 = 0; export result; }
+fpcmp64: ",?"	is fpcond=2 & FPR264 & FPR164 { result:1 = nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!<=>"	is fpcond=3 & FPR264 & FPR164 { result:1 = nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",="	is fpcond=4 & FPR264 & FPR164 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",=T"	is fpcond=5 & FPR264 & FPR164 { result:1 = FPR264 f== FPR164; export result; }
+fpcmp64: ",?="	is fpcond=6 & FPR264 & FPR164 { result:1 = (FPR264 f== FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!<>"	is fpcond=7 & FPR264 & FPR164 { result:1 = (FPR264 f== FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!?>="	is fpcond=8 & FPR264 & FPR164 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",<"	is fpcond=9 & FPR264 & FPR164 { result:1 = FPR264 f< FPR164; export result; }
+fpcmp64: ",?<"	is fpcond=10 & FPR264 & FPR164 { result:1 = (FPR264 f< FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!>="	is fpcond=11 & FPR264 & FPR164 { result:1 = (FPR264 f< FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!?>"	is fpcond=12 & FPR264 & FPR164 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",<="	is fpcond=13 & FPR264 & FPR164 { result:1 = FPR264 f<= FPR164; export result; }
+fpcmp64: ",?<="	is fpcond=14 & FPR264 & FPR164 { result:1 = !(FPR264 f> FPR164); export result; }
+fpcmp64: ",!>"	is fpcond=15 & FPR264 & FPR164 { result:1 = !(FPR264 f> FPR164); export result; }
+fpcmp64: ",!?<="	is fpcond=16 & FPR264 & FPR164 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",>"	is fpcond=17 & FPR264 & FPR164 { result:1 = FPR264 f> FPR164; export result; }
+fpcmp64: ",?>"	is fpcond=18 & FPR264 & FPR164 { result:1 = (FPR264 f> FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!<="	is fpcond=19 & FPR264 & FPR164 { result:1 = (FPR264 f> FPR164) || nan(FPR264) || nan(FPR164); export result; }
+fpcmp64: ",!?<"	is fpcond=20 & FPR264 & FPR164 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",>="	is fpcond=21 & FPR264 & FPR164 { result:1 = FPR264 f>= FPR164; export result; }
+fpcmp64: ",?>="	is fpcond=22 & FPR264 & FPR164 { result:1 = !(FPR264 f< FPR164); export result; }
+fpcmp64: ",!<"	is fpcond=23 & FPR264 & FPR164 { result:1 = !(FPR264 f< FPR164); export result; }
+fpcmp64: ",!?="	is fpcond=24 & FPR264 & FPR164 { result:1 = (FPR264 f!= FPR164) && !(nan(FPR264) || nan(FPR164)); export result; }
+fpcmp64: ",<>"	is fpcond=25 & FPR264 & FPR164 { result:1 = (FPR264 f!= FPR164) && !(nan(FPR264) || nan(FPR164)); export result; }
+fpcmp64: ",!="	is fpcond=26 & FPR264 & FPR164 { result:1 = !(FPR264 f== FPR164); export result; }
+fpcmp64: ",!=T"	is fpcond=27 & FPR264 & FPR164 { result:1 = !(FPR264 f== FPR164); export result; }
+fpcmp64: ",!?"	is fpcond=28 & FPR264 & FPR164 { result:1 = !(nan(FPR264) || nan(FPR164)); export result; }
+fpcmp64: ",<=>"	is fpcond=29 & FPR264 & FPR164 { result:1 = !(nan(FPR264) || nan(FPR164)); export result; }
+fpcmp64: ",TRUE?"	is fpcond=30 { result:1 = 1; export result; }
+fpcmp64: ",TRUE"	is fpcond=31 { result:1 = 1; export result; }
  	
 
 #################################
