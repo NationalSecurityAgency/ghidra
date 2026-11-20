@@ -85,7 +85,7 @@ define register offset=0x1000 size=8 [
 ];
 
 define register offset=0x1000 size=4 [
-	fr0R fr0L fpe2 fpe3 fpe4 fpe5 fpe6 fpe7
+	fr0L fr0R fpe2 fpe3 fpe4 fpe5 fpe6 fpe7
 	fr4L fr4R fr5L fr5R fr6L fr6R fr7L fr7R
 	fr8L fr8R fr9L fr9R fr10L fr10R
 	fr11L fr11R fr12L fr12R fr13L fr13R fr14L fr14R
