@@ -4,6 +4,7 @@ README.md||GHIDRA||||END|
 data/languages/pa-risc.ldefs||GHIDRA||||END|
 data/languages/pa-risc.opinion||GHIDRA||||END|
 data/languages/pa-risc.sinc||GHIDRA||||END|
+data/languages/pa-risc32-hpux.cspec||GHIDRA||||END|
 data/languages/pa-risc32.cspec||GHIDRA||||END|
 data/languages/pa-risc32.dwarf||GHIDRA||||END|
 data/languages/pa-risc32.pspec||GHIDRA||||END|

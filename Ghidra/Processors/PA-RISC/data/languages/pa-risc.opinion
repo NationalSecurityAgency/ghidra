@@ -13,7 +13,7 @@
 		<constraint primary="15" secondary="0b.... .... .... .... 0000 0010 0001 0000" processor="PA-RISC" endian="big" size="32" />
 		<constraint primary="15" secondary="0b.... .... .... .... 0000 0010 0001 0100" processor="PA-RISC" endian="big" size="32" />
 	</constraint>
-	<constraint loader="System Object Model (SOM)" compilerSpecID="default">
+	<constraint loader="System Object Model (SOM)" compilerSpecID="hpux">
 		<constraint primary="523" processor="PA-RISC"   endian="big"  size="32" />
 		<constraint primary="528" processor="PA-RISC"   endian="big"  size="32" />
 		<constraint primary="532" processor="PA-RISC"   endian="big"  size="32" />
