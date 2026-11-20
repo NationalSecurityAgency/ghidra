@@ -456,11 +456,9 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		for (int i = 0; i < num; i++) {
 			monitor.checkCancelled();
 			Address addr = tableAddr.addWrap(i * size);
-			Data defData = program.getListing().getDefinedDataAt(addr);
-			if (defData != null) {
-				if (!Undefined.isUndefined(defData.getDataType())) {
-					continue;
-				}
+			// Leave existing data alone, including data the table only partially overlaps
+			if (overlapsDefinedData(addr, fulldt.getLength())) {
+				continue;
 			}
 			CreateDataCmd cmd = new CreateDataCmd(addr, true, fulldt);
 			cmd.applyTo(program);
@@ -491,6 +489,37 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 		dataNameLabel.setNamespace(space);
 		dataNameLabel.applyTo(program);
 
+	}
+
+	/**
+	 * Check whether any non-undefined defined data overlaps the given range,
+	 * either containing its start or starting within it.
+	 * @param start first address of the range
+	 * @param length length of the range in bytes
+	 * @return true if defined data overlaps the range
+	 */
+	private boolean overlapsDefinedData(Address start, int length) {
+		Listing listing = program.getListing();
+		Data containing = listing.getDefinedDataContaining(start);
+		if (containing != null && !Undefined.isUndefined(containing.getDataType())) {
+			return true;
+		}
+		if (length <= 1) {
+			return false;
+		}
+		Address end;
+		try {
+			end = start.addNoWrap(length - 1);
+		}
+		catch (AddressOverflowException e) {
+			end = start.getAddressSpace().getMaxAddress();
+		}
+		for (Data data : listing.getDefinedData(new AddressSet(start, end), true)) {
+			if (!Undefined.isUndefined(data.getDataType())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public final void markDataAsConstant(Address addr) {
