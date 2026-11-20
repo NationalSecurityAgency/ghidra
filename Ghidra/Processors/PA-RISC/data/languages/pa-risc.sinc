@@ -96,13 +96,6 @@ define register offset=0x1000 size=4 [
 	fr31L fr31R
 ];
 
-# Floating Point Status Register
-# Only the compare bit and the compare queue are implemented here
-# and the Condition Queue is only 8 bits, rather than 10
-define register offset=0x1100 size=1 [
-	compareBit	compareQueue
-];
-
 # Shadow Registers
 define register offset=0x2000 size=$(REGSIZE) [
 	shr0 shr1 shr2 shr3 shr4 shr5 shr6
@@ -390,11 +383,6 @@ attach names [ RegCSCondSym ] [
 
 attach names [ InvCSCondSym ] [
 	"" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
-];
-
-# the different tests used by the FTEST instruction
-attach names [ fptest ] [
-	"" "ACC" "REJ" _ _ "ACC8" "REJ8" _ _ "ACC6" _ _ _ "ACC4" _ _ _ "ACC2" _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ];
 
 # the floating point number types
@@ -1239,6 +1227,22 @@ fpcmp64: ",!?"	is fpcond=28 & FPR264 & FPR164 { result:1 = !(nan(FPR264) || nan(
 fpcmp64: ",<=>"	is fpcond=29 & FPR264 & FPR164 { result:1 = !(nan(FPR264) || nan(FPR164)); export result; }
 fpcmp64: ",TRUE?"	is fpcond=30 { result:1 = 1; export result; }
 fpcmp64: ",TRUE"	is fpcond=31 { result:1 = 1; export result; }
+
+# The floating-point status register is fr0L. FCMP sets its C bit (bit 5)
+# and shifts the previous C into the compare queue CQ{0..10} (bits 6-16).
+macro setCompareBit(result) {
+	fr0L = (fr0L & 0xF8007FFF) | (zext(result) << 26) | ((fr0L >> 1) & 0x03FF8000);
+}
+
+# FTEST conditions; the next instruction is nullified if the condition holds
+ftestcond: ""		is fptest=0  { result:1 = (fr0L & 0x04000000) != 0; export result; }
+ftestcond: ",ACC"	is fptest=1  { result:1 = (fr0L & 0x07FF8000) == 0; export result; }
+ftestcond: ",REJ"	is fptest=2  { result:1 = (fr0L & (fr0L >> 6) & 0x001F8000) != 0; export result; }
+ftestcond: ",ACC8"	is fptest=5  { result:1 = (fr0L & 0x07F80000) == 0; export result; }
+ftestcond: ",REJ8"	is fptest=6  { result:1 = (fr0L & (fr0L >> 4) & 0x00780000) != 0; export result; }
+ftestcond: ",ACC6"	is fptest=9  { result:1 = (fr0L & 0x07E00000) == 0; export result; }
+ftestcond: ",ACC4"	is fptest=13 { result:1 = (fr0L & 0x07800000) == 0; export result; }
+ftestcond: ",ACC2"	is fptest=17 { result:1 = (fr0L & 0x06000000) == 0; export result; }
  	
 
 #################################

@@ -1839,49 +1839,29 @@ define pcodeop diag;
 # Floating Point Compare
 # 32 bit register comparison
 :FCMP^fpfmt1bit^fpcmp FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=0 & fpcmp {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp;
-	compareBit = result;
+	setCompareBit(fpcmp);
 }
 
 :FCMP^fpfmt1bit^fpcmp64 FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=1 & fpcmp64 {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp64;
-	compareBit = result;
+	setCompareBit(fpcmp64);
 }
 
 # 64 bit register comparison 
 :FCMP^fpfmt^fpcmp FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=0 & fpcmp {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp;
-	compareBit = result;
+	setCompareBit(fpcmp);
 }
 
 :FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=1 & fpcmp64 {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp64;
-	compareBit = result;
+	setCompareBit(fpcmp64);
 }
 
-:FTEST^fptest										is opfam=0x0C & fpclass=2 & fpsub=1 & fptest & $(COMMON)
+:FTEST^ftestcond										is opfam=0x0C & fpclass=2 & fpsub=1 & ftestcond & $(COMMON)
 	[
 	  nullifyEnable = 1;
 	  globalset(inst_next, nullifyEnable);
 	] 
 {
-	nullifyNextCond = compareBit;
+	nullifyNextCond = ftestcond;
 }
 
 # Misc Floating Point Functions
