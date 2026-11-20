@@ -33,97 +33,84 @@ namespace ghidra {
 ///       BODY2
 ///    }                  }
 /// \endcode
-/// Other similar configurations where two CBRANCHs are based on
-/// the same condition are handled.  The main variation, referred to as a
-/// \b directsplit in the code looks like:
+/// or:
 /// \code
-///  if (a) {                      if (a && new_boolean()) {
-///     a = new_boolean();
-///  }                      ==>      BODY1
-///  if (a) {
-///     BODY1
-///  }                             }
+///    if (a) {           if (a) {
+///       BODY1             BODY1
+///    }          ==>     }
+///    if (!a) {          else
+///       BODY2             BODY2
+///    }                  }
 /// \endcode
-/// The value of 'a' doesn't need to be reevaluated if it is false.
 ///
-/// In the first scenario, there is a block where two flows come
-/// together but don't need to, as the evaluation of the boolean
-/// is redundant.  This block is the \b iblock.  The original
-/// evaluation of the boolean occurs in \b initblock.  There are
-/// two paths from here to \b iblock, called the \b prea path and \b preb path,
-/// either of which may contain additional 1in/1out blocks.
-/// There are also two paths out of \b iblock, \b posta, and \b postb.
-/// The ConditionalExecution class determines if the CBRANCH in
-/// \b iblock is redundant by determining if the boolean value is
-/// either the same as, or the complement of, the boolean value
-/// in \b initblock.  If the CBRANCH is redundant, \b iblock is
-/// removed, linking \b prea to \b posta and \b preb to \b postb (or vice versa
-/// depending on whether the booleans are complements of each other).
-/// If \b iblock is to be removed, modifications to data-flow made
-/// by \b iblock must be preserved.  For MULTIEQUALs in \b iblock,
-/// reads are examined to see if they came from the \b posta path,
-/// or the \b postb path, then the are replaced by the MULTIEQUAL
-/// slot corresponding to the matching \b prea or \b preb branch. If
-/// \b posta and \b postb merge at an \b exitblock, the MULTIEQUAL must
-/// be pushed into the \b exitblock and reads which can't be
-/// attributed to the \b posta or \b postb path are replaced by the
-/// \b exitblock MULTIEQUAL.
+/// There is a block where two flows come together but don't need to,
+/// as the evaluation of the boolean is redundant.  This block is the
+/// \b c2block.  The original evaluation of the boolean occurs in the
+/// \b c1block. The \b true and \b false edges out of \b c1block are
+/// connected to the corresponding out edge of \b c2block separated by
+/// the contents of \b c2block.
 ///
-/// In theory, other operations performed in \b iblock could be
-/// pushed into \b exitblock if they are not read in the \b posta
-/// or \b postb paths, but currently
-/// non MULTIEQUAL operations in \b iblock terminate the action.
+/// For the first transformation above:
+/// \code
+///   +---------+             +---------+
+///   | c1block |             | c1block |
+///   +---------+             +---------+
+///     |!a   |a                |!a   |a
+///     |     |                 |     +-------+
+///     |   +-------+           |             |
+///     |   | BODY1 |           |         +-------+
+///     |   +-------+           |         | BODY1 |
+///     |     |                 |         +-------+
+///     |     |                 |             |
+///   +---------+         +-----------+ +-----------+
+///   | c2block |     ==> | c2block.1 | | c2block.2 |
+///   +---------+         +-----------+ +-----------+
+///     |!a   |a                |             |
+///     |     |                 |         +-------+
+///     |   +-------+           |         | BODY2 |
+///     |   | BODY2 |           |         +-------+
+///     |   +-------+           |             |
+///     |     |                 |     +-------+
+///     |     |                 |     |
+///   +---------+             +---------+
+///   |   out   |             |   out   |
+///   +---------+             +---------+
+/// \endcode
 ///
-/// In the second scenario, the boolean evaluated in \b initblock
-/// remains unmodified along only one of the two paths out, \b prea
-/// or \b reb.  The boolean in \b iblock (modulo complementing) will
-/// evaluate in the same way. We define \b posta as the path out of
-/// \b iblock that will be followed by this unmodified path. The
-/// transform that needs to be made is to have the unmodified path
-/// out of \b initblock flow immediately into the \b posta path without
-/// having to reevalute the condition in \b iblock.  \b iblock is not
-/// removed because flow from the "modified" path may also flow
-/// into \b posta, depending on how the boolean was modified.
-/// Adjustments to data-flow are similar to the first scenario but
-/// slightly more complicated.  The first block along the \b posta
-/// path is referred to as the \b posta_block, this block will
-/// have a new block flowing into it.
+/// This transformation requires adjustments to output Varnodes that
+/// descend into \b c2block.1 and \b c2block.2, and those created by
+/// the \b c2block. More specifically, any MULTIEQUAL into \b c2block
+/// will transform into a COPY - in \b c2block.1 and \b c1block.2 -
+/// containing the corresponding Varnode from the original in edge.
+/// These, along with the created output Varnodes, are propagated down
+/// their respective edges. For Varnodes with descendants in \b out
+/// (and beyond), the two paths are recombined with a MULTIEQUAL.
+///
+/// It is important to reduce unnecessary duplication of PcodeOps. To
+/// this effect, attempts are made to pull-back PcodeOps from
+/// \b c2block to \b c1block before the split occurs. It would
+/// also be possible to push-back PcodeOps into \b out as-well.
 class ConditionalExecution {
-  Funcdata *fd;			///< Function being analyzed
-  PcodeOp *cbranch;		///< CBRANCH in iblock
-  BlockBasic *initblock;	///< The initial block computing the boolean value
-  BlockBasic *iblock;		///< The block where flow is (unnecessarily) coming together
-  int4 prea_inslot;	    	///< iblock->In(prea_inslot) = pre a path
-  bool init2a_true; 		///< Does \b true branch (in terms of iblock) go to path pre a
-  bool iblock2posta_true;	///< Does \b true branch go to path post a
-  int4 camethruposta_slot;	///< init or pre slot to use, for data-flow thru post
-  int4 posta_outslot;		///< The \b out edge from iblock to posta
-  BlockBasic *posta_block;	///< First block in posta path
-  BlockBasic *postb_block;	///< First block in postb path
-  map<int4,Varnode *> replacement;	///< Map from block to replacement Varnode for (current) Varnode
-  vector<Varnode *> pullback;	///< Outputs of ops that have been pulled back from \b iblock for (current) Varnode
-  vector<bool> heritageyes;	///< Boolean array indexed by address space indicating whether the space is heritaged
+  Funcdata &fd; ///< Function being analyzed
 
-  void buildHeritageArray(void);
-  bool testIBlock(void);
-  bool findInitPre(void);			///< Find \b initblock, based on \b iblock
-  bool verifySameCondition(void);		///< Verify that \b initblock and \b iblock branch on the same condition
-  bool testOpRead(Varnode *vn,PcodeOp *op);	///< Can we move the (non MULTIEQUAL) defining p-code of the given Varnode
-  bool testMultiRead(Varnode *vn,PcodeOp *op);	///< Can we move the MULTIEQUAL defining p-code of the given Varnode
-  bool testRemovability(PcodeOp *op);		///< Test if the given PcodeOp can be removed from \b iblock
-  Varnode *findPullback(int4 inbranch);		///< Find previously constructed pull-back op
-  Varnode *pullbackOp(PcodeOp *op,int4 inbranch);	///< Pull-back PcodeOp out of the iblock
-  Varnode *getNewMulti(PcodeOp *op,BlockBasic *bl);
-  Varnode *resolveRead(PcodeOp *op,BlockBasic *bl);	///< Resolve a read op coming through an arbitrary block
-  Varnode *resolveIblockRead(PcodeOp *op,int4 inbranch);	///< Resolve a read op coming through the \b iblock
-  Varnode *getMultiequalRead(PcodeOp *op,PcodeOp *readop,int4 slot);
-  Varnode *getReplacementRead(PcodeOp *op,BlockBasic *bl);
-  void doReplacement(PcodeOp *op);		///< Replace the data-flow for the given PcodeOp in \b iblock
-  bool verify(void);				///< Verify that we have a removable \b iblock
+  const vector<bool> heritageyes;
+
+  BlockBasic *c1block; ///< The initial block computing the boolean value
+  BlockBasic *c2block; ///< The block where flow is (unnecessarily) coming together
+  bool flip;
+
+  static const vector<bool> buildHeritageArray(Funcdata &f);
+  static bool isCondBlock(FlowBlock *fb); ///< Commond conditional block requirements
+
+  bool isCond2(void); ///< Basic \b c2block requirements
+  bool findCond1(void); ///< Find \b c1block, based on \b c2block
+  bool isSameCondition(void); ///< Verify that \b c1block and \b c2block branch on the same condition
+  bool canDuplicate(const PcodeOp *op); ///< Test if the given PcodeOp can be cloned from \b c2block
 public:
-  ConditionalExecution(Funcdata *f);		///< Constructor
-  bool trial(BlockBasic *ib);			///< Test for a modifiable configuration around the given block
-  void execute(void);				///< Eliminate the unnecessary path join at \b iblock
+  ConditionalExecution(Funcdata &f) : fd(f),heritageyes(buildHeritageArray(f)) { }
+
+  bool trial(BlockBasic *bb); ///< Test for a modifiable configuration around the given block
+  void execute(void); ///< Eliminate the unnecessary path join at \b iblock
 };
 
 /// \brief Search for and remove various forms of redundant CBRANCH operations
