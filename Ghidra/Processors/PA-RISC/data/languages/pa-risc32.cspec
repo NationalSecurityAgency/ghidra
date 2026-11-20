@@ -308,4 +308,22 @@
       <register name="r31"/>
     </killedbycall>
   </prototype>
+
+  <!--
+    Indirect calls go through $$dyncall with the target in r22. If bit 1
+    of r22 is set, it points 2 bytes into a function descriptor holding
+    the entry point and the callee's linkage table pointer (r19).
+  -->
+  <callfixup name="$$dyncall">
+    <target name="$$dyncall"/>
+    <pcode>
+      <body><![CDATA[
+        if ((r22 & 2) == 0) goto <plain>;
+        r19 = *:4 ((r22 & 0xfffffffc) + 4);
+        r22 = *:4 (r22 & 0xfffffffc);
+        <plain>
+        call [r22];
+      ]]></body>
+    </pcode>
+  </callfixup>
 </compiler_spec>
