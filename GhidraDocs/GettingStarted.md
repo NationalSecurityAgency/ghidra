@@ -188,7 +188,6 @@ be found in `<GhidraInstallDir>` once extraction of the distribution file is com
 * __ghidraRun(.bat):__ Script used to launch Ghidra.
 * __LICENSE:__ Ghidra license information.
 * __licenses:__ Contains licenses used by Ghidra.
-* __bom.json:__ Software Bill of Materials (SBOM) in CycloneDX JSON format.
 
 ## Building Native Components
 Ghidra requires several native binaries to be present in order to successfully run. An official
