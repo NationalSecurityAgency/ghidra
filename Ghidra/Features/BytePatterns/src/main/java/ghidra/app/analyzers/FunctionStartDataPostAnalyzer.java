@@ -28,6 +28,7 @@ public class FunctionStartDataPostAnalyzer extends FunctionStartAnalyzer {
 		super(NAME + " After Data", AnalyzerType.DATA_ANALYZER);
 		setSupportsOneTimeAnalysis(false);
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before());
+		shouldExtendSearchSet = true;
 	}
 
 	@Override
