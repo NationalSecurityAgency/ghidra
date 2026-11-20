@@ -138,6 +138,10 @@ define register offset=0x7100 size=4 [branchIndDest nullifyCondResult];
 # Result and digit carries of a unit operation, for the unit conditions.
 # Bit 4i of unitCarries is the carry out of the 4-bit digit at bits 4i+3..4i.
 define register offset=0x7108 size=4 [unitResult unitCarries];
+# Result, carry and signed overflow of an arithmetic operation, for the
+# arithmetic conditions.
+define register offset=0x7110 size=$(REGSIZE) [condResult];
+define register offset=0x7004 size=1 [condCarry condOverflow];
 
 define register offset=0x7200 size=12   contextreg;
 define context contextreg
@@ -1415,8 +1419,7 @@ lse21: off				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_1
 #
 #lse11: immed				is im11 & bit0
 lse11: immed				is im11less0 & bit0
-	[ immed	= ((-1*bit0) << 10) | im11less0; temp32 = immed; ]
-#	[ immed = (bit0 * 0xFFFFFFFFFFFFFC00) | ( (im11 >> 1) & 0x3FF ); temp32 = immed; ]
+	[ immed	= ((-1*bit0) << 10) | im11less0; ]
 	{ temp:4 = immed; export temp; }
 
 OFF_BASE_14: lse14^SRRB	is lse14 & SRRB & SPCBASE { temp:$(ADDRSIZE) = SPCBASE + sext(lse14); export temp; }
@@ -1505,85 +1508,60 @@ UnitCondSym: RegUnitCondSym	is RegUnitCondSym & fv=0 { }
 UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 
 #
+##### The arithmetic conditions from table 5-1 on page 5-3
+#
+# An arithmetic instruction first sets condResult, condCarry and
+# condOverflow (see the arithAdd macros) and then builds the condition,
+# so the condition sees its operands even when the target is one of them.
+# Set condResult, condCarry and condOverflow from a + b, or a + b + cin.
+macro arithAdd(a, b) {
+	condResult = a + b;
+	condCarry = carry(a, b);
+	condOverflow = scarry(a, b);
+}
+
+macro arithAddCarry(a, b, cin) {
+	condResult = a + b + zext(cin);
+	condCarry = carry(a, b) || carry(a + b, zext(cin));
+	condOverflow = ((a ^ condResult) & (b ^ condResult)) s< 0;
+}
+
+# In a shift and add, the shift takes part in the overflow conditions. A
+# bit shifted out of a that differs from the sign after the shift is a
+# signed overflow, and one that is 1 an unsigned overflow. PSW[C/B] gets
+# the carry of the addition alone, so shAddCarry comes after it is set.
+macro arithShAdd(a, k, b) {
+	arithAdd(a << k, b);
+	condOverflow = condOverflow || (((a << k) s>> k) != a);
+}
+
+macro shAddCarry(a, k) {
+	condCarry = condCarry || ((a >> (32 - k)) != 0);
+}
+
+RegArithCond:		is c=0 { export 0:1; } # never
+RegArithCond:		is c=1 { tmp:1 = condResult == 0; export tmp; } # all bits are 0
+RegArithCond:		is c=2 { tmp:1 = (condResult s< 0) != condOverflow; export tmp; } # leftmost bit xor signed overflow
+RegArithCond:		is c=3 { tmp:1 = (condResult == 0) || ((condResult s< 0) != condOverflow); export tmp; }
+RegArithCond:		is c=4 { tmp:1 = !condCarry; export tmp; } # no unsigned overflow (adds), borrow (subtracts)
+RegArithCond:		is c=5 { tmp:1 = (condResult == 0) || !condCarry; export tmp; }
+RegArithCond:		is c=6 { tmp:1 = condOverflow; export tmp; } # signed overflow
+RegArithCond:		is c=7 { tmp:1 = (condResult & 1) != 0; export tmp; } # rightmost bit is 1
+
+ArithCond:		is RegArithCond & fv=0 { export RegArithCond; }
+ArithCond:		is RegArithCond & fv=1 { tmp:1 = !RegArithCond; export tmp; }
+
+ArithCondNullify:	is c=0 & fv=0 { }
+ArithCondNullify:	is ArithCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = ArithCond;
+}
+
+#
 ##### The Add Conditions from table 5-4 on page 5-5
 #
-RegAddCond: 		is c = 0 { export 0:1; } # never
-RegAddCond: 		is c = 1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
-RegAddCond: 		is c = 2 & R1 & R2 { tmp:1 = (R1 s< -R2) ; export tmp; } # signed less than negative of R2 
-RegAddCond: 		is c = 3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than or equal to R2
-RegAddCond: 		is c = 4 & R1 & R2 { tmp:1 = ! carry(R1,R2) ; export tmp; } # unsigned sum does not overflow
-RegAddCond: 		is c = 5 & R1 & R2 { tmp:1 = (R1 + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-RegAddCond: 		is c = 6 & R1 & R2 { tmp:1 = scarry(R1,R2); export tmp; } # signed sum overflows
-RegAddCond: 		is c = 7 & R1 & R2 { tmp:1 = ((R1+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-AddCond:			is RegAddCond & fv=0 { export RegAddCond; }
-AddCond:			is RegAddCond & fv=1 { tmp:1 = ! RegAddCond; export tmp; }
-
-AddCondNullify:	is c=0 & fv=0 { }
-AddCondNullify:	is AddCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = AddCond;
-}
-
 AddCondSym: RegAddCondSym	is RegAddCondSym & fv=0 { }
 AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
-
-RegAddCondI: 		is c = 0 { export 0:1; } # never
-RegAddCondI: 		is c = 1 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val == -R2) ; export tmp; } # equal to negated
-RegAddCondI: 		is c = 2 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s< -R2) ; export tmp; } # signed less than negated R2 
-RegAddCondI: 		is c = 3 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s<= -R2) ; export tmp; } # signed less than or equal to R2
-RegAddCondI: 		is c = 4 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
-RegAddCondI: 		is c = 5 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-RegAddCondI: 		is c = 6 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
-RegAddCondI: 		is c = 7 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ((val+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-
-# Some notes-
-#	lse11 is derived from an 11-bit immediate, so we need to take 2 bytes, not 1 byte as in the original coding
-# 	R2 must sometimes be negated before the comparison, as per the manual, Table 5-4
-#	The arithmetic comparison must be performed on a larger size temp than the original, so that negating 0x80000000 works correctly
-#	temp32 is used because the value of lse11 in the pcode does not flow so well to here - maybe a compiler bug?
-#
-
-RegAddCondI11: is c = 0 { export 0:1; } # never
-
-RegAddCondI11: is temp32 & c = 1 & lse11 & R2 {
-                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val == -tmp_R2) ; export tmp; } # equal
-
-RegAddCondI11: is temp32 & c = 2 & lse11 & R2 {
-                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val s< -tmp_R2) ; export tmp; } # signed less than negative of R2
-
-RegAddCondI11: is temp32 & c = 3 & lse11 & R2 {
-				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val s<= -tmp_R2) ; export tmp; } # signed less than or equal to R2
-
-RegAddCondI11: is temp32 & c = 4 & lse11 & R2 {
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
-
-RegAddCondI11: is temp32 & c = 5 & lse11 & R2 {
-				# Don't need 64-bit arithmetic here
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-
-RegAddCondI11: is temp32 & c = 6 & lse11 & R2 {
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
-
-RegAddCondI11: is temp32 & c = 7 & lse11 & R2 {
-				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = ((val+tmp_R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-AddCondI11:		is RegAddCondI11 & fv=0 { export RegAddCondI11; }
-AddCondI11:		is RegAddCondI11 & fv=1 { temp:1 = ! RegAddCondI11; export temp; }
-
-AddCondI11Nullify:	is c=0 & fv=0 { }
-AddCondI11Nullify:	is AddCondI11 [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = AddCondI11;
-}
 
 #
 #### Compare / Subtract Instructions
