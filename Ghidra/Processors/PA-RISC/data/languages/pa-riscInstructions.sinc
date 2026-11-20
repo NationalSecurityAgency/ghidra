@@ -444,7 +444,7 @@ with : phase=1 {
 
 # this is the idiom for return from subroutine
 # currently we pull it out so we don't print out the R0, but we could modify this to do a return...
-:BV^nullifyForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifyForBranch & reg1=0 & ReturnTarget & bit0=0 & n=1 & $(COMMON)
+:BV^nullifySymForBranch (RB)									is opfam=0x3A & c=0x6 & RB & nullifySymForBranch & reg1=0 & ReturnTarget & bit0=0 & n=1 & $(COMMON)
 {
 	return [branchIndDest];
 }
@@ -728,7 +728,7 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:BE^nullifyForBranch externalTarget		is opfam=0x38 & nullifyForBranch & externalTarget & SR3bit & n=1 & $(COMMON)
+:BE^nullifySymForBranch externalTarget		is opfam=0x38 & nullifySymForBranch & externalTarget & SR3bit & n=1 & $(COMMON)
 {
 	iasq_front = SR3bit; # set the space ID to the new space ID
 	goto [externalTarget];
@@ -751,7 +751,7 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & $(COMMON)
+:BE^",L"^nullifySymForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifySymForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & $(COMMON)
 {
 	r31 = inst_next+4; # store the link/return address
 	sr0 = iasq_front; # store the link/return space ID 
@@ -773,7 +773,7 @@ define pcodeop getCurrentSpace;
 	branchExecuted = 1;
 }
 
-:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=1 & $(COMMON)
+:B^",GATE"^nullifySymForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifySymForBranch & branchTarget3W & n=1 & $(COMMON)
 {
 	R2dst = changePrivLevel();
 	goto [branchTarget3W];
