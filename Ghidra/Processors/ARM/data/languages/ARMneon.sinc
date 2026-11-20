@@ -2838,8 +2838,8 @@ vdupRd16: vdupRd8	is vdupRd8
 extImm: "#"^c0811	    is TMode=0 & c0811		{ tmp:1 = c0811; export tmp; }
 extImm: "#"^thv_c0811	is TMode=1 & thv_c0811	{ tmp:1 = thv_c0811; export tmp; }
 
-:vext.8 Dd,Dn,Dm,extImm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=5 &     c2021=3 &     c0606=0  &     c0404=0 ) |
-                            ($(TMODE_E) &     thv_c2327=0x1f & thv_c2021=3 & thv_c0606=0  & thv_c0404=0) ) & Dd & Dn & Dm & extImm
+:vext.8 Dd,Dn,Dm,extImm  is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=5 &     c2021=3 &     c1111=0 &     c0606=0  &     c0404=0 ) |
+                            ($(TMODE_E) &     thv_c2327=0x1f & thv_c2021=3 & thv_c1111=0 & thv_c0606=0  & thv_c0404=0) ) & Dd & Dn & Dm & extImm
 {
 	val:16 = (zext(Dm) << 64) | zext(Dn);
 	local shift = extImm * 8;
