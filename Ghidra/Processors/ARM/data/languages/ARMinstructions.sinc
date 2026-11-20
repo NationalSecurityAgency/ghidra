@@ -1585,6 +1585,47 @@ spsrmask: "spsr_csf"	is mask=13	{ export 0xffff00ff:4; }
 spsrmask: "spsr_xsf"	is mask=14	{ export 0xffffff00:4; }
 spsrmask: "spsr_cxsf"	is mask=15	{ export 0xffffffff:4; }
 
+@if defined(VERSION_7)
+
+# bankedreg is the banked register for the MRS/MSR (banked register) instructions.
+# It exports SYSm with R in bit 5 (R:M:M1).
+
+bankedreg: "r8_usr"    is c2222=0 & c0808=0 & c1619=0  { export 0x0:1; }
+bankedreg: "r9_usr"    is c2222=0 & c0808=0 & c1619=1  { export 0x1:1; }
+bankedreg: "r10_usr"   is c2222=0 & c0808=0 & c1619=2  { export 0x2:1; }
+bankedreg: "r11_usr"   is c2222=0 & c0808=0 & c1619=3  { export 0x3:1; }
+bankedreg: "r12_usr"   is c2222=0 & c0808=0 & c1619=4  { export 0x4:1; }
+bankedreg: "sp_usr"    is c2222=0 & c0808=0 & c1619=5  { export 0x5:1; }
+bankedreg: "lr_usr"    is c2222=0 & c0808=0 & c1619=6  { export 0x6:1; }
+bankedreg: "r8_fiq"    is c2222=0 & c0808=0 & c1619=8  { export 0x8:1; }
+bankedreg: "r9_fiq"    is c2222=0 & c0808=0 & c1619=9  { export 0x9:1; }
+bankedreg: "r10_fiq"   is c2222=0 & c0808=0 & c1619=10 { export 0xa:1; }
+bankedreg: "r11_fiq"   is c2222=0 & c0808=0 & c1619=11 { export 0xb:1; }
+bankedreg: "r12_fiq"   is c2222=0 & c0808=0 & c1619=12 { export 0xc:1; }
+bankedreg: "sp_fiq"    is c2222=0 & c0808=0 & c1619=13 { export 0xd:1; }
+bankedreg: "lr_fiq"    is c2222=0 & c0808=0 & c1619=14 { export 0xe:1; }
+bankedreg: "lr_irq"    is c2222=0 & c0808=1 & c1619=0  { export 0x10:1; }
+bankedreg: "sp_irq"    is c2222=0 & c0808=1 & c1619=1  { export 0x11:1; }
+bankedreg: "lr_svc"    is c2222=0 & c0808=1 & c1619=2  { export 0x12:1; }
+bankedreg: "sp_svc"    is c2222=0 & c0808=1 & c1619=3  { export 0x13:1; }
+bankedreg: "lr_abt"    is c2222=0 & c0808=1 & c1619=4  { export 0x14:1; }
+bankedreg: "sp_abt"    is c2222=0 & c0808=1 & c1619=5  { export 0x15:1; }
+bankedreg: "lr_und"    is c2222=0 & c0808=1 & c1619=6  { export 0x16:1; }
+bankedreg: "sp_und"    is c2222=0 & c0808=1 & c1619=7  { export 0x17:1; }
+bankedreg: "lr_mon"    is c2222=0 & c0808=1 & c1619=12 { export 0x1c:1; }
+bankedreg: "sp_mon"    is c2222=0 & c0808=1 & c1619=13 { export 0x1d:1; }
+bankedreg: "elr_hyp"   is c2222=0 & c0808=1 & c1619=14 { export 0x1e:1; }
+bankedreg: "sp_hyp"    is c2222=0 & c0808=1 & c1619=15 { export 0x1f:1; }
+bankedreg: "spsr_fiq"  is c2222=1 & c0808=0 & c1619=14 { export 0x2e:1; }
+bankedreg: "spsr_irq"  is c2222=1 & c0808=1 & c1619=0  { export 0x30:1; }
+bankedreg: "spsr_svc"  is c2222=1 & c0808=1 & c1619=2  { export 0x32:1; }
+bankedreg: "spsr_abt"  is c2222=1 & c0808=1 & c1619=4  { export 0x34:1; }
+bankedreg: "spsr_und"  is c2222=1 & c0808=1 & c1619=6  { export 0x36:1; }
+bankedreg: "spsr_mon"  is c2222=1 & c0808=1 & c1619=12 { export 0x3c:1; }
+bankedreg: "spsr_hyp"  is c2222=1 & c0808=1 & c1619=14 { export 0x3e:1; }
+
+@endif # VERSION_7
+
 #####################
 ######  immediate bit-number data for unsigned/signed saturated instructions 
 #####################
@@ -4297,6 +4338,25 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build spsrmask;
   spsr = (spsr& ~spsrmask) | (rm & spsrmask);
 }
+
+@if defined(VERSION_7)
+
+define pcodeop getBankedRegister;
+define pcodeop setBankedRegister;
+
+:mrs^COND Rd,bankedreg		is $(AMODE) & ARMcond=1 & COND & c2327=2 & c2021=0 & bankedreg & Rd & c0911=1 & c0007=0
+{
+  build COND;
+  Rd = getBankedRegister(bankedreg);
+}
+
+:msr^COND bankedreg,rm		is $(AMODE) & ARMcond=1 & COND & c2327=2 & c2021=2 & bankedreg & c1215=15 & c0911=1 & c0407=0 & rm
+{
+  build COND;
+  setBankedRegister(bankedreg, rm);
+}
+
+@endif # VERSION_7
 
 :mul^COND^SBIT_ZN rn,rm,rs 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=0 & SBIT_ZN & rn & c1215=0 & rs & c0407=9 & rm
 {
