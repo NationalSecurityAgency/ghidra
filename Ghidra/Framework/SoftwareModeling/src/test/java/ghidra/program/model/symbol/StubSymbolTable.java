@@ -321,4 +321,14 @@ public class StubSymbolTable implements SymbolTable {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public int anonymizeLabelHistory(String anonymousName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int anonymizeLabelHistory(String anonymousName, Address addr) {
+		throw new UnsupportedOperationException();
+	}
+
 }

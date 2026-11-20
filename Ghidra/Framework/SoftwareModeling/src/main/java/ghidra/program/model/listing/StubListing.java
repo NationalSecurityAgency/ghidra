@@ -476,4 +476,14 @@ public class StubListing implements Listing {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public int anonymizeCommentHistory(String anonymousName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int anonymizeCommentHistory(String anonymousName, Address addr) {
+		throw new UnsupportedOperationException();
+	}
+
 }
