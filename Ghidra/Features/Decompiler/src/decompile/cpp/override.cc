@@ -26,6 +26,160 @@ ElementId ELEM_MULTISTAGEJUMP = ElementId("multistagejump",222);
 ElementId ELEM_OVERRIDE = ElementId("override",223);
 ElementId ELEM_PROTOOVERRIDE = ElementId("protooverride",224);
 
+ValueDomainConstraint::ValueDomainConstraint(const Address &owner,const Address &load,int4 size,
+    const Address &use,uintb lo,uintb hi,const Address &descriptor,const string &source,
+    const Address &guard,bool trueEdge)
+  : ValueDomainConstraint(owner,load,size,use,lo,hi,descriptor,source,guard,trueEdge,true)
+{
+}
+
+ValueDomainConstraint::ValueDomainConstraint(const Address &owner,const Address &load,int4 size,
+    uintb lo,uintb hi,const Address &descriptor,const string &source,const Address &guard,bool trueEdge)
+  : ValueDomainConstraint(owner,load,size,Address((AddrSpace *)0,0),lo,hi,descriptor,source,guard,trueEdge,false)
+{
+}
+
+ValueDomainConstraint::ValueDomainConstraint(const Address &owner,const Address &load,int4 size,
+    const Address &use,uintb lo,uintb hi,const Address &descriptor,const string &source,
+    const Address &guard,bool trueEdge,bool useRestricted)
+  : ownerEntry(owner), loadAddress(load), outputSize(size),
+    switchAddress(useRestricted && !use.isInvalid() ? use : Address((AddrSpace *)0,0)), first(lo), last(hi),
+    descriptorAddress(descriptor), provenance(source),
+    guardAddress(guard.isInvalid() ? Address((AddrSpace *)0,0) : guard),
+    guardTrue(!guard.isInvalid() && trueEdge)
+{
+  if (owner.isInvalid() || load.isInvalid() || descriptor.isInvalid() ||
+      (useRestricted && use.isInvalid()) ||
+      owner.getSpace()->getType() != IPTR_PROCESSOR || load.getSpace()->getType() != IPTR_PROCESSOR ||
+      (useRestricted && use.getSpace()->getType() != IPTR_PROCESSOR) ||
+      descriptor.getSpace()->getType() != IPTR_PROCESSOR ||
+      (!guard.isInvalid() && guard.getSpace()->getType() != IPTR_PROCESSOR))
+    throw LowlevelError("Value-domain addresses must be memory addresses");
+  if (size < 1 || size > 8)
+    throw LowlevelError("Value-domain width must be 1 through 8 bytes");
+  uintb maximum = size == 8 ? ~(uintb)0 : (((uintb)1 << (8 * size)) - 1);
+  if (lo > hi || hi > maximum)
+    throw LowlevelError("Value-domain bounds do not fit the unsigned width");
+  if (source.find_first_not_of(" \t\r\n\f\v") == string::npos)
+    throw LowlevelError("Value-domain provenance is required");
+}
+
+bool ValueDomainConstraint::hasSameSelector(const ValueDomainConstraint &other) const
+
+{
+  return ownerEntry == other.ownerEntry && loadAddress == other.loadAddress &&
+      outputSize == other.outputSize && (!isUseRestricted() || !other.isUseRestricted() ||
+      switchAddress == other.switchAddress);
+}
+
+static void encodeDomainAddress(Encoder &encoder,const char *role,const Address &addr)
+
+{
+  encoder.openElement(ELEM_ADDR);
+  encoder.writeString(ATTRIB_TYPE,role);
+  if (!addr.isInvalid()) {
+    encoder.writeSpace(ATTRIB_SPACE,addr.getSpace());
+    encoder.writeUnsignedInteger(ATTRIB_OFFSET,addr.getOffset());
+  }
+  encoder.closeElement(ELEM_ADDR);
+}
+
+void ValueDomainConstraint::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_VALUEDOMAIN);
+  encoder.writeSignedInteger(ATTRIB_FORMAT,1);
+  encoder.writeString(ATTRIB_TYPE,"load");
+  encoder.writeSignedInteger(ATTRIB_SIZE,outputSize);
+  encoder.writeUnsignedInteger(ATTRIB_FIRST,first);
+  encoder.writeUnsignedInteger(ATTRIB_LAST,last);
+  encoder.writeString(ATTRIB_NAME,provenance);
+  encoder.writeSignedInteger(ATTRIB_INDEX,guardAddress.isInvalid() ? -1 : guardTrue ? 1 : 0);
+  encodeDomainAddress(encoder,"owner",ownerEntry);
+  encodeDomainAddress(encoder,"load",loadAddress);
+  encodeDomainAddress(encoder,"switch",switchAddress);
+  encodeDomainAddress(encoder,"descriptor",descriptorAddress);
+  if (!guardAddress.isInvalid())
+    encodeDomainAddress(encoder,"guard",guardAddress);
+  encoder.closeElement(ELEM_VALUEDOMAIN);
+}
+
+static Address decodeDomainAddress(Decoder &decoder,const char *expectedRole)
+
+{
+  uint4 element = decoder.openElement(ELEM_ADDR);
+  int4 fields = 0;
+  string role;
+  AddrSpace *space = (AddrSpace *)0;
+  uintb offset = 0;
+  for(uint4 id;(id = decoder.getNextAttributeId()) != 0;) {
+    int4 bit;
+    if (id == ATTRIB_TYPE) { bit = 1; role = decoder.readString(); }
+    else if (id == ATTRIB_SPACE) { bit = 2; space = decoder.readSpace(); }
+    else if (id == ATTRIB_OFFSET) { bit = 4; offset = decoder.readUnsignedInteger(); }
+    else { throw DecoderError("Unknown value-domain address attribute"); }
+    if ((fields & bit) != 0)
+      throw DecoderError("Duplicate value-domain address attribute");
+    fields |= bit;
+  }
+  if (fields == 1 && string(expectedRole) == "switch" && role == expectedRole) {
+    decoder.closeElement(element);
+    return Address((AddrSpace *)0,0);
+  }
+  if (fields != 7 || role != expectedRole || space == (AddrSpace *)0)
+    throw DecoderError("Unexpected value-domain address role");
+  decoder.closeElement(element);
+  if (offset > space->getHighest())
+    throw DecoderError("Value-domain address offset exceeds its address space");
+  return Address(space,offset);
+}
+
+/// The caller has already opened the valuedomain element and closes it after this returns.
+ValueDomainConstraint ValueDomainConstraint::decodeFromElement(Decoder &decoder)
+
+{
+  int4 fields = 0;
+  int8 format = -1, size = 0, edge = -2;
+  uintb first = 0, last = 0;
+  string type, source;
+  for(uint4 id;(id = decoder.getNextAttributeId()) != 0;) {
+    int4 bit;
+    if (id == ATTRIB_FORMAT) { bit = 1; format = decoder.readSignedInteger(); }
+    else if (id == ATTRIB_TYPE) { bit = 2; type = decoder.readString(); }
+    else if (id == ATTRIB_SIZE) { bit = 4; size = decoder.readSignedInteger(); }
+    else if (id == ATTRIB_FIRST) { bit = 8; first = decoder.readUnsignedInteger(); }
+    else if (id == ATTRIB_LAST) { bit = 16; last = decoder.readUnsignedInteger(); }
+    else if (id == ATTRIB_NAME) { bit = 32; source = decoder.readString(); }
+    else if (id == ATTRIB_INDEX) { bit = 64; edge = decoder.readSignedInteger(); }
+    else { throw DecoderError("Unknown value-domain attribute"); }
+    if ((fields & bit) != 0)
+      throw DecoderError("Duplicate value-domain attribute");
+    fields |= bit;
+  }
+  if (fields != 127 || format != 1 || type != "load" || size < 1 || size > 8 || edge < -1 || edge > 1)
+    throw DecoderError("Unsupported value-domain schema");
+  Address owner = decodeDomainAddress(decoder,"owner");
+  Address load = decodeDomainAddress(decoder,"load");
+  Address use = decodeDomainAddress(decoder,"switch");
+  Address descriptor = decodeDomainAddress(decoder,"descriptor");
+  Address guard = edge == -1 ? Address((AddrSpace *)0,0) : decodeDomainAddress(decoder,"guard");
+  if (decoder.peekElement() != 0)
+    throw DecoderError("Unexpected value-domain child");
+  if (use.isInvalid())
+    return ValueDomainConstraint(owner,load,(int4)size,first,last,descriptor,source,guard,edge == 1);
+  return ValueDomainConstraint(owner,load,(int4)size,use,first,last,descriptor,source,guard,edge == 1);
+}
+
+void Override::insertValueDomainConstraint(const ValueDomainConstraint &constraint)
+
+{
+  for(vector<ValueDomainConstraint>::const_iterator iter=valueDomains.begin();iter!=valueDomains.end();++iter) {
+    if (constraint.hasSameSelector(*iter))
+      throw LowlevelError("Duplicate value-domain result/use selector");
+  }
+  valueDomains.push_back(constraint);
+}
+
 void Override::clear(void)
 
 {
@@ -42,6 +196,7 @@ void Override::clear(void)
   deindirect.clear();
   protoover.clear();
   multistagejump.clear();
+  valueDomains.clear();
 }
 
 /// \brief Generate \e warning message related to a dead code delay
@@ -309,7 +464,7 @@ void Override::encode(Encoder &encoder,Architecture *glb) const
 
 {
   if (forcegoto.empty() && deadcodedelay.empty() && deindirect.empty() && protoover.empty() &&
-      multistagejump.empty() && pcodeover.empty())
+      multistagejump.empty() && pcodeover.empty() && valueDomains.empty())
     return;
   encoder.openElement(ELEM_OVERRIDE);
 
@@ -345,6 +500,9 @@ void Override::encode(Encoder &encoder,Architecture *glb) const
   for(map<Address,Record *>::const_iterator titer=pcodeover.begin();titer!=pcodeover.end();++titer)
     (*titer).second->encode(encoder, (*titer).first);
 
+  for(vector<ValueDomainConstraint>::const_iterator iter=valueDomains.begin();iter!=valueDomains.end();++iter)
+    iter->encode(encoder);
+
   encoder.closeElement(ELEM_OVERRIDE);
 }
 
@@ -359,7 +517,10 @@ void Override::decode(Decoder &decoder,Architecture *glb)
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId == 0) break;
-    if (subId == ELEM_PROTOOVERRIDE) {
+    if (subId == ELEM_VALUEDOMAIN) {
+      insertValueDomainConstraint(ValueDomainConstraint::decodeFromElement(decoder));
+    }
+    else if (subId == ELEM_PROTOOVERRIDE) {
       Address callpoint = Address::decode(decoder);
       unique_ptr<FuncProto> fp(new FuncProto());
       fp->setInternal(glb->defaultfp,glb->types->getTypeVoid());

@@ -51,6 +51,7 @@ public class HighFunction extends PcodeSyntaxTree {
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
 	private Address entryPoint;
+	private List<ValueDomainConstraint> valueDomainConstraints = List.of();
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
@@ -119,6 +120,34 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 		JumpTable[] res = new JumpTable[jumpTables.size()];
 		return jumpTables.toArray(res);
+	}
+
+	/**
+	 * Supply ephemeral LOAD-result contracts for this decompilation context. These are not read
+	 * from datatypes or persisted function annotations. Competing records for the same selector
+	 * must be resolved by the producer rather than implicitly intersected by the decompiler.
+	 * @param constraints the contracts, or an empty list to clear them
+	 * @throws IllegalArgumentException for a different owner or duplicate result/use selector
+	 */
+	public void setValueDomainConstraints(List<ValueDomainConstraint> constraints) {
+		List<ValueDomainConstraint> copy = List.copyOf(constraints);
+		for (int i = 0; i < copy.size(); ++i) {
+			ValueDomainConstraint constraint = copy.get(i);
+			if (!entryPoint.equals(constraint.getOwnerEntry())) {
+				throw new IllegalArgumentException("Value-domain owner does not match this function");
+			}
+			for (int j = 0; j < i; ++j) {
+				if (constraint.hasSameSelector(copy.get(j))) {
+					throw new IllegalArgumentException("Duplicate value-domain result/use selector");
+				}
+			}
+		}
+		valueDomainConstraints = copy;
+	}
+
+	/** @return the immutable contracts for this decompilation context */
+	public List<ValueDomainConstraint> getValueDomainConstraints() {
+		return valueDomainConstraints;
 	}
 
 	/**
@@ -462,12 +491,13 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 			encoder.closeElement(ELEM_JUMPTABLELIST);
 		}
-		boolean hasOverrideTag = ((protoOverrides != null) && (protoOverrides.size() > 0));
+		boolean hasOverrideTag = ((protoOverrides != null) && (protoOverrides.size() > 0)) ||
+			!valueDomainConstraints.isEmpty();
 		if (hasOverrideTag) {
 			encoder.openElement(ELEM_OVERRIDE);
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
 			Program prog = func.getProgram();
-			for (DataTypeSymbol sym : protoOverrides) {
+			for (DataTypeSymbol sym : protoOverrides == null ? List.<DataTypeSymbol>of() : protoOverrides) {
 				Address addr = sym.getAddress();
 				int firstVarArg = HighFunctionDBUtil.getFirstVarArg(prog, addr);
 				FunctionPrototype fproto = new FunctionPrototype(
@@ -476,6 +506,9 @@ public class HighFunction extends PcodeSyntaxTree {
 				AddressXML.encode(encoder, addr);
 				fproto.encodePrototype(encoder, dtmanage, firstVarArg);
 				encoder.closeElement(ELEM_PROTOOVERRIDE);
+			}
+			for (ValueDomainConstraint constraint : valueDomainConstraints) {
+				constraint.encode(encoder);
 			}
 			encoder.closeElement(ELEM_OVERRIDE);
 		}

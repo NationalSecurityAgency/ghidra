@@ -21,6 +21,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.docking.settings.SettingsImpl;
@@ -82,6 +83,7 @@ public class DecompileCallback {
 	private ConstantPool cpool;
 	private PcodeDataTypeManager dtmanage;
 	private String errorMessage;
+	private List<ValueDomainConstraint> valueDomainConstraints = List.of();
 
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
@@ -108,6 +110,13 @@ public class DecompileCallback {
 	 * @param dbg is the debugging context (or null)
 	 */
 	public void setFunction(Function func, Address entry, DecompileDebug dbg) {
+		setFunction(func, entry, dbg, List.of());
+	}
+
+	/** Establish a request-local context without changing the stored function signature. */
+	public void setFunction(Function func, Address entry, DecompileDebug dbg,
+			List<ValueDomainConstraint> constraints) {
+		valueDomainConstraints = List.copyOf(constraints);
 		cachedFunction = func;
 		undefinedBody = null;
 		if (func instanceof UndefinedFunction) {
@@ -123,6 +132,10 @@ public class DecompileCallback {
 		if (pseudoDisassembler != null) {
 			pseudoDisassembler.resetDisassemblerContext();
 		}
+	}
+
+	void clearValueDomainConstraints() {
+		valueDomainConstraints = List.of();
 	}
 
 	/**
@@ -718,6 +731,9 @@ public class DecompileCallback {
 
 		int extrapop = getExtraPopOverride(func, addr);
 		hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
+		if (func.getEntryPoint().equals(funcEntry)) {
+			hfunc.setValueDomainConstraints(valueDomainConstraints);
+		}
 
 		HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
 		Namespace namespc = funcSymbol.getNamespace();
@@ -909,6 +925,9 @@ public class DecompileCallback {
 				int extrapop = getExtraPopOverride(func, addr);
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,
 					(extrapop != default_extrapop));
+				if (entry.equals(funcEntry)) {
+					hfunc.setValueDomainConstraints(valueDomainConstraints);
+				}
 
 				long size = range.getMaxAddress().getOffset() - entry.getOffset() + 1;
 				if (size <= 0) {
