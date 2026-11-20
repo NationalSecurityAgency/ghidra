@@ -3694,15 +3694,15 @@ vld3DdList2: "{"^buildVld3DdList2^"}"	is TMode=1 & thv_D22 & thv_c1215 & buildVl
 vld3DdList2: "{"^buildVld3DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0405=2) | (thv_c1011=2 & thv_c0406=4)) & thv_D22 & thv_c1215 & buildVld3DdList2 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=3; ] { } # Double
 
 
-:vld3.^esize1011 vld3DdList2,vld3Rn		is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=2 & c0003=15) |
-											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=2 & thv_c0003=15) ) & vld3Rn & esize1011 & vld3DdList2
+:vld3.^esize1011 vld3DdList2,vld3Rn		is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2 & c0003=15) |
+											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2 & thv_c0003=15) ) & vld3Rn & esize1011 & vld3DdList2
 {
 	mult_addr = vld3Rn;
 	build vld3DdList2;
 }
 
-:vld3.^esize1011 vld3DdList2,vld3Rn^"!"	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=2 & c0003=13) |
-											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=2 & thv_c0003=13) ) & vld3Rn & esize1011 & vld3DdList2
+:vld3.^esize1011 vld3DdList2,vld3Rn^"!"	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2 & c0003=13) |
+											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2 & thv_c0003=13) ) & vld3Rn & esize1011 & vld3DdList2
 {
 	mult_addr = vld3Rn;
 	build vld3DdList2;
@@ -3710,8 +3710,8 @@ vld3DdList2: "{"^buildVld3DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0405=2) 
 }
 
 
-:vld3.^esize1011 vld3DdList2,vld3Rn,VRm	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=2) |
-											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=2) ) & VRm & vld3Rn & esize1011 & vld3DdList2
+:vld3.^esize1011 vld3DdList2,vld3Rn,VRm	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=2 & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2) |
+											 ( $(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2) ) & VRm & vld3Rn & esize1011 & vld3DdList2
 {
 	mult_addr = vld3Rn;
 	build vld3DdList2;
@@ -6516,23 +6516,23 @@ vst3DdList2: "{"^buildVst3DdList2^"}"	is TMode=0 & ((c1011=1 & c0505=1) | (c1011
 vst3DdList2: "{"^buildVst3DdList2^"}"	is TMode=1 & thv_D22 & thv_c1215 & buildVst3DdList2 [ regNum=(thv_D22<<4)+thv_c1215-1; regInc=1; counter=3; ] { } # Single
 vst3DdList2: "{"^buildVst3DdList2^"}"	is TMode=1 & ((thv_c1011=1 & thv_c0505=1) | (thv_c1011=2 & thv_c0606=1)) & thv_D22 & thv_c1215 & buildVst3DdList2 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=3; ] { } # Double
 
-:vst3.^esize1011 vst3DdList2,vst3Rn		is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=2 & c0003=15 )  |
-                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=2 & thv_c0003=15 ) ) & vst3Rn & esize1011 & vst3DdList2 
+:vst3.^esize1011 vst3DdList2,vst3Rn		is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2 & c0003=15 )  |
+                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2 & thv_c0003=15 ) ) & vst3Rn & esize1011 & vst3DdList2 
 {
 	mult_addr = vst3Rn;
 	build vst3DdList2;
 }
 
-:vst3.^esize1011 vst3DdList2,vst3Rn^"!"	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=2 & c0003=13 )  |
-                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=2 & thv_c0003=13 ) ) & vst3Rn & esize1011 & vst3DdList2
+:vst3.^esize1011 vst3DdList2,vst3Rn^"!"	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2 & c0003=13 )  |
+                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2 & thv_c0003=13 ) ) & vst3Rn & esize1011 & vst3DdList2
 {
 	mult_addr = vst3Rn;
 	build vst3DdList2;
 	vst3Rn = vst3Rn + (3 * esize1011);
 }
 
-:vst3.^esize1011 vst3DdList2,vst3Rn,VRm	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=2 )  |
-                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=2 ) ) & vst3Rn & esize1011 & vst3DdList2 & VRm
+:vst3.^esize1011 vst3DdList2,vst3Rn,VRm	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=9 & c2021=0  & ((c1011<2 & c0404=0) | (c1011=2 & c0405=0)) & c0809=2 )  |
+                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & ((thv_c1011<2 & thv_c0404=0) | (thv_c1011=2 & thv_c0405=0)) & thv_c0809=2 ) ) & vst3Rn & esize1011 & vst3DdList2 & VRm
 {
 	mult_addr = vst3Rn;
 	build vst3DdList2;
