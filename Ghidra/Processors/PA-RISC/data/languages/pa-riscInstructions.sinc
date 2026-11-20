@@ -1036,10 +1036,10 @@ macro unitAdd(a, b) {
 	setCarryBorrow();
 	RT = condResult;
 
-# handle pswV -- I'm using R2 here, the book says R2, but non-restoring algorithms usually use R1, so
-# this could be the error.
-	shiftBit:1 = ((origR2 >> 31) & 0x1) == 1;
-	pswV = pswCB ^ shiftBit;
+	# PSW[V] <- xor(carry_borrows{0}, GR[r2]{0}): the carry out of the
+	# leftmost digit xor the sign of the divisor. It selects whether the
+	# next step adds or subtracts.
+	pswV = pswCB ^ (origR2 s< 0);
 }
 
 :CMPCLR^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x22 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify
