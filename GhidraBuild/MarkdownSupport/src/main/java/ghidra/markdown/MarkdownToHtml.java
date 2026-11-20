@@ -16,6 +16,8 @@
 package ghidra.markdown;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -69,9 +71,13 @@ public class MarkdownToHtml {
 			throw new Exception("Failed to create: " + outFile.getParent());
 		}
 
-		// Generate and write the HTML
-		String html = renderer.render(parser.parseReader(new FileReader(inFile)));
-		try (PrintWriter out = new PrintWriter(outFile)) {
+		// Generate and write the HTML (as UTF-8)
+		String html;
+		try (Reader in = Files.newBufferedReader(inFile.toPath(), StandardCharsets.UTF_8)) {
+			html = renderer.render(parser.parseReader(in));
+		}
+		try (Writer out = Files.newBufferedWriter(outFile.toPath(), StandardCharsets.UTF_8)) {
+			out.write("<meta charset=\"UTF-8\">\n");
 			out.write(html);
 		}
 	}
