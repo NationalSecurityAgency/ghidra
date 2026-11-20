@@ -103,7 +103,8 @@ public class DWARFFunction {
 				try {
 					DWARFExpressionEvaluator evaluator =
 						new DWARFExpressionEvaluator(diea.getCompilationUnit());
-					if (prog.getImportOptions().isUseStaticStackFrameRegisterValue()) {
+					if (prog.getImportOptions().isUseStaticStackFrameRegisterValue() &&
+						prog.getRegisterMappings() != null) {
 						evaluator.setValReader(evaluator.withStaticStackRegisterValues(null,
 							prog.getRegisterMappings().getStackFrameRegisterOffset()));
 					}
