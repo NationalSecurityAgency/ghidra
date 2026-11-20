@@ -230,6 +230,19 @@ with : phase=1 {
 	branchExecuted = 1;
 }
 
+# B,L .+8,t only reads the program counter: the branch goes where
+# execution continues anyway, so it is not a call
+:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & reg2!=0 & nullifySymForBranch & n=0 & branchTarget3W & w=0 & w1=0 & w2=0 & $(COMMON) 
+{
+	R2dst = inst_start+8;
+}
+
+:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & reg2!=0 & nullifySymForBranch & n=1 & branchTarget3W & w=0 & w1=0 & w2=0 & afterDelaySlot & $(COMMON) 
+{
+	R2dst = inst_start+8;
+	goto afterDelaySlot;
+}
+
 # nullifying unconditional immediate call
 # special case that doesn't need the deferral mechanism. The delay slot
 # never executes, and the call returns past it.
