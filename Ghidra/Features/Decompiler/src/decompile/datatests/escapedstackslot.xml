@@ -1,0 +1,53 @@
+<decompilertest>
+<!-- ARM Thumb code allocating locals with "push" instead of "sub sp" (GitHub issue #9728).
+     The slot receiving a register from "push" is written and its address is passed to a
+     sub-function, so it holds a local variable that must stay mapped and aliased.
+     my_function:  push {r7,lr}; movs r0,#1; str r0,[sp,#0]; mov r0,sp; bl some_function; pop {r0,pc}
+     my_function2: push {r2,r3,r7,lr}; movs r0,#1; str r0,[sp,#0]; mov r0,sp; add r1,sp,#4;
+                   add r2,sp,#8; bl some_function; pop {r0,r1,r2,pc}
+     my_function3: push {r5,r6,r7,lr}; mov r0,sp; bl some_function; add sp,#0xc; pop {pc}
+     framefunc:    push {r7,lr}; add r7,sp,#0; bl some_function; nop; pop {r7,pc}
+                   (genuine save of r7 followed by a frame pointer to its slot, must stay hidden)
+-->
+<binaryimage arch="ARM:LE:32:v8:default">
+<bytechunk space="ram" offset="0x10000" readonly="true">80b501200090684600f0faff01bd</bytechunk>
+<bytechunk space="ram" offset="0x10100" readonly="true">8cb501200090684601a902aa00f078ff07bd</bytechunk>
+<bytechunk space="ram" offset="0x10200" readonly="true">e0b5684600f0fcfe03b000bd</bytechunk>
+<bytechunk space="ram" offset="0x10300" readonly="true">80b500af00f07cfe00bf80bd</bytechunk>
+<bytechunk space="ram" offset="0x11000" readonly="true">7047</bytechunk>
+<symbol space="ram" offset="0x10000" name="my_function"/>
+<symbol space="ram" offset="0x10100" name="my_function2"/>
+<symbol space="ram" offset="0x10200" name="my_function3"/>
+<symbol space="ram" offset="0x10300" name="framefunc"/>
+<symbol space="ram" offset="0x11000" name="some_function"/>
+</binaryimage>
+<script>
+<com>option readonly on</com>
+<com>set context TMode 1 [ram,0x10000] [ram,0x11002]</com>
+<com>parse line extern void some_function(int4 *ptr);</com>
+<com>parse line extern int4 my_function(void);</com>
+<com>parse line extern int4 my_function2(void);</com>
+<com>lo fu my_function</com>
+<com>decompile</com>
+<com>print C</com>
+<com>lo fu my_function2</com>
+<com>decompile</com>
+<com>print C</com>
+<com>lo fu my_function3</com>
+<com>decompile</com>
+<com>print C</com>
+<com>lo fu framefunc</com>
+<com>decompile</com>
+<com>print C</com>
+<com>quit</com>
+</script>
+<stringmatch name="Escaped stack slot #1" min="1" max="1">iStack_8 = 1;</stringmatch>
+<stringmatch name="Escaped stack slot #2" min="1" max="1">some_function\(&amp;iStack_8\);</stringmatch>
+<stringmatch name="Escaped stack slot #3" min="1" max="1">return iStack_8;</stringmatch>
+<stringmatch name="Escaped stack slot #4" min="0" max="0">return 1;</stringmatch>
+<stringmatch name="Escaped stack slot #5" min="1" max="1">return aiStack_10\[0\];</stringmatch>
+<stringmatch name="Escaped stack slot #6" min="1" max="1">some_function\(&amp;iStack_10\);</stringmatch>
+<stringmatch name="Escaped stack slot #7" min="0" max="0">\[128\]</stringmatch>
+<stringmatch name="Escaped stack slot #8" min="1" max="1">some_function\(param_1\);</stringmatch>
+<stringmatch name="Escaped stack slot #9" min="0" max="0">unaff_r7</stringmatch>
+</decompilertest>
