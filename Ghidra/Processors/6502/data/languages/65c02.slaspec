@@ -1,3 +1,4 @@
+@define CMOS_BRK_CLEAR_D "1"
 @include "6502.slaspec"
 
 define token bitopbyte (8)
