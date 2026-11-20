@@ -441,10 +441,11 @@ attach names [ fusedfmt ] [
 	local wasNullified = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	if (wasNullified) goto <skip>;
-		build instruction;
-		nullifyCond=nullifyNextCond;
-	<skip>	
+	# A nullified branch is not taken; the next instruction reads this
+	branchExecuted = 0;
+	if (wasNullified) goto inst_next;
+	build instruction;
+	nullifyCond=nullifyNextCond;
 }
 
 #
