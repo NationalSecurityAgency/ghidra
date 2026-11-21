@@ -687,7 +687,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 			if (flowFrom != null) {
 				InstructionBlock containingBlock =
 					instructionSet.getInstructionBlockContaining(blockAddr);
-				if (containingBlock != null && containingBlock.getInstructionAt(flowFrom) != null) {
+				if (containingBlock != null && containingBlock.getInstructionAt(flowFrom) != null &&
+					!isFlowPastDelaySlot(containingBlock, blockAddr)) {
 					// Skip block if start address already handled as a fallthrough.
 					// NOTE: This behavior is relied upon by customized disassemblers which may
 					// create a conjoined InstructionBlock for an unconditional branch which 
@@ -859,6 +860,18 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
+	 * {@return whether a flow to addr lands in a delay slot of an instruction that does not
+	 * fall through, so the code after the delay slots is reached only through this flow}
+	 * @param block the block containing the flow target
+	 * @param addr the flow target
+	 */
+	private boolean isFlowPastDelaySlot(InstructionBlock block, Address addr) {
+		Instruction instr = block.getInstructionAt(addr);
+		return instr != null && instr.isInDelaySlot() &&
+			!delaySlottedInstructionHasFallthrough(instr, block);
+	}
+
+	/**
 	 * Examine delay-slotted instruction to determine if it has a fall-through
 	 * @param dsInstr pseudo-instruction within existingBlock
 	 * @param existingBlock InstructionBlock containing dsInstr
@@ -930,9 +943,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 						true, true);
 					return;
 				}
-				else if (existingBlockStartInstr.isInDelaySlot() &&
-					!delaySlottedInstructionHasFallthrough(existingBlockStartInstr,
-						existingBlock)) {
+				else if (isFlowPastDelaySlot(existingBlock, addr)) {
 					// Flow into existing delay slot - if delay-slotted instruction does not 
 					// fall-through, we need to resume block after delay slots
 					block = existingBlock;
