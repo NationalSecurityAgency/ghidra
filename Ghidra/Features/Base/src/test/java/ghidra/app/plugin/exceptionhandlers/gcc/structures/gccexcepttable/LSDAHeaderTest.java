@@ -28,9 +28,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests that the LSDA header locates the type table correctly however many bytes the TType
- * offset ULEB128 occupies. Each LSDA below runs LPStart encoding (omitted), TType encoding
- * (pcrel|sdata4), TType offset, call site encoding (uleb128) and table length, call site
- * records, action table, then a single type table entry ending at the type table base.
+ * offset ULEB128 occupies, and reads an encoded LPStart. Each LSDA below runs LPStart encoding
+ * (omitted unless noted), TType encoding (pcrel|sdata4), TType offset, call site encoding
+ * (uleb128) and table length, call site records, action table, then a single type table entry
+ * ending at the type table base.
  */
 public class LSDAHeaderTest extends AbstractGenericTest {
 
@@ -84,6 +85,19 @@ public class LSDAHeaderTest extends AbstractGenericTest {
 		}
 
 		assertEquals(addr(0x5004), header.getTTypeBaseAddress());
+	}
+
+	@Test
+	public void testEncodedLPStart() throws Exception {
+		// as above, but LPStart is pcrel|sdata4 0x3f from 0x1001 and the landing pad is 0x10
+		builder.setBytes("0x1000",
+			"1b 3f 00 00 00 1b 0d 01 04 00 02 10 01 01 00 00 f4 02 00 00");
+
+		LSDATable table = createTable();
+
+		assertEquals(addr(0x1040), table.getHeader().getLPStartAddress());
+		assertEquals(addr(0x1050),
+			table.getCallSiteTable().getCallSiteRecords().get(0).getLandingPad());
 	}
 
 	private LSDATable createTable() throws Exception {
