@@ -652,7 +652,7 @@ with : phase=1 {
 }
 	
 #######################################
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & reg2=0 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -665,7 +665,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }						
 
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & reg2=0 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
