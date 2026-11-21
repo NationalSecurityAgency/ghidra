@@ -119,6 +119,9 @@ public class SectionHeader implements StructConverter {
 		if (getSectionKind() != SectionKind.PackedData) {
 			throw new IOException("Attempt to unpack a section that is not packed.");
 		}
+		if (getUnpackedLength() < 0) {
+			throw new IllegalStateException("Invalid unpacked length: " + getUnpackedLength());
+		}
 		try (InputStream input = getData()) {
 			byte[] data = new byte[getUnpackedLength()];
 			int index = 0;
@@ -136,29 +139,17 @@ public class SectionHeader implements StructConverter {
 				}
 				PackedDataOpcodes opcode = PackedDataOpcodes.get(value >> 5);
 				if (opcode == PackedDataOpcodes.kPEFPkDataZero) {
-					index += count;
+					index = skip(data, index, count, opcode);
 				}
 				else if (opcode == PackedDataOpcodes.kPEFPkDataBlock) {
-					byte[] rawData = new byte[count];
-					int nRead = input.read(rawData);
-					if (nRead != count) {
-						throw new IllegalStateException(
-							"Unable to read enough bytes for " + opcode);
-					}
-					System.arraycopy(rawData, 0, data, index, rawData.length);
-					index += rawData.length;
+					byte[] rawData = readFully(input, count, data, index, opcode);
+					index = copy(rawData, data, index, opcode);
 				}
 				else if (opcode == PackedDataOpcodes.kPEFPkDataRepeat) {
 					int repeatCount = unpackNextValue(input);
-					byte[] rawData = new byte[count];
-					int nRead = input.read(rawData);
-					if (nRead != rawData.length) {
-						throw new IllegalStateException(
-							"Unable to read enough bytes for " + opcode);
-					}
+					byte[] rawData = readFully(input, count, data, index, opcode);
 					for (int i = 0; i < repeatCount + 1; ++i) {
-						System.arraycopy(rawData, 0, data, index, rawData.length);
-						index += rawData.length;
+						index = copy(rawData, data, index, opcode);
 					}
 				}
 				else if (opcode == PackedDataOpcodes.kPEFPkDataRepeatBlock) {
@@ -166,30 +157,17 @@ public class SectionHeader implements StructConverter {
 					int customSize = unpackNextValue(input);
 					int repeatCount = unpackNextValue(input);
 
-					byte[] commonData = new byte[commonSize];
-					int nCommonRead = input.read(commonData);
-					if (nCommonRead != commonData.length) {
-						throw new IllegalStateException(
-							"Unable to read enough common data bytes for " + opcode);
-					}
+					byte[] commonData = readFully(input, commonSize, data, index, opcode);
 
 					for (int i = 0; i < repeatCount; ++i) {
-						System.arraycopy(commonData, 0, data, index, commonData.length);
-						index += commonData.length;
+						index = copy(commonData, data, index, opcode);
 
-						byte[] customData = new byte[customSize];
-						int nCustomRead = input.read(customData);
-						if (nCustomRead != customData.length) {
-							throw new IllegalStateException(
-								"Unable to read enough custom data bytes for " + opcode);
-						}
-						System.arraycopy(customData, 0, data, index, customData.length);
-						index += customData.length;
+						byte[] customData = readFully(input, customSize, data, index, opcode);
+						index = copy(customData, data, index, opcode);
 					}
 
 					//a final common data pattern is added at end...
-					System.arraycopy(commonData, 0, data, index, commonData.length);
-					index += commonData.length;
+					index = copy(commonData, data, index, opcode);
 				}
 				else if (opcode == PackedDataOpcodes.kPEFPkDataRepeatZero) {
 					int commonSize = count;
@@ -197,19 +175,13 @@ public class SectionHeader implements StructConverter {
 					int repeatCount = unpackNextValue(input);
 
 					for (int i = 0; i < repeatCount; ++i) {
-						index += commonSize;//skip common size of zero bytes...
+						index = skip(data, index, commonSize, opcode);//skip common size of zero bytes...
 
-						byte[] customData = new byte[customSize];
-						int nCustomRead = input.read(customData);
-						if (nCustomRead != customData.length) {
-							throw new IllegalStateException(
-								"Unable to read enough custom data bytes for " + opcode);
-						}
-						System.arraycopy(customData, 0, data, index, customData.length);
-						index += customData.length;
+						byte[] customData = readFully(input, customSize, data, index, opcode);
+						index = copy(customData, data, index, opcode);
 					}
 
-					index += commonSize;//a final common size of zero bytes...
+					index = skip(data, index, commonSize, opcode);//a final common size of zero bytes...
 				}
 				else {
 					Msg.error(this, "Unrecognized packed data opcode: " + opcode);
@@ -219,9 +191,53 @@ public class SectionHeader implements StructConverter {
 		}
 	}
 
+	/**
+	 * Reads exactly {@code size} bytes from the packed data stream, after verifying that they
+	 * will fit in the remaining unpacked data buffer (prevents excessive allocations caused by
+	 * corrupted size values).
+	 */
+	private static byte[] readFully(InputStream input, int size, byte[] data, int index,
+			PackedDataOpcodes opcode) throws IOException, IllegalStateException {
+		ensureFits(data, index, size, opcode);
+		byte[] bytes = input.readNBytes(size);
+		if (bytes.length != size) {
+			throw new IllegalStateException("Unable to read enough bytes for " + opcode);
+		}
+		return bytes;
+	}
+
+	private static int copy(byte[] src, byte[] data, int index, PackedDataOpcodes opcode)
+			throws IllegalStateException {
+		ensureFits(data, index, src.length, opcode);
+		System.arraycopy(src, 0, data, index, src.length);
+		return index + src.length;
+	}
+
+	private static int skip(byte[] data, int index, int size, PackedDataOpcodes opcode)
+			throws IllegalStateException {
+		if (size < 0) {
+			ensureFits(data, index, size, opcode); // throws
+		}
+		// zero-fill past the end is harmless (buffer is already zeroed), clamp to preserve
+		// historical tolerance and avoid int overflow of the index
+		return (int) Math.min((long) index + size, data.length);
+	}
+
+	private static void ensureFits(byte[] data, int index, int size, PackedDataOpcodes opcode)
+			throws IllegalStateException {
+		if (size < 0 || size > data.length - index) {
+			throw new IllegalStateException(
+				"Packed data for %s exceeds unpacked length: index=%d, size=%d, length=%d"
+						.formatted(opcode, index, size, data.length));
+		}
+	}
+
 	private int unpackNextValue(InputStream input) throws IOException, IllegalStateException {
 		int unpacked = 0;
 		while (true) {
+			if ((unpacked & ~(Integer.MAX_VALUE >>> 7)) != 0) {
+				throw new IllegalStateException("Packed value is too large");
+			}
 			unpacked <<= 7;
 			int value = input.read();
 			if (value == -1) {
