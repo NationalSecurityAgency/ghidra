@@ -12,6 +12,7 @@
             id="ARM:LE:32:v8">
     <description>Generic ARM/Thumb v8 little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="iwmmxt"/>
@@ -36,6 +37,7 @@
             id="ARM:LE:32:v8T">
     <description>Generic ARM/Thumb v8 little endian (Thumb is default)</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>    
     <external_name tool="gnu" name="iwmmxt"/>
@@ -59,6 +61,7 @@
             id="ARM:LEBE:32:v8LEInstruction">
     <description>Generic ARM/Thumb v8 little endian instructions and big endian data</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="Visual Studio" spec="ARM.cspec" id="windows"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -75,6 +78,7 @@
             id="ARM:BE:32:v8">
     <description>Generic ARM/Thumb v8 big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="iwmmxt"/>
     <external_name tool="gnu" name="armv8-a"/>
@@ -98,6 +102,7 @@
             id="ARM:BE:32:v8T">
     <description>Generic ARM/Thumb v8 big endian (Thumb is default)</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="iwmmxt"/>
     <external_name tool="gnu" name="arm_any"/>
@@ -118,6 +123,7 @@
             id="ARM:LE:32:v7">
     <description>Generic ARM/Thumb v7 little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="Visual Studio" spec="ARM_win.cspec" id="windows"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="iwmmxt"/>
@@ -141,6 +147,7 @@
             id="ARM:LEBE:32:v7LEInstruction">
     <description>Generic ARM/Thumb v7 little endian instructions and big endian data</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="Visual Studio" spec="ARM.cspec" id="windows"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
@@ -157,6 +164,7 @@
             id="ARM:BE:32:v7">
     <description>Generic ARM/Thumb v7 big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="iwmmxt"/>
     <external_name tool="gnu" name="armv7"/>
@@ -178,6 +186,7 @@
             id="ARM:LE:32:Cortex">
     <description>ARM Cortex / Thumb little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="armv7e-m"/>
     <external_name tool="gnu" name="armv6k"/>
@@ -202,6 +211,7 @@
             id="ARM:BE:32:Cortex">
     <description>ARM Cortex / Thumb big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="armv6k"/>
     <external_name tool="gnu" name="armv6kz"/>
@@ -225,6 +235,7 @@
             id="ARM:LE:32:v8-m">
     <description>ARM Cortex v8-m little endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="armv8-m.base"/>
     <external_name tool="gnu" name="armv8-m.main"/>
@@ -243,6 +254,7 @@
             id="ARM:BE:32:v8-m">
     <description>ARM Cortex v8-m big endian</description>
     <compiler name="default" spec="ARM.cspec" id="default"/>
+    <compiler name="soft-float" spec="ARM_softfp.cspec" id="softfp"/>
     <compiler name="APCS" spec="ARM_apcs.cspec" id="apcs"/>
     <external_name tool="gnu" name="armv8-m.base"/>
     <external_name tool="gnu" name="armv8-m.main"/>
