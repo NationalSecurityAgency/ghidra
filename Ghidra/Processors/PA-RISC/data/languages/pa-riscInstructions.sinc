@@ -1640,15 +1640,15 @@ define pcodeop diag;
 	FPRT32 = float2float(FPR232);
 }
  
-:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fpdf & freg2sgl & fptsgl {
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fpdf & FPR2SGL & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
 # and we don't support quad right now	
-	FPRT64 = float2float(freg2sgl);
+	FPRT64 = float2float(FPR2SGL);
 }
 
-:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fpdf & freg2sgl & fptsgl {
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fpdf & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
@@ -1662,19 +1662,19 @@ define pcodeop diag;
 
 # int2float -- support single/double size ints and single/double floats
 # so handle 4 different cases
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=0 & bit5=0 {
-	fptsgl = int2float(freg2sgl);
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & FPR2SGL & fpsfraw=0 & fpdfraw=0 & bit5=0 {
+	fptsgl = int2float(FPR2SGL);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=1 & bit5=0 {
-	FPRT64 = int2float(freg2sgl);
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & FPR2SGL & fpsfraw=0 & fpdfraw=1 & bit5=0 {
+	FPRT64 = int2float(FPR2SGL);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=0 & bit5=0 {
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & fpsfraw=1 & fpdfraw=0 & bit5=0 {
 	fptsgl = int2float(FPR264);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=1 & bit5=0 {
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fpsfraw=1 & fpdfraw=1 & bit5=0 {
 	FPRT64 = int2float(FPR264);
 }
 
@@ -1683,14 +1683,14 @@ define pcodeop diag;
 	FPRT32 = trunc(temp);
 }
 
-:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & freg2sgl & bit5=0 {
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & bit5=0 {
 	local temp:8 = FPR264; 
 	temp = round(temp);
 	FPRT64 = trunc(temp);
 } 
 
-:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & freg2sgl & bit5=0 {
-	local temp:8 = float2float(freg2sgl); # convert single precision to double
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & FPR2SGL & bit5=0 {
+	local temp:8 = float2float(FPR2SGL); # convert single precision to double
 	temp = round(temp);
 	FPRT64 = trunc(temp);
 }
@@ -1699,13 +1699,13 @@ define pcodeop diag;
 	FPRT32 = trunc(FPR232);
 } 
 
-:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & freg2sgl & bit5=0 {
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & bit5=0 {
 	local value:4 = float2float(FPR264); # convert double precision to single
 	fptsgl = trunc(value);
 }
 
-:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & freg2sgl & bit5=0 {
-	local value:4 = freg2sgl; # get single precision value from left half of 64 bit register
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & FPR2SGL & bit5=0 {
+	local value:4 = FPR2SGL; # get single precision value from left half of 64 bit register
 	fptsgl = trunc(value);
 }
 
@@ -1714,11 +1714,11 @@ define pcodeop diag;
 	FPRT32 = FPR232;
 } 
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl & bits59=0 {
-	fptsgl = freg2sgl;
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & bits59=0 {
+	fptsgl = FPR2SGL;
 }
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & fptsgl & freg2sgl & bits59=0 {
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & bits59=0 {
 	FPRT64 = FPR264;
 }
 
@@ -1726,8 +1726,8 @@ define pcodeop diag;
 	FPRT32 = abs(FPR232);
 } 
 
-:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
-	fptsgl = abs(freg2sgl);
+:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL {
+	fptsgl = abs(FPR2SGL);
 }
 
 :FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 {
@@ -1737,8 +1737,8 @@ define pcodeop diag;
 :FSQRT^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=4 & freg1=0 & FPR232 & FPRT32 & fpfmt & fpr1x=0 & bit5=0 & bit8=0 {
 	FPRT32 = sqrt(FPR232);
 } 
-:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl & bits59=0 {
-	fptsgl = sqrt(freg2sgl);
+:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & bits59=0 {
+	fptsgl = sqrt(FPR2SGL);
 }
 
 :FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & bits59=0 {
@@ -1749,8 +1749,8 @@ define pcodeop diag;
 	FPRT32 = round(FPR232);
  } 
 
-:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl & freg1=0 & bits59=0 {
-	fptsgl = round(freg2sgl);
+:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & freg1=0 & bits59=0 {
+	fptsgl = round(FPR2SGL);
 }
 
 :FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & freg1=0 & bits59=0 {
@@ -1761,11 +1761,11 @@ define pcodeop diag;
 	FPRT32 = FPR132 f+ FPR232;
 } 
 
-:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & freg1sgl & freg2sgl & fptsgl & sfu=0 & bit5=0 {
-	fptsgl = freg1sgl f+ freg2sgl;
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & FPR1SGL & FPR2SGL & fptsgl & sfu=0 & bit5=0 {
+	fptsgl = FPR1SGL f+ FPR2SGL;
 }
 
-:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & freg1sgl & freg2sgl & fptsgl & sfu=0 & bit5=0 {
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR164 f+ FPR264;
 }
 
@@ -1773,11 +1773,11 @@ define pcodeop diag;
 	FPRT32 = FPR232 f- FPR132;
 } 
 
-:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
-	fptsgl = freg2sgl f- freg1sgl;
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR2SGL f- FPR1SGL;
 }
 
-:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR264 f- FPR164;
 }
 
@@ -1785,11 +1785,11 @@ define pcodeop diag;
 	FPRT32 = FPR132 f* FPR232;
 } 
 
-:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
-	fptsgl = freg1sgl f* freg2sgl;
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR1SGL f* FPR2SGL;
 }
 
-:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR164 f* FPR264;
 }
 
@@ -1797,11 +1797,11 @@ define pcodeop diag;
 	FPRT32 = FPR232 f/ FPR132;
 } 
 
-:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
-	fptsgl = freg2sgl f/ freg1sgl;
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR2SGL f/ FPR1SGL;
 }
 
-:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl & sfu=0 & bit5=0 {
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR264 f/ FPR164;
 }
 

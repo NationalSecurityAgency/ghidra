@@ -950,10 +950,22 @@ SAR: "SAR"				is epsilon { export sar; }
 SR0: sr0				is sr0 { export sr0; }
 R31: r31				is r31 { export r31; }
 
-# 64 bit fp register access
+# 64 bit fp register access. Register 0 holds the status and exception
+# registers, but a non-load/store operation reads it as +0 (see "Status
+# Register" in the floating-point chapter of the PA-RISC 1.1 and 2.0
+# manuals), and only those operations use the source operands below.
+FPR164: freg1				is freg1 & freg1=0 { export 0:8; }
 FPR164: freg1				is freg1 { export freg1; }
+FPR264: freg2				is freg2 & freg2=0 { export 0:8; }
 FPR264: freg2				is freg2 { export freg2; }
 FPRT64: fpt					is fpt   { export fpt; }
+
+# Single-precision sources of the opcode 0x0C operations, which name the left
+# half of a register. Register 0 reads as +0, as for FPR164 and FPR264.
+FPR1SGL: freg1sgl			is freg1sgl & freg1sgl=0 { export 0:4; }
+FPR1SGL: freg1sgl			is freg1sgl { export freg1sgl; }
+FPR2SGL: freg2sgl			is freg2sgl & freg2sgl=0 { export 0:4; }
+FPR2SGL: freg2sgl			is freg2sgl { export freg2sgl; }
 
 # register encoding for fused ops (fmpyadd, fmpysub)
 FUSEDR1: fusedr1			is fusedr1 { export fusedr1; }
@@ -963,7 +975,7 @@ FUSEDTA: fusedta			is fusedta { export fusedta; }
 FUSEDRT: fusedrt			is fusedrt { export fusedrt; }
 
 # 32 bit fp register access, lower half (L) and upper half (R)
-FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 0 { export fr0L; }
+FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 0 { export 0:4; }
 FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 1 { export fpe2; }
 FPR132: freg1^"L"				is fpr1x = 0 & freg1 & fr1half = 2 { export fpe4; }
 FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 3 { export fpe6; }
@@ -995,7 +1007,7 @@ FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 28 { export fr28L; }
 FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 29 { export fr29L; }
 FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 30 { export fr30L; }
 FPR132: freg1^"L"					is fpr1x = 0 & freg1 & fr1half = 31 { export fr31L; }
-FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 0 { export fr0R; }
+FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 0 { export 0:4; }
 FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 1 { export fpe3; }
 FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 2 { export fpe5; }
 FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 3 { export fpe7; }
@@ -1028,7 +1040,7 @@ FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 29 { export fr29R; }
 FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 30 { export fr30R; }
 FPR132: freg1^"R"					is freg1 & fpr1x = 1 & fr1half = 31 { export fr31R; }
 
-FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 0 { export fr0L; }
+FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 0 { export 0:4; }
 FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 1 { export fpe2; }
 FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 2 { export fpe4; }
 FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 3 { export fpe6; }
@@ -1061,7 +1073,7 @@ FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 29 { export fr29L; }
 FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 30 { export fr30L; }
 FPR232: freg2^"L"					is fpr2x = 0 & freg2 & fr2half = 31 { export fr31L; }
 
-FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 0 { export fr0R; }
+FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 0 { export 0:4; }
 FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 1 { export fpe3; }
 FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 2 { export fpe5; }
 FPR232: freg2^"R"					is freg2 & fpr2x = 1 & fr2half = 3 { export fpe7; }
