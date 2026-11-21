@@ -225,20 +225,18 @@ StringSequence::StringSequence(Funcdata &fdata,Datatype *ct,MapEntry *ent,PcodeO
 }
 
 /// The COPYs must be in the same basic block.
-/// If any COPY size does not match the \b copyType, return \b false.
-/// If there is a COPY to the array entry before rootVn, return \b false.
-/// Otherwise earlier COPYs are skipped. No COPYs are collected after the first gap (entry with no COPY to it).
+/// If any COPY at or after the root has a size that does not match the
+/// \b copyType, return \b false.
+/// If there is a COPY to the array entry before rootVn, or a wide COPY that has
+/// yet to be split into character sized pieces, return \b false.
+/// COPYs confined to earlier elements are skipped. No COPYs are collected after the first gap (entry with no COPY to it).
 /// \param size is the number of bytes in the memory region
 /// \return \b true to indicate legal COPY ops of constants were recovered.
 bool StringSequence::collectCopyOps(int4 size)
 
 {
   Address endAddr = startAddr + (size - 1);		// startAddr - endAddr bounds the formal array
-  Address beginAddr = startAddr;			// Start search for COPYs at the start of the array
-  if (startAddr != rootAddr) {
-    beginAddr = rootAddr - charType->getAlignSize();	// or the first address before the root address (whichever is later)
-  }
-  VarnodeLocSet::const_iterator iter = data.beginLoc(beginAddr);
+  VarnodeLocSet::const_iterator iter = data.beginLoc(startAddr);	// Start search for COPYs at the start of the array
   VarnodeLocSet::const_iterator enditer = data.endLoc(endAddr);
   int4 diff = rootAddr.getOffset() - startAddr.getOffset();
   while(iter != enditer) {
@@ -249,15 +247,15 @@ bool StringSequence::collectCopyOps(int4 size)
     if (op->code() != CPUI_COPY) continue;
     if (op->getParent() != block) continue;
     if (!op->getIn(0)->isConstant()) continue;
-    if (vn->getSize() != charType->getSize())
-      return false;		// COPY is the wrong size (has yet to be split)
     int4 tmpDiff = vn->getOffset() - startAddr.getOffset();
     if (tmpDiff < diff) {
-      if (tmpDiff + charType->getAlignSize() == diff)
+      if (tmpDiff + charType->getAlignSize() + vn->getSize() > diff)
 	return false;		// COPY to previous element, rootVn is not the first in sequence
       continue;
     }
-    else if (tmpDiff > diff) {
+    if (vn->getSize() != charType->getSize())
+      return false;		// COPY is the wrong size (has yet to be split)
+    if (tmpDiff > diff) {
       if (tmpDiff - diff < charType->getAlignSize())
 	continue;
       if (tmpDiff - diff > charType->getAlignSize())
