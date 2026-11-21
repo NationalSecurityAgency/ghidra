@@ -322,11 +322,58 @@ class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
         return name
 
 
+class MIPS_RegisterMapper(DefaultRegisterMapper):
+    """Reconcile GDB's ABI-dependent MIPS GPR names with Ghidra's SLEIGH names.
+
+    Ghidra's MIPS language always names general registers $8-$15 using the O32
+    convention (t0-t7). GDB, however, renames that band per the selected ABI:
+    under n32/n64 the same registers become a4-a7 ($8-$11) and t0-t3 ($12-$15).
+    So under an n-ABI, GDB's "t3" is $15 while Ghidra's "t3" is $11, and without
+    translation every value in $8-$15 lands in the wrong Ghidra register (e.g. a
+    loop counter in $11 shows up under Ghidra's t7). Detect the n-ABI and remap.
+
+    Under o32/o64 GDB already uses t0-t7, matching Ghidra, so the map is a no-op.
+    """
+
+    # GDB n32/n64 GPR name ($8-$15) -> Ghidra O32 GPR name
+    _gdb_to_ghidra = {
+        'a4': 't0', 'a5': 't1', 'a6': 't2', 'a7': 't3',
+        't0': 't4', 't1': 't5', 't2': 't6', 't3': 't7',
+    }
+    _ghidra_to_gdb = {v: k for k, v in _gdb_to_ghidra.items()}
+
+    def _uses_n_abi_names(self, inf: gdb.Inferior) -> bool:
+        # o32/o64 name $8-$15 as t0-t7 (matching Ghidra) and expose no 'a4';
+        # n32/n64 expose a4-a7. Presence of 'a4' means the band needs remapping.
+        try:
+            return any(r.name == 'a4' for r in inf.architecture().registers())
+        except Exception:
+            # Older GDBs lacking Inferior.architecture(): assume O32 naming,
+            # i.e. no remap. No worse than the un-patched behavior.
+            return False
+
+    def map_name(self, inf: gdb.Inferior, name: str) -> str:
+        if self._uses_n_abi_names(inf):
+            name = self._gdb_to_ghidra.get(name, name)
+        return super().map_name(inf, name)
+
+    def map_name_back(self, inf: gdb.Inferior, name: str) -> str:
+        if self._uses_n_abi_names(inf):
+            name = self._ghidra_to_gdb.get(name, name)
+        return super().map_name_back(inf, name)
+
+
 DEFAULT_BE_REGISTER_MAPPER = DefaultRegisterMapper('big')
 DEFAULT_LE_REGISTER_MAPPER = DefaultRegisterMapper('little')
 
 register_mappers: Dict[str, DefaultRegisterMapper] = {
-    'x86:LE:64:default': Intel_x86_64_RegisterMapper()
+    'x86:LE:64:default': Intel_x86_64_RegisterMapper(),
+    # Only the 64-bit MIPS languages can be driven by an n32/n64 GDB; the
+    # mapper self-detects the ABI and is a no-op under o32/o64.
+    'MIPS:BE:64:default': MIPS_RegisterMapper('big'),
+    'MIPS:LE:64:default': MIPS_RegisterMapper('little'),
+    'MIPS:BE:64:64-32addr': MIPS_RegisterMapper('big'),
+    'MIPS:LE:64:64-32addr': MIPS_RegisterMapper('little'),
 }
 
 
