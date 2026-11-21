@@ -266,7 +266,7 @@ define token instr(32)
     w2_2		= (2,2)
     w2less2		= (3,12)
     n			= (1,1)
-    im26		= (0,25) signed
+    im26		= (0,25)
     sim21		= (0,20) signed
     sim14		= (0,13) signed
     im21less0	= (1,20)

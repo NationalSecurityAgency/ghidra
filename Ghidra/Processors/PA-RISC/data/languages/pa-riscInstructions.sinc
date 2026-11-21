@@ -1878,7 +1878,10 @@ define pcodeop diag;
 ###############################################################
 # Performance Montioring Unit Instructions
 ###############################################################
-:PMENB												is opfam=0x0C & bit5=0  & sfu=0x2 & pmuop=0x3 { }
-:PMDIS												is opfam=0x0C & bit5=0  & sfu=0x2 & pmuop=0x1 { }
+:PMENB												is opfam=0x0C & im26=0x680 { }
+:PMDIS												is opfam=0x0C & im26=0x280 { }
+# ,N nullifies the next instruction if measurement was enabled, which
+# is not known here
+:PMDIS^",N"											is opfam=0x0C & im26=0x2A0 { }
 
 } # end with : phase=1
