@@ -20,6 +20,10 @@
 @include "quicciii.sinc"
 @include "FPRC.sinc"
 
+# PowerPC AS: undocumented tagged-memory extensions used by IBM i (POWER5+).
+# See powerpcas.sinc for sourcing/caveats. Optional, like altivec.sinc below.
+@include "powerpcas.sinc"
+
 # A given processor can be compliant with the PowerISA spec by including EITHER
 # the embedded vector instructions (EVX) OR the AltiVec instructions
 # However, these instruction sets overlap in their bit patterns, so Sleigh cannot support
