@@ -968,9 +968,10 @@ define pcodeop bstrins.w;
 	local msb:1 = imm16_5;
 	local lsb:1 = imm10_5;
 	local len:1 = msb + 1 - lsb;
-	local mask:4 = (1 << len) - 1;
-	local repl:4 = (RJ32src & (mask << lsb)) >> lsb;
-	RD = sext((RD32 & (~mask)) | repl);
+	local lowmask:4 = (1 << len) - 1;
+	local fieldmask:4 = lowmask << lsb;
+	local repl:4 = (RJ32src & lowmask) << lsb;
+	RD = sext((RD32 & (~fieldmask)) | repl);
 }
 
 
