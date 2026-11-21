@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+  <language processor="SuperH" endian="big" size="32" variant="SH7266" version="1.0" slafile="sh-2a.sla" processorspec="SH7266.pspec" id="SuperH:BE:32:SH7266">
+    <description>SuperH SH7266 processor 32-bit big-endian</description>
+    <compiler name="default" spec="superh2a.cspec" id="default"/>
+  </language>
+</language_definitions>
