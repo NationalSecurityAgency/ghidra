@@ -72,7 +72,11 @@ public class Segment {
 
         ArrayList<SegmentRelocation> list = new ArrayList<SegmentRelocation>();
         if (hasRelocation()) {
-            int relocPos = offsetAlign + Short.toUnsignedInt(length);
+            int fileLength = Short.toUnsignedInt(length);
+            if (fileLength == 0 && offsetAlign != 0) {
+                fileLength = 0x10000;
+            }
+            int relocPos = offsetAlign + fileLength;
 
             long oldIndex = reader.getPointerIndex();
             reader.setPointerIndex(relocPos);
