@@ -17,24 +17,50 @@ package ghidra.program.model.listing;
 
 import static org.junit.Assert.*;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
+import ghidra.util.exception.InvalidInputException;
 
+@RunWith(Parameterized.class)
 public class VariableUtilitiesTest extends AbstractGenericTest {
+
+	@Parameters(name = "{0}")
+	public static Object[][] languages() {
+		return new Object[][] { { "Toy:BE:64:default" }, { "Toy:LE:64:default" } };
+	}
+
+	private final String languageName;
+
+	public VariableUtilitiesTest(String languageName) {
+		this.languageName = languageName;
+	}
 
 	private ProgramDB program;
 
 	@Before
 	public void setUp() throws Exception {
-		Language language = getLanguage("Toy:BE:64:default");
+		Language language = getLanguage(languageName);
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB("Test", language, compilerSpec, this);
+	}
+
+	@After
+	public void tearDown() {
+		program.release(this);
 	}
 
 	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
@@ -56,5 +82,133 @@ public class VariableUtilitiesTest extends AbstractGenericTest {
 
 		dt = VariableUtilities.checkDataType(dt, false, -1, program);
 		assertEquals(40, dt.getLength());
+	}
+
+	@Test
+	public void testResizeStackWithoutFunction() throws Exception {
+		VariableStorage original = new VariableStorage(program, -16, 4);
+		VariableStorage resized =
+			VariableUtilities.resizeStorage(original, new QWordDataType(), true, null);
+		assertEquals(-16, resized.getStackOffset());
+		assertEquals(8, resized.size());
+		assertEquals(4, original.size());
+	}
+
+	@Test
+	public void testShrinkRegisterWithoutFunction() throws Exception {
+		VariableStorage original = new VariableStorage(program, program.getRegister("r0"));
+		VariableStorage resized =
+			VariableUtilities.resizeStorage(original, new DWordDataType(), false, null);
+		assertEquals(program.getRegister("r0l").getAddress(), resized.getFirstVarnode().getAddress());
+		assertEquals(4, resized.size());
+		assertEquals(8, original.size());
+	}
+
+	@Test
+	public void testVariableImplGrowsStackStorage() throws Exception {
+		LocalVariableImpl variable = new LocalVariableImpl("local", new DWordDataType(), -16, program);
+		VariableStorage original = variable.getVariableStorage();
+		variable.setDataType(new QWordDataType(), SourceType.USER_DEFINED);
+		assertEquals(8, variable.getVariableStorage().size());
+		assertEquals(-16, variable.getStackOffset());
+		assertEquals(4, original.size());
+	}
+
+	@Test
+	public void testResizeWithoutFunctionRejectsStackBoundaryCrossing() throws Exception {
+		VariableStorage original = new VariableStorage(program, -4, 4);
+		try {
+			VariableUtilities.resizeStorage(original, new QWordDataType(), false, null);
+			fail("Storage must not grow across stack offset zero");
+		}
+		catch (InvalidInputException expected) {
+			assertEquals(-4, original.getStackOffset());
+			assertEquals(4, original.size());
+		}
+	}
+
+	@Test
+	public void testVariableImplGrowsToParentRegister() throws Exception {
+		Register lowHalf = program.getRegister("r0l");
+		LocalVariableImpl variable =
+			new LocalVariableImpl("local", 0, new DWordDataType(), lowHalf, program);
+		VariableStorage original = variable.getVariableStorage();
+		variable.setDataType(new QWordDataType(), SourceType.USER_DEFINED);
+		assertEquals(program.getRegister("r0").getAddress(),
+			variable.getVariableStorage().getFirstVarnode().getAddress());
+		assertEquals(8, variable.getVariableStorage().size());
+		assertEquals(lowHalf.getAddress(), original.getFirstVarnode().getAddress());
+	}
+
+	private ProgramArchitecture standaloneArchitecture() {
+		return new ProgramArchitecture() {
+			@Override
+			public Language getLanguage() {
+				return program.getLanguage();
+			}
+
+			@Override
+			public AddressFactory getAddressFactory() {
+				return program.getAddressFactory();
+			}
+
+			@Override
+			public CompilerSpec getCompilerSpec() {
+				return program.getCompilerSpec();
+			}
+		};
+	}
+
+	@Test
+	public void testResizeScalarMemoryWithStandaloneArchitecture() throws Exception {
+		ProgramArchitecture architecture = standaloneArchitecture();
+		Address start = architecture.getAddressFactory().getDefaultAddressSpace().getAddress(0x1004);
+		VariableStorage original = new VariableStorage(architecture, start, 4);
+		VariableStorage expanded =
+			VariableUtilities.resizeStorage(original, new QWordDataType(), false, null);
+		Address expected = architecture.getLanguage().isBigEndian() ? start.subtract(4) : start;
+		assertEquals(expected, expanded.getFirstVarnode().getAddress());
+		assertEquals(8, expanded.size());
+		VariableStorage shrunk =
+			VariableUtilities.resizeStorage(expanded, new DWordDataType(), false, null);
+		assertEquals(start, shrunk.getFirstVarnode().getAddress());
+		assertEquals(4, shrunk.size());
+		assertEquals(start, original.getFirstVarnode().getAddress());
+	}
+
+	@Test
+	public void testResizeRegisterWithStandaloneArchitecture() throws Exception {
+		ProgramArchitecture architecture = standaloneArchitecture();
+		Register lowHalf = architecture.getLanguage().getRegister("r0l");
+		Register parent = architecture.getLanguage().getRegister("r0");
+		VariableStorage original = new VariableStorage(architecture, lowHalf);
+		VariableStorage expanded =
+			VariableUtilities.resizeStorage(original, new QWordDataType(), false, null);
+		assertEquals(parent.getAddress(), expanded.getFirstVarnode().getAddress());
+		assertEquals(8, expanded.size());
+		VariableStorage shrunk =
+			VariableUtilities.resizeStorage(expanded, new DWordDataType(), false, null);
+		assertEquals(lowHalf.getAddress(), shrunk.getFirstVarnode().getAddress());
+		assertEquals(4, shrunk.size());
+		assertEquals(lowHalf.getAddress(), original.getFirstVarnode().getAddress());
+	}
+
+	@Test
+	public void testResizeStackWithFunction() throws Exception {
+		int transaction = program.startTransaction("Create function");
+		try {
+			Address entry = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x1000);
+			Function function = program.getFunctionManager()
+				.createFunction("function", entry, new AddressSet(entry), SourceType.USER_DEFINED);
+			VariableStorage original = new VariableStorage(program, -16, 4);
+			VariableStorage resized =
+				VariableUtilities.resizeStorage(original, new QWordDataType(), false, function);
+			assertEquals(-16, resized.getStackOffset());
+			assertEquals(8, resized.size());
+			assertEquals(4, original.size());
+		}
+		finally {
+			program.endTransaction(transaction, false);
+		}
 	}
 }
