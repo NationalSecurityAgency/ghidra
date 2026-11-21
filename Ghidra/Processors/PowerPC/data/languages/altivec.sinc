@@ -436,6 +436,26 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 	vrD = vectorConvertFromUnsignedFixedPointWord(vrB,A_BITS:1);
 }
 
+# Record-form vector compares set CR6 from the compare result mask:
+#   CR6 = all_true || 0b0 || all_false || 0b0
+# The 128-bit mask is tested as two 64-bit halves so that the decompiler, whose
+# constants are limited to 64 bits, does not print a truncated all-ones constant.
+macro vectorCompareSetCR6(mask) {
+	local maskHi:8 = mask(8);
+	local maskLo:8 = mask:8;
+	local allTrue:1 = (maskHi == 0xffffffffffffffff) && (maskLo == 0xffffffffffffffff);
+	local allFalse:1 = (maskHi == 0) && (maskLo == 0);
+	cr6 = (allTrue << 3) | (allFalse << 1);
+}
+
+# vcmpbfp. sets CR6 = 0b00 || all_within_bounds || 0b0
+macro vectorBoundsCompareSetCR6(mask) {
+	local maskHi:8 = mask(8);
+	local maskLo:8 = mask:8;
+	local allWithinBounds:1 = (maskHi == 0) && (maskLo == 0);
+	cr6 = allWithinBounds << 1;
+}
+
 :vcmpbfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=966
 {   # TODO definition
 	vrD = vectorCompareBoundsFloatingPoint(vrA,vrB);
@@ -443,8 +463,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpbfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=966
 {   # TODO definition
-	# TODO change CR6
 	vrD = vectorCompareBoundsFloatingPoint(vrA,vrB);
+	vectorBoundsCompareSetCR6(vrD);
 }
 
 :vcmpeqfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=198
@@ -456,6 +476,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 :vcmpeqfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=198
 {   # TODO definition
 	vrD = vectorCompareEqualToFloatingPoint(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpequb vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=6
@@ -466,8 +487,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpequb. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=6
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareEqualToUnsignedByte(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpequh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=70
@@ -478,8 +499,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpequh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=70
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareEqualToUnsignedHalfWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpequw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=134
@@ -490,8 +511,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpequw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=134
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareEqualToUnsignedWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgefp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=454
@@ -502,8 +523,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgefp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=454
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanOrEqualToFloatingPoint(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtfp vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=710
@@ -514,8 +535,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtfp. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=710
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanFloatingPoint(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtsb vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=774
@@ -526,8 +547,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtsb. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=774
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanSignedByte(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtsh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=838
@@ -538,8 +559,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtsh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=838
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanConditionRegisterSignedHalfWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtsw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=902
@@ -550,8 +571,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtsw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=902
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanSignedWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtub vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=518
@@ -562,8 +583,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtub. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=518
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanUnsignedByte(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtuh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=582
@@ -574,8 +595,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtuh. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=582
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanUnsignedHalfWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtuw vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=646
@@ -586,8 +607,8 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vcmpgtuw. vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=1 & XOP_0_9=646
 {	# TODO definition
-	# TODO change CR6
 	vrD = vectorCompareGreaterThanUnsignedWord(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vctsxs vrD,vrB,A_BITS	is OP=4 & vrD & A_BITS & vrB & XOP_0_10=970
@@ -1365,6 +1386,7 @@ define pcodeop altv300_71;
 
 :vcmpequd. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=199 {
 	vrD = altv207_14(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtsd vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=967 {
@@ -1373,6 +1395,7 @@ define pcodeop altv300_71;
 
 :vcmpgtsd. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=967 {
 	vrD = altv207_16(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpgtud vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=711 {
@@ -1381,6 +1404,7 @@ define pcodeop altv300_71;
 
 :vcmpgtud. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=711 {
 	vrD = altv207_18(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :veqv vrD,vrA,vrB			is OP=4 & vrD & vrA & vrB & XOP_0_10=1668 {
@@ -1640,6 +1664,7 @@ define pcodeop altv300_71;
 
 :vcmpneb. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=7 {
 	vrD = altv300_21(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpneh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=71 {
@@ -1648,6 +1673,7 @@ define pcodeop altv300_71;
 
 :vcmpneh. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=71 {
 	vrD = altv300_23(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpnew vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=135 {
@@ -1656,6 +1682,7 @@ define pcodeop altv300_71;
 
 :vcmpnew. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=135 {
 	vrD = altv300_25(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpnezb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=263 {
@@ -1664,6 +1691,7 @@ define pcodeop altv300_71;
 
 :vcmpnezb. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=263 {
 	vrD = altv300_27(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpnezh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=327 {
@@ -1672,6 +1700,7 @@ define pcodeop altv300_71;
 
 :vcmpnezh. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=327 {
 	vrD = altv300_29(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vcmpnezw vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=0 & XOP_0_9=391 {
@@ -1680,6 +1709,7 @@ define pcodeop altv300_71;
 
 :vcmpnezw. vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & Rc2=1 & XOP_0_9=391 {
 	vrD = altv300_31(vrA,vrB);
+	vectorCompareSetCR6(vrD);
 }
 
 :vctzb vrD,vrB				is OP=4 & vrD & vrB & BITS_16_20=28 & XOP_0_10=1538 {
