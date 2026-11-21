@@ -184,7 +184,7 @@ TEST(double_decimal_precision) {
   double f0 = doubleFromRawBits(0x3fc5555555555555);
   ASSERT_EQUALS(ff.printDecimal(f0, false), "0.16666666666666666");
   double f1 = doubleFromRawBits(0x7fefffffffffffff);
-  ASSERT_EQUALS(ff.printDecimal(f1, false), "1.79769313486232e+308");
+  ASSERT_EQUALS(ff.printDecimal(f1, false), "1.7976931348623157e+308");
   double f2 = doubleFromRawBits(0x3fd555555c7dda4b);
   ASSERT_EQUALS(ff.printDecimal(f2, false), "0.33333334");
   double f3 = doubleFromRawBits(0x3fd0000000000000);
