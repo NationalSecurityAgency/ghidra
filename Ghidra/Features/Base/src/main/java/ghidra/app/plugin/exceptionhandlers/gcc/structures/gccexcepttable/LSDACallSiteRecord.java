@@ -88,7 +88,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 		Address lpStart = region.getLSDATable().getHeader().getLPStartAddress();
 
-		Address callSiteBaseAddr = lpStart.add(getCallSitePosition());
+		Address callSiteBaseAddr = region.getRangeStart().add(getCallSitePosition());
 		Address callSiteExtentAddr = callSiteBaseAddr.add(getCallSiteLength() - 1);
 
 		callSiteRange = new AddressRangeImpl(callSiteBaseAddr, callSiteExtentAddr);

@@ -50,6 +50,18 @@ public class LSDAHeaderTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testCallSiteRelativeToFunctionStart() throws Exception {
+		builder.setBytes("0x1000",
+			"1b 4e 00 00 00 1b 0d 01 04 08 04 11 01 01 00 00 f4 02 00 00");
+
+		LSDACallSiteRecord record =
+			createTable().getCallSiteTable().getCallSiteRecords().get(0);
+
+		assertEquals(addr(0x1008), record.getCallSite().getMinAddress());
+		assertEquals(addr(0x1060), record.getLandingPad());
+	}
+
+	@Test
 	public void testSingleByteTTypeOffset() throws Exception {
 		builder.setBytes("0x1000", "ff 1b 0d 01 04 00 02 02 01 01 00 00 f4 02 00 00");
 
