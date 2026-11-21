@@ -734,10 +734,8 @@ Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved)
 
 {
   bitsPreserved = mostsigbit_set(vn->getNZMask()) + 1;
-  if (bitsPreserved == 0) return vn;
-  uintb mask = 1 << 1;
-  mask <<= (bitsPreserved - 1);
-  mask -= 1;
+  if (bitsPreserved <= 0) return vn;
+  uintb mask = (bitsPreserved >= 8 * (int4)sizeof(uintb)) ? ~(uintb)0 : (((uintb)1 << bitsPreserved) - 1);
   PcodeOp *op = vn->getDef();
   Varnode *constVn;
   while(op != (PcodeOp *)0) {
