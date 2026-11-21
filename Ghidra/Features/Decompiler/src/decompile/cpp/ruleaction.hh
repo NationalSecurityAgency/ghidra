@@ -788,8 +788,8 @@ class RuleLoadVarnode : public Rule {
   friend class RuleStoreVarnode;
   static AddrSpace *correctSpacebase(Architecture *glb,Varnode *vn,AddrSpace *spc);
   static AddrSpace *vnSpacebase(Architecture *glb,Varnode *vn,uintb &val,AddrSpace *spc);
-  static AddrSpace *checkSpacebase(Architecture *glb,PcodeOp *op,uintb &offoff);
 public:
+  static AddrSpace *checkSpacebase(Architecture *glb,PcodeOp *op,uintb &offoff);
   RuleLoadVarnode(const string &g) : Rule(g, 0, "loadvarnode") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;

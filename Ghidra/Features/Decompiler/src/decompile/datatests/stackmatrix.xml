@@ -36,11 +36,11 @@ float rotate(float a, float s) {
   <com>decompile</com>
   <com>print C</com>
 </script>
-<stringmatch name="StackLanes #1" min="1" max="1">fStack_48 = s;</stringmatch>
-<stringmatch name="StackLanes #2" min="1" max="1">fStack_34 = s;</stringmatch>
+<stringmatch name="StackLanes #1" min="1" max="1">afStack_48\[0\] = s;</stringmatch>
+<stringmatch name="StackLanes #2" min="1" max="1">afStack_48\[5\] = s;</stringmatch>
 <stringmatch name="StackLanes #3" min="1" max="1">fStack_20 = s;</stringmatch>
-<stringmatch name="StackLanes #4" min="1" max="1">fill\(&amp;fStack_48\);</stringmatch>
-<stringmatch name="StackLanes #5" min="1" max="1">return fVar1 \* fStack_48 \+ fStack_10 \* fStack_34 \+ fStack_20;</stringmatch>
+<stringmatch name="StackLanes #4" min="1" max="1">fill\(afStack_48\);</stringmatch>
+<stringmatch name="StackLanes #5" min="1" max="1">return fVar1 \* afStack_48\[0\] \+ fStack_10 \* afStack_48\[5\] \+ fStack_20;</stringmatch>
 <stringmatch name="StackLanes #6" min="0" max="0">&lt;&lt; 0x20</stringmatch>
 <stringmatch name="StackLanes #7" min="0" max="0">ZEXT416</stringmatch>
 <stringmatch name="StackLanes #8" min="0" max="0">_4_4_</stringmatch>

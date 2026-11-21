@@ -1,0 +1,56 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+/* a four-float vector slot on the stack, as a compiler lays it out for a value it builds lane by lane: two lanes set to
+   zero by integer stores, two by converted ints; a call (a sine) between; the slot loaded whole into a register whose lanes
+   the maths then shuffles out; three lanes rewritten from memory, another call, the slot loaded whole again; at the end
+   the slot overwritten by one 16-byte copy and its address handed to a call */
+__asm__(
+".intel_syntax noprefix\n"
+".text\n.globl slotlanes\n.type slotlanes,@function\nslotlanes:\n"
+"  push rbx\n  push r12\n  push r13\n  push r14\n  sub rsp, 0x48\n"
+"  mov rbx, rdi\n  mov r12, rsi\n  mov r13, rdx\n  mov r14, rcx\n"
+"  mov dword ptr [rsp+0x20], 0\n"
+"  mov dword ptr [rsp+0x2c], 0\n"
+"  movd xmm0, dword ptr [rbx+0x1c]\n  cvtdq2ps xmm0, xmm0\n  movss dword ptr [rsp+0x28], xmm0\n"
+"  movd xmm1, dword ptr [rbx+0x20]\n  cvtdq2ps xmm1, xmm1\n  movss dword ptr [rsp+0x24], xmm1\n"
+"  movss xmm0, dword ptr [rbx+0x40]\n  call r12\n  movss dword ptr [rsp+0x30], xmm0\n"
+"  movss xmm0, dword ptr [rbx+0x40]\n  call r13\n  movss dword ptr [rsp+0x34], xmm0\n"
+"  movaps xmm3, xmmword ptr [rsp+0x20]\n"
+"  movaps xmm1, xmm3\n  shufps xmm1, xmm3, 0x55\n"
+"  movaps xmm2, xmm3\n  shufps xmm2, xmm3, 0xaa\n"
+"  mulss xmm1, dword ptr [rsp+0x30]\n  mulss xmm2, dword ptr [rsp+0x34]\n  addss xmm1, xmm2\n"
+"  movss dword ptr [rbx+0x44], xmm1\n"
+"  movss xmm0, dword ptr [rbx+0x70]\n  movss dword ptr [rsp+0x20], xmm0\n"
+"  movss xmm0, dword ptr [rbx+0x74]\n  movss dword ptr [rsp+0x24], xmm0\n"
+"  movss xmm0, dword ptr [rbx+0x78]\n  movss dword ptr [rsp+0x28], xmm0\n"
+"  movss xmm0, dword ptr [rbx+0x48]\n  call r12\n  movss dword ptr [rsp+0x30], xmm0\n"
+"  movaps xmm3, xmmword ptr [rsp+0x20]\n"
+"  movaps xmm1, xmm3\n  shufps xmm1, xmm3, 0x00\n"
+"  mulss xmm1, dword ptr [rsp+0x30]\n"
+"  movaps xmm2, xmm3\n  shufps xmm2, xmm3, 0xff\n  addss xmm1, xmm2\n"
+"  movss dword ptr [rbx+0x4c], xmm1\n"
+"  movups xmm0, xmmword ptr [rbx+0x10]\n"
+"  lea rdi, [rsp+0x20]\n  movaps xmmword ptr [rsp+0x20], xmm0\n  call r14\n"
+"  add rsp, 0x48\n  pop r14\n  pop r13\n  pop r12\n  pop rbx\n  ret\n"
+".att_syntax prefix\n"
+);
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+534154415541564883ec484889fb4989f44989d54989cec744242000000000c744242c00000000660f6e431c0f5bc0f30f11442428660f6e4b200f5bc9f30f114c2424f30f10434041ffd4f30f11442430f30f10434041ffd5f30f114424340f285c24200f28cb0fc6cb550f28d30fc6d3aaf30f594c2430f30f59542434f30f58caf30f114b44f30f104370f30f11442420f30f104374f30f11442424f30f104378f30f11442428f30f10434841ffd4f30f114424300f285c24200f28cb0fc6cb00f30f594c24300f28d30fc6d3fff30f58caf30f114b4c0f104310488d7c24200f2944242041ffd64883c448415e415d415c5bc3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="slotlanes"/>
+</binaryimage>
+<script>
+  <com>lo fu slotlanes</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="SlotLanes #1" min="1" max="1">fStack_48 = 0.0;</stringmatch>
+<stringmatch name="SlotLanes #2" min="1" max="1">fStack_3c = 0.0;</stringmatch>
+<stringmatch name="SlotLanes #3" min="1" max="1">fStack_40 = \(float4\)\*\(int4 \*\)\(param_1 \+ 0x1c\);</stringmatch>
+<stringmatch name="SlotLanes #4" min="1" max="1">fStack_44 = \*\(float4 \*\)\(param_1 \+ 0x74\);</stringmatch>
+<stringmatch name="SlotLanes #5" min="1" max="1">fStack_3c = \*\(float4 \*\)\(param_1 \+ 0x1c\);</stringmatch>
+<stringmatch name="SlotLanes #6" min="0" max="0">xStack</stringmatch>
+<stringmatch name="SlotLanes #7" min="0" max="0">_4_4_</stringmatch>
+</decompilertest>
