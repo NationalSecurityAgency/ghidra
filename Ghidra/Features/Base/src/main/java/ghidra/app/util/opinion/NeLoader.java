@@ -669,7 +669,8 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				int relocType = reloc.getType();
 				int byteLength = SegmentRelocation.TYPE_LENGTHS[relocType];
 
-				do {
+				Set<Integer> processedOffsets = new HashSet<>();
+				while (processedOffsets.add(offset)) {
 					// TODO: it appears that offset may be a far-offset and not always a segment-offset
 					SegmentedAddress address = space.getAddress(segment, offset);
 					try {
@@ -684,14 +685,13 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 					if (reloc.isAdditive()) {
 						break;
 					}
-					if (offset <= 0 || offset >= 0xffff) {
+					if (offset < 0 || offset >= 0xffff) {
 						break;
 					}
 					if (monitor.isCancelled()) {
 						break;
 					}
 				}
-				while (true);
 			}
 		}
 	}
@@ -699,10 +699,13 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 	private int relocate(Memory memory, SegmentRelocation reloc, SegmentedAddress address,
 			SegmentedAddress relocAddr) throws MemoryAccessException {
 
-		int value = 0;
+		int value = -1;
 		switch (reloc.getType()) {
 			case SegmentRelocation.TYPE_LO_BYTE: {
-				value = memory.getByte(address) & 0xff;
+				byte[] link = new byte[2];
+				if (memory.getBytes(address, link) == link.length) {
+					value = Byte.toUnsignedInt(link[0]) | Byte.toUnsignedInt(link[1]) << 8;
+				}
 
 				memory.setByte(address, (byte) relocAddr.getSegmentOffset());
 				break;
