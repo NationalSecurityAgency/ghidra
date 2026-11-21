@@ -964,7 +964,8 @@ public final class RustDemanglerV0 {
 			HexNibbles hex = parser.hexNibbles();
 			Long value = hex.tryParseUInt();
 			if (value != null) {
-				print(value);
+				// the value is unsigned: values with the top bit set must not print as negative
+				print(Long.toUnsignedString(value));
 			}
 			else {
 				print("0x");
