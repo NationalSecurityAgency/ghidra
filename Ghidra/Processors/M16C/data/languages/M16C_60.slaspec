@@ -456,10 +456,13 @@ regBase: b2_d4_reg16  is b1_0007; b2_d4_23=0x0 & b2_d4_reg16 { export b2_d4_reg1
 regBase: b2_d4_regAx  is b1_0007; b2_d4_13=0x2 & b2_d4_regAx { export b2_d4_regAx; } # Ax 
 
 # bit-base is byte location within memory
-memBase: imm8_base^":8"^[b2_d4_regAxSF]  is b1_0007; b2_d4_23=0x2 & b2_d4_regAxSF; imm8_base   { ptr:3 = zext(b2_d4_regAxSF + imm8_base); export *:1 ptr; }    # dsp:8[Ax|SB]
+memBase: imm8_base^":8"^[b2_d4_regAxSF]  is b1_0007; b2_d4_23=0x2 & b2_d4_regAxSF; imm8_base   { ptr:3 = zext(b2_d4_regAxSF + imm8_base); export *:1 ptr; }    # dsp:8[SB]
 memBase: simm8_base^":8"^[FB]            is b1_0007; b2_d4_23=0x2 & b2_d4=0xb & FB; simm8_base { ptr:3 = zext(FB + simm8_base); export *:1 ptr; }    # dsp:8[FB]
-memBase: imm16_base^":16"^[b2_d4_regAxSF]  is b1_0007; b2_d4_23=0x3 & b2_d4_regAxSF; imm16_base { ptr:3 = zext(b2_d4_regAxSF + imm16_base); export *:1 ptr; }    # dsp:16[Ax|SB]
+memBase: imm16_base^":16"^[b2_d4_regAxSF]  is b1_0007; b2_d4_23=0x3 & b2_d4_regAxSF; imm16_base { ptr:3 = zext(b2_d4_regAxSF + imm16_base); export *:1 ptr; }    # dsp:16[SB]
 memBase: imm16_base^":16"                is b1_0007; b2_d4=0xf; imm16_base                     { export *:1 imm16_base; }    # abs16 (special constant address case)
+# base is a byte address and Ax is a bit offset from bit 0 of that address
+memBase: imm8_dat^":8"^[b2_d4_regAx]     is b1_0007; b2_d4_13=0x4 & b2_d4_regAx; imm8_dat      { ptr:3 = zext(imm8_dat + (b2_d4_regAx >> 3)); export *:1 ptr; }    # base:8[Ax]
+memBase: imm16_dat^":16"^[b2_d4_regAx]   is b1_0007; b2_d4_13=0x6 & b2_d4_regAx; imm16_dat     { ptr:3 = zext(imm16_dat + (b2_d4_regAx >> 3)); export *:1 ptr; }    # base:16[Ax]
 
 memBase11: imm8_dat^":11"^[SB]           is SB & b1_0007; imm8_dat                             { ptr:3 = zext(SB + imm8_dat); export *:1 ptr; } # dsp:11[SB]
 
@@ -468,8 +471,9 @@ memBase11: imm8_dat^":11"^[SB]           is SB & b1_0007; imm8_dat              
 regBit: imm8_0003  is b1_0007; b2_d4; imm8_0003 { export *[const]:1 imm8_0003; } # Rx, Ax
 
 # Bit operand associated with memBase operand
-memBit: imm8_bit   is b1_0007; b2_d4; imm8_bit       { export *[const]:1 imm8_bit; }    # dsp:8[Ax|SB|FB]
-memBit: imm16_bit  is b1_0007; b2_d4_23=3; imm16_bit { export *[const]:1 imm16_bit; } # dsp:16[Ax|SB], base:16
+memBit: imm8_bit^"," is b1_0007; b2_d4; imm8_bit       { export *[const]:1 imm8_bit; }    # dsp:8[SB|FB]
+memBit: imm16_bit^"," is b1_0007; b2_d4_23=3; imm16_bit { export *[const]:1 imm16_bit; } # dsp:16[SB], base:16
+memBit:            is b1_0007; (b2_d4_13=0x4 | b2_d4_13=0x6) & b2_d4_regAx { bit:1 = b2_d4_regAx:1 & 0x7; export bit; } # base:8[Ax], base:16[Ax]
 
 #
 # Immediate data operand
@@ -935,7 +939,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BAND bit,base
-:BAND memBit, memBase               is (b1_0007=0x7e; b2_0407=0x4) ... & memBase & memBit {
+:BAND memBit^memBase                is (b1_0007=0x7e; b2_0407=0x4) ... & memBase & memBit {
     bitValue:1 = (memBase >> memBit) & 1;
     $(CARRY) = $(CARRY) &  bitValue;
 }
@@ -959,7 +963,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # (1) BCLR:G bit,base
-:BCLR^":G" memBit, memBase          is (b1_0007=0x7e; b2_0407=0x8) ... & memBase & memBit {
+:BCLR^":G" memBit^memBase           is (b1_0007=0x7e; b2_0407=0x8) ... & memBase & memBit {
     mask:1 = ~(1 << memBit);
     memBase = memBase & mask;
 }
@@ -988,7 +992,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # (1) BMcnd bit,base
-:BM^cnd8 memBit, memBase            is ((b1_0007=0x7e; b2_0407=0x2) ... & memBase & memBit); cnd8 {
+:BM^cnd8 memBit^memBase             is ((b1_0007=0x7e; b2_0407=0x2) ... & memBase & memBit); cnd8 {
     mask:1 = ~(1 << memBit);
     memBase = ((cnd8 << memBit) | (memBase & mask));
 }
@@ -1018,7 +1022,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BNAND bit,base
-:BNAND memBit, memBase              is (b1_0007=0x7e; b2_0407=0x5) ... & memBase & memBit {
+:BNAND memBit^memBase               is (b1_0007=0x7e; b2_0407=0x5) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     $(CARRY) = $(CARRY) && (bitValue == 0);
@@ -1044,7 +1048,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BNOR bit,base
-:BNOR memBit, memBase               is (b1_0007=0x7e; b2_0407=0x7) ... & memBase & memBit {
+:BNOR memBit^memBase                is (b1_0007=0x7e; b2_0407=0x7) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     $(CARRY) = $(CARRY) || (bitValue == 0);
@@ -1070,7 +1074,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # (1) BNOT:G bit,base
-:BNOT^":G" memBit, memBase          is (b1_0007=0x7e; b2_0407=0xa) ... & memBase & memBit {
+:BNOT^":G" memBit^memBase           is (b1_0007=0x7e; b2_0407=0xa) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     val:1 = memBase;
     bitValue:1 = (~val & mask);
@@ -1109,7 +1113,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BNTST bit,base
-:BNTST memBit, memBase              is (b1_0007=0x7e; b2_0407=0x3) ... & memBase & memBit {
+:BNTST memBit^memBase               is (b1_0007=0x7e; b2_0407=0x3) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     z:1 = (bitValue == 0);
@@ -1137,7 +1141,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BNXOR bit,base
-:BNXOR memBit, memBase              is (b1_0007=0x7e; b2_0407=0xd) ... & memBase & memBit {
+:BNXOR memBit^memBase               is (b1_0007=0x7e; b2_0407=0xd) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     $(CARRY) = $(CARRY) ^ (bitValue == 0);
@@ -1163,7 +1167,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BOR bit,base
-:BOR memBit, memBase                is (b1_0007=0x7e; b2_0407=0x6) ... & memBase & memBit {
+:BOR memBit^memBase                 is (b1_0007=0x7e; b2_0407=0x6) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     $(CARRY) = $(CARRY) || (bitValue != 0);
@@ -1194,7 +1198,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # (1) BSET:G bit,base
-:BSET^":G" memBit, memBase          is (b1_0007=0x7e; b2_0407=0x9) ... & memBase & memBit {
+:BSET^":G" memBit^memBase           is (b1_0007=0x7e; b2_0407=0x9) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     memBase = memBase | mask;
 }
@@ -1229,7 +1233,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # (1) BTST:G bit,base
-:BTST^":G" memBit, memBase          is (b1_0007=0x7e; b2_0407=0xb) ... & memBase & memBit {
+:BTST^":G" memBit^memBase           is (b1_0007=0x7e; b2_0407=0xb) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     z:1 = (bitValue == 0);
@@ -1272,7 +1276,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BTSTC bit,base
-:BTSTC memBit, memBase              is (b1_0007=0x7e; b2_0407=0x0) ... & memBase & memBit {
+:BTSTC memBit^memBase               is (b1_0007=0x7e; b2_0407=0x0) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     val:1 = memBase;
     bitValue:1 = (val & mask);
@@ -1308,7 +1312,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BTSTS bit,base
-:BTSTS memBit, memBase              is (b1_0007=0x7e; b2_0407=0x1) ... & memBase & memBit {
+:BTSTS memBit^memBase               is (b1_0007=0x7e; b2_0407=0x1) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     val:1 = memBase;
     bitValue:1 = (val & mask);
@@ -1338,7 +1342,7 @@ flagBit: "U"  is b2_0406=7 { export 7:2; }
 }
 
 # BXOR bit,base
-:BXOR memBit, memBase               is (b1_0007=0x7e; b2_0407=0xc) ... & memBase & memBit {
+:BXOR memBit^memBase                is (b1_0007=0x7e; b2_0407=0xc) ... & memBase & memBit {
     mask:1 = (1 << memBit);
     bitValue:1 = (memBase & mask);
     $(CARRY) = $(CARRY) ^ (bitValue != 0);
