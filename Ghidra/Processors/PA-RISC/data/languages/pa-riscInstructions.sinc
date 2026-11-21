@@ -1449,10 +1449,10 @@ define pcodeop diag;
 #################################################
 # Coprocessor and Special Function Instructions
 #################################################
-:SPOP0,SFU^nullifyForSpecial sop					is opfam=0x04 & specop=0 & SFU & nullifyForSpecial & im5 & im15 [ sop=(im15 << 5) | im5; ] unimpl
-:SPOP1,SFU^nullifyForSpecial sop					is opfam=0x04 & specop=1 & SFU & nullifyForSpecial & im5 & sopim10 [ sop=(sopim10 << 5) | im5; ] unimpl
-:SPOP2,SFU^nullifyForSpecial sop R2					is opfam=0x04 & specop=2 & SFU & nullifyForSpecial & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
-:SPOP3,SFU^nullifyForSpecial sop R1,R2				is opfam=0x04 & specop=3 & SFU & nullifyForSpecial & R1 & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
+:SPOP0,SFU,sop^nullifyForSpecial				is opfam=0x04 & specop=0 & SFU & nullifyForSpecial & im5 & im15 [ sop=(im15 << 5) | im5; ] unimpl
+:SPOP1,SFU,im15^nullifyForSpecial RT				is opfam=0x04 & specop=1 & SFU & nullifyForSpecial & im15 & RT unimpl
+:SPOP2,SFU,sop^nullifyForSpecial R2				is opfam=0x04 & specop=2 & SFU & nullifyForSpecial & R2 & im5 & sopim10 [ sop=(sopim10 << 5) | im5; ] unimpl
+:SPOP3,SFU,sop^nullifyForSpecial R1,R2				is opfam=0x04 & specop=3 & SFU & nullifyForSpecial & R1 & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
 :COPR,SFU,sop^nullifyForSpecial						is opfam=0x0C & SFU & nullifyForSpecial & im5 & sopim17 [ sop=(sopim17 << 5) | im5; ] unimpl
 
 :CLDW,SFU^indexedWordAccessCmplt^loadCC RX^SRRB,RT		is opfam=0x09 & bit9=0 & zero=0 & RX & SRRB & RT & SFU & indexedWordAccessCmplt & loadCC unimpl 

@@ -219,8 +219,8 @@ define token instr(32)
     one			= (12,12)
     subop1012	= (10,12)
     im15		= (11,25)
-    sopim10		= (11,20) signed
-    sopim5		= (11,15) signed
+    sopim10		= (11,20)
+    sopim5		= (11,15)
     fpta		= (11,15)
     fusedta		= (11,15)
     fpsf		= (11,12)
