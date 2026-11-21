@@ -387,7 +387,7 @@ attach names [ InvCSCondSym ] [
 
 # the floating point number types
 attach names [ fpsf fpdf fpfmt  ] [
-	",SGL" ",DBL" ",QUAD" _
+	",SGL" ",DBL" _ ",QUAD"
 ];
 
 attach names [ fpfmt1bit  ] [
@@ -396,7 +396,7 @@ attach names [ fpfmt1bit  ] [
 
 # the fixed point number types
 attach names [ fixedsf fixeddf ] [
-	",UW" ",UD" ",UQ" _
+	",SGL" ",DBL" _ ",QUAD"
 ];
 
 # the floating point number types for fused ops
