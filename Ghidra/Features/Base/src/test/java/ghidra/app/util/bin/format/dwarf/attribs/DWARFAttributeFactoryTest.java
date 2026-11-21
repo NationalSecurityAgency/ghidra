@@ -462,6 +462,23 @@ public class DWARFAttributeFactoryTest extends DWARFTestBase {
 	}
 
 	@Test
+	public void testRefSig8() throws IOException {
+		BinaryReader br = br(
+			0x80, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+			0xff);
+
+		DWARFNumericAttribute result =
+			(DWARFNumericAttribute) read(br, DW_AT_signature, DW_FORM_ref_sig8);
+		assertEquals(0x8001020304050607L, result.getUnsignedValue());
+		assertEquals("guard byte", (byte) 0xff, br.readNextByte());
+
+		// Even a signature equal to an existing DIE offset must not be treated as an offset.
+		long rootOffset = cu.getCompUnitDIEA().getOffset();
+		assertNotNull(dieContainer.getDIE(DW_FORM_ref_addr, rootOffset, cu));
+		assertNull(dieContainer.getDIE(DW_FORM_ref_sig8, rootOffset, cu));
+	}
+
+	@Test
 	public void testRefUData() throws IOException {
 		BinaryReader br = br(55, 0xff, 0x7e);
 

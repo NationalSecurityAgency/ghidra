@@ -214,8 +214,13 @@ public class DWARFImporter {
 		Set<SourceFileInfo> badSourceFileInfo = new HashSet<>();
 		List<SourceFileAddr> sourceInfo = new ArrayList<>();
 		for (DWARFCompilationUnit cu : compUnits) {
-			DWARFLine dLine = cu.getLine();
 			monitor.increment();
+			// Type units use DW_AT_stmt_list to resolve DW_AT_decl_file, but do not own
+			// executable line mappings. Replaying their line programs duplicates source rows.
+			if (cu.isTypeUnit()) {
+				continue;
+			}
+			DWARFLine dLine = cu.getLine();
 			for (SourceFileInfo sfi : dLine.getAllSourceFileInfos()) {
 				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
 					continue;
@@ -241,7 +246,7 @@ public class DWARFImporter {
 					continue;
 				}
 			}
-			sourceInfo.addAll(cu.getLine().getAllSourceFileAddrInfo(cu));
+			dLine.addSourceFileAddrInfo(cu, sourceInfo);
 		}
 
 		int sourceInfoSize = sourceInfo.size();
