@@ -1838,6 +1838,7 @@ JumpBasicOverride::JumpBasicOverride(JumpTable *jt)
   startingvalue = 0;
   hash = 0;
   istrivial = false;
+  isloadnorm = false;
 }
 
 /// \param adtable is the list of externally provided addresses, which will be deduped
@@ -2004,6 +2005,34 @@ Varnode *JumpBasicOverride::findLikelyNorm(void)
   return res;
 }
 
+/// \brief Try each LOADed Varnode on the common path as the normalized switch variable
+///
+/// Some computed jumps index their address table with a value that is itself read through a
+/// pointer, such as an opcode fetched by a bytecode interpreter (\e target = T[*ip]).
+/// findLikelyNorm() does not propose such a Varnode.  Here every Varnode common to all paths that
+/// is the output of a LOAD (other than the BRANCHIND input itself) is tried with trialNorm(),
+/// nearest the BRANCHIND first, and the first one producing every manual address is used.
+/// \param fd is the function containing the switch
+/// \return \b true if a normalized switch variable was found
+bool JumpBasicOverride::trialLoadNorm(Funcdata *fd)
+
+{
+  int4 limit = pathMeld.numCommonVarnode();
+  if (limit > 32) limit = 32;		// Bound the number of emulation trials
+  for(int4 i=1;i<limit;++i) {
+    Varnode *vn = pathMeld.getVarnode(i);
+    if (!vn->isWritten() || vn->getDef()->code() != CPUI_LOAD) continue;
+    if (vn->getSize() > 2) continue;	// Too wide for an enumerable index
+    if (trialNorm(fd,vn,10) >= 0) {
+      varnodeIndex = i;
+      normalvn = vn;
+      isloadnorm = true;
+      return true;
+    }
+  }
+  return false;
+}
+
 /// \brief Clear varnodes and ops that are specific to one instance of a function
 void JumpBasicOverride::clearCopySpecific(void)
 
@@ -2019,6 +2048,14 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel
 {
   clearCopySpecific();
   findDeterminingVarnodes(indop,0);
+  if (isloadnorm) {		// A LOADed switch variable was chosen on an earlier copy of the function
+    values.clear();		// Re-derive it on this copy:  trialNorm() would otherwise accept the
+    addrtable.clear();		// earlier values for whichever Varnode it is handed
+    isloadnorm = false;
+    if (!trialLoadNorm(fd))
+      setupTrivial();
+    return true;
+  }
   if (!istrivial) {		// If we haven't previously decided to use trivial model
     Varnode *trialvn = (Varnode *)0;
     if (hash != 0) {
@@ -2037,6 +2074,8 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel
 	return true;
       }
     }
+    if (values.empty() && trialLoadNorm(fd))
+      return true;
   }
   setupTrivial();
   return true;
@@ -2079,6 +2118,7 @@ JumpModel *JumpBasicOverride::clone(JumpTable *jt) const
   res->startingvalue = startingvalue;
   res->normaddress = normaddress;
   res->hash = hash;
+  res->isloadnorm = isloadnorm;	// The Varnode itself is re-derived by recoverModel
   return res;
 }
 
@@ -2092,6 +2132,7 @@ void JumpBasicOverride::clear(void)
   values.clear();
   addrtable.clear();
   istrivial = false;
+  isloadnorm = false;
 }
 
 void JumpBasicOverride::encode(Encoder &encoder) const
