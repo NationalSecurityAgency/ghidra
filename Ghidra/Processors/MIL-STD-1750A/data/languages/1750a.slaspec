@@ -1,0 +1,1970 @@
+# MIL-STD-1750A, sixteen-bit computer instruction set architecture
+# Source: MIL-STD-1750A (USAF), 2 July 1980, with Notice 1, 21 May 1982.
+# Memory is word addressed: one address unit is one 16-bit word.
+# Bit 0 is the most significant bit, as in the standard.
+# Floating point uses the 1750A formats (24-bit mantissa, 8-bit exponent; extended adds 16 mantissa bits)
+# and is modeled with pcodeops.
+
+define endian=big;
+define alignment=2;
+
+define space ram type=ram_space size=2 wordsize=2 default;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=2 [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+define register offset=0x40 size=2 [ IC SW MK PI FT ];
+# Condition status (CS), SW bits 0-3
+define register offset=0x80 size=1 [ CS_C CS_P CS_Z CS_N ];
+
+define token instr(16)
+	op8   = (8,15)
+	op6   = (10,15)
+	br    = (8,9)
+	ra    = (4,7)
+	ra1   = (4,7)
+	ra2   = (4,7)
+	n4    = (4,7)
+	opx   = (4,7)
+	cc    = (4,7)
+	ccv   = (4,7)
+	cc_c  = (7,7)
+	cc_p  = (6,6)
+	cc_z  = (5,5)
+	cc_n  = (4,4)
+	rb    = (0,3)
+	rb1   = (0,3)
+	rb2   = (0,3)
+	rx    = (0,3)
+	nlo   = (0,3)
+	dsp   = (0,7)
+	sdsp  = (0,7) signed
+	ex8   = (0,7)
+;
+
+define token ext(16)
+	addr16 = (0,15)
+	addrv  = (0,15)
+	xcmd   = (0,15)
+	imm16  = (0,15)
+	cmdin  = (15,15)
+	xhi    = (8,15)
+	xpx    = (4,7)
+	xpy    = (0,3)
+;
+
+attach variables [ ra rb ] [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [ ra1 rb1 ] [ R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R0 ];
+attach variables [ ra2 rb2 ] [ R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R0 R1 ];
+attach variables [ rx ] [ _ R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [ br ] [ R12 R13 R14 R15 ];
+
+define pcodeop fadd;
+define pcodeop fsub;
+define pcodeop fmul;
+define pcodeop fdiv;
+define pcodeop fcmp;
+define pcodeop fabs;
+define pcodeop fneg;
+define pcodeop fix;
+define pcodeop flt;
+define pcodeop efadd;
+define pcodeop efsub;
+define pcodeop efmul;
+define pcodeop efdiv;
+define pcodeop efcmp;
+define pcodeop efix;
+define pcodeop eflt;
+define pcodeop xio_in;
+define pcodeop xio_out;
+define pcodeop xio;
+define pcodeop enable_interrupts;
+define pcodeop disable_interrupts;
+define pcodeop vio;
+define pcodeop bex;
+define pcodeop breakpoint;
+define pcodeop bif;
+
+macro nzp(v) {
+	CS_Z = v == 0;
+	CS_N = v s< 0;
+	CS_P = v s> 0;
+}
+
+# Fixed point overflow sets pending interrupt 4 (PI bit 4, 0x0800)
+macro ovf(c) {
+	PI = PI | (zext(c) << 11);
+}
+
+macro cs(v) {
+	CS_C = 0;
+	nzp(v);
+}
+
+macro cmpcs(a, b) {
+	CS_C = 0;
+	CS_Z = a == b;
+	CS_N = a s< b;
+	CS_P = a s> b;
+}
+
+macro fcs(r) {
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+macro swtocs() {
+	CS_C = (SW & 0x8000) != 0;
+	CS_P = (SW & 0x4000) != 0;
+	CS_Z = (SW & 0x2000) != 0;
+	CS_N = (SW & 0x1000) != 0;
+}
+
+# Memory direct (D) and memory direct-indexed (DX): derived address
+DA: addr16      is rx=0 ; addr16  { export *[const]:2 addr16; }
+DA: addr16,rx   is rx ; addr16    { local a:2 = addr16 + rx; export a; }
+
+# Memory indirect (I) and memory indirect with pre-indexing (IX): derived address
+IA: "@"^addr16    is rx=0 ; addr16  { local t:2 = addr16; local a:2 = *[ram]:2 t; export a; }
+IA: "@"^addr16,rx is rx ; addr16    { local t:2 = addr16 + rx; local a:2 = *[ram]:2 t; export a; }
+
+# Immediate long, indexable (IM/IMX)
+IMX: imm16    is rx=0 ; imm16  { export *[const]:2 imm16; }
+IMX: imm16,rx is rx ; imm16    { local v:2 = imm16 + rx; export v; }
+
+# Jump targets
+JD: addr16    is rx=0 ; addr16  { export *[ram]:2 addr16; }
+JX: addr16,rx is rx ; addr16    { local a:2 = addr16 + rx; export a; }
+
+# Base relative (B) and base relative-indexed (BX)
+BA: br,dsp   is br & dsp  { local a:2 = br + dsp; export a; }
+BXA: br      is br & rx=0 { export br; }
+BXA: br,rx   is br & rx   { local a:2 = br + rx; export a; }
+
+# N = field + 1: in bits 8-11 for shifts and INCM/DECM, in bits 12-15 for immediate short (ISP, ISN)
+NP: val is n4 [ val = n4 + 1; ]      { export *[const]:2 val; }
+ISP: val is nlo [ val = nlo + 1; ]   { export *[const]:2 val; }
+ISN: val is nlo [ val = -(nlo + 1); ] { export *[const]:2 val; }
+
+# Bit number N (bit 0 is the MSB)
+BIT: n4 is n4 { local m:2 = 0x8000 >> n4; export m; }
+
+# Address of the next instruction, in words (the p-code inst_next is a byte offset)
+NEXT: nxt is epsilon [ nxt = inst_next; ] { export *[const]:2 nxt; }
+
+# Instruction counter relative (ICR)
+REL: dest is sdsp [ dest = inst_start + sdsp; ] { export *[ram]:2 dest; }
+
+# Jump condition: C ANDed bit by bit with CS, then ORed; C = 7 or F is unconditional
+COND: is ccv=7  { export 1:1; }
+COND: is ccv=15 { export 1:1; }
+COND: is cc_c & cc_p & cc_z & cc_n {
+	local r:1 = (cc_c & CS_C) | (cc_p & CS_P) | (cc_z & CS_Z) | (cc_n & CS_N);
+	export r;
+}
+
+:LR ra,rb is op8=0x81 & ra & ra1 & rb {
+	ra = rb;
+	cs(ra);
+}
+
+:L ra,DA is (op8=0x80 & ra & ra1) ... & DA {
+	ra = *[ram]:2 DA;
+	cs(ra);
+}
+
+:LI ra,IA is (op8=0x84 & ra & ra1) ... & IA {
+	ra = *[ram]:2 IA;
+	cs(ra);
+}
+
+:LISP ra,ISP is op8=0x82 & ra & ra1 & ISP {
+	ra = ISP;
+	cs(ra);
+}
+
+:LB BA is op6=0x00 & BA {
+	R2 = *[ram]:2 BA;
+	cs(R2);
+}
+
+:LBX BXA is op6=0x10 & opx=0x0 & BXA {
+	R2 = *[ram]:2 BXA;
+	cs(R2);
+}
+
+:AR ra,rb is op8=0xA1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:A ra,DA is (op8=0xA0 & ra & ra1) ... & DA {
+	local o:2 = *[ram]:2 DA;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x1 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AISP ra,ISP is op8=0xA2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AB BA is op6=0x04 & BA {
+	local o:2 = *[ram]:2 BA;
+	ovf(scarry(R2, o));
+	CS_C = carry(R2, o);
+	R2 = R2 + o;
+	nzp(R2);
+}
+
+:ABX BXA is op6=0x10 & opx=0x4 & BXA {
+	local o:2 = *[ram]:2 BXA;
+	ovf(scarry(R2, o));
+	CS_C = carry(R2, o);
+	R2 = R2 + o;
+	nzp(R2);
+}
+
+:SR ra,rb is op8=0xB1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:S ra,DA is (op8=0xB0 & ra & ra1) ... & DA {
+	local o:2 = *[ram]:2 DA;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x2 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SISP ra,ISP is op8=0xB2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SBB BA is op6=0x05 & BA {
+	local o:2 = *[ram]:2 BA;
+	ovf(sborrow(R2, o));
+	CS_C = R2 >= o;
+	R2 = R2 - o;
+	nzp(R2);
+}
+
+:SBBX BXA is op6=0x10 & opx=0x5 & BXA {
+	local o:2 = *[ram]:2 BXA;
+	ovf(sborrow(R2, o));
+	CS_C = R2 >= o;
+	R2 = R2 - o;
+	nzp(R2);
+}
+
+:MSR ra,rb is op8=0xC1 & ra & ra1 & rb {
+	local p:4 = sext(ra) * sext(rb);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MS ra,DA is (op8=0xC0 & ra & ra1) ... & DA {
+	local p:4 = sext(ra) * sext(*[ram]:2 DA);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MSIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x4 ; imm16 {
+	local im:2 = imm16;
+	local p:4 = sext(ra) * sext(im);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MISP ra,ISP is op8=0xC2 & ra & ra1 & ISP {
+	local p:4 = sext(ra) * sext(ISP);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MISN ra,ISP is op8=0xC3 & ra & ra1 & ISP & ISN {
+	local p:4 = sext(ra) * sext(ISN);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MR ra,rb is op8=0xC5 & ra & ra1 & rb {
+	local p:4 = sext(ra) * sext(rb);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:M ra,DA is (op8=0xC4 & ra & ra1) ... & DA {
+	local p:4 = sext(ra) * sext(*[ram]:2 DA);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:MIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x3 ; imm16 {
+	local im:2 = imm16;
+	local p:4 = sext(ra) * sext(im);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:MB BA is op6=0x06 & BA {
+	local p:4 = sext(R2) * sext(*[ram]:2 BA);
+	R2 = p(2);
+	R3 = p:2;
+	cs(p);
+}
+
+:MBX BXA is op6=0x10 & opx=0x6 & BXA {
+	local p:4 = sext(R2) * sext(*[ram]:2 BXA);
+	R2 = p(2);
+	R3 = p:2;
+	cs(p);
+}
+
+:DVR ra,rb is op8=0xD1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DV ra,DA is (op8=0xD0 & ra & ra1) ... & DA {
+	local o:2 = *[ram]:2 DA;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DVIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x6 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DISP ra,ISP is op8=0xD2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DISN ra,ISP is op8=0xD3 & ra & ra1 & ISP & ISN {
+	local o:2 = ISN;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DR ra,rb is op8=0xD5 & ra & ra1 & rb {
+	local o:4 = sext(rb);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:D ra,DA is (op8=0xD4 & ra & ra1) ... & DA {
+	local o:4 = sext(*[ram]:2 DA);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:DIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x5 ; imm16 {
+	local im:2 = imm16;
+	local o:4 = sext(im);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:DB BA is op6=0x07 & BA {
+	local o:4 = sext(*[ram]:2 BA);
+	local v:4 = ((zext(R2) << 16) | zext(R3));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	R2 = q:2;
+	R3 = r:2;
+	cs(R2);
+}
+
+:DBX BXA is op6=0x10 & opx=0x7 & BXA {
+	local o:4 = sext(*[ram]:2 BXA);
+	local v:4 = ((zext(R2) << 16) | zext(R3));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	R2 = q:2;
+	R3 = r:2;
+	cs(R2);
+}
+
+:ORR ra,rb is op8=0xE1 & ra & ra1 & rb {
+	ra = ra | rb;
+	cs(ra);
+}
+
+:OR ra,DA is (op8=0xE0 & ra & ra1) ... & DA {
+	ra = ra | *[ram]:2 DA;
+	cs(ra);
+}
+
+:ORIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x8 ; imm16 {
+	local im:2 = imm16;
+	ra = ra | im;
+	cs(ra);
+}
+
+:ORB BA is op6=0x0C & BA {
+	R2 = R2 | *[ram]:2 BA;
+	cs(R2);
+}
+
+:ORBX BXA is op6=0x10 & opx=0xF & BXA {
+	R2 = R2 | *[ram]:2 BXA;
+	cs(R2);
+}
+
+:ANDR ra,rb is op8=0xE3 & ra & ra1 & rb {
+	ra = ra & rb;
+	cs(ra);
+}
+
+:AND ra,DA is (op8=0xE2 & ra & ra1) ... & DA {
+	ra = ra & *[ram]:2 DA;
+	cs(ra);
+}
+
+:ANDM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x7 ; imm16 {
+	local im:2 = imm16;
+	ra = ra & im;
+	cs(ra);
+}
+
+:ANDB BA is op6=0x0D & BA {
+	R2 = R2 & *[ram]:2 BA;
+	cs(R2);
+}
+
+:ANDX BXA is op6=0x10 & opx=0xE & BXA {
+	R2 = R2 & *[ram]:2 BXA;
+	cs(R2);
+}
+
+:XORR ra,rb is op8=0xE5 & ra & ra1 & rb {
+	ra = ra ^ rb;
+	cs(ra);
+}
+
+:XOR ra,DA is (op8=0xE4 & ra & ra1) ... & DA {
+	ra = ra ^ *[ram]:2 DA;
+	cs(ra);
+}
+
+:XORM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x9 ; imm16 {
+	local im:2 = imm16;
+	ra = ra ^ im;
+	cs(ra);
+}
+
+:NR ra,rb is op8=0xE7 & ra & ra1 & rb {
+	ra = ~(ra & rb);
+	cs(ra);
+}
+
+:N ra,DA is (op8=0xE6 & ra & ra1) ... & DA {
+	ra = ~(ra & *[ram]:2 DA);
+	cs(ra);
+}
+
+:NIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0xB ; imm16 {
+	local im:2 = imm16;
+	ra = ~(ra & im);
+	cs(ra);
+}
+
+:CR ra,rb is op8=0xF1 & ra & ra1 & rb {
+	cmpcs(ra, rb);
+}
+
+:C ra,DA is (op8=0xF0 & ra & ra1) ... & DA {
+	cmpcs(ra, *[ram]:2 DA);
+}
+
+:CIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0xA ; imm16 {
+	local im:2 = imm16;
+	cmpcs(ra, im);
+}
+
+:CISP ra,ISP is op8=0xF2 & ra & ra1 & ISP {
+	cmpcs(ra, ISP);
+}
+
+:CISN ra,ISP is op8=0xF3 & ra & ra1 & ISP & ISN {
+	cmpcs(ra, ISN);
+}
+
+:CB BA is op6=0x0E & BA {
+	cmpcs(R2, *[ram]:2 BA);
+}
+
+:CBX BXA is op6=0x10 & opx=0xC & BXA {
+	cmpcs(R2, *[ram]:2 BXA);
+}
+
+:LISN ra,ISP is op8=0x83 & ra & ISP & ISN {
+	ra = ISN;
+	cs(ra);
+}
+:LIM ra,IMX is (op8=0x85 & ra) ... & IMX {
+	ra = IMX;
+	cs(ra);
+}
+
+:DLR ra,rb is op8=0x87 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DL ra,DA is (op8=0x86 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DLI ra,IA is (op8=0x88 & ra & ra1) ... & IA {
+	local o:4 = *[ram]:4 IA;
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DLB BA is op6=0x01 & BA {
+	local o:4 = *[ram]:4 BA;
+	R0 = o(2);
+	R1 = o:2;
+	cs(o);
+}
+
+:DLBX BXA is op6=0x10 & opx=0x1 & BXA {
+	local o:4 = *[ram]:4 BXA;
+	R0 = o(2);
+	R1 = o:2;
+	cs(o);
+}
+
+:DAR ra,rb is op8=0xA7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(scarry(v, o));
+	CS_C = carry(v, o);
+	local r:4 = v + o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DA ra,DA is (op8=0xA6 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(scarry(v, o));
+	CS_C = carry(v, o);
+	local r:4 = v + o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DSR ra,rb is op8=0xB7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(sborrow(v, o));
+	CS_C = v >= o;
+	local r:4 = v - o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DS ra,DA is (op8=0xB6 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(sborrow(v, o));
+	CS_C = v >= o;
+	local r:4 = v - o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DMR ra,rb is op8=0xC7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local p:8 = sext(v) * sext(o);
+	ovf(p != sext(p:4));
+	local r:4 = p:4;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DM ra,DA is (op8=0xC6 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local p:8 = sext(v) * sext(o);
+	ovf(p != sext(p:4));
+	local r:4 = p:4;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DDR ra,rb is op8=0xD7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf((o == 0) || ((v == 0x80000000) && (o == 0xffffffff)));
+	local r:4 = v s/ o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DD ra,DA is (op8=0xD6 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf((o == 0) || ((v == 0x80000000) && (o == 0xffffffff)));
+	local r:4 = v s/ o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DCR ra,rb is op8=0xF7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	cmpcs(v, o);
+}
+
+:DC ra,DA is (op8=0xF6 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	cmpcs(v, o);
+}
+
+:FAR ra,rb is op8=0xA9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fadd(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FA ra,DA is (op8=0xA8 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fadd(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FAB BA is op6=0x08 & BA {
+	local o:4 = *[ram]:4 BA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fadd(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FABX BXA is op6=0x10 & opx=0x8 & BXA {
+	local o:4 = *[ram]:4 BXA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fadd(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FSR ra,rb is op8=0xB9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fsub(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FS ra,DA is (op8=0xB8 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fsub(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FSB BA is op6=0x09 & BA {
+	local o:4 = *[ram]:4 BA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fsub(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FSBX BXA is op6=0x10 & opx=0x9 & BXA {
+	local o:4 = *[ram]:4 BXA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fsub(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FMR ra,rb is op8=0xC9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fmul(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FM ra,DA is (op8=0xC8 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fmul(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FMB BA is op6=0x0A & BA {
+	local o:4 = *[ram]:4 BA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fmul(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FMBX BXA is op6=0x10 & opx=0xA & BXA {
+	local o:4 = *[ram]:4 BXA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fmul(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FDR ra,rb is op8=0xD9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fdiv(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FD ra,DA is (op8=0xD8 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fdiv(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FDB BA is op6=0x0B & BA {
+	local o:4 = *[ram]:4 BA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fdiv(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FDBX BXA is op6=0x10 & opx=0xB & BXA {
+	local o:4 = *[ram]:4 BXA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fdiv(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FCR ra,rb is op8=0xF9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FC ra,DA is (op8=0xF8 & ra & ra1) ... & DA {
+	local o:4 = *[ram]:4 DA;
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FCB BA is op6=0x0F & BA {
+	local o:4 = *[ram]:4 BA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FCBX BXA is op6=0x10 & opx=0xD & BXA {
+	local o:4 = *[ram]:4 BXA;
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:EFAR ra,rb is op8=0xAB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efadd(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFA ra,DA is (op8=0xAA & ra & ra1 & ra2) ... & DA {
+	local o:6 = *[ram]:6 DA;
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efadd(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFSR ra,rb is op8=0xBB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efsub(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFS ra,DA is (op8=0xBA & ra & ra1 & ra2) ... & DA {
+	local o:6 = *[ram]:6 DA;
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efsub(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFMR ra,rb is op8=0xCB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efmul(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFM ra,DA is (op8=0xCA & ra & ra1 & ra2) ... & DA {
+	local o:6 = *[ram]:6 DA;
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efmul(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFDR ra,rb is op8=0xDB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efdiv(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFD ra,DA is (op8=0xDA & ra & ra1 & ra2) ... & DA {
+	local o:6 = *[ram]:6 DA;
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efdiv(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFCR ra,rb is op8=0xFB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:1 = efcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:EFC ra,DA is (op8=0xFA & ra & ra1 & ra2) ... & DA {
+	local o:6 = *[ram]:6 DA;
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:1 = efcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:ST ra,DA is (op8=0x90 & ra & ra1) ... & DA {
+	*[ram]:2 DA = ra;
+}
+:STI ra,IA is (op8=0x94 & ra & ra1) ... & IA {
+	*[ram]:2 IA = ra;
+}
+:STB BA is op6=0x02 & BA {
+	*[ram]:2 BA = R2;
+}
+:STBX BXA is op6=0x10 & opx=0x2 & BXA {
+	*[ram]:2 BXA = R2;
+}
+
+:DST ra,DA is (op8=0x96 & ra & ra1) ... & DA {
+	*[ram]:4 DA = ((zext(ra) << 16) | zext(ra1));
+}
+:DSTI ra,IA is (op8=0x98 & ra & ra1) ... & IA {
+	*[ram]:4 IA = ((zext(ra) << 16) | zext(ra1));
+}
+:DSTB BA is op6=0x03 & BA {
+	*[ram]:4 BA = ((zext(R0) << 16) | zext(R1));
+}
+:DSTX BXA is op6=0x10 & opx=0x3 & BXA {
+	*[ram]:4 BXA = ((zext(R0) << 16) | zext(R1));
+}
+
+
+# Extended precision floating point load and store
+:EFL ra,DA is (op8=0x8A & ra & ra1 & ra2) ... & DA {
+	local v:6 = *[ram]:6 DA;
+	ra = v(4);
+	ra1 = v(2);
+	ra2 = v:2;
+	fcs(v);
+}
+:EFST ra,DA is (op8=0x9A & ra & ra1 & ra2) ... & DA {
+	*[ram]:6 DA = (zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2);
+}
+
+# Store a non-negative constant
+:STZ DA is (op8=0x91 & n4=0) ... & DA      { *[ram]:2 DA = 0:2; }
+:STC n4,DA is (op8=0x91 & n4) ... & DA     { local c:2 = n4; *[ram]:2 DA = c; }
+:STZI IA is (op8=0x92 & n4=0) ... & IA     { *[ram]:2 IA = 0:2; }
+:STCI n4,IA is (op8=0x92 & n4) ... & IA    { local c:2 = n4; *[ram]:2 IA = c; }
+
+# Store register through mask, (RA+1) = mask
+:SRM ra,DA is (op8=0x97 & ra & ra1) ... & DA {
+	local a:2 = DA;
+	*[ram]:2 a = (*[ram]:2 a & ~ra1) | (ra & ra1);
+}
+
+# Byte loads and stores; bits 0-7 are the upper byte
+:LUB ra,DA is (op8=0x8B & ra) ... & DA   { ra = (ra & 0xff00) | (*[ram]:2 DA >> 8); cs(ra); }
+:LUBI ra,IA is (op8=0x8D & ra) ... & IA  { ra = (ra & 0xff00) | (*[ram]:2 IA >> 8); cs(ra); }
+:LLB ra,DA is (op8=0x8C & ra) ... & DA   { ra = (ra & 0xff00) | (*[ram]:2 DA & 0xff); cs(ra); }
+:LLBI ra,IA is (op8=0x8E & ra) ... & IA  { ra = (ra & 0xff00) | (*[ram]:2 IA & 0xff); cs(ra); }
+:STUB ra,DA is (op8=0x9B & ra) ... & DA  { local a:2 = DA; *[ram]:2 a = (*[ram]:2 a & 0xff) | (ra << 8); }
+:SUBI ra,IA is (op8=0x9D & ra) ... & IA  { local a:2 = IA; *[ram]:2 a = (*[ram]:2 a & 0xff) | (ra << 8); }
+:STLB ra,DA is (op8=0x9C & ra) ... & DA  { local a:2 = DA; *[ram]:2 a = (*[ram]:2 a & 0xff00) | (ra & 0xff); }
+:SLBI ra,IA is (op8=0x9E & ra) ... & IA  { local a:2 = IA; *[ram]:2 a = (*[ram]:2 a & 0xff00) | (ra & 0xff); }
+
+# Move multiple words, memory to memory: RA destination, RB source, RA+1 count
+:MOV ra,rb is op8=0x93 & ra & ra1 & rb {
+<loop>
+	if (ra1 == 0) goto <done>;
+	*[ram]:2 ra = *[ram]:2 rb;
+	ra = ra + 1;
+	rb = rb + 1;
+	ra1 = ra1 - 1;
+	goto <loop>;
+<done>
+}
+
+# Increment and decrement memory by a positive integer
+:INCM NP,DA is (op8=0xA3 & NP) ... & DA {
+	local a:2 = DA;
+	local v:2 = *[ram]:2 a;
+	ovf(scarry(v, NP));
+	CS_C = carry(v, NP);
+	v = v + NP;
+	*[ram]:2 a = v;
+	nzp(v);
+}
+:DECM NP,DA is (op8=0xB3 & NP) ... & DA {
+	local a:2 = DA;
+	local v:2 = *[ram]:2 a;
+	ovf(sborrow(v, NP));
+	CS_C = v >= NP;
+	v = v - NP;
+	*[ram]:2 a = v;
+	nzp(v);
+}
+
+# Absolute value and negate
+:ABS ra,rb is op8=0xA4 & ra & rb {
+	local o:2 = rb;
+	ovf(o == 0x8000);
+	local s:2 = zext(o s< 0);
+	ra = (o ^ -s) + s;
+	cs(ra);
+}
+:NEG ra,rb is op8=0xB4 & ra & rb   { ovf(rb == 0x8000); ra = -rb; cs(ra); }
+:DABS ra,rb is op8=0xA5 & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ovf(o == 0x80000000);
+	local s:4 = zext(o s< 0);
+	local r:4 = (o ^ -s) + s;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:DNEG ra,rb is op8=0xB5 & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ovf(o == 0x80000000);
+	local r:4 = -o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:FABS ra,rb is op8=0xAC & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:4 = fabs(o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+:FNEG ra,rb is op8=0xBC & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:4 = fneg(o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+# Conversions
+:FIX ra,rb is op8=0xE8 & ra & rb & rb1 {
+	local e:1 = rb1:1;
+	ovf(e s> 0x0f);
+	if (e s> 0x0f) goto inst_next;
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ra = fix(o);
+	cs(ra);
+}
+:FLT ra,rb is op8=0xE9 & ra & ra1 & rb         { local r:4 = flt(rb); ra = r(2); ra1 = r:2; fcs(r); }
+:EFIX ra,rb is op8=0xEA & ra & ra1 & rb & rb1 & rb2 {
+	local e:1 = rb1:1;
+	ovf(e s> 0x1f);
+	if (e s> 0x1f) goto inst_next;
+	local o:6 = (zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2);
+	local r:4 = efix(o);
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:EFLT ra,rb is op8=0xEB & ra & ra1 & ra2 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:6 = eflt(o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+# Exchange bytes, exchange words
+:XBR ra is op8=0xEC & ra & rb=0     { ra = (ra << 8) | (ra >> 8); cs(ra); }
+:XWR ra,rb is op8=0xED & ra & rb    { local t:2 = ra; ra = rb; rb = t; cs(ra); }
+
+# Compare between limits: DO1 = [DA], DO2 = [DA+1]
+:CBL ra,DA is (op8=0xF4 & ra) ... & DA {
+	local a:2 = DA;
+	local lo:2 = *[ram]:2 a;
+	local hi:2 = *[ram]:2 (a + 1);
+	CS_C = lo s> hi;
+	CS_N = !CS_C && (ra s< lo);
+	CS_P = !CS_C && (ra s> hi);
+	CS_Z = !CS_C && !CS_N && !CS_P;
+}
+
+# Shifts, count N in the instruction (field holds N-1)
+:SLL rb,NP is op8=0x60 & rb & NP    { rb = rb << NP; cs(rb); }
+:SRL rb,NP is op8=0x61 & rb & NP    { rb = rb >> NP; cs(rb); }
+:SRA rb,NP is op8=0x62 & rb & NP    { rb = rb s>> NP; cs(rb); }
+:SLC rb,NP is op8=0x63 & rb & NP    { rb = (rb << NP) | (rb >> (16 - NP)); cs(rb); }
+:DSLL rb,NP is op8=0x65 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) << NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSRL rb,NP is op8=0x66 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) >> NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSRA rb,NP is op8=0x67 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) s>> NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSLC rb,NP is op8=0x68 & rb & rb1 & NP {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local v:4 = (o << NP) | (o >> (32 - NP));
+	rb = v(2); rb1 = v:2; cs(v);
+}
+
+# Shifts, count in register RB: positive shifts left, negative shifts right.
+# A count outside -16..16 (-32..32 for double shifts) is a fixed point overflow and no shift.
+:SLR ra,rb is op8=0x6A & ra & rb {
+	local n:2 = rb;
+	ovf((n s> 16) || (n s< -16));
+	if ((n s> 16) || (n s< -16)) goto inst_next;
+	ra = (ra << n) * zext(n s>= 0) + (ra >> -n) * zext(n s< 0);
+	cs(ra);
+}
+:SAR ra,rb is op8=0x6B & ra & rb {
+	local n:2 = rb;
+	ovf((n s> 16) || (n s< -16));
+	if ((n s> 16) || (n s< -16)) goto inst_next;
+	ovf((n s> 0) && (((ra << n) s>> n) != ra));
+	ra = (ra << n) * zext(n s>= 0) + (ra s>> -n) * zext(n s< 0);
+	cs(ra);
+}
+:SCR ra,rb is op8=0x6C & ra & rb {
+	ovf((rb s> 16) || (rb s< -16));
+	if ((rb s> 16) || (rb s< -16)) goto inst_next;
+	local n:2 = rb & 0xf;
+	ra = (ra << n) | (ra >> (16 - n));
+	cs(ra);
+}
+:DSLR ra,rb is op8=0x6D & ra & ra1 & rb {
+	local n:4 = sext(rb);
+	ovf((n s> 32) || (n s< -32));
+	if ((n s> 32) || (n s< -32)) goto inst_next;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	local v:4 = (o << n) * zext(n s>= 0) + (o >> -n) * zext(n s< 0);
+	ra = v(2); ra1 = v:2; cs(v);
+}
+:DSAR ra,rb is op8=0x6E & ra & ra1 & rb {
+	local n:4 = sext(rb);
+	ovf((n s> 32) || (n s< -32));
+	if ((n s> 32) || (n s< -32)) goto inst_next;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	ovf((n s> 0) && (((o << n) s>> n) != o));
+	local v:4 = (o << n) * zext(n s>= 0) + (o s>> -n) * zext(n s< 0);
+	ra = v(2); ra1 = v:2; cs(v);
+}
+:DSCR ra,rb is op8=0x6F & ra & ra1 & rb {
+	ovf((rb s> 32) || (rb s< -32));
+	if ((rb s> 32) || (rb s< -32)) goto inst_next;
+	local n:4 = sext(rb) & 0x1f;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	local v:4 = (o << n) | (o >> (32 - n));
+	ra = v(2); ra1 = v:2; cs(v);
+}
+
+# Bit operations; bit N counts from the MSB
+:SBR n4,rb is op8=0x51 & n4 & rb & BIT      { rb = rb | BIT; }
+:SB n4,DA is (op8=0x50 & n4 & BIT) ... & DA   { local a:2 = DA; *[ram]:2 a = *[ram]:2 a | BIT; }
+:SBI n4,IA is (op8=0x52 & n4 & BIT) ... & IA  { local a:2 = IA; *[ram]:2 a = *[ram]:2 a | BIT; }
+:RBR n4,rb is op8=0x54 & n4 & rb & BIT      { rb = rb & ~BIT; }
+:RB n4,DA is (op8=0x53 & n4 & BIT) ... & DA   { local a:2 = DA; *[ram]:2 a = *[ram]:2 a & ~BIT; }
+:RBI n4,IA is (op8=0x55 & n4 & BIT) ... & IA  { local a:2 = IA; *[ram]:2 a = *[ram]:2 a & ~BIT; }
+
+macro testbit(v, m) {
+	local b:1 = (v & m) != 0;
+	CS_C = 0;
+	CS_Z = !b;
+	CS_N = b && (m == 0x8000);
+	CS_P = b && (m != 0x8000);
+}
+
+:TBR n4,rb is op8=0x57 & n4 & rb & BIT      { testbit(rb, BIT); }
+:TB n4,DA is (op8=0x56 & n4 & BIT) ... & DA   { testbit(*[ram]:2 DA, BIT); }
+:TBI n4,IA is (op8=0x58 & n4 & BIT) ... & IA  { testbit(*[ram]:2 IA, BIT); }
+:TSB n4,DA is (op8=0x59 & n4 & BIT) ... & DA  {
+	local a:2 = DA;
+	local v:2 = *[ram]:2 a;
+	testbit(v, BIT);
+	*[ram]:2 a = v | BIT;
+}
+:SVBR ra,rb is op8=0x5A & ra & rb    { rb = rb | (0x8000 >> (ra & 0xf)); }
+:RVBR ra,rb is op8=0x5C & ra & rb    { rb = rb & ~(0x8000 >> (ra & 0xf)); }
+:TVBR ra,rb is op8=0x5E & ra & rb    { local m:2 = 0x8000 >> (ra & 0xf); testbit(rb, m); }
+
+# Branches, instruction counter relative
+:BR REL  is op8=0x74 & REL  { goto REL; }
+:BEZ REL is op8=0x75 & REL  { if (CS_Z) goto REL; }
+:BLT REL is op8=0x76 & REL  { if (CS_N) goto REL; }
+:BLE REL is op8=0x78 & REL  { if (CS_N || CS_Z) goto REL; }
+:BGT REL is op8=0x79 & REL  { if (CS_P) goto REL; }
+:BNZ REL is op8=0x7A & REL  { if (!CS_Z) goto REL; }
+:BGE REL is op8=0x7B & REL  { if (CS_P || CS_Z) goto REL; }
+
+# Jump on condition
+:JC cc,JD is (op8=0x70 & cc & COND) ... & JD   { if (COND) goto JD; }
+:JC cc,JX is (op8=0x70 & cc & COND) ... & JX   { local t:2 = JX; if (!COND) goto inst_next; goto [t]; }
+# Unconditional indexed jump from location zero: the return from JS (5.25)
+:JC cc,addr16,rx is (op8=0x70 & cc & ccv=7 & rx) ; addr16 & addrv=0  { return [rx]; }
+:JC cc,addr16,rx is (op8=0x70 & cc & ccv=15 & rx) ; addr16 & addrv=0 { return [rx]; }
+:JCI cc,IA is (op8=0x71 & cc & COND) ... & IA  { local t:2 = IA; if (!COND) goto inst_next; goto [t]; }
+
+# Jump to subroutine, return address in RA
+:JS ra,JD is (op8=0x72 & ra & NEXT) ... & JD   { ra = NEXT; call JD; }
+:JS ra,JX is (op8=0x72 & ra & NEXT) ... & JX   { local t:2 = JX; ra = NEXT; call [t]; }
+
+# Subtract one and jump
+:SOJ ra,JD is (op8=0x73 & ra) ... & JD  { ra = ra - 1; cs(ra); if (ra != 0) goto JD; }
+:SOJ ra,JX is (op8=0x73 & ra) ... & JX  { local t:2 = JX; ra = ra - 1; cs(ra); if (ra == 0) goto inst_next; goto [t]; }
+
+# Stack IC and jump to subroutine, unstack IC and return
+:SJS ra,JD is (op8=0x7E & ra & NEXT) ... & JD  { ra = ra - 1; *[ram]:2 ra = NEXT; call JD; }
+:SJS ra,JX is (op8=0x7E & ra & NEXT) ... & JX  { local t:2 = JX; ra = ra - 1; *[ram]:2 ra = NEXT; call [t]; }
+:URS ra is op8=0x7F & ra & rb=0         { local t:2 = *[ram]:2 ra; ra = ra + 1; return [t]; }
+
+# Load status: (MK, SW, IC) <-- [DA, DA+1, DA+2]
+:LST DA is (op8=0x7D & n4=0) ... & DA {
+	local a:2 = DA;
+	local m:2 = *[ram]:2 a;
+	local s:2 = *[ram]:2 (a + 1);
+	local t:2 = *[ram]:2 (a + 2);
+	MK = m;
+	SW = s;
+	swtocs();
+	return [t];
+}
+:LSTI IA is (op8=0x7C & n4=0) ... & IA {
+	local a:2 = IA;
+	local m:2 = *[ram]:2 a;
+	local s:2 = *[ram]:2 (a + 1);
+	local t:2 = *[ram]:2 (a + 2);
+	MK = m;
+	SW = s;
+	swtocs();
+	return [t];
+}
+
+# Branch to executive
+:BEX nlo is op8=0x77 & n4=0 & nlo  { bex(nlo:1); }
+
+# Input/output (5.1). Mandatory commands that act on the processor registers are modeled;
+# other commands are named and use the xio_out/xio_in pcodeops. Commands w/ bit 0 (the MSB) set are input.
+:XIO ra,"SMK" is op8=0x48 & ra & rx=0 ; xcmd=0x2000   { MK = ra; }
+:XIO ra,"CLIR" is op8=0x48 & ra & rx=0 ; xcmd=0x2001  { PI = 0; FT = 0; }
+:XIO ra,"ENBL" is op8=0x48 & ra & rx=0 ; xcmd=0x2002  { enable_interrupts(); }
+:XIO ra,"DSBL" is op8=0x48 & ra & rx=0 ; xcmd=0x2003  { disable_interrupts(); }
+:XIO ra,"RPI" is op8=0x48 & ra & rx=0 ; xcmd=0x2004 {
+	local n:2 = ra & 0xf;
+	PI = PI & ~(0x8000 >> n);
+	FT = FT * zext(n != 1);
+}
+:XIO ra,"SPI" is op8=0x48 & ra & rx=0 ; xcmd=0x2005   { PI = PI | ra; }
+:XIO ra,"WSW" is op8=0x48 & ra & rx=0 ; xcmd=0x200E   { SW = ra; swtocs(); }
+:XIO ra,"RMK" is op8=0x48 & ra & rx=0 ; xcmd=0xA000   { ra = MK; }
+:XIO ra,"RPIR" is op8=0x48 & ra & rx=0 ; xcmd=0xA004  { ra = PI; }
+:XIO ra,"RSW" is op8=0x48 & ra & rx=0 ; xcmd=0xA00E {
+	ra = (SW & 0x0fff) | (zext(CS_C) << 15) | (zext(CS_P) << 14) | (zext(CS_Z) << 13) | (zext(CS_N) << 12);
+}
+:XIO ra,"RCFR" is op8=0x48 & ra & rx=0 ; xcmd=0xA00F  { ra = FT; FT = 0; }
+:XIO ra,"OD" is op8=0x48 & ra & rx=0 ; xcmd=0x2008  { xio_out(0x2008:2, ra); }
+:XIO ra,"RNS" is op8=0x48 & ra & rx=0 ; xcmd=0x200A  { xio_out(0x200A:2, ra); }
+:XIO ra,"CO" is op8=0x48 & ra & rx=0 ; xcmd=0x4000  { xio_out(0x4000:2, ra); }
+:XIO ra,"CLC" is op8=0x48 & ra & rx=0 ; xcmd=0x4001  { xio_out(0x4001:2, ra); }
+:XIO ra,"MPEN" is op8=0x48 & ra & rx=0 ; xcmd=0x4003  { xio_out(0x4003:2, ra); }
+:XIO ra,"ESUR" is op8=0x48 & ra & rx=0 ; xcmd=0x4004  { xio_out(0x4004:2, ra); }
+:XIO ra,"DMAE" is op8=0x48 & ra & rx=0 ; xcmd=0x4006  { xio_out(0x4006:2, ra); }
+:XIO ra,"DMAD" is op8=0x48 & ra & rx=0 ; xcmd=0x4007  { xio_out(0x4007:2, ra); }
+:XIO ra,"TAS" is op8=0x48 & ra & rx=0 ; xcmd=0x4008  { xio_out(0x4008:2, ra); }
+:XIO ra,"TAH" is op8=0x48 & ra & rx=0 ; xcmd=0x4009  { xio_out(0x4009:2, ra); }
+:XIO ra,"OTA" is op8=0x48 & ra & rx=0 ; xcmd=0x400A  { xio_out(0x400A:2, ra); }
+:XIO ra,"GO" is op8=0x48 & ra & rx=0 ; xcmd=0x400B  { xio_out(0x400B:2, ra); }
+:XIO ra,"TBS" is op8=0x48 & ra & rx=0 ; xcmd=0x400C  { xio_out(0x400C:2, ra); }
+:XIO ra,"TBH" is op8=0x48 & ra & rx=0 ; xcmd=0x400D  { xio_out(0x400D:2, ra); }
+:XIO ra,"OTB" is op8=0x48 & ra & rx=0 ; xcmd=0x400E  { xio_out(0x400E:2, ra); }
+:XIO ra,"RIC1" is op8=0x48 & ra & rx=0 ; xcmd=0xA001  { ra = xio_in(0xA001:2); }
+:XIO ra,"RIC2" is op8=0x48 & ra & rx=0 ; xcmd=0xA002  { ra = xio_in(0xA002:2); }
+:XIO ra,"RDOR" is op8=0x48 & ra & rx=0 ; xcmd=0xA008  { ra = xio_in(0xA008:2); }
+:XIO ra,"RDI" is op8=0x48 & ra & rx=0 ; xcmd=0xA009  { ra = xio_in(0xA009:2); }
+:XIO ra,"TPIO" is op8=0x48 & ra & rx=0 ; xcmd=0xA00B  { ra = xio_in(0xA00B:2); }
+:XIO ra,"RMFS" is op8=0x48 & ra & rx=0 ; xcmd=0xA00D  { ra = xio_in(0xA00D:2); }
+:XIO ra,"CI" is op8=0x48 & ra & rx=0 ; xcmd=0xC000  { ra = xio_in(0xC000:2); }
+:XIO ra,"RCS" is op8=0x48 & ra & rx=0 ; xcmd=0xC001  { ra = xio_in(0xC001:2); }
+:XIO ra,"ITA" is op8=0x48 & ra & rx=0 ; xcmd=0xC00A  { ra = xio_in(0xC00A:2); }
+:XIO ra,"ITB" is op8=0x48 & ra & rx=0 ; xcmd=0xC00E  { ra = xio_in(0xC00E:2); }
+:XIO ra,imm16 is op8=0x48 & ra & rx=0 ; imm16 & cmdin=1  { ra = xio_in(imm16:2); }
+:XIO ra,imm16 is op8=0x48 & ra & rx=0 ; imm16 & cmdin=0  { xio_out(imm16:2, ra); }
+:XIO ra,imm16,rx is op8=0x48 & ra & rx ; imm16           { local c:2 = imm16 + rx; ra = xio(c, ra); }
+:VIO ra,DA is (op8=0x49 & ra) ... & DA                   { vio(ra, DA); }
+
+# No operation, break point, built-in function
+:NOP is op8=0xFF & ra=0 & rb=0     { }
+:BPT is op8=0xFF & ra=15 & rb=15   { breakpoint(); }
+:BIF ex8 is op8=0x4F & ex8         { bif(ex8:1); }
+
+# Page register commands (optional expanded memory, 4.5.2): X = group, Y = page register
+:XIO ra,"WIPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0x51 & xpx & xpy { local c:2 = 0x5100 | (xpx << 4) | xpy; xio_out(c, ra); }
+:XIO ra,"WOPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0x52 & xpx & xpy { local c:2 = 0x5200 | (xpx << 4) | xpy; xio_out(c, ra); }
+:XIO ra,"RIPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0xD1 & xpx & xpy { local c:2 = 0xD100 | (xpx << 4) | xpy; ra = xio_in(c); }
+:XIO ra,"ROPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0xD2 & xpx & xpy { local c:2 = 0xD200 | (xpx << 4) | xpy; ra = xio_in(c); }
+
+
+# Load and store multiple registers R0 through RN, push and pop multiple registers (R15 is the stack pointer)
+macro push(r) {
+	R15 = R15 - 1;
+	*[ram]:2 R15 = r;
+}
+macro pop(r) {
+	r = *[ram]:2 R15;
+	R15 = R15 + 1;
+}
+
+:LM n4,DA is (op8=0x89 & n4 & ccv=0) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=1) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=2) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=3) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=4) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=5) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=6) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=7) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=8) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=9) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=10) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=11) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); R11 = *[ram]:2 (a + 11); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=12) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); R11 = *[ram]:2 (a + 11); R12 = *[ram]:2 (a + 12); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=13) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); R11 = *[ram]:2 (a + 11); R12 = *[ram]:2 (a + 12); R13 = *[ram]:2 (a + 13); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=14) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); R11 = *[ram]:2 (a + 11); R12 = *[ram]:2 (a + 12); R13 = *[ram]:2 (a + 13); R14 = *[ram]:2 (a + 14); }
+:LM n4,DA is (op8=0x89 & n4 & ccv=15) ... & DA { local a:2 = DA; R0 = *[ram]:2 (a + 0); R1 = *[ram]:2 (a + 1); R2 = *[ram]:2 (a + 2); R3 = *[ram]:2 (a + 3); R4 = *[ram]:2 (a + 4); R5 = *[ram]:2 (a + 5); R6 = *[ram]:2 (a + 6); R7 = *[ram]:2 (a + 7); R8 = *[ram]:2 (a + 8); R9 = *[ram]:2 (a + 9); R10 = *[ram]:2 (a + 10); R11 = *[ram]:2 (a + 11); R12 = *[ram]:2 (a + 12); R13 = *[ram]:2 (a + 13); R14 = *[ram]:2 (a + 14); R15 = *[ram]:2 (a + 15); }
+
+:STM n4,DA is (op8=0x99 & n4 & ccv=0) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=1) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=2) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=3) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=4) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=5) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=6) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=7) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=8) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=9) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=10) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=11) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; *[ram]:2 (a + 11) = R11; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=12) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; *[ram]:2 (a + 11) = R11; *[ram]:2 (a + 12) = R12; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=13) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; *[ram]:2 (a + 11) = R11; *[ram]:2 (a + 12) = R12; *[ram]:2 (a + 13) = R13; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=14) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; *[ram]:2 (a + 11) = R11; *[ram]:2 (a + 12) = R12; *[ram]:2 (a + 13) = R13; *[ram]:2 (a + 14) = R14; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=15) ... & DA { local a:2 = DA; *[ram]:2 (a + 0) = R0; *[ram]:2 (a + 1) = R1; *[ram]:2 (a + 2) = R2; *[ram]:2 (a + 3) = R3; *[ram]:2 (a + 4) = R4; *[ram]:2 (a + 5) = R5; *[ram]:2 (a + 6) = R6; *[ram]:2 (a + 7) = R7; *[ram]:2 (a + 8) = R8; *[ram]:2 (a + 9) = R9; *[ram]:2 (a + 10) = R10; *[ram]:2 (a + 11) = R11; *[ram]:2 (a + 12) = R12; *[ram]:2 (a + 13) = R13; *[ram]:2 (a + 14) = R14; *[ram]:2 (a + 15) = R15; }
+
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=0 { push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=1 { push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=2 { push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=3 { push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=1 { push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=2 { push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=3 { push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=4 { push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=2 { push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=3 { push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=4 { push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=5 { push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=3 { push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=4 { push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=5 { push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=6 { push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=4 { push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=5 { push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=6 { push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=7 { push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=5 { push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=6 { push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=7 { push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=8 { push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=6 { push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=7 { push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=8 { push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=9 { push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=7 { push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=8 { push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=9 { push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=10 { push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=8 { push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=9 { push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=10 { push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=11 { push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=9 { push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=10 { push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=11 { push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=12 { push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=10 { push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=11 { push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=12 { push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=13 { push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=11 { push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=12 { push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=13 { push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=14 { push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=12 { push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=13 { push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=14 { push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=15 { push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=0 { push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=13 { push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=14 { push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=15 { push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=0 { push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=1 { push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=14 { push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=15 { push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=0 { push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=1 { push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=2 { push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=15 { push(R15); }
+
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=0 { pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=1 { pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=2 { pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=3 { pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=4 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=5 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=6 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=7 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=8 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=9 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=10 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=11 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=12 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=13 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=14 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=15 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=0 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=1 { pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=2 { pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=3 { pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=4 { pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=5 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=6 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=7 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=8 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=9 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=10 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=11 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=12 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=13 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=14 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=15 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=0 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=1 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=2 { pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=3 { pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=4 { pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=5 { pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=6 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=7 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=8 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=9 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=10 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=11 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=12 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=13 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=14 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=15 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=0 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=1 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=2 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=3 { pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=4 { pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=5 { pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=6 { pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=7 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=8 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=9 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=10 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=11 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=12 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=13 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=14 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=15 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=0 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=1 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=2 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=3 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=4 { pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=5 { pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=6 { pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=7 { pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=8 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=9 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=10 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=11 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=12 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=13 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=14 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=15 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=0 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=1 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=2 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=3 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=4 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=5 { pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=6 { pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=7 { pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=8 { pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=9 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=10 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=11 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=12 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=13 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=14 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=15 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=0 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=1 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=2 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=3 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=4 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=5 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=6 { pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=7 { pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=8 { pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=9 { pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=10 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=11 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=12 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=13 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=14 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=15 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=0 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=1 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=2 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=3 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=4 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=5 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=6 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=7 { pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=8 { pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=9 { pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=10 { pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=11 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=12 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=13 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=14 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=15 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=0 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=1 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=2 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=3 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=4 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=5 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=6 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=7 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=8 { pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=9 { pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=10 { pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=11 { pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=12 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=13 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=14 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=15 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=0 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=1 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=2 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=3 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=4 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=5 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=6 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=7 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=8 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=9 { pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=10 { pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=11 { pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=12 { pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=13 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=14 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=15 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=0 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=1 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=2 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=3 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=4 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=5 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=6 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=7 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=8 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=9 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=10 { pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=11 { pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=12 { pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=13 { pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=14 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=15 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=0 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=1 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=2 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=3 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=4 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=5 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=6 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=7 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=8 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=9 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=10 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=11 { pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=12 { pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=13 { pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=14 { pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=15 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=0 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=1 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=2 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=3 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=4 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=5 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=6 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=7 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=8 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=9 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=10 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=11 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=12 { pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=13 { pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=14 { pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=15 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=0 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=1 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=2 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=3 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=4 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=5 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=6 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=7 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=8 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=9 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=10 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=11 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=12 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=13 { pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=14 { pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=15 { pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=0 { pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=1 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=2 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=3 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=4 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=5 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=6 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=7 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=8 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=9 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=10 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=11 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=12 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=13 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=14 { pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=15 { pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=0 { R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=1 { R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=2 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=3 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=4 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=5 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=6 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=7 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=8 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=9 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=10 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=11 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=12 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=13 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=14 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=15 { R15 = R15 + 1; }

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="IC"/>
+  <default_symbols>
+    <!-- Execution begins at IC = 0 after reset (4.4.4) -->
+    <symbol name="RESET" address="ram:0x0" entry="true"/>
+    <!-- Interrupt linkage and service pointers, table VIII -->
+    <symbol name="INT00_POWER_DOWN_LP" address="ram:0x20" entry="false"/>
+    <symbol name="INT00_POWER_DOWN_SP" address="ram:0x21" entry="false"/>
+    <symbol name="INT01_MACHINE_ERROR_LP" address="ram:0x22" entry="false"/>
+    <symbol name="INT01_MACHINE_ERROR_SP" address="ram:0x23" entry="false"/>
+    <symbol name="INT02_SPARE_2_LP" address="ram:0x24" entry="false"/>
+    <symbol name="INT02_SPARE_2_SP" address="ram:0x25" entry="false"/>
+    <symbol name="INT03_FLOAT_OVERFLOW_LP" address="ram:0x26" entry="false"/>
+    <symbol name="INT03_FLOAT_OVERFLOW_SP" address="ram:0x27" entry="false"/>
+    <symbol name="INT04_FIXED_OVERFLOW_LP" address="ram:0x28" entry="false"/>
+    <symbol name="INT04_FIXED_OVERFLOW_SP" address="ram:0x29" entry="false"/>
+    <symbol name="INT05_EXEC_CALL_LP" address="ram:0x2a" entry="false"/>
+    <symbol name="INT05_EXEC_CALL_SP" address="ram:0x2b" entry="false"/>
+    <symbol name="INT06_FLOAT_UNDERFLOW_LP" address="ram:0x2c" entry="false"/>
+    <symbol name="INT06_FLOAT_UNDERFLOW_SP" address="ram:0x2d" entry="false"/>
+    <symbol name="INT07_TIMER_A_LP" address="ram:0x2e" entry="false"/>
+    <symbol name="INT07_TIMER_A_SP" address="ram:0x2f" entry="false"/>
+    <symbol name="INT08_SPARE_8_LP" address="ram:0x30" entry="false"/>
+    <symbol name="INT08_SPARE_8_SP" address="ram:0x31" entry="false"/>
+    <symbol name="INT09_TIMER_B_LP" address="ram:0x32" entry="false"/>
+    <symbol name="INT09_TIMER_B_SP" address="ram:0x33" entry="false"/>
+    <symbol name="INT10_SPARE_10_LP" address="ram:0x34" entry="false"/>
+    <symbol name="INT10_SPARE_10_SP" address="ram:0x35" entry="false"/>
+    <symbol name="INT11_SPARE_11_LP" address="ram:0x36" entry="false"/>
+    <symbol name="INT11_SPARE_11_SP" address="ram:0x37" entry="false"/>
+    <symbol name="INT12_IO_LEVEL_1_LP" address="ram:0x38" entry="false"/>
+    <symbol name="INT12_IO_LEVEL_1_SP" address="ram:0x39" entry="false"/>
+    <symbol name="INT13_SPARE_13_LP" address="ram:0x3a" entry="false"/>
+    <symbol name="INT13_SPARE_13_SP" address="ram:0x3b" entry="false"/>
+    <symbol name="INT14_IO_LEVEL_2_LP" address="ram:0x3c" entry="false"/>
+    <symbol name="INT14_IO_LEVEL_2_SP" address="ram:0x3d" entry="false"/>
+    <symbol name="INT15_SPARE_15_LP" address="ram:0x3e" entry="false"/>
+    <symbol name="INT15_SPARE_15_SP" address="ram:0x3f" entry="false"/>
+  </default_symbols>
+</processor_spec>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="MIL-STD-1750A"
+            endian="big"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="1750a.sla"
+            processorspec="1750a.pspec"
+            manualindexfile="../manuals/1750a.idx"
+            id="MIL-STD-1750A:BE:16:default">
+    <description>MIL-STD-1750A 16-bit instruction set architecture</description>
+    <compiler name="default" spec="1750a.cspec" id="default"/>
+  </language>
+  <language processor="MIL-STD-1750A"
+            endian="big"
+            size="24"
+            variant="expanded"
+            version="1.0"
+            slafile="1750a_exp.sla"
+            processorspec="1750a.pspec"
+            manualindexfile="../manuals/1750a.idx"
+            id="MIL-STD-1750A:BE:24:expanded">
+    <description>MIL-STD-1750A w/ expanded memory addressing: 20-bit physical memory mapped by the page registers</description>
+    <compiler name="default" spec="1750a.cspec" id="default"/>
+  </language>
+</language_definitions>

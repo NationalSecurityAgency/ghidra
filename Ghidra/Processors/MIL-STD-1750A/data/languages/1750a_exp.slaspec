@@ -1,0 +1,1972 @@
+# MIL-STD-1750A, sixteen-bit computer instruction set architecture, w/ expanded memory addressing (4.5.2)
+# Source: MIL-STD-1750A (USAF), 2 July 1980, with Notice 1, 21 May 1982.
+# Memory is word addressed: one address unit is one 16-bit word.
+# Bit 0 is the most significant bit, as in the standard.
+# Floating point uses the 1750A formats (24-bit mantissa, 8-bit exponent; extended adds 16 mantissa bits)
+# and is modeled with pcodeops.
+
+define endian=big;
+define alignment=2;
+
+define space ram type=ram_space size=3 wordsize=2 default;
+# Page file: index = group * 32 + set * 16 + register (set 0 = instruction, 1 = operand)
+define space pagefile type=ram_space size=2 wordsize=2;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=2 [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+define register offset=0x40 size=2 [ IC SW MK PI FT ];
+# Condition status (CS), SW bits 0-3
+define register offset=0x80 size=1 [ CS_C CS_P CS_Z CS_N ];
+
+define token instr(16)
+	op8   = (8,15)
+	op6   = (10,15)
+	br    = (8,9)
+	ra    = (4,7)
+	ra1   = (4,7)
+	ra2   = (4,7)
+	n4    = (4,7)
+	opx   = (4,7)
+	cc    = (4,7)
+	ccv   = (4,7)
+	cc_c  = (7,7)
+	cc_p  = (6,6)
+	cc_z  = (5,5)
+	cc_n  = (4,4)
+	rb    = (0,3)
+	rb1   = (0,3)
+	rb2   = (0,3)
+	rx    = (0,3)
+	nlo   = (0,3)
+	dsp   = (0,7)
+	sdsp  = (0,7) signed
+	ex8   = (0,7)
+;
+
+define token ext(16)
+	addr16 = (0,15)
+	addrv  = (0,15)
+	xcmd   = (0,15)
+	imm16  = (0,15)
+	cmdin  = (15,15)
+	xhi    = (8,15)
+	xpx    = (4,7)
+	xpy    = (0,3)
+;
+
+attach variables [ ra rb ] [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [ ra1 rb1 ] [ R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R0 ];
+attach variables [ ra2 rb2 ] [ R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R0 R1 ];
+attach variables [ rx ] [ _ R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [ br ] [ R12 R13 R14 R15 ];
+
+define pcodeop fadd;
+define pcodeop fsub;
+define pcodeop fmul;
+define pcodeop fdiv;
+define pcodeop fcmp;
+define pcodeop fabs;
+define pcodeop fneg;
+define pcodeop fix;
+define pcodeop flt;
+define pcodeop efadd;
+define pcodeop efsub;
+define pcodeop efmul;
+define pcodeop efdiv;
+define pcodeop efcmp;
+define pcodeop efix;
+define pcodeop eflt;
+define pcodeop xio_in;
+define pcodeop xio_out;
+define pcodeop xio;
+define pcodeop enable_interrupts;
+define pcodeop disable_interrupts;
+define pcodeop vio;
+define pcodeop bex;
+define pcodeop breakpoint;
+define pcodeop bif;
+
+macro nzp(v) {
+	CS_Z = v == 0;
+	CS_N = v s< 0;
+	CS_P = v s> 0;
+}
+
+# Fixed point overflow sets pending interrupt 4 (PI bit 4, 0x0800)
+macro ovf(c) {
+	PI = PI | (zext(c) << 11);
+}
+
+macro cs(v) {
+	CS_C = 0;
+	nzp(v);
+}
+
+macro cmpcs(a, b) {
+	CS_C = 0;
+	CS_Z = a == b;
+	CS_N = a s< b;
+	CS_P = a s> b;
+}
+
+macro fcs(r) {
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+macro swtocs() {
+	CS_C = (SW & 0x8000) != 0;
+	CS_P = (SW & 0x4000) != 0;
+	CS_Z = (SW & 0x2000) != 0;
+	CS_N = (SW & 0x1000) != 0;
+}
+
+# Memory direct (D) and memory direct-indexed (DX): derived address
+DA: addr16      is rx=0 ; addr16  { export *[const]:2 addr16; }
+DA: addr16,rx   is rx ; addr16    { local a:2 = addr16 + rx; export a; }
+
+# Memory indirect (I) and memory indirect with pre-indexing (IX): derived address
+IA: "@"^addr16    is rx=0 ; addr16  { local t:2 = addr16; local pi6:2 = ((SW & 0xf) << 5) | 0x10 | ((t) >> 12); local pp6:3 = zext(*[pagefile]:2 pi6) & 0xff; local pa6:3 = (pp6 << 12) | zext((t) & 0xfff); local a:2 = *[ram]:2 pa6; export a; }
+IA: "@"^addr16,rx is rx ; addr16    { local t:2 = addr16 + rx; local pi7:2 = ((SW & 0xf) << 5) | 0x10 | ((t) >> 12); local pp7:3 = zext(*[pagefile]:2 pi7) & 0xff; local pa7:3 = (pp7 << 12) | zext((t) & 0xfff); local a:2 = *[ram]:2 pa7; export a; }
+
+# Immediate long, indexable (IM/IMX)
+IMX: imm16    is rx=0 ; imm16  { export *[const]:2 imm16; }
+IMX: imm16,rx is rx ; imm16    { local v:2 = imm16 + rx; export v; }
+
+# Jump targets
+JD: dest      is rx=0 ; addr16 [ dest = (inst_start & 0xf0000) | addr16; ] { export *[ram]:2 dest; }
+JX: addr16,rx is rx ; addr16    { local a:2 = addr16 + rx; export a; }
+
+# Base relative (B) and base relative-indexed (BX)
+BA: br,dsp   is br & dsp  { local a:2 = br + dsp; export a; }
+BXA: br      is br & rx=0 { export br; }
+BXA: br,rx   is br & rx   { local a:2 = br + rx; export a; }
+
+# N = field + 1: in bits 8-11 for shifts and INCM/DECM, in bits 12-15 for immediate short (ISP, ISN)
+NP: val is n4 [ val = n4 + 1; ]      { export *[const]:2 val; }
+ISP: val is nlo [ val = nlo + 1; ]   { export *[const]:2 val; }
+ISN: val is nlo [ val = -(nlo + 1); ] { export *[const]:2 val; }
+
+# Bit number N (bit 0 is the MSB)
+BIT: n4 is n4 { local m:2 = 0x8000 >> n4; export m; }
+
+# Address of the next instruction, in words (the p-code inst_next is a byte offset)
+NEXT: nxt is epsilon [ nxt = inst_next & 0xffff; ] { export *[const]:2 nxt; }
+
+# Instruction counter relative (ICR)
+REL: dest is sdsp [ dest = (inst_start & 0xf0000) | ((inst_start + sdsp) & 0xffff); ] { export *[ram]:2 dest; }
+
+# Jump condition: C ANDed bit by bit with CS, then ORed; C = 7 or F is unconditional
+COND: is ccv=7  { export 1:1; }
+COND: is ccv=15 { export 1:1; }
+COND: is cc_c & cc_p & cc_z & cc_n {
+	local r:1 = (cc_c & CS_C) | (cc_p & CS_P) | (cc_z & CS_Z) | (cc_n & CS_N);
+	export r;
+}
+
+:LR ra,rb is op8=0x81 & ra & ra1 & rb {
+	ra = rb;
+	cs(ra);
+}
+
+:L ra,DA is (op8=0x80 & ra & ra1) ... & DA {
+	local pi8:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp8:3 = zext(*[pagefile]:2 pi8) & 0xff; local pa8:3 = (pp8 << 12) | zext((DA) & 0xfff); ra = *[ram]:2 pa8;
+	cs(ra);
+}
+
+:LI ra,IA is (op8=0x84 & ra & ra1) ... & IA {
+	local pi9:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp9:3 = zext(*[pagefile]:2 pi9) & 0xff; local pa9:3 = (pp9 << 12) | zext((IA) & 0xfff); ra = *[ram]:2 pa9;
+	cs(ra);
+}
+
+:LISP ra,ISP is op8=0x82 & ra & ra1 & ISP {
+	ra = ISP;
+	cs(ra);
+}
+
+:LB BA is op6=0x00 & BA {
+	local pi10:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp10:3 = zext(*[pagefile]:2 pi10) & 0xff; local pa10:3 = (pp10 << 12) | zext((BA) & 0xfff); R2 = *[ram]:2 pa10;
+	cs(R2);
+}
+
+:LBX BXA is op6=0x10 & opx=0x0 & BXA {
+	local pi11:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp11:3 = zext(*[pagefile]:2 pi11) & 0xff; local pa11:3 = (pp11 << 12) | zext((BXA) & 0xfff); R2 = *[ram]:2 pa11;
+	cs(R2);
+}
+
+:AR ra,rb is op8=0xA1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:A ra,DA is (op8=0xA0 & ra & ra1) ... & DA {
+	local pi12:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp12:3 = zext(*[pagefile]:2 pi12) & 0xff; local pa12:3 = (pp12 << 12) | zext((DA) & 0xfff); local o:2 = *[ram]:2 pa12;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x1 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AISP ra,ISP is op8=0xA2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf(scarry(ra, o));
+	CS_C = carry(ra, o);
+	ra = ra + o;
+	nzp(ra);
+}
+
+:AB BA is op6=0x04 & BA {
+	local pi13:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp13:3 = zext(*[pagefile]:2 pi13) & 0xff; local pa13:3 = (pp13 << 12) | zext((BA) & 0xfff); local o:2 = *[ram]:2 pa13;
+	ovf(scarry(R2, o));
+	CS_C = carry(R2, o);
+	R2 = R2 + o;
+	nzp(R2);
+}
+
+:ABX BXA is op6=0x10 & opx=0x4 & BXA {
+	local pi14:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp14:3 = zext(*[pagefile]:2 pi14) & 0xff; local pa14:3 = (pp14 << 12) | zext((BXA) & 0xfff); local o:2 = *[ram]:2 pa14;
+	ovf(scarry(R2, o));
+	CS_C = carry(R2, o);
+	R2 = R2 + o;
+	nzp(R2);
+}
+
+:SR ra,rb is op8=0xB1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:S ra,DA is (op8=0xB0 & ra & ra1) ... & DA {
+	local pi15:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp15:3 = zext(*[pagefile]:2 pi15) & 0xff; local pa15:3 = (pp15 << 12) | zext((DA) & 0xfff); local o:2 = *[ram]:2 pa15;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x2 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SISP ra,ISP is op8=0xB2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf(sborrow(ra, o));
+	CS_C = ra >= o;
+	ra = ra - o;
+	nzp(ra);
+}
+
+:SBB BA is op6=0x05 & BA {
+	local pi16:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp16:3 = zext(*[pagefile]:2 pi16) & 0xff; local pa16:3 = (pp16 << 12) | zext((BA) & 0xfff); local o:2 = *[ram]:2 pa16;
+	ovf(sborrow(R2, o));
+	CS_C = R2 >= o;
+	R2 = R2 - o;
+	nzp(R2);
+}
+
+:SBBX BXA is op6=0x10 & opx=0x5 & BXA {
+	local pi17:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp17:3 = zext(*[pagefile]:2 pi17) & 0xff; local pa17:3 = (pp17 << 12) | zext((BXA) & 0xfff); local o:2 = *[ram]:2 pa17;
+	ovf(sborrow(R2, o));
+	CS_C = R2 >= o;
+	R2 = R2 - o;
+	nzp(R2);
+}
+
+:MSR ra,rb is op8=0xC1 & ra & ra1 & rb {
+	local p:4 = sext(ra) * sext(rb);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MS ra,DA is (op8=0xC0 & ra & ra1) ... & DA {
+	local pi18:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp18:3 = zext(*[pagefile]:2 pi18) & 0xff; local pa18:3 = (pp18 << 12) | zext((DA) & 0xfff); local p:4 = sext(ra) * sext(*[ram]:2 pa18);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MSIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x4 ; imm16 {
+	local im:2 = imm16;
+	local p:4 = sext(ra) * sext(im);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MISP ra,ISP is op8=0xC2 & ra & ra1 & ISP {
+	local p:4 = sext(ra) * sext(ISP);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MISN ra,ISP is op8=0xC3 & ra & ra1 & ISP & ISN {
+	local p:4 = sext(ra) * sext(ISN);
+	ovf(p != sext(p:2));
+	ra = p:2;
+	cs(ra);
+}
+
+:MR ra,rb is op8=0xC5 & ra & ra1 & rb {
+	local p:4 = sext(ra) * sext(rb);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:M ra,DA is (op8=0xC4 & ra & ra1) ... & DA {
+	local pi19:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp19:3 = zext(*[pagefile]:2 pi19) & 0xff; local pa19:3 = (pp19 << 12) | zext((DA) & 0xfff); local p:4 = sext(ra) * sext(*[ram]:2 pa19);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:MIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x3 ; imm16 {
+	local im:2 = imm16;
+	local p:4 = sext(ra) * sext(im);
+	ra = p(2);
+	ra1 = p:2;
+	cs(p);
+}
+
+:MB BA is op6=0x06 & BA {
+	local pi20:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp20:3 = zext(*[pagefile]:2 pi20) & 0xff; local pa20:3 = (pp20 << 12) | zext((BA) & 0xfff); local p:4 = sext(R2) * sext(*[ram]:2 pa20);
+	R2 = p(2);
+	R3 = p:2;
+	cs(p);
+}
+
+:MBX BXA is op6=0x10 & opx=0x6 & BXA {
+	local pi21:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp21:3 = zext(*[pagefile]:2 pi21) & 0xff; local pa21:3 = (pp21 << 12) | zext((BXA) & 0xfff); local p:4 = sext(R2) * sext(*[ram]:2 pa21);
+	R2 = p(2);
+	R3 = p:2;
+	cs(p);
+}
+
+:DVR ra,rb is op8=0xD1 & ra & ra1 & rb {
+	local o:2 = rb;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DV ra,DA is (op8=0xD0 & ra & ra1) ... & DA {
+	local pi22:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp22:3 = zext(*[pagefile]:2 pi22) & 0xff; local pa22:3 = (pp22 << 12) | zext((DA) & 0xfff); local o:2 = *[ram]:2 pa22;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DVIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x6 ; imm16 {
+	local im:2 = imm16;
+	local o:2 = im;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DISP ra,ISP is op8=0xD2 & ra & ra1 & ISP {
+	local o:2 = ISP;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DISN ra,ISP is op8=0xD3 & ra & ra1 & ISP & ISN {
+	local o:2 = ISN;
+	ovf((o == 0) || ((ra == 0x8000) && (o == 0xffff)));
+	local q:2 = ra s/ o;
+	local r:2 = ra s% o;
+	ra = q;
+	ra1 = r;
+	cs(q);
+}
+
+:DR ra,rb is op8=0xD5 & ra & ra1 & rb {
+	local o:4 = sext(rb);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:D ra,DA is (op8=0xD4 & ra & ra1) ... & DA {
+	local pi23:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp23:3 = zext(*[pagefile]:2 pi23) & 0xff; local pa23:3 = (pp23 << 12) | zext((DA) & 0xfff); local o:4 = sext(*[ram]:2 pa23);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:DIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x5 ; imm16 {
+	local im:2 = imm16;
+	local o:4 = sext(im);
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	ra = q:2;
+	ra1 = r:2;
+	cs(ra);
+}
+
+:DB BA is op6=0x07 & BA {
+	local pi24:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp24:3 = zext(*[pagefile]:2 pi24) & 0xff; local pa24:3 = (pp24 << 12) | zext((BA) & 0xfff); local o:4 = sext(*[ram]:2 pa24);
+	local v:4 = ((zext(R2) << 16) | zext(R3));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	R2 = q:2;
+	R3 = r:2;
+	cs(R2);
+}
+
+:DBX BXA is op6=0x10 & opx=0x7 & BXA {
+	local pi25:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp25:3 = zext(*[pagefile]:2 pi25) & 0xff; local pa25:3 = (pp25 << 12) | zext((BXA) & 0xfff); local o:4 = sext(*[ram]:2 pa25);
+	local v:4 = ((zext(R2) << 16) | zext(R3));
+	ovf(o == 0);
+	local q:4 = v s/ o;
+	local r:4 = v s% o;
+	ovf((q s> 0x7fff) || (q s< -0x8000));
+	R2 = q:2;
+	R3 = r:2;
+	cs(R2);
+}
+
+:ORR ra,rb is op8=0xE1 & ra & ra1 & rb {
+	ra = ra | rb;
+	cs(ra);
+}
+
+:OR ra,DA is (op8=0xE0 & ra & ra1) ... & DA {
+	local pi26:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp26:3 = zext(*[pagefile]:2 pi26) & 0xff; local pa26:3 = (pp26 << 12) | zext((DA) & 0xfff); ra = ra | *[ram]:2 pa26;
+	cs(ra);
+}
+
+:ORIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x8 ; imm16 {
+	local im:2 = imm16;
+	ra = ra | im;
+	cs(ra);
+}
+
+:ORB BA is op6=0x0C & BA {
+	local pi27:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp27:3 = zext(*[pagefile]:2 pi27) & 0xff; local pa27:3 = (pp27 << 12) | zext((BA) & 0xfff); R2 = R2 | *[ram]:2 pa27;
+	cs(R2);
+}
+
+:ORBX BXA is op6=0x10 & opx=0xF & BXA {
+	local pi28:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp28:3 = zext(*[pagefile]:2 pi28) & 0xff; local pa28:3 = (pp28 << 12) | zext((BXA) & 0xfff); R2 = R2 | *[ram]:2 pa28;
+	cs(R2);
+}
+
+:ANDR ra,rb is op8=0xE3 & ra & ra1 & rb {
+	ra = ra & rb;
+	cs(ra);
+}
+
+:AND ra,DA is (op8=0xE2 & ra & ra1) ... & DA {
+	local pi29:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp29:3 = zext(*[pagefile]:2 pi29) & 0xff; local pa29:3 = (pp29 << 12) | zext((DA) & 0xfff); ra = ra & *[ram]:2 pa29;
+	cs(ra);
+}
+
+:ANDM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x7 ; imm16 {
+	local im:2 = imm16;
+	ra = ra & im;
+	cs(ra);
+}
+
+:ANDB BA is op6=0x0D & BA {
+	local pi30:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp30:3 = zext(*[pagefile]:2 pi30) & 0xff; local pa30:3 = (pp30 << 12) | zext((BA) & 0xfff); R2 = R2 & *[ram]:2 pa30;
+	cs(R2);
+}
+
+:ANDX BXA is op6=0x10 & opx=0xE & BXA {
+	local pi31:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp31:3 = zext(*[pagefile]:2 pi31) & 0xff; local pa31:3 = (pp31 << 12) | zext((BXA) & 0xfff); R2 = R2 & *[ram]:2 pa31;
+	cs(R2);
+}
+
+:XORR ra,rb is op8=0xE5 & ra & ra1 & rb {
+	ra = ra ^ rb;
+	cs(ra);
+}
+
+:XOR ra,DA is (op8=0xE4 & ra & ra1) ... & DA {
+	local pi32:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp32:3 = zext(*[pagefile]:2 pi32) & 0xff; local pa32:3 = (pp32 << 12) | zext((DA) & 0xfff); ra = ra ^ *[ram]:2 pa32;
+	cs(ra);
+}
+
+:XORM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0x9 ; imm16 {
+	local im:2 = imm16;
+	ra = ra ^ im;
+	cs(ra);
+}
+
+:NR ra,rb is op8=0xE7 & ra & ra1 & rb {
+	ra = ~(ra & rb);
+	cs(ra);
+}
+
+:N ra,DA is (op8=0xE6 & ra & ra1) ... & DA {
+	local pi33:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp33:3 = zext(*[pagefile]:2 pi33) & 0xff; local pa33:3 = (pp33 << 12) | zext((DA) & 0xfff); ra = ~(ra & *[ram]:2 pa33);
+	cs(ra);
+}
+
+:NIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0xB ; imm16 {
+	local im:2 = imm16;
+	ra = ~(ra & im);
+	cs(ra);
+}
+
+:CR ra,rb is op8=0xF1 & ra & ra1 & rb {
+	cmpcs(ra, rb);
+}
+
+:C ra,DA is (op8=0xF0 & ra & ra1) ... & DA {
+	local pi34:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp34:3 = zext(*[pagefile]:2 pi34) & 0xff; local pa34:3 = (pp34 << 12) | zext((DA) & 0xfff); cmpcs(ra, *[ram]:2 pa34);
+}
+
+:CIM ra,imm16 is op8=0x4A & ra & ra1 & nlo=0xA ; imm16 {
+	local im:2 = imm16;
+	cmpcs(ra, im);
+}
+
+:CISP ra,ISP is op8=0xF2 & ra & ra1 & ISP {
+	cmpcs(ra, ISP);
+}
+
+:CISN ra,ISP is op8=0xF3 & ra & ra1 & ISP & ISN {
+	cmpcs(ra, ISN);
+}
+
+:CB BA is op6=0x0E & BA {
+	local pi35:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp35:3 = zext(*[pagefile]:2 pi35) & 0xff; local pa35:3 = (pp35 << 12) | zext((BA) & 0xfff); cmpcs(R2, *[ram]:2 pa35);
+}
+
+:CBX BXA is op6=0x10 & opx=0xC & BXA {
+	local pi36:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp36:3 = zext(*[pagefile]:2 pi36) & 0xff; local pa36:3 = (pp36 << 12) | zext((BXA) & 0xfff); cmpcs(R2, *[ram]:2 pa36);
+}
+
+:LISN ra,ISP is op8=0x83 & ra & ISP & ISN {
+	ra = ISN;
+	cs(ra);
+}
+:LIM ra,IMX is (op8=0x85 & ra) ... & IMX {
+	ra = IMX;
+	cs(ra);
+}
+
+:DLR ra,rb is op8=0x87 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DL ra,DA is (op8=0x86 & ra & ra1) ... & DA {
+	local pi37:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp37:3 = zext(*[pagefile]:2 pi37) & 0xff; local pa37:3 = (pp37 << 12) | zext((DA) & 0xfff); local pi38:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp38:3 = zext(*[pagefile]:2 pi38) & 0xff; local pa38:3 = (pp38 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa37) << 16) | zext(*[ram]:2 pa38));
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DLI ra,IA is (op8=0x88 & ra & ra1) ... & IA {
+	local pi39:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp39:3 = zext(*[pagefile]:2 pi39) & 0xff; local pa39:3 = (pp39 << 12) | zext((IA) & 0xfff); local pi40:2 = ((SW & 0xf) << 5) | 0x10 | (((IA + 1)) >> 12); local pp40:3 = zext(*[pagefile]:2 pi40) & 0xff; local pa40:3 = (pp40 << 12) | zext(((IA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa39) << 16) | zext(*[ram]:2 pa40));
+	ra = o(2);
+	ra1 = o:2;
+	cs(o);
+}
+
+:DLB BA is op6=0x01 & BA {
+	local pi41:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp41:3 = zext(*[pagefile]:2 pi41) & 0xff; local pa41:3 = (pp41 << 12) | zext((BA) & 0xfff); local pi42:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp42:3 = zext(*[pagefile]:2 pi42) & 0xff; local pa42:3 = (pp42 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa41) << 16) | zext(*[ram]:2 pa42));
+	R0 = o(2);
+	R1 = o:2;
+	cs(o);
+}
+
+:DLBX BXA is op6=0x10 & opx=0x1 & BXA {
+	local pi43:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp43:3 = zext(*[pagefile]:2 pi43) & 0xff; local pa43:3 = (pp43 << 12) | zext((BXA) & 0xfff); local pi44:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp44:3 = zext(*[pagefile]:2 pi44) & 0xff; local pa44:3 = (pp44 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa43) << 16) | zext(*[ram]:2 pa44));
+	R0 = o(2);
+	R1 = o:2;
+	cs(o);
+}
+
+:DAR ra,rb is op8=0xA7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(scarry(v, o));
+	CS_C = carry(v, o);
+	local r:4 = v + o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DA ra,DA is (op8=0xA6 & ra & ra1) ... & DA {
+	local pi45:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp45:3 = zext(*[pagefile]:2 pi45) & 0xff; local pa45:3 = (pp45 << 12) | zext((DA) & 0xfff); local pi46:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp46:3 = zext(*[pagefile]:2 pi46) & 0xff; local pa46:3 = (pp46 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa45) << 16) | zext(*[ram]:2 pa46));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(scarry(v, o));
+	CS_C = carry(v, o);
+	local r:4 = v + o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DSR ra,rb is op8=0xB7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(sborrow(v, o));
+	CS_C = v >= o;
+	local r:4 = v - o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DS ra,DA is (op8=0xB6 & ra & ra1) ... & DA {
+	local pi47:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp47:3 = zext(*[pagefile]:2 pi47) & 0xff; local pa47:3 = (pp47 << 12) | zext((DA) & 0xfff); local pi48:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp48:3 = zext(*[pagefile]:2 pi48) & 0xff; local pa48:3 = (pp48 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa47) << 16) | zext(*[ram]:2 pa48));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf(sborrow(v, o));
+	CS_C = v >= o;
+	local r:4 = v - o;
+	ra = r(2);
+	ra1 = r:2;
+	nzp(r);
+}
+
+:DMR ra,rb is op8=0xC7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local p:8 = sext(v) * sext(o);
+	ovf(p != sext(p:4));
+	local r:4 = p:4;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DM ra,DA is (op8=0xC6 & ra & ra1) ... & DA {
+	local pi49:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp49:3 = zext(*[pagefile]:2 pi49) & 0xff; local pa49:3 = (pp49 << 12) | zext((DA) & 0xfff); local pi50:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp50:3 = zext(*[pagefile]:2 pi50) & 0xff; local pa50:3 = (pp50 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa49) << 16) | zext(*[ram]:2 pa50));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local p:8 = sext(v) * sext(o);
+	ovf(p != sext(p:4));
+	local r:4 = p:4;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DDR ra,rb is op8=0xD7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf((o == 0) || ((v == 0x80000000) && (o == 0xffffffff)));
+	local r:4 = v s/ o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DD ra,DA is (op8=0xD6 & ra & ra1) ... & DA {
+	local pi51:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp51:3 = zext(*[pagefile]:2 pi51) & 0xff; local pa51:3 = (pp51 << 12) | zext((DA) & 0xfff); local pi52:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp52:3 = zext(*[pagefile]:2 pi52) & 0xff; local pa52:3 = (pp52 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa51) << 16) | zext(*[ram]:2 pa52));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	ovf((o == 0) || ((v == 0x80000000) && (o == 0xffffffff)));
+	local r:4 = v s/ o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+
+:DCR ra,rb is op8=0xF7 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	cmpcs(v, o);
+}
+
+:DC ra,DA is (op8=0xF6 & ra & ra1) ... & DA {
+	local pi53:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp53:3 = zext(*[pagefile]:2 pi53) & 0xff; local pa53:3 = (pp53 << 12) | zext((DA) & 0xfff); local pi54:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp54:3 = zext(*[pagefile]:2 pi54) & 0xff; local pa54:3 = (pp54 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa53) << 16) | zext(*[ram]:2 pa54));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	cmpcs(v, o);
+}
+
+:FAR ra,rb is op8=0xA9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fadd(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FA ra,DA is (op8=0xA8 & ra & ra1) ... & DA {
+	local pi55:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp55:3 = zext(*[pagefile]:2 pi55) & 0xff; local pa55:3 = (pp55 << 12) | zext((DA) & 0xfff); local pi56:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp56:3 = zext(*[pagefile]:2 pi56) & 0xff; local pa56:3 = (pp56 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa55) << 16) | zext(*[ram]:2 pa56));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fadd(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FAB BA is op6=0x08 & BA {
+	local pi57:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp57:3 = zext(*[pagefile]:2 pi57) & 0xff; local pa57:3 = (pp57 << 12) | zext((BA) & 0xfff); local pi58:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp58:3 = zext(*[pagefile]:2 pi58) & 0xff; local pa58:3 = (pp58 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa57) << 16) | zext(*[ram]:2 pa58));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fadd(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FABX BXA is op6=0x10 & opx=0x8 & BXA {
+	local pi59:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp59:3 = zext(*[pagefile]:2 pi59) & 0xff; local pa59:3 = (pp59 << 12) | zext((BXA) & 0xfff); local pi60:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp60:3 = zext(*[pagefile]:2 pi60) & 0xff; local pa60:3 = (pp60 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa59) << 16) | zext(*[ram]:2 pa60));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fadd(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FSR ra,rb is op8=0xB9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fsub(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FS ra,DA is (op8=0xB8 & ra & ra1) ... & DA {
+	local pi61:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp61:3 = zext(*[pagefile]:2 pi61) & 0xff; local pa61:3 = (pp61 << 12) | zext((DA) & 0xfff); local pi62:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp62:3 = zext(*[pagefile]:2 pi62) & 0xff; local pa62:3 = (pp62 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa61) << 16) | zext(*[ram]:2 pa62));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fsub(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FSB BA is op6=0x09 & BA {
+	local pi63:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp63:3 = zext(*[pagefile]:2 pi63) & 0xff; local pa63:3 = (pp63 << 12) | zext((BA) & 0xfff); local pi64:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp64:3 = zext(*[pagefile]:2 pi64) & 0xff; local pa64:3 = (pp64 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa63) << 16) | zext(*[ram]:2 pa64));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fsub(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FSBX BXA is op6=0x10 & opx=0x9 & BXA {
+	local pi65:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp65:3 = zext(*[pagefile]:2 pi65) & 0xff; local pa65:3 = (pp65 << 12) | zext((BXA) & 0xfff); local pi66:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp66:3 = zext(*[pagefile]:2 pi66) & 0xff; local pa66:3 = (pp66 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa65) << 16) | zext(*[ram]:2 pa66));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fsub(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FMR ra,rb is op8=0xC9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fmul(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FM ra,DA is (op8=0xC8 & ra & ra1) ... & DA {
+	local pi67:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp67:3 = zext(*[pagefile]:2 pi67) & 0xff; local pa67:3 = (pp67 << 12) | zext((DA) & 0xfff); local pi68:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp68:3 = zext(*[pagefile]:2 pi68) & 0xff; local pa68:3 = (pp68 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa67) << 16) | zext(*[ram]:2 pa68));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fmul(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FMB BA is op6=0x0A & BA {
+	local pi69:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp69:3 = zext(*[pagefile]:2 pi69) & 0xff; local pa69:3 = (pp69 << 12) | zext((BA) & 0xfff); local pi70:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp70:3 = zext(*[pagefile]:2 pi70) & 0xff; local pa70:3 = (pp70 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa69) << 16) | zext(*[ram]:2 pa70));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fmul(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FMBX BXA is op6=0x10 & opx=0xA & BXA {
+	local pi71:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp71:3 = zext(*[pagefile]:2 pi71) & 0xff; local pa71:3 = (pp71 << 12) | zext((BXA) & 0xfff); local pi72:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp72:3 = zext(*[pagefile]:2 pi72) & 0xff; local pa72:3 = (pp72 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa71) << 16) | zext(*[ram]:2 pa72));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fmul(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FDR ra,rb is op8=0xD9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fdiv(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FD ra,DA is (op8=0xD8 & ra & ra1) ... & DA {
+	local pi73:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp73:3 = zext(*[pagefile]:2 pi73) & 0xff; local pa73:3 = (pp73 << 12) | zext((DA) & 0xfff); local pi74:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp74:3 = zext(*[pagefile]:2 pi74) & 0xff; local pa74:3 = (pp74 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa73) << 16) | zext(*[ram]:2 pa74));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:4 = fdiv(v, o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+:FDB BA is op6=0x0B & BA {
+	local pi75:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp75:3 = zext(*[pagefile]:2 pi75) & 0xff; local pa75:3 = (pp75 << 12) | zext((BA) & 0xfff); local pi76:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp76:3 = zext(*[pagefile]:2 pi76) & 0xff; local pa76:3 = (pp76 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa75) << 16) | zext(*[ram]:2 pa76));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fdiv(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FDBX BXA is op6=0x10 & opx=0xB & BXA {
+	local pi77:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp77:3 = zext(*[pagefile]:2 pi77) & 0xff; local pa77:3 = (pp77 << 12) | zext((BXA) & 0xfff); local pi78:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp78:3 = zext(*[pagefile]:2 pi78) & 0xff; local pa78:3 = (pp78 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa77) << 16) | zext(*[ram]:2 pa78));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:4 = fdiv(v, o);
+	R0 = r(2);
+	R1 = r:2;
+	fcs(r);
+}
+
+:FCR ra,rb is op8=0xF9 & ra & ra1 & rb & rb1 {
+	local o:4 = ((zext(rb) << 16) | zext(rb1));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FC ra,DA is (op8=0xF8 & ra & ra1) ... & DA {
+	local pi79:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp79:3 = zext(*[pagefile]:2 pi79) & 0xff; local pa79:3 = (pp79 << 12) | zext((DA) & 0xfff); local pi80:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp80:3 = zext(*[pagefile]:2 pi80) & 0xff; local pa80:3 = (pp80 << 12) | zext(((DA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa79) << 16) | zext(*[ram]:2 pa80));
+	local v:4 = ((zext(ra) << 16) | zext(ra1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FCB BA is op6=0x0F & BA {
+	local pi81:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp81:3 = zext(*[pagefile]:2 pi81) & 0xff; local pa81:3 = (pp81 << 12) | zext((BA) & 0xfff); local pi82:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp82:3 = zext(*[pagefile]:2 pi82) & 0xff; local pa82:3 = (pp82 << 12) | zext(((BA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa81) << 16) | zext(*[ram]:2 pa82));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:FCBX BXA is op6=0x10 & opx=0xD & BXA {
+	local pi83:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp83:3 = zext(*[pagefile]:2 pi83) & 0xff; local pa83:3 = (pp83 << 12) | zext((BXA) & 0xfff); local pi84:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp84:3 = zext(*[pagefile]:2 pi84) & 0xff; local pa84:3 = (pp84 << 12) | zext(((BXA + 1)) & 0xfff); local o:4 = ((zext(*[ram]:2 pa83) << 16) | zext(*[ram]:2 pa84));
+	local v:4 = ((zext(R0) << 16) | zext(R1));
+	local r:1 = fcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:EFAR ra,rb is op8=0xAB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efadd(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFA ra,DA is (op8=0xAA & ra & ra1 & ra2) ... & DA {
+	local pi85:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp85:3 = zext(*[pagefile]:2 pi85) & 0xff; local pa85:3 = (pp85 << 12) | zext((DA) & 0xfff); local pi86:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp86:3 = zext(*[pagefile]:2 pi86) & 0xff; local pa86:3 = (pp86 << 12) | zext(((DA + 1)) & 0xfff); local pi87:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp87:3 = zext(*[pagefile]:2 pi87) & 0xff; local pa87:3 = (pp87 << 12) | zext(((DA + 2)) & 0xfff); local o:6 = ((zext(*[ram]:2 pa85) << 32) | (zext(*[ram]:2 pa86) << 16) | zext(*[ram]:2 pa87));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efadd(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFSR ra,rb is op8=0xBB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efsub(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFS ra,DA is (op8=0xBA & ra & ra1 & ra2) ... & DA {
+	local pi88:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp88:3 = zext(*[pagefile]:2 pi88) & 0xff; local pa88:3 = (pp88 << 12) | zext((DA) & 0xfff); local pi89:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp89:3 = zext(*[pagefile]:2 pi89) & 0xff; local pa89:3 = (pp89 << 12) | zext(((DA + 1)) & 0xfff); local pi90:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp90:3 = zext(*[pagefile]:2 pi90) & 0xff; local pa90:3 = (pp90 << 12) | zext(((DA + 2)) & 0xfff); local o:6 = ((zext(*[ram]:2 pa88) << 32) | (zext(*[ram]:2 pa89) << 16) | zext(*[ram]:2 pa90));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efsub(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFMR ra,rb is op8=0xCB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efmul(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFM ra,DA is (op8=0xCA & ra & ra1 & ra2) ... & DA {
+	local pi91:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp91:3 = zext(*[pagefile]:2 pi91) & 0xff; local pa91:3 = (pp91 << 12) | zext((DA) & 0xfff); local pi92:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp92:3 = zext(*[pagefile]:2 pi92) & 0xff; local pa92:3 = (pp92 << 12) | zext(((DA + 1)) & 0xfff); local pi93:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp93:3 = zext(*[pagefile]:2 pi93) & 0xff; local pa93:3 = (pp93 << 12) | zext(((DA + 2)) & 0xfff); local o:6 = ((zext(*[ram]:2 pa91) << 32) | (zext(*[ram]:2 pa92) << 16) | zext(*[ram]:2 pa93));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efmul(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFDR ra,rb is op8=0xDB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efdiv(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFD ra,DA is (op8=0xDA & ra & ra1 & ra2) ... & DA {
+	local pi94:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp94:3 = zext(*[pagefile]:2 pi94) & 0xff; local pa94:3 = (pp94 << 12) | zext((DA) & 0xfff); local pi95:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp95:3 = zext(*[pagefile]:2 pi95) & 0xff; local pa95:3 = (pp95 << 12) | zext(((DA + 1)) & 0xfff); local pi96:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp96:3 = zext(*[pagefile]:2 pi96) & 0xff; local pa96:3 = (pp96 << 12) | zext(((DA + 2)) & 0xfff); local o:6 = ((zext(*[ram]:2 pa94) << 32) | (zext(*[ram]:2 pa95) << 16) | zext(*[ram]:2 pa96));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:6 = efdiv(v, o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+:EFCR ra,rb is op8=0xFB & ra & ra1 & ra2 & rb & rb1 & rb2 {
+	local o:6 = ((zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:1 = efcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:EFC ra,DA is (op8=0xFA & ra & ra1 & ra2) ... & DA {
+	local pi97:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp97:3 = zext(*[pagefile]:2 pi97) & 0xff; local pa97:3 = (pp97 << 12) | zext((DA) & 0xfff); local pi98:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp98:3 = zext(*[pagefile]:2 pi98) & 0xff; local pa98:3 = (pp98 << 12) | zext(((DA + 1)) & 0xfff); local pi99:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp99:3 = zext(*[pagefile]:2 pi99) & 0xff; local pa99:3 = (pp99 << 12) | zext(((DA + 2)) & 0xfff); local o:6 = ((zext(*[ram]:2 pa97) << 32) | (zext(*[ram]:2 pa98) << 16) | zext(*[ram]:2 pa99));
+	local v:6 = ((zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2));
+	local r:1 = efcmp(v, o);
+	CS_C = 0;
+	CS_Z = r == 0;
+	CS_N = r s< 0;
+	CS_P = r s> 0;
+}
+
+:ST ra,DA is (op8=0x90 & ra & ra1) ... & DA {
+	local pi100:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp100:3 = zext(*[pagefile]:2 pi100) & 0xff; local pa100:3 = (pp100 << 12) | zext((DA) & 0xfff); *[ram]:2 pa100 = ra;
+}
+:STI ra,IA is (op8=0x94 & ra & ra1) ... & IA {
+	local pi101:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp101:3 = zext(*[pagefile]:2 pi101) & 0xff; local pa101:3 = (pp101 << 12) | zext((IA) & 0xfff); *[ram]:2 pa101 = ra;
+}
+:STB BA is op6=0x02 & BA {
+	local pi102:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp102:3 = zext(*[pagefile]:2 pi102) & 0xff; local pa102:3 = (pp102 << 12) | zext((BA) & 0xfff); *[ram]:2 pa102 = R2;
+}
+:STBX BXA is op6=0x10 & opx=0x2 & BXA {
+	local pi103:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp103:3 = zext(*[pagefile]:2 pi103) & 0xff; local pa103:3 = (pp103 << 12) | zext((BXA) & 0xfff); *[ram]:2 pa103 = R2;
+}
+
+:DST ra,DA is (op8=0x96 & ra & ra1) ... & DA {
+	local mw1:4 = ((zext(ra) << 16) | zext(ra1)); local pi104:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp104:3 = zext(*[pagefile]:2 pi104) & 0xff; local pa104:3 = (pp104 << 12) | zext((DA) & 0xfff); *[ram]:2 pa104 = mw1(2); local pi105:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp105:3 = zext(*[pagefile]:2 pi105) & 0xff; local pa105:3 = (pp105 << 12) | zext(((DA + 1)) & 0xfff); *[ram]:2 pa105 = mw1:2;
+}
+:DSTI ra,IA is (op8=0x98 & ra & ra1) ... & IA {
+	local mw2:4 = ((zext(ra) << 16) | zext(ra1)); local pi106:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp106:3 = zext(*[pagefile]:2 pi106) & 0xff; local pa106:3 = (pp106 << 12) | zext((IA) & 0xfff); *[ram]:2 pa106 = mw2(2); local pi107:2 = ((SW & 0xf) << 5) | 0x10 | (((IA + 1)) >> 12); local pp107:3 = zext(*[pagefile]:2 pi107) & 0xff; local pa107:3 = (pp107 << 12) | zext(((IA + 1)) & 0xfff); *[ram]:2 pa107 = mw2:2;
+}
+:DSTB BA is op6=0x03 & BA {
+	local mw3:4 = ((zext(R0) << 16) | zext(R1)); local pi108:2 = ((SW & 0xf) << 5) | 0x10 | ((BA) >> 12); local pp108:3 = zext(*[pagefile]:2 pi108) & 0xff; local pa108:3 = (pp108 << 12) | zext((BA) & 0xfff); *[ram]:2 pa108 = mw3(2); local pi109:2 = ((SW & 0xf) << 5) | 0x10 | (((BA + 1)) >> 12); local pp109:3 = zext(*[pagefile]:2 pi109) & 0xff; local pa109:3 = (pp109 << 12) | zext(((BA + 1)) & 0xfff); *[ram]:2 pa109 = mw3:2;
+}
+:DSTX BXA is op6=0x10 & opx=0x3 & BXA {
+	local mw4:4 = ((zext(R0) << 16) | zext(R1)); local pi110:2 = ((SW & 0xf) << 5) | 0x10 | ((BXA) >> 12); local pp110:3 = zext(*[pagefile]:2 pi110) & 0xff; local pa110:3 = (pp110 << 12) | zext((BXA) & 0xfff); *[ram]:2 pa110 = mw4(2); local pi111:2 = ((SW & 0xf) << 5) | 0x10 | (((BXA + 1)) >> 12); local pp111:3 = zext(*[pagefile]:2 pi111) & 0xff; local pa111:3 = (pp111 << 12) | zext(((BXA + 1)) & 0xfff); *[ram]:2 pa111 = mw4:2;
+}
+
+
+# Extended precision floating point load and store
+:EFL ra,DA is (op8=0x8A & ra & ra1 & ra2) ... & DA {
+	local pi112:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp112:3 = zext(*[pagefile]:2 pi112) & 0xff; local pa112:3 = (pp112 << 12) | zext((DA) & 0xfff); local pi113:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp113:3 = zext(*[pagefile]:2 pi113) & 0xff; local pa113:3 = (pp113 << 12) | zext(((DA + 1)) & 0xfff); local pi114:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp114:3 = zext(*[pagefile]:2 pi114) & 0xff; local pa114:3 = (pp114 << 12) | zext(((DA + 2)) & 0xfff); local v:6 = ((zext(*[ram]:2 pa112) << 32) | (zext(*[ram]:2 pa113) << 16) | zext(*[ram]:2 pa114));
+	ra = v(4);
+	ra1 = v(2);
+	ra2 = v:2;
+	fcs(v);
+}
+:EFST ra,DA is (op8=0x9A & ra & ra1 & ra2) ... & DA {
+	local mw5:6 = (zext(ra) << 32) | (zext(ra1) << 16) | zext(ra2); local pi115:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp115:3 = zext(*[pagefile]:2 pi115) & 0xff; local pa115:3 = (pp115 << 12) | zext((DA) & 0xfff); *[ram]:2 pa115 = mw5(4); local pi116:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 1)) >> 12); local pp116:3 = zext(*[pagefile]:2 pi116) & 0xff; local pa116:3 = (pp116 << 12) | zext(((DA + 1)) & 0xfff); *[ram]:2 pa116 = mw5(2); local pi117:2 = ((SW & 0xf) << 5) | 0x10 | (((DA + 2)) >> 12); local pp117:3 = zext(*[pagefile]:2 pi117) & 0xff; local pa117:3 = (pp117 << 12) | zext(((DA + 2)) & 0xfff); *[ram]:2 pa117 = mw5:2;
+}
+
+# Store a non-negative constant
+:STZ DA is (op8=0x91 & n4=0) ... & DA      { local pi118:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp118:3 = zext(*[pagefile]:2 pi118) & 0xff; local pa118:3 = (pp118 << 12) | zext((DA) & 0xfff); *[ram]:2 pa118 = 0:2; }
+:STC n4,DA is (op8=0x91 & n4) ... & DA     { local c:2 = n4; local pi119:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp119:3 = zext(*[pagefile]:2 pi119) & 0xff; local pa119:3 = (pp119 << 12) | zext((DA) & 0xfff); *[ram]:2 pa119 = c; }
+:STZI IA is (op8=0x92 & n4=0) ... & IA     { local pi120:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp120:3 = zext(*[pagefile]:2 pi120) & 0xff; local pa120:3 = (pp120 << 12) | zext((IA) & 0xfff); *[ram]:2 pa120 = 0:2; }
+:STCI n4,IA is (op8=0x92 & n4) ... & IA    { local c:2 = n4; local pi121:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp121:3 = zext(*[pagefile]:2 pi121) & 0xff; local pa121:3 = (pp121 << 12) | zext((IA) & 0xfff); *[ram]:2 pa121 = c; }
+
+# Store register through mask, (RA+1) = mask
+:SRM ra,DA is (op8=0x97 & ra & ra1) ... & DA {
+	local a:2 = DA;
+	local pi122:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp122:3 = zext(*[pagefile]:2 pi122) & 0xff; local pa122:3 = (pp122 << 12) | zext((a) & 0xfff); local pi123:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp123:3 = zext(*[pagefile]:2 pi123) & 0xff; local pa123:3 = (pp123 << 12) | zext((a) & 0xfff); *[ram]:2 pa122 = (*[ram]:2 pa123 & ~ra1) | (ra & ra1);
+}
+
+# Byte loads and stores; bits 0-7 are the upper byte
+:LUB ra,DA is (op8=0x8B & ra) ... & DA   { local pi124:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp124:3 = zext(*[pagefile]:2 pi124) & 0xff; local pa124:3 = (pp124 << 12) | zext((DA) & 0xfff); ra = (ra & 0xff00) | (*[ram]:2 pa124 >> 8); cs(ra); }
+:LUBI ra,IA is (op8=0x8D & ra) ... & IA  { local pi125:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp125:3 = zext(*[pagefile]:2 pi125) & 0xff; local pa125:3 = (pp125 << 12) | zext((IA) & 0xfff); ra = (ra & 0xff00) | (*[ram]:2 pa125 >> 8); cs(ra); }
+:LLB ra,DA is (op8=0x8C & ra) ... & DA   { local pi126:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp126:3 = zext(*[pagefile]:2 pi126) & 0xff; local pa126:3 = (pp126 << 12) | zext((DA) & 0xfff); ra = (ra & 0xff00) | (*[ram]:2 pa126 & 0xff); cs(ra); }
+:LLBI ra,IA is (op8=0x8E & ra) ... & IA  { local pi127:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp127:3 = zext(*[pagefile]:2 pi127) & 0xff; local pa127:3 = (pp127 << 12) | zext((IA) & 0xfff); ra = (ra & 0xff00) | (*[ram]:2 pa127 & 0xff); cs(ra); }
+:STUB ra,DA is (op8=0x9B & ra) ... & DA  { local a:2 = DA; local pi128:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp128:3 = zext(*[pagefile]:2 pi128) & 0xff; local pa128:3 = (pp128 << 12) | zext((a) & 0xfff); local pi129:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp129:3 = zext(*[pagefile]:2 pi129) & 0xff; local pa129:3 = (pp129 << 12) | zext((a) & 0xfff); *[ram]:2 pa128 = (*[ram]:2 pa129 & 0xff) | (ra << 8); }
+:SUBI ra,IA is (op8=0x9D & ra) ... & IA  { local a:2 = IA; local pi130:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp130:3 = zext(*[pagefile]:2 pi130) & 0xff; local pa130:3 = (pp130 << 12) | zext((a) & 0xfff); local pi131:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp131:3 = zext(*[pagefile]:2 pi131) & 0xff; local pa131:3 = (pp131 << 12) | zext((a) & 0xfff); *[ram]:2 pa130 = (*[ram]:2 pa131 & 0xff) | (ra << 8); }
+:STLB ra,DA is (op8=0x9C & ra) ... & DA  { local a:2 = DA; local pi132:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp132:3 = zext(*[pagefile]:2 pi132) & 0xff; local pa132:3 = (pp132 << 12) | zext((a) & 0xfff); local pi133:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp133:3 = zext(*[pagefile]:2 pi133) & 0xff; local pa133:3 = (pp133 << 12) | zext((a) & 0xfff); *[ram]:2 pa132 = (*[ram]:2 pa133 & 0xff00) | (ra & 0xff); }
+:SLBI ra,IA is (op8=0x9E & ra) ... & IA  { local a:2 = IA; local pi134:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp134:3 = zext(*[pagefile]:2 pi134) & 0xff; local pa134:3 = (pp134 << 12) | zext((a) & 0xfff); local pi135:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp135:3 = zext(*[pagefile]:2 pi135) & 0xff; local pa135:3 = (pp135 << 12) | zext((a) & 0xfff); *[ram]:2 pa134 = (*[ram]:2 pa135 & 0xff00) | (ra & 0xff); }
+
+# Move multiple words, memory to memory: RA destination, RB source, RA+1 count
+:MOV ra,rb is op8=0x93 & ra & ra1 & rb {
+<loop>
+	if (ra1 == 0) goto <done>;
+	local pi136:2 = ((SW & 0xf) << 5) | 0x10 | ((ra) >> 12); local pp136:3 = zext(*[pagefile]:2 pi136) & 0xff; local pa136:3 = (pp136 << 12) | zext((ra) & 0xfff); local pi137:2 = ((SW & 0xf) << 5) | 0x10 | ((rb) >> 12); local pp137:3 = zext(*[pagefile]:2 pi137) & 0xff; local pa137:3 = (pp137 << 12) | zext((rb) & 0xfff); *[ram]:2 pa136 = *[ram]:2 pa137;
+	ra = ra + 1;
+	rb = rb + 1;
+	ra1 = ra1 - 1;
+	goto <loop>;
+<done>
+}
+
+# Increment and decrement memory by a positive integer
+:INCM NP,DA is (op8=0xA3 & NP) ... & DA {
+	local a:2 = DA;
+	local pi138:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp138:3 = zext(*[pagefile]:2 pi138) & 0xff; local pa138:3 = (pp138 << 12) | zext((a) & 0xfff); local v:2 = *[ram]:2 pa138;
+	ovf(scarry(v, NP));
+	CS_C = carry(v, NP);
+	v = v + NP;
+	local pi139:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp139:3 = zext(*[pagefile]:2 pi139) & 0xff; local pa139:3 = (pp139 << 12) | zext((a) & 0xfff); *[ram]:2 pa139 = v;
+	nzp(v);
+}
+:DECM NP,DA is (op8=0xB3 & NP) ... & DA {
+	local a:2 = DA;
+	local pi140:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp140:3 = zext(*[pagefile]:2 pi140) & 0xff; local pa140:3 = (pp140 << 12) | zext((a) & 0xfff); local v:2 = *[ram]:2 pa140;
+	ovf(sborrow(v, NP));
+	CS_C = v >= NP;
+	v = v - NP;
+	local pi141:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp141:3 = zext(*[pagefile]:2 pi141) & 0xff; local pa141:3 = (pp141 << 12) | zext((a) & 0xfff); *[ram]:2 pa141 = v;
+	nzp(v);
+}
+
+# Absolute value and negate
+:ABS ra,rb is op8=0xA4 & ra & rb {
+	local o:2 = rb;
+	ovf(o == 0x8000);
+	local s:2 = zext(o s< 0);
+	ra = (o ^ -s) + s;
+	cs(ra);
+}
+:NEG ra,rb is op8=0xB4 & ra & rb   { ovf(rb == 0x8000); ra = -rb; cs(ra); }
+:DABS ra,rb is op8=0xA5 & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ovf(o == 0x80000000);
+	local s:4 = zext(o s< 0);
+	local r:4 = (o ^ -s) + s;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:DNEG ra,rb is op8=0xB5 & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ovf(o == 0x80000000);
+	local r:4 = -o;
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:FABS ra,rb is op8=0xAC & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:4 = fabs(o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+:FNEG ra,rb is op8=0xBC & ra & ra1 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:4 = fneg(o);
+	ra = r(2);
+	ra1 = r:2;
+	fcs(r);
+}
+
+# Conversions
+:FIX ra,rb is op8=0xE8 & ra & rb & rb1 {
+	local e:1 = rb1:1;
+	ovf(e s> 0x0f);
+	if (e s> 0x0f) goto inst_next;
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	ra = fix(o);
+	cs(ra);
+}
+:FLT ra,rb is op8=0xE9 & ra & ra1 & rb         { local r:4 = flt(rb); ra = r(2); ra1 = r:2; fcs(r); }
+:EFIX ra,rb is op8=0xEA & ra & ra1 & rb & rb1 & rb2 {
+	local e:1 = rb1:1;
+	ovf(e s> 0x1f);
+	if (e s> 0x1f) goto inst_next;
+	local o:6 = (zext(rb) << 32) | (zext(rb1) << 16) | zext(rb2);
+	local r:4 = efix(o);
+	ra = r(2);
+	ra1 = r:2;
+	cs(r);
+}
+:EFLT ra,rb is op8=0xEB & ra & ra1 & ra2 & rb & rb1 {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local r:6 = eflt(o);
+	ra = r(4);
+	ra1 = r(2);
+	ra2 = r:2;
+	fcs(r);
+}
+
+# Exchange bytes, exchange words
+:XBR ra is op8=0xEC & ra & rb=0     { ra = (ra << 8) | (ra >> 8); cs(ra); }
+:XWR ra,rb is op8=0xED & ra & rb    { local t:2 = ra; ra = rb; rb = t; cs(ra); }
+
+# Compare between limits: DO1 = [DA], DO2 = [DA+1]
+:CBL ra,DA is (op8=0xF4 & ra) ... & DA {
+	local a:2 = DA;
+	local pi142:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp142:3 = zext(*[pagefile]:2 pi142) & 0xff; local pa142:3 = (pp142 << 12) | zext((a) & 0xfff); local lo:2 = *[ram]:2 pa142;
+	local pi143:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp143:3 = zext(*[pagefile]:2 pi143) & 0xff; local pa143:3 = (pp143 << 12) | zext(((a + 1)) & 0xfff); local hi:2 = *[ram]:2 pa143;
+	CS_C = lo s> hi;
+	CS_N = !CS_C && (ra s< lo);
+	CS_P = !CS_C && (ra s> hi);
+	CS_Z = !CS_C && !CS_N && !CS_P;
+}
+
+# Shifts, count N in the instruction (field holds N-1)
+:SLL rb,NP is op8=0x60 & rb & NP    { rb = rb << NP; cs(rb); }
+:SRL rb,NP is op8=0x61 & rb & NP    { rb = rb >> NP; cs(rb); }
+:SRA rb,NP is op8=0x62 & rb & NP    { rb = rb s>> NP; cs(rb); }
+:SLC rb,NP is op8=0x63 & rb & NP    { rb = (rb << NP) | (rb >> (16 - NP)); cs(rb); }
+:DSLL rb,NP is op8=0x65 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) << NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSRL rb,NP is op8=0x66 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) >> NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSRA rb,NP is op8=0x67 & rb & rb1 & NP {
+	local v:4 = ((zext(rb) << 16) | zext(rb1)) s>> NP;
+	rb = v(2); rb1 = v:2; cs(v);
+}
+:DSLC rb,NP is op8=0x68 & rb & rb1 & NP {
+	local o:4 = (zext(rb) << 16) | zext(rb1);
+	local v:4 = (o << NP) | (o >> (32 - NP));
+	rb = v(2); rb1 = v:2; cs(v);
+}
+
+# Shifts, count in register RB: positive shifts left, negative shifts right.
+# A count outside -16..16 (-32..32 for double shifts) is a fixed point overflow and no shift.
+:SLR ra,rb is op8=0x6A & ra & rb {
+	local n:2 = rb;
+	ovf((n s> 16) || (n s< -16));
+	if ((n s> 16) || (n s< -16)) goto inst_next;
+	ra = (ra << n) * zext(n s>= 0) + (ra >> -n) * zext(n s< 0);
+	cs(ra);
+}
+:SAR ra,rb is op8=0x6B & ra & rb {
+	local n:2 = rb;
+	ovf((n s> 16) || (n s< -16));
+	if ((n s> 16) || (n s< -16)) goto inst_next;
+	ovf((n s> 0) && (((ra << n) s>> n) != ra));
+	ra = (ra << n) * zext(n s>= 0) + (ra s>> -n) * zext(n s< 0);
+	cs(ra);
+}
+:SCR ra,rb is op8=0x6C & ra & rb {
+	ovf((rb s> 16) || (rb s< -16));
+	if ((rb s> 16) || (rb s< -16)) goto inst_next;
+	local n:2 = rb & 0xf;
+	ra = (ra << n) | (ra >> (16 - n));
+	cs(ra);
+}
+:DSLR ra,rb is op8=0x6D & ra & ra1 & rb {
+	local n:4 = sext(rb);
+	ovf((n s> 32) || (n s< -32));
+	if ((n s> 32) || (n s< -32)) goto inst_next;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	local v:4 = (o << n) * zext(n s>= 0) + (o >> -n) * zext(n s< 0);
+	ra = v(2); ra1 = v:2; cs(v);
+}
+:DSAR ra,rb is op8=0x6E & ra & ra1 & rb {
+	local n:4 = sext(rb);
+	ovf((n s> 32) || (n s< -32));
+	if ((n s> 32) || (n s< -32)) goto inst_next;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	ovf((n s> 0) && (((o << n) s>> n) != o));
+	local v:4 = (o << n) * zext(n s>= 0) + (o s>> -n) * zext(n s< 0);
+	ra = v(2); ra1 = v:2; cs(v);
+}
+:DSCR ra,rb is op8=0x6F & ra & ra1 & rb {
+	ovf((rb s> 32) || (rb s< -32));
+	if ((rb s> 32) || (rb s< -32)) goto inst_next;
+	local n:4 = sext(rb) & 0x1f;
+	local o:4 = (zext(ra) << 16) | zext(ra1);
+	local v:4 = (o << n) | (o >> (32 - n));
+	ra = v(2); ra1 = v:2; cs(v);
+}
+
+# Bit operations; bit N counts from the MSB
+:SBR n4,rb is op8=0x51 & n4 & rb & BIT      { rb = rb | BIT; }
+:SB n4,DA is (op8=0x50 & n4 & BIT) ... & DA   { local a:2 = DA; local pi144:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp144:3 = zext(*[pagefile]:2 pi144) & 0xff; local pa144:3 = (pp144 << 12) | zext((a) & 0xfff); local pi145:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp145:3 = zext(*[pagefile]:2 pi145) & 0xff; local pa145:3 = (pp145 << 12) | zext((a) & 0xfff); *[ram]:2 pa144 = *[ram]:2 pa145 | BIT; }
+:SBI n4,IA is (op8=0x52 & n4 & BIT) ... & IA  { local a:2 = IA; local pi146:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp146:3 = zext(*[pagefile]:2 pi146) & 0xff; local pa146:3 = (pp146 << 12) | zext((a) & 0xfff); local pi147:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp147:3 = zext(*[pagefile]:2 pi147) & 0xff; local pa147:3 = (pp147 << 12) | zext((a) & 0xfff); *[ram]:2 pa146 = *[ram]:2 pa147 | BIT; }
+:RBR n4,rb is op8=0x54 & n4 & rb & BIT      { rb = rb & ~BIT; }
+:RB n4,DA is (op8=0x53 & n4 & BIT) ... & DA   { local a:2 = DA; local pi148:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp148:3 = zext(*[pagefile]:2 pi148) & 0xff; local pa148:3 = (pp148 << 12) | zext((a) & 0xfff); local pi149:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp149:3 = zext(*[pagefile]:2 pi149) & 0xff; local pa149:3 = (pp149 << 12) | zext((a) & 0xfff); *[ram]:2 pa148 = *[ram]:2 pa149 & ~BIT; }
+:RBI n4,IA is (op8=0x55 & n4 & BIT) ... & IA  { local a:2 = IA; local pi150:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp150:3 = zext(*[pagefile]:2 pi150) & 0xff; local pa150:3 = (pp150 << 12) | zext((a) & 0xfff); local pi151:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp151:3 = zext(*[pagefile]:2 pi151) & 0xff; local pa151:3 = (pp151 << 12) | zext((a) & 0xfff); *[ram]:2 pa150 = *[ram]:2 pa151 & ~BIT; }
+
+macro testbit(v, m) {
+	local b:1 = (v & m) != 0;
+	CS_C = 0;
+	CS_Z = !b;
+	CS_N = b && (m == 0x8000);
+	CS_P = b && (m != 0x8000);
+}
+
+:TBR n4,rb is op8=0x57 & n4 & rb & BIT      { testbit(rb, BIT); }
+:TB n4,DA is (op8=0x56 & n4 & BIT) ... & DA   { local pi152:2 = ((SW & 0xf) << 5) | 0x10 | ((DA) >> 12); local pp152:3 = zext(*[pagefile]:2 pi152) & 0xff; local pa152:3 = (pp152 << 12) | zext((DA) & 0xfff); testbit(*[ram]:2 pa152, BIT); }
+:TBI n4,IA is (op8=0x58 & n4 & BIT) ... & IA  { local pi153:2 = ((SW & 0xf) << 5) | 0x10 | ((IA) >> 12); local pp153:3 = zext(*[pagefile]:2 pi153) & 0xff; local pa153:3 = (pp153 << 12) | zext((IA) & 0xfff); testbit(*[ram]:2 pa153, BIT); }
+:TSB n4,DA is (op8=0x59 & n4 & BIT) ... & DA  {
+	local a:2 = DA;
+	local pi154:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp154:3 = zext(*[pagefile]:2 pi154) & 0xff; local pa154:3 = (pp154 << 12) | zext((a) & 0xfff); local v:2 = *[ram]:2 pa154;
+	testbit(v, BIT);
+	local pi155:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp155:3 = zext(*[pagefile]:2 pi155) & 0xff; local pa155:3 = (pp155 << 12) | zext((a) & 0xfff); *[ram]:2 pa155 = v | BIT;
+}
+:SVBR ra,rb is op8=0x5A & ra & rb    { rb = rb | (0x8000 >> (ra & 0xf)); }
+:RVBR ra,rb is op8=0x5C & ra & rb    { rb = rb & ~(0x8000 >> (ra & 0xf)); }
+:TVBR ra,rb is op8=0x5E & ra & rb    { local m:2 = 0x8000 >> (ra & 0xf); testbit(rb, m); }
+
+# Branches, instruction counter relative
+:BR REL  is op8=0x74 & REL  { goto REL; }
+:BEZ REL is op8=0x75 & REL  { if (CS_Z) goto REL; }
+:BLT REL is op8=0x76 & REL  { if (CS_N) goto REL; }
+:BLE REL is op8=0x78 & REL  { if (CS_N || CS_Z) goto REL; }
+:BGT REL is op8=0x79 & REL  { if (CS_P) goto REL; }
+:BNZ REL is op8=0x7A & REL  { if (!CS_Z) goto REL; }
+:BGE REL is op8=0x7B & REL  { if (CS_P || CS_Z) goto REL; }
+
+# Jump on condition
+:JC cc,JD is (op8=0x70 & cc & COND) ... & JD   { if (COND) goto JD; }
+:JC cc,JX is (op8=0x70 & cc & COND) ... & JX   { local t:2 = JX; if (!COND) goto inst_next; local pi439:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp439:3 = zext(*[pagefile]:2 pi439) & 0xff; local pa439:3 = (pp439 << 12) | zext((t) & 0xfff); goto [pa439]; }
+# Unconditional indexed jump from location zero: the return from JS (5.25)
+:JC cc,addr16,rx is (op8=0x70 & cc & ccv=7 & rx) ; addr16 & addrv=0  { local pi440:2 = ((SW & 0xf) << 5) | 0 | ((rx) >> 12); local pp440:3 = zext(*[pagefile]:2 pi440) & 0xff; local pa440:3 = (pp440 << 12) | zext((rx) & 0xfff); return [pa440]; }
+:JC cc,addr16,rx is (op8=0x70 & cc & ccv=15 & rx) ; addr16 & addrv=0 { local pi441:2 = ((SW & 0xf) << 5) | 0 | ((rx) >> 12); local pp441:3 = zext(*[pagefile]:2 pi441) & 0xff; local pa441:3 = (pp441 << 12) | zext((rx) & 0xfff); return [pa441]; }
+:JCI cc,IA is (op8=0x71 & cc & COND) ... & IA  { local t:2 = IA; if (!COND) goto inst_next; local pi442:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp442:3 = zext(*[pagefile]:2 pi442) & 0xff; local pa442:3 = (pp442 << 12) | zext((t) & 0xfff); goto [pa442]; }
+
+# Jump to subroutine, return address in RA
+:JS ra,JD is (op8=0x72 & ra & NEXT) ... & JD   { ra = NEXT; call JD; }
+:JS ra,JX is (op8=0x72 & ra & NEXT) ... & JX   { local t:2 = JX; ra = NEXT; local pi443:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp443:3 = zext(*[pagefile]:2 pi443) & 0xff; local pa443:3 = (pp443 << 12) | zext((t) & 0xfff); call [pa443]; }
+
+# Subtract one and jump
+:SOJ ra,JD is (op8=0x73 & ra) ... & JD  { ra = ra - 1; cs(ra); if (ra != 0) goto JD; }
+:SOJ ra,JX is (op8=0x73 & ra) ... & JX  { local t:2 = JX; ra = ra - 1; cs(ra); if (ra == 0) goto inst_next; local pi444:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp444:3 = zext(*[pagefile]:2 pi444) & 0xff; local pa444:3 = (pp444 << 12) | zext((t) & 0xfff); goto [pa444]; }
+
+# Stack IC and jump to subroutine, unstack IC and return
+:SJS ra,JD is (op8=0x7E & ra & NEXT) ... & JD  { ra = ra - 1; local pi156:2 = ((SW & 0xf) << 5) | 0x10 | ((ra) >> 12); local pp156:3 = zext(*[pagefile]:2 pi156) & 0xff; local pa156:3 = (pp156 << 12) | zext((ra) & 0xfff); *[ram]:2 pa156 = NEXT; call JD; }
+:SJS ra,JX is (op8=0x7E & ra & NEXT) ... & JX  { local t:2 = JX; ra = ra - 1; local pi157:2 = ((SW & 0xf) << 5) | 0x10 | ((ra) >> 12); local pp157:3 = zext(*[pagefile]:2 pi157) & 0xff; local pa157:3 = (pp157 << 12) | zext((ra) & 0xfff); *[ram]:2 pa157 = NEXT; local pi445:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp445:3 = zext(*[pagefile]:2 pi445) & 0xff; local pa445:3 = (pp445 << 12) | zext((t) & 0xfff); call [pa445]; }
+:URS ra is op8=0x7F & ra & rb=0         { local pi158:2 = ((SW & 0xf) << 5) | 0x10 | ((ra) >> 12); local pp158:3 = zext(*[pagefile]:2 pi158) & 0xff; local pa158:3 = (pp158 << 12) | zext((ra) & 0xfff); local t:2 = *[ram]:2 pa158; ra = ra + 1; local pi446:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp446:3 = zext(*[pagefile]:2 pi446) & 0xff; local pa446:3 = (pp446 << 12) | zext((t) & 0xfff); return [pa446]; }
+
+# Load status: (MK, SW, IC) <-- [DA, DA+1, DA+2]
+:LST DA is (op8=0x7D & n4=0) ... & DA {
+	local a:2 = DA;
+	local pi159:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp159:3 = zext(*[pagefile]:2 pi159) & 0xff; local pa159:3 = (pp159 << 12) | zext((a) & 0xfff); local m:2 = *[ram]:2 pa159;
+	local pi160:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp160:3 = zext(*[pagefile]:2 pi160) & 0xff; local pa160:3 = (pp160 << 12) | zext(((a + 1)) & 0xfff); local s:2 = *[ram]:2 pa160;
+	local pi161:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp161:3 = zext(*[pagefile]:2 pi161) & 0xff; local pa161:3 = (pp161 << 12) | zext(((a + 2)) & 0xfff); local t:2 = *[ram]:2 pa161;
+	MK = m;
+	SW = s;
+	swtocs();
+	local pi447:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp447:3 = zext(*[pagefile]:2 pi447) & 0xff; local pa447:3 = (pp447 << 12) | zext((t) & 0xfff); return [pa447];
+}
+:LSTI IA is (op8=0x7C & n4=0) ... & IA {
+	local a:2 = IA;
+	local pi162:2 = ((SW & 0xf) << 5) | 0x10 | ((a) >> 12); local pp162:3 = zext(*[pagefile]:2 pi162) & 0xff; local pa162:3 = (pp162 << 12) | zext((a) & 0xfff); local m:2 = *[ram]:2 pa162;
+	local pi163:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp163:3 = zext(*[pagefile]:2 pi163) & 0xff; local pa163:3 = (pp163 << 12) | zext(((a + 1)) & 0xfff); local s:2 = *[ram]:2 pa163;
+	local pi164:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp164:3 = zext(*[pagefile]:2 pi164) & 0xff; local pa164:3 = (pp164 << 12) | zext(((a + 2)) & 0xfff); local t:2 = *[ram]:2 pa164;
+	MK = m;
+	SW = s;
+	swtocs();
+	local pi448:2 = ((SW & 0xf) << 5) | 0 | ((t) >> 12); local pp448:3 = zext(*[pagefile]:2 pi448) & 0xff; local pa448:3 = (pp448 << 12) | zext((t) & 0xfff); return [pa448];
+}
+
+# Branch to executive
+:BEX nlo is op8=0x77 & n4=0 & nlo  { bex(nlo:1); }
+
+# Input/output (5.1). Mandatory commands that act on the processor registers are modeled;
+# other commands are named and use the xio_out/xio_in pcodeops. Commands w/ bit 0 (the MSB) set are input.
+:XIO ra,"SMK" is op8=0x48 & ra & rx=0 ; xcmd=0x2000   { MK = ra; }
+:XIO ra,"CLIR" is op8=0x48 & ra & rx=0 ; xcmd=0x2001  { PI = 0; FT = 0; }
+:XIO ra,"ENBL" is op8=0x48 & ra & rx=0 ; xcmd=0x2002  { enable_interrupts(); }
+:XIO ra,"DSBL" is op8=0x48 & ra & rx=0 ; xcmd=0x2003  { disable_interrupts(); }
+:XIO ra,"RPI" is op8=0x48 & ra & rx=0 ; xcmd=0x2004 {
+	local n:2 = ra & 0xf;
+	PI = PI & ~(0x8000 >> n);
+	FT = FT * zext(n != 1);
+}
+:XIO ra,"SPI" is op8=0x48 & ra & rx=0 ; xcmd=0x2005   { PI = PI | ra; }
+:XIO ra,"WSW" is op8=0x48 & ra & rx=0 ; xcmd=0x200E   { SW = ra; swtocs(); }
+:XIO ra,"RMK" is op8=0x48 & ra & rx=0 ; xcmd=0xA000   { ra = MK; }
+:XIO ra,"RPIR" is op8=0x48 & ra & rx=0 ; xcmd=0xA004  { ra = PI; }
+:XIO ra,"RSW" is op8=0x48 & ra & rx=0 ; xcmd=0xA00E {
+	ra = (SW & 0x0fff) | (zext(CS_C) << 15) | (zext(CS_P) << 14) | (zext(CS_Z) << 13) | (zext(CS_N) << 12);
+}
+:XIO ra,"RCFR" is op8=0x48 & ra & rx=0 ; xcmd=0xA00F  { ra = FT; FT = 0; }
+:XIO ra,"OD" is op8=0x48 & ra & rx=0 ; xcmd=0x2008  { xio_out(0x2008:2, ra); }
+:XIO ra,"RNS" is op8=0x48 & ra & rx=0 ; xcmd=0x200A  { xio_out(0x200A:2, ra); }
+:XIO ra,"CO" is op8=0x48 & ra & rx=0 ; xcmd=0x4000  { xio_out(0x4000:2, ra); }
+:XIO ra,"CLC" is op8=0x48 & ra & rx=0 ; xcmd=0x4001  { xio_out(0x4001:2, ra); }
+:XIO ra,"MPEN" is op8=0x48 & ra & rx=0 ; xcmd=0x4003  { xio_out(0x4003:2, ra); }
+:XIO ra,"ESUR" is op8=0x48 & ra & rx=0 ; xcmd=0x4004  { xio_out(0x4004:2, ra); }
+:XIO ra,"DMAE" is op8=0x48 & ra & rx=0 ; xcmd=0x4006  { xio_out(0x4006:2, ra); }
+:XIO ra,"DMAD" is op8=0x48 & ra & rx=0 ; xcmd=0x4007  { xio_out(0x4007:2, ra); }
+:XIO ra,"TAS" is op8=0x48 & ra & rx=0 ; xcmd=0x4008  { xio_out(0x4008:2, ra); }
+:XIO ra,"TAH" is op8=0x48 & ra & rx=0 ; xcmd=0x4009  { xio_out(0x4009:2, ra); }
+:XIO ra,"OTA" is op8=0x48 & ra & rx=0 ; xcmd=0x400A  { xio_out(0x400A:2, ra); }
+:XIO ra,"GO" is op8=0x48 & ra & rx=0 ; xcmd=0x400B  { xio_out(0x400B:2, ra); }
+:XIO ra,"TBS" is op8=0x48 & ra & rx=0 ; xcmd=0x400C  { xio_out(0x400C:2, ra); }
+:XIO ra,"TBH" is op8=0x48 & ra & rx=0 ; xcmd=0x400D  { xio_out(0x400D:2, ra); }
+:XIO ra,"OTB" is op8=0x48 & ra & rx=0 ; xcmd=0x400E  { xio_out(0x400E:2, ra); }
+:XIO ra,"RIC1" is op8=0x48 & ra & rx=0 ; xcmd=0xA001  { ra = xio_in(0xA001:2); }
+:XIO ra,"RIC2" is op8=0x48 & ra & rx=0 ; xcmd=0xA002  { ra = xio_in(0xA002:2); }
+:XIO ra,"RDOR" is op8=0x48 & ra & rx=0 ; xcmd=0xA008  { ra = xio_in(0xA008:2); }
+:XIO ra,"RDI" is op8=0x48 & ra & rx=0 ; xcmd=0xA009  { ra = xio_in(0xA009:2); }
+:XIO ra,"TPIO" is op8=0x48 & ra & rx=0 ; xcmd=0xA00B  { ra = xio_in(0xA00B:2); }
+:XIO ra,"RMFS" is op8=0x48 & ra & rx=0 ; xcmd=0xA00D  { ra = xio_in(0xA00D:2); }
+:XIO ra,"CI" is op8=0x48 & ra & rx=0 ; xcmd=0xC000  { ra = xio_in(0xC000:2); }
+:XIO ra,"RCS" is op8=0x48 & ra & rx=0 ; xcmd=0xC001  { ra = xio_in(0xC001:2); }
+:XIO ra,"ITA" is op8=0x48 & ra & rx=0 ; xcmd=0xC00A  { ra = xio_in(0xC00A:2); }
+:XIO ra,"ITB" is op8=0x48 & ra & rx=0 ; xcmd=0xC00E  { ra = xio_in(0xC00E:2); }
+:XIO ra,imm16 is op8=0x48 & ra & rx=0 ; imm16 & cmdin=1  { ra = xio_in(imm16:2); }
+:XIO ra,imm16 is op8=0x48 & ra & rx=0 ; imm16 & cmdin=0  { xio_out(imm16:2, ra); }
+:XIO ra,imm16,rx is op8=0x48 & ra & rx ; imm16           { local c:2 = imm16 + rx; ra = xio(c, ra); }
+:VIO ra,DA is (op8=0x49 & ra) ... & DA                   { vio(ra, DA); }
+
+# No operation, break point, built-in function
+:NOP is op8=0xFF & ra=0 & rb=0     { }
+:BPT is op8=0xFF & ra=15 & rb=15   { breakpoint(); }
+:BIF ex8 is op8=0x4F & ex8         { bif(ex8:1); }
+
+# Page register commands (optional expanded memory, 4.5.2): X = group, Y = page register
+:XIO ra,"WIPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0x51 & xpx & xpy { local ix:2 = (xpx << 5) | 0 | xpy; *[pagefile]:2 ix = ra; }
+:XIO ra,"WOPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0x52 & xpx & xpy { local ix:2 = (xpx << 5) | 16 | xpy; *[pagefile]:2 ix = ra; }
+:XIO ra,"RIPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0xD1 & xpx & xpy { local ix:2 = (xpx << 5) | 0 | xpy; ra = *[pagefile]:2 ix; }
+:XIO ra,"ROPR",xpx,xpy is op8=0x48 & ra & rx=0 ; xhi=0xD2 & xpx & xpy { local ix:2 = (xpx << 5) | 16 | xpy; ra = *[pagefile]:2 ix; }
+
+
+# Load and store multiple registers R0 through RN, push and pop multiple registers (R15 is the stack pointer)
+macro push(r) {
+	R15 = R15 - 1;
+	local pi165:2 = ((SW & 0xf) << 5) | 0x10 | ((R15) >> 12); local pp165:3 = zext(*[pagefile]:2 pi165) & 0xff; local pa165:3 = (pp165 << 12) | zext((R15) & 0xfff); *[ram]:2 pa165 = r;
+}
+macro pop(r) {
+	local pi166:2 = ((SW & 0xf) << 5) | 0x10 | ((R15) >> 12); local pp166:3 = zext(*[pagefile]:2 pi166) & 0xff; local pa166:3 = (pp166 << 12) | zext((R15) & 0xfff); r = *[ram]:2 pa166;
+	R15 = R15 + 1;
+}
+
+:LM n4,DA is (op8=0x89 & n4 & ccv=0) ... & DA { local a:2 = DA; local pi167:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp167:3 = zext(*[pagefile]:2 pi167) & 0xff; local pa167:3 = (pp167 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa167; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=1) ... & DA { local a:2 = DA; local pi168:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp168:3 = zext(*[pagefile]:2 pi168) & 0xff; local pa168:3 = (pp168 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa168; local pi169:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp169:3 = zext(*[pagefile]:2 pi169) & 0xff; local pa169:3 = (pp169 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa169; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=2) ... & DA { local a:2 = DA; local pi170:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp170:3 = zext(*[pagefile]:2 pi170) & 0xff; local pa170:3 = (pp170 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa170; local pi171:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp171:3 = zext(*[pagefile]:2 pi171) & 0xff; local pa171:3 = (pp171 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa171; local pi172:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp172:3 = zext(*[pagefile]:2 pi172) & 0xff; local pa172:3 = (pp172 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa172; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=3) ... & DA { local a:2 = DA; local pi173:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp173:3 = zext(*[pagefile]:2 pi173) & 0xff; local pa173:3 = (pp173 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa173; local pi174:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp174:3 = zext(*[pagefile]:2 pi174) & 0xff; local pa174:3 = (pp174 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa174; local pi175:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp175:3 = zext(*[pagefile]:2 pi175) & 0xff; local pa175:3 = (pp175 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa175; local pi176:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp176:3 = zext(*[pagefile]:2 pi176) & 0xff; local pa176:3 = (pp176 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa176; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=4) ... & DA { local a:2 = DA; local pi177:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp177:3 = zext(*[pagefile]:2 pi177) & 0xff; local pa177:3 = (pp177 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa177; local pi178:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp178:3 = zext(*[pagefile]:2 pi178) & 0xff; local pa178:3 = (pp178 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa178; local pi179:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp179:3 = zext(*[pagefile]:2 pi179) & 0xff; local pa179:3 = (pp179 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa179; local pi180:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp180:3 = zext(*[pagefile]:2 pi180) & 0xff; local pa180:3 = (pp180 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa180; local pi181:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp181:3 = zext(*[pagefile]:2 pi181) & 0xff; local pa181:3 = (pp181 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa181; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=5) ... & DA { local a:2 = DA; local pi182:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp182:3 = zext(*[pagefile]:2 pi182) & 0xff; local pa182:3 = (pp182 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa182; local pi183:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp183:3 = zext(*[pagefile]:2 pi183) & 0xff; local pa183:3 = (pp183 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa183; local pi184:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp184:3 = zext(*[pagefile]:2 pi184) & 0xff; local pa184:3 = (pp184 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa184; local pi185:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp185:3 = zext(*[pagefile]:2 pi185) & 0xff; local pa185:3 = (pp185 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa185; local pi186:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp186:3 = zext(*[pagefile]:2 pi186) & 0xff; local pa186:3 = (pp186 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa186; local pi187:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp187:3 = zext(*[pagefile]:2 pi187) & 0xff; local pa187:3 = (pp187 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa187; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=6) ... & DA { local a:2 = DA; local pi188:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp188:3 = zext(*[pagefile]:2 pi188) & 0xff; local pa188:3 = (pp188 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa188; local pi189:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp189:3 = zext(*[pagefile]:2 pi189) & 0xff; local pa189:3 = (pp189 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa189; local pi190:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp190:3 = zext(*[pagefile]:2 pi190) & 0xff; local pa190:3 = (pp190 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa190; local pi191:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp191:3 = zext(*[pagefile]:2 pi191) & 0xff; local pa191:3 = (pp191 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa191; local pi192:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp192:3 = zext(*[pagefile]:2 pi192) & 0xff; local pa192:3 = (pp192 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa192; local pi193:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp193:3 = zext(*[pagefile]:2 pi193) & 0xff; local pa193:3 = (pp193 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa193; local pi194:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp194:3 = zext(*[pagefile]:2 pi194) & 0xff; local pa194:3 = (pp194 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa194; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=7) ... & DA { local a:2 = DA; local pi195:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp195:3 = zext(*[pagefile]:2 pi195) & 0xff; local pa195:3 = (pp195 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa195; local pi196:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp196:3 = zext(*[pagefile]:2 pi196) & 0xff; local pa196:3 = (pp196 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa196; local pi197:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp197:3 = zext(*[pagefile]:2 pi197) & 0xff; local pa197:3 = (pp197 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa197; local pi198:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp198:3 = zext(*[pagefile]:2 pi198) & 0xff; local pa198:3 = (pp198 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa198; local pi199:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp199:3 = zext(*[pagefile]:2 pi199) & 0xff; local pa199:3 = (pp199 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa199; local pi200:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp200:3 = zext(*[pagefile]:2 pi200) & 0xff; local pa200:3 = (pp200 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa200; local pi201:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp201:3 = zext(*[pagefile]:2 pi201) & 0xff; local pa201:3 = (pp201 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa201; local pi202:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp202:3 = zext(*[pagefile]:2 pi202) & 0xff; local pa202:3 = (pp202 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa202; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=8) ... & DA { local a:2 = DA; local pi203:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp203:3 = zext(*[pagefile]:2 pi203) & 0xff; local pa203:3 = (pp203 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa203; local pi204:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp204:3 = zext(*[pagefile]:2 pi204) & 0xff; local pa204:3 = (pp204 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa204; local pi205:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp205:3 = zext(*[pagefile]:2 pi205) & 0xff; local pa205:3 = (pp205 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa205; local pi206:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp206:3 = zext(*[pagefile]:2 pi206) & 0xff; local pa206:3 = (pp206 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa206; local pi207:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp207:3 = zext(*[pagefile]:2 pi207) & 0xff; local pa207:3 = (pp207 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa207; local pi208:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp208:3 = zext(*[pagefile]:2 pi208) & 0xff; local pa208:3 = (pp208 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa208; local pi209:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp209:3 = zext(*[pagefile]:2 pi209) & 0xff; local pa209:3 = (pp209 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa209; local pi210:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp210:3 = zext(*[pagefile]:2 pi210) & 0xff; local pa210:3 = (pp210 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa210; local pi211:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp211:3 = zext(*[pagefile]:2 pi211) & 0xff; local pa211:3 = (pp211 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa211; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=9) ... & DA { local a:2 = DA; local pi212:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp212:3 = zext(*[pagefile]:2 pi212) & 0xff; local pa212:3 = (pp212 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa212; local pi213:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp213:3 = zext(*[pagefile]:2 pi213) & 0xff; local pa213:3 = (pp213 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa213; local pi214:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp214:3 = zext(*[pagefile]:2 pi214) & 0xff; local pa214:3 = (pp214 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa214; local pi215:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp215:3 = zext(*[pagefile]:2 pi215) & 0xff; local pa215:3 = (pp215 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa215; local pi216:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp216:3 = zext(*[pagefile]:2 pi216) & 0xff; local pa216:3 = (pp216 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa216; local pi217:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp217:3 = zext(*[pagefile]:2 pi217) & 0xff; local pa217:3 = (pp217 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa217; local pi218:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp218:3 = zext(*[pagefile]:2 pi218) & 0xff; local pa218:3 = (pp218 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa218; local pi219:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp219:3 = zext(*[pagefile]:2 pi219) & 0xff; local pa219:3 = (pp219 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa219; local pi220:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp220:3 = zext(*[pagefile]:2 pi220) & 0xff; local pa220:3 = (pp220 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa220; local pi221:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp221:3 = zext(*[pagefile]:2 pi221) & 0xff; local pa221:3 = (pp221 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa221; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=10) ... & DA { local a:2 = DA; local pi222:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp222:3 = zext(*[pagefile]:2 pi222) & 0xff; local pa222:3 = (pp222 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa222; local pi223:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp223:3 = zext(*[pagefile]:2 pi223) & 0xff; local pa223:3 = (pp223 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa223; local pi224:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp224:3 = zext(*[pagefile]:2 pi224) & 0xff; local pa224:3 = (pp224 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa224; local pi225:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp225:3 = zext(*[pagefile]:2 pi225) & 0xff; local pa225:3 = (pp225 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa225; local pi226:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp226:3 = zext(*[pagefile]:2 pi226) & 0xff; local pa226:3 = (pp226 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa226; local pi227:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp227:3 = zext(*[pagefile]:2 pi227) & 0xff; local pa227:3 = (pp227 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa227; local pi228:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp228:3 = zext(*[pagefile]:2 pi228) & 0xff; local pa228:3 = (pp228 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa228; local pi229:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp229:3 = zext(*[pagefile]:2 pi229) & 0xff; local pa229:3 = (pp229 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa229; local pi230:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp230:3 = zext(*[pagefile]:2 pi230) & 0xff; local pa230:3 = (pp230 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa230; local pi231:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp231:3 = zext(*[pagefile]:2 pi231) & 0xff; local pa231:3 = (pp231 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa231; local pi232:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp232:3 = zext(*[pagefile]:2 pi232) & 0xff; local pa232:3 = (pp232 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa232; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=11) ... & DA { local a:2 = DA; local pi233:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp233:3 = zext(*[pagefile]:2 pi233) & 0xff; local pa233:3 = (pp233 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa233; local pi234:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp234:3 = zext(*[pagefile]:2 pi234) & 0xff; local pa234:3 = (pp234 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa234; local pi235:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp235:3 = zext(*[pagefile]:2 pi235) & 0xff; local pa235:3 = (pp235 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa235; local pi236:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp236:3 = zext(*[pagefile]:2 pi236) & 0xff; local pa236:3 = (pp236 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa236; local pi237:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp237:3 = zext(*[pagefile]:2 pi237) & 0xff; local pa237:3 = (pp237 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa237; local pi238:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp238:3 = zext(*[pagefile]:2 pi238) & 0xff; local pa238:3 = (pp238 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa238; local pi239:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp239:3 = zext(*[pagefile]:2 pi239) & 0xff; local pa239:3 = (pp239 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa239; local pi240:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp240:3 = zext(*[pagefile]:2 pi240) & 0xff; local pa240:3 = (pp240 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa240; local pi241:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp241:3 = zext(*[pagefile]:2 pi241) & 0xff; local pa241:3 = (pp241 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa241; local pi242:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp242:3 = zext(*[pagefile]:2 pi242) & 0xff; local pa242:3 = (pp242 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa242; local pi243:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp243:3 = zext(*[pagefile]:2 pi243) & 0xff; local pa243:3 = (pp243 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa243; local pi244:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp244:3 = zext(*[pagefile]:2 pi244) & 0xff; local pa244:3 = (pp244 << 12) | zext(((a + 11)) & 0xfff); R11 = *[ram]:2 pa244; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=12) ... & DA { local a:2 = DA; local pi245:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp245:3 = zext(*[pagefile]:2 pi245) & 0xff; local pa245:3 = (pp245 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa245; local pi246:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp246:3 = zext(*[pagefile]:2 pi246) & 0xff; local pa246:3 = (pp246 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa246; local pi247:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp247:3 = zext(*[pagefile]:2 pi247) & 0xff; local pa247:3 = (pp247 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa247; local pi248:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp248:3 = zext(*[pagefile]:2 pi248) & 0xff; local pa248:3 = (pp248 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa248; local pi249:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp249:3 = zext(*[pagefile]:2 pi249) & 0xff; local pa249:3 = (pp249 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa249; local pi250:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp250:3 = zext(*[pagefile]:2 pi250) & 0xff; local pa250:3 = (pp250 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa250; local pi251:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp251:3 = zext(*[pagefile]:2 pi251) & 0xff; local pa251:3 = (pp251 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa251; local pi252:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp252:3 = zext(*[pagefile]:2 pi252) & 0xff; local pa252:3 = (pp252 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa252; local pi253:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp253:3 = zext(*[pagefile]:2 pi253) & 0xff; local pa253:3 = (pp253 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa253; local pi254:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp254:3 = zext(*[pagefile]:2 pi254) & 0xff; local pa254:3 = (pp254 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa254; local pi255:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp255:3 = zext(*[pagefile]:2 pi255) & 0xff; local pa255:3 = (pp255 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa255; local pi256:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp256:3 = zext(*[pagefile]:2 pi256) & 0xff; local pa256:3 = (pp256 << 12) | zext(((a + 11)) & 0xfff); R11 = *[ram]:2 pa256; local pi257:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp257:3 = zext(*[pagefile]:2 pi257) & 0xff; local pa257:3 = (pp257 << 12) | zext(((a + 12)) & 0xfff); R12 = *[ram]:2 pa257; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=13) ... & DA { local a:2 = DA; local pi258:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp258:3 = zext(*[pagefile]:2 pi258) & 0xff; local pa258:3 = (pp258 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa258; local pi259:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp259:3 = zext(*[pagefile]:2 pi259) & 0xff; local pa259:3 = (pp259 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa259; local pi260:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp260:3 = zext(*[pagefile]:2 pi260) & 0xff; local pa260:3 = (pp260 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa260; local pi261:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp261:3 = zext(*[pagefile]:2 pi261) & 0xff; local pa261:3 = (pp261 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa261; local pi262:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp262:3 = zext(*[pagefile]:2 pi262) & 0xff; local pa262:3 = (pp262 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa262; local pi263:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp263:3 = zext(*[pagefile]:2 pi263) & 0xff; local pa263:3 = (pp263 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa263; local pi264:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp264:3 = zext(*[pagefile]:2 pi264) & 0xff; local pa264:3 = (pp264 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa264; local pi265:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp265:3 = zext(*[pagefile]:2 pi265) & 0xff; local pa265:3 = (pp265 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa265; local pi266:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp266:3 = zext(*[pagefile]:2 pi266) & 0xff; local pa266:3 = (pp266 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa266; local pi267:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp267:3 = zext(*[pagefile]:2 pi267) & 0xff; local pa267:3 = (pp267 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa267; local pi268:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp268:3 = zext(*[pagefile]:2 pi268) & 0xff; local pa268:3 = (pp268 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa268; local pi269:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp269:3 = zext(*[pagefile]:2 pi269) & 0xff; local pa269:3 = (pp269 << 12) | zext(((a + 11)) & 0xfff); R11 = *[ram]:2 pa269; local pi270:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp270:3 = zext(*[pagefile]:2 pi270) & 0xff; local pa270:3 = (pp270 << 12) | zext(((a + 12)) & 0xfff); R12 = *[ram]:2 pa270; local pi271:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp271:3 = zext(*[pagefile]:2 pi271) & 0xff; local pa271:3 = (pp271 << 12) | zext(((a + 13)) & 0xfff); R13 = *[ram]:2 pa271; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=14) ... & DA { local a:2 = DA; local pi272:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp272:3 = zext(*[pagefile]:2 pi272) & 0xff; local pa272:3 = (pp272 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa272; local pi273:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp273:3 = zext(*[pagefile]:2 pi273) & 0xff; local pa273:3 = (pp273 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa273; local pi274:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp274:3 = zext(*[pagefile]:2 pi274) & 0xff; local pa274:3 = (pp274 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa274; local pi275:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp275:3 = zext(*[pagefile]:2 pi275) & 0xff; local pa275:3 = (pp275 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa275; local pi276:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp276:3 = zext(*[pagefile]:2 pi276) & 0xff; local pa276:3 = (pp276 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa276; local pi277:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp277:3 = zext(*[pagefile]:2 pi277) & 0xff; local pa277:3 = (pp277 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa277; local pi278:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp278:3 = zext(*[pagefile]:2 pi278) & 0xff; local pa278:3 = (pp278 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa278; local pi279:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp279:3 = zext(*[pagefile]:2 pi279) & 0xff; local pa279:3 = (pp279 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa279; local pi280:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp280:3 = zext(*[pagefile]:2 pi280) & 0xff; local pa280:3 = (pp280 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa280; local pi281:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp281:3 = zext(*[pagefile]:2 pi281) & 0xff; local pa281:3 = (pp281 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa281; local pi282:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp282:3 = zext(*[pagefile]:2 pi282) & 0xff; local pa282:3 = (pp282 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa282; local pi283:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp283:3 = zext(*[pagefile]:2 pi283) & 0xff; local pa283:3 = (pp283 << 12) | zext(((a + 11)) & 0xfff); R11 = *[ram]:2 pa283; local pi284:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp284:3 = zext(*[pagefile]:2 pi284) & 0xff; local pa284:3 = (pp284 << 12) | zext(((a + 12)) & 0xfff); R12 = *[ram]:2 pa284; local pi285:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp285:3 = zext(*[pagefile]:2 pi285) & 0xff; local pa285:3 = (pp285 << 12) | zext(((a + 13)) & 0xfff); R13 = *[ram]:2 pa285; local pi286:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 14)) >> 12); local pp286:3 = zext(*[pagefile]:2 pi286) & 0xff; local pa286:3 = (pp286 << 12) | zext(((a + 14)) & 0xfff); R14 = *[ram]:2 pa286; }
+:LM n4,DA is (op8=0x89 & n4 & ccv=15) ... & DA { local a:2 = DA; local pi287:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp287:3 = zext(*[pagefile]:2 pi287) & 0xff; local pa287:3 = (pp287 << 12) | zext(((a + 0)) & 0xfff); R0 = *[ram]:2 pa287; local pi288:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp288:3 = zext(*[pagefile]:2 pi288) & 0xff; local pa288:3 = (pp288 << 12) | zext(((a + 1)) & 0xfff); R1 = *[ram]:2 pa288; local pi289:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp289:3 = zext(*[pagefile]:2 pi289) & 0xff; local pa289:3 = (pp289 << 12) | zext(((a + 2)) & 0xfff); R2 = *[ram]:2 pa289; local pi290:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp290:3 = zext(*[pagefile]:2 pi290) & 0xff; local pa290:3 = (pp290 << 12) | zext(((a + 3)) & 0xfff); R3 = *[ram]:2 pa290; local pi291:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp291:3 = zext(*[pagefile]:2 pi291) & 0xff; local pa291:3 = (pp291 << 12) | zext(((a + 4)) & 0xfff); R4 = *[ram]:2 pa291; local pi292:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp292:3 = zext(*[pagefile]:2 pi292) & 0xff; local pa292:3 = (pp292 << 12) | zext(((a + 5)) & 0xfff); R5 = *[ram]:2 pa292; local pi293:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp293:3 = zext(*[pagefile]:2 pi293) & 0xff; local pa293:3 = (pp293 << 12) | zext(((a + 6)) & 0xfff); R6 = *[ram]:2 pa293; local pi294:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp294:3 = zext(*[pagefile]:2 pi294) & 0xff; local pa294:3 = (pp294 << 12) | zext(((a + 7)) & 0xfff); R7 = *[ram]:2 pa294; local pi295:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp295:3 = zext(*[pagefile]:2 pi295) & 0xff; local pa295:3 = (pp295 << 12) | zext(((a + 8)) & 0xfff); R8 = *[ram]:2 pa295; local pi296:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp296:3 = zext(*[pagefile]:2 pi296) & 0xff; local pa296:3 = (pp296 << 12) | zext(((a + 9)) & 0xfff); R9 = *[ram]:2 pa296; local pi297:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp297:3 = zext(*[pagefile]:2 pi297) & 0xff; local pa297:3 = (pp297 << 12) | zext(((a + 10)) & 0xfff); R10 = *[ram]:2 pa297; local pi298:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp298:3 = zext(*[pagefile]:2 pi298) & 0xff; local pa298:3 = (pp298 << 12) | zext(((a + 11)) & 0xfff); R11 = *[ram]:2 pa298; local pi299:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp299:3 = zext(*[pagefile]:2 pi299) & 0xff; local pa299:3 = (pp299 << 12) | zext(((a + 12)) & 0xfff); R12 = *[ram]:2 pa299; local pi300:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp300:3 = zext(*[pagefile]:2 pi300) & 0xff; local pa300:3 = (pp300 << 12) | zext(((a + 13)) & 0xfff); R13 = *[ram]:2 pa300; local pi301:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 14)) >> 12); local pp301:3 = zext(*[pagefile]:2 pi301) & 0xff; local pa301:3 = (pp301 << 12) | zext(((a + 14)) & 0xfff); R14 = *[ram]:2 pa301; local pi302:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 15)) >> 12); local pp302:3 = zext(*[pagefile]:2 pi302) & 0xff; local pa302:3 = (pp302 << 12) | zext(((a + 15)) & 0xfff); R15 = *[ram]:2 pa302; }
+
+:STM n4,DA is (op8=0x99 & n4 & ccv=0) ... & DA { local a:2 = DA; local pi303:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp303:3 = zext(*[pagefile]:2 pi303) & 0xff; local pa303:3 = (pp303 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa303 = R0; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=1) ... & DA { local a:2 = DA; local pi304:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp304:3 = zext(*[pagefile]:2 pi304) & 0xff; local pa304:3 = (pp304 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa304 = R0; local pi305:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp305:3 = zext(*[pagefile]:2 pi305) & 0xff; local pa305:3 = (pp305 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa305 = R1; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=2) ... & DA { local a:2 = DA; local pi306:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp306:3 = zext(*[pagefile]:2 pi306) & 0xff; local pa306:3 = (pp306 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa306 = R0; local pi307:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp307:3 = zext(*[pagefile]:2 pi307) & 0xff; local pa307:3 = (pp307 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa307 = R1; local pi308:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp308:3 = zext(*[pagefile]:2 pi308) & 0xff; local pa308:3 = (pp308 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa308 = R2; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=3) ... & DA { local a:2 = DA; local pi309:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp309:3 = zext(*[pagefile]:2 pi309) & 0xff; local pa309:3 = (pp309 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa309 = R0; local pi310:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp310:3 = zext(*[pagefile]:2 pi310) & 0xff; local pa310:3 = (pp310 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa310 = R1; local pi311:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp311:3 = zext(*[pagefile]:2 pi311) & 0xff; local pa311:3 = (pp311 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa311 = R2; local pi312:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp312:3 = zext(*[pagefile]:2 pi312) & 0xff; local pa312:3 = (pp312 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa312 = R3; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=4) ... & DA { local a:2 = DA; local pi313:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp313:3 = zext(*[pagefile]:2 pi313) & 0xff; local pa313:3 = (pp313 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa313 = R0; local pi314:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp314:3 = zext(*[pagefile]:2 pi314) & 0xff; local pa314:3 = (pp314 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa314 = R1; local pi315:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp315:3 = zext(*[pagefile]:2 pi315) & 0xff; local pa315:3 = (pp315 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa315 = R2; local pi316:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp316:3 = zext(*[pagefile]:2 pi316) & 0xff; local pa316:3 = (pp316 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa316 = R3; local pi317:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp317:3 = zext(*[pagefile]:2 pi317) & 0xff; local pa317:3 = (pp317 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa317 = R4; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=5) ... & DA { local a:2 = DA; local pi318:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp318:3 = zext(*[pagefile]:2 pi318) & 0xff; local pa318:3 = (pp318 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa318 = R0; local pi319:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp319:3 = zext(*[pagefile]:2 pi319) & 0xff; local pa319:3 = (pp319 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa319 = R1; local pi320:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp320:3 = zext(*[pagefile]:2 pi320) & 0xff; local pa320:3 = (pp320 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa320 = R2; local pi321:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp321:3 = zext(*[pagefile]:2 pi321) & 0xff; local pa321:3 = (pp321 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa321 = R3; local pi322:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp322:3 = zext(*[pagefile]:2 pi322) & 0xff; local pa322:3 = (pp322 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa322 = R4; local pi323:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp323:3 = zext(*[pagefile]:2 pi323) & 0xff; local pa323:3 = (pp323 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa323 = R5; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=6) ... & DA { local a:2 = DA; local pi324:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp324:3 = zext(*[pagefile]:2 pi324) & 0xff; local pa324:3 = (pp324 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa324 = R0; local pi325:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp325:3 = zext(*[pagefile]:2 pi325) & 0xff; local pa325:3 = (pp325 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa325 = R1; local pi326:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp326:3 = zext(*[pagefile]:2 pi326) & 0xff; local pa326:3 = (pp326 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa326 = R2; local pi327:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp327:3 = zext(*[pagefile]:2 pi327) & 0xff; local pa327:3 = (pp327 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa327 = R3; local pi328:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp328:3 = zext(*[pagefile]:2 pi328) & 0xff; local pa328:3 = (pp328 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa328 = R4; local pi329:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp329:3 = zext(*[pagefile]:2 pi329) & 0xff; local pa329:3 = (pp329 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa329 = R5; local pi330:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp330:3 = zext(*[pagefile]:2 pi330) & 0xff; local pa330:3 = (pp330 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa330 = R6; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=7) ... & DA { local a:2 = DA; local pi331:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp331:3 = zext(*[pagefile]:2 pi331) & 0xff; local pa331:3 = (pp331 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa331 = R0; local pi332:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp332:3 = zext(*[pagefile]:2 pi332) & 0xff; local pa332:3 = (pp332 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa332 = R1; local pi333:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp333:3 = zext(*[pagefile]:2 pi333) & 0xff; local pa333:3 = (pp333 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa333 = R2; local pi334:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp334:3 = zext(*[pagefile]:2 pi334) & 0xff; local pa334:3 = (pp334 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa334 = R3; local pi335:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp335:3 = zext(*[pagefile]:2 pi335) & 0xff; local pa335:3 = (pp335 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa335 = R4; local pi336:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp336:3 = zext(*[pagefile]:2 pi336) & 0xff; local pa336:3 = (pp336 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa336 = R5; local pi337:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp337:3 = zext(*[pagefile]:2 pi337) & 0xff; local pa337:3 = (pp337 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa337 = R6; local pi338:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp338:3 = zext(*[pagefile]:2 pi338) & 0xff; local pa338:3 = (pp338 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa338 = R7; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=8) ... & DA { local a:2 = DA; local pi339:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp339:3 = zext(*[pagefile]:2 pi339) & 0xff; local pa339:3 = (pp339 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa339 = R0; local pi340:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp340:3 = zext(*[pagefile]:2 pi340) & 0xff; local pa340:3 = (pp340 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa340 = R1; local pi341:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp341:3 = zext(*[pagefile]:2 pi341) & 0xff; local pa341:3 = (pp341 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa341 = R2; local pi342:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp342:3 = zext(*[pagefile]:2 pi342) & 0xff; local pa342:3 = (pp342 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa342 = R3; local pi343:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp343:3 = zext(*[pagefile]:2 pi343) & 0xff; local pa343:3 = (pp343 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa343 = R4; local pi344:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp344:3 = zext(*[pagefile]:2 pi344) & 0xff; local pa344:3 = (pp344 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa344 = R5; local pi345:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp345:3 = zext(*[pagefile]:2 pi345) & 0xff; local pa345:3 = (pp345 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa345 = R6; local pi346:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp346:3 = zext(*[pagefile]:2 pi346) & 0xff; local pa346:3 = (pp346 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa346 = R7; local pi347:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp347:3 = zext(*[pagefile]:2 pi347) & 0xff; local pa347:3 = (pp347 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa347 = R8; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=9) ... & DA { local a:2 = DA; local pi348:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp348:3 = zext(*[pagefile]:2 pi348) & 0xff; local pa348:3 = (pp348 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa348 = R0; local pi349:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp349:3 = zext(*[pagefile]:2 pi349) & 0xff; local pa349:3 = (pp349 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa349 = R1; local pi350:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp350:3 = zext(*[pagefile]:2 pi350) & 0xff; local pa350:3 = (pp350 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa350 = R2; local pi351:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp351:3 = zext(*[pagefile]:2 pi351) & 0xff; local pa351:3 = (pp351 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa351 = R3; local pi352:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp352:3 = zext(*[pagefile]:2 pi352) & 0xff; local pa352:3 = (pp352 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa352 = R4; local pi353:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp353:3 = zext(*[pagefile]:2 pi353) & 0xff; local pa353:3 = (pp353 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa353 = R5; local pi354:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp354:3 = zext(*[pagefile]:2 pi354) & 0xff; local pa354:3 = (pp354 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa354 = R6; local pi355:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp355:3 = zext(*[pagefile]:2 pi355) & 0xff; local pa355:3 = (pp355 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa355 = R7; local pi356:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp356:3 = zext(*[pagefile]:2 pi356) & 0xff; local pa356:3 = (pp356 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa356 = R8; local pi357:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp357:3 = zext(*[pagefile]:2 pi357) & 0xff; local pa357:3 = (pp357 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa357 = R9; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=10) ... & DA { local a:2 = DA; local pi358:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp358:3 = zext(*[pagefile]:2 pi358) & 0xff; local pa358:3 = (pp358 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa358 = R0; local pi359:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp359:3 = zext(*[pagefile]:2 pi359) & 0xff; local pa359:3 = (pp359 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa359 = R1; local pi360:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp360:3 = zext(*[pagefile]:2 pi360) & 0xff; local pa360:3 = (pp360 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa360 = R2; local pi361:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp361:3 = zext(*[pagefile]:2 pi361) & 0xff; local pa361:3 = (pp361 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa361 = R3; local pi362:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp362:3 = zext(*[pagefile]:2 pi362) & 0xff; local pa362:3 = (pp362 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa362 = R4; local pi363:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp363:3 = zext(*[pagefile]:2 pi363) & 0xff; local pa363:3 = (pp363 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa363 = R5; local pi364:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp364:3 = zext(*[pagefile]:2 pi364) & 0xff; local pa364:3 = (pp364 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa364 = R6; local pi365:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp365:3 = zext(*[pagefile]:2 pi365) & 0xff; local pa365:3 = (pp365 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa365 = R7; local pi366:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp366:3 = zext(*[pagefile]:2 pi366) & 0xff; local pa366:3 = (pp366 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa366 = R8; local pi367:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp367:3 = zext(*[pagefile]:2 pi367) & 0xff; local pa367:3 = (pp367 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa367 = R9; local pi368:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp368:3 = zext(*[pagefile]:2 pi368) & 0xff; local pa368:3 = (pp368 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa368 = R10; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=11) ... & DA { local a:2 = DA; local pi369:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp369:3 = zext(*[pagefile]:2 pi369) & 0xff; local pa369:3 = (pp369 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa369 = R0; local pi370:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp370:3 = zext(*[pagefile]:2 pi370) & 0xff; local pa370:3 = (pp370 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa370 = R1; local pi371:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp371:3 = zext(*[pagefile]:2 pi371) & 0xff; local pa371:3 = (pp371 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa371 = R2; local pi372:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp372:3 = zext(*[pagefile]:2 pi372) & 0xff; local pa372:3 = (pp372 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa372 = R3; local pi373:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp373:3 = zext(*[pagefile]:2 pi373) & 0xff; local pa373:3 = (pp373 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa373 = R4; local pi374:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp374:3 = zext(*[pagefile]:2 pi374) & 0xff; local pa374:3 = (pp374 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa374 = R5; local pi375:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp375:3 = zext(*[pagefile]:2 pi375) & 0xff; local pa375:3 = (pp375 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa375 = R6; local pi376:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp376:3 = zext(*[pagefile]:2 pi376) & 0xff; local pa376:3 = (pp376 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa376 = R7; local pi377:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp377:3 = zext(*[pagefile]:2 pi377) & 0xff; local pa377:3 = (pp377 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa377 = R8; local pi378:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp378:3 = zext(*[pagefile]:2 pi378) & 0xff; local pa378:3 = (pp378 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa378 = R9; local pi379:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp379:3 = zext(*[pagefile]:2 pi379) & 0xff; local pa379:3 = (pp379 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa379 = R10; local pi380:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp380:3 = zext(*[pagefile]:2 pi380) & 0xff; local pa380:3 = (pp380 << 12) | zext(((a + 11)) & 0xfff); *[ram]:2 pa380 = R11; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=12) ... & DA { local a:2 = DA; local pi381:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp381:3 = zext(*[pagefile]:2 pi381) & 0xff; local pa381:3 = (pp381 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa381 = R0; local pi382:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp382:3 = zext(*[pagefile]:2 pi382) & 0xff; local pa382:3 = (pp382 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa382 = R1; local pi383:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp383:3 = zext(*[pagefile]:2 pi383) & 0xff; local pa383:3 = (pp383 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa383 = R2; local pi384:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp384:3 = zext(*[pagefile]:2 pi384) & 0xff; local pa384:3 = (pp384 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa384 = R3; local pi385:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp385:3 = zext(*[pagefile]:2 pi385) & 0xff; local pa385:3 = (pp385 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa385 = R4; local pi386:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp386:3 = zext(*[pagefile]:2 pi386) & 0xff; local pa386:3 = (pp386 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa386 = R5; local pi387:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp387:3 = zext(*[pagefile]:2 pi387) & 0xff; local pa387:3 = (pp387 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa387 = R6; local pi388:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp388:3 = zext(*[pagefile]:2 pi388) & 0xff; local pa388:3 = (pp388 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa388 = R7; local pi389:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp389:3 = zext(*[pagefile]:2 pi389) & 0xff; local pa389:3 = (pp389 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa389 = R8; local pi390:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp390:3 = zext(*[pagefile]:2 pi390) & 0xff; local pa390:3 = (pp390 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa390 = R9; local pi391:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp391:3 = zext(*[pagefile]:2 pi391) & 0xff; local pa391:3 = (pp391 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa391 = R10; local pi392:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp392:3 = zext(*[pagefile]:2 pi392) & 0xff; local pa392:3 = (pp392 << 12) | zext(((a + 11)) & 0xfff); *[ram]:2 pa392 = R11; local pi393:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp393:3 = zext(*[pagefile]:2 pi393) & 0xff; local pa393:3 = (pp393 << 12) | zext(((a + 12)) & 0xfff); *[ram]:2 pa393 = R12; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=13) ... & DA { local a:2 = DA; local pi394:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp394:3 = zext(*[pagefile]:2 pi394) & 0xff; local pa394:3 = (pp394 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa394 = R0; local pi395:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp395:3 = zext(*[pagefile]:2 pi395) & 0xff; local pa395:3 = (pp395 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa395 = R1; local pi396:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp396:3 = zext(*[pagefile]:2 pi396) & 0xff; local pa396:3 = (pp396 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa396 = R2; local pi397:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp397:3 = zext(*[pagefile]:2 pi397) & 0xff; local pa397:3 = (pp397 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa397 = R3; local pi398:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp398:3 = zext(*[pagefile]:2 pi398) & 0xff; local pa398:3 = (pp398 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa398 = R4; local pi399:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp399:3 = zext(*[pagefile]:2 pi399) & 0xff; local pa399:3 = (pp399 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa399 = R5; local pi400:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp400:3 = zext(*[pagefile]:2 pi400) & 0xff; local pa400:3 = (pp400 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa400 = R6; local pi401:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp401:3 = zext(*[pagefile]:2 pi401) & 0xff; local pa401:3 = (pp401 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa401 = R7; local pi402:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp402:3 = zext(*[pagefile]:2 pi402) & 0xff; local pa402:3 = (pp402 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa402 = R8; local pi403:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp403:3 = zext(*[pagefile]:2 pi403) & 0xff; local pa403:3 = (pp403 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa403 = R9; local pi404:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp404:3 = zext(*[pagefile]:2 pi404) & 0xff; local pa404:3 = (pp404 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa404 = R10; local pi405:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp405:3 = zext(*[pagefile]:2 pi405) & 0xff; local pa405:3 = (pp405 << 12) | zext(((a + 11)) & 0xfff); *[ram]:2 pa405 = R11; local pi406:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp406:3 = zext(*[pagefile]:2 pi406) & 0xff; local pa406:3 = (pp406 << 12) | zext(((a + 12)) & 0xfff); *[ram]:2 pa406 = R12; local pi407:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp407:3 = zext(*[pagefile]:2 pi407) & 0xff; local pa407:3 = (pp407 << 12) | zext(((a + 13)) & 0xfff); *[ram]:2 pa407 = R13; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=14) ... & DA { local a:2 = DA; local pi408:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp408:3 = zext(*[pagefile]:2 pi408) & 0xff; local pa408:3 = (pp408 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa408 = R0; local pi409:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp409:3 = zext(*[pagefile]:2 pi409) & 0xff; local pa409:3 = (pp409 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa409 = R1; local pi410:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp410:3 = zext(*[pagefile]:2 pi410) & 0xff; local pa410:3 = (pp410 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa410 = R2; local pi411:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp411:3 = zext(*[pagefile]:2 pi411) & 0xff; local pa411:3 = (pp411 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa411 = R3; local pi412:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp412:3 = zext(*[pagefile]:2 pi412) & 0xff; local pa412:3 = (pp412 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa412 = R4; local pi413:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp413:3 = zext(*[pagefile]:2 pi413) & 0xff; local pa413:3 = (pp413 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa413 = R5; local pi414:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp414:3 = zext(*[pagefile]:2 pi414) & 0xff; local pa414:3 = (pp414 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa414 = R6; local pi415:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp415:3 = zext(*[pagefile]:2 pi415) & 0xff; local pa415:3 = (pp415 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa415 = R7; local pi416:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp416:3 = zext(*[pagefile]:2 pi416) & 0xff; local pa416:3 = (pp416 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa416 = R8; local pi417:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp417:3 = zext(*[pagefile]:2 pi417) & 0xff; local pa417:3 = (pp417 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa417 = R9; local pi418:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp418:3 = zext(*[pagefile]:2 pi418) & 0xff; local pa418:3 = (pp418 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa418 = R10; local pi419:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp419:3 = zext(*[pagefile]:2 pi419) & 0xff; local pa419:3 = (pp419 << 12) | zext(((a + 11)) & 0xfff); *[ram]:2 pa419 = R11; local pi420:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp420:3 = zext(*[pagefile]:2 pi420) & 0xff; local pa420:3 = (pp420 << 12) | zext(((a + 12)) & 0xfff); *[ram]:2 pa420 = R12; local pi421:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp421:3 = zext(*[pagefile]:2 pi421) & 0xff; local pa421:3 = (pp421 << 12) | zext(((a + 13)) & 0xfff); *[ram]:2 pa421 = R13; local pi422:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 14)) >> 12); local pp422:3 = zext(*[pagefile]:2 pi422) & 0xff; local pa422:3 = (pp422 << 12) | zext(((a + 14)) & 0xfff); *[ram]:2 pa422 = R14; }
+:STM n4,DA is (op8=0x99 & n4 & ccv=15) ... & DA { local a:2 = DA; local pi423:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 0)) >> 12); local pp423:3 = zext(*[pagefile]:2 pi423) & 0xff; local pa423:3 = (pp423 << 12) | zext(((a + 0)) & 0xfff); *[ram]:2 pa423 = R0; local pi424:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 1)) >> 12); local pp424:3 = zext(*[pagefile]:2 pi424) & 0xff; local pa424:3 = (pp424 << 12) | zext(((a + 1)) & 0xfff); *[ram]:2 pa424 = R1; local pi425:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 2)) >> 12); local pp425:3 = zext(*[pagefile]:2 pi425) & 0xff; local pa425:3 = (pp425 << 12) | zext(((a + 2)) & 0xfff); *[ram]:2 pa425 = R2; local pi426:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 3)) >> 12); local pp426:3 = zext(*[pagefile]:2 pi426) & 0xff; local pa426:3 = (pp426 << 12) | zext(((a + 3)) & 0xfff); *[ram]:2 pa426 = R3; local pi427:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 4)) >> 12); local pp427:3 = zext(*[pagefile]:2 pi427) & 0xff; local pa427:3 = (pp427 << 12) | zext(((a + 4)) & 0xfff); *[ram]:2 pa427 = R4; local pi428:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 5)) >> 12); local pp428:3 = zext(*[pagefile]:2 pi428) & 0xff; local pa428:3 = (pp428 << 12) | zext(((a + 5)) & 0xfff); *[ram]:2 pa428 = R5; local pi429:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 6)) >> 12); local pp429:3 = zext(*[pagefile]:2 pi429) & 0xff; local pa429:3 = (pp429 << 12) | zext(((a + 6)) & 0xfff); *[ram]:2 pa429 = R6; local pi430:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 7)) >> 12); local pp430:3 = zext(*[pagefile]:2 pi430) & 0xff; local pa430:3 = (pp430 << 12) | zext(((a + 7)) & 0xfff); *[ram]:2 pa430 = R7; local pi431:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 8)) >> 12); local pp431:3 = zext(*[pagefile]:2 pi431) & 0xff; local pa431:3 = (pp431 << 12) | zext(((a + 8)) & 0xfff); *[ram]:2 pa431 = R8; local pi432:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 9)) >> 12); local pp432:3 = zext(*[pagefile]:2 pi432) & 0xff; local pa432:3 = (pp432 << 12) | zext(((a + 9)) & 0xfff); *[ram]:2 pa432 = R9; local pi433:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 10)) >> 12); local pp433:3 = zext(*[pagefile]:2 pi433) & 0xff; local pa433:3 = (pp433 << 12) | zext(((a + 10)) & 0xfff); *[ram]:2 pa433 = R10; local pi434:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 11)) >> 12); local pp434:3 = zext(*[pagefile]:2 pi434) & 0xff; local pa434:3 = (pp434 << 12) | zext(((a + 11)) & 0xfff); *[ram]:2 pa434 = R11; local pi435:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 12)) >> 12); local pp435:3 = zext(*[pagefile]:2 pi435) & 0xff; local pa435:3 = (pp435 << 12) | zext(((a + 12)) & 0xfff); *[ram]:2 pa435 = R12; local pi436:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 13)) >> 12); local pp436:3 = zext(*[pagefile]:2 pi436) & 0xff; local pa436:3 = (pp436 << 12) | zext(((a + 13)) & 0xfff); *[ram]:2 pa436 = R13; local pi437:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 14)) >> 12); local pp437:3 = zext(*[pagefile]:2 pi437) & 0xff; local pa437:3 = (pp437 << 12) | zext(((a + 14)) & 0xfff); *[ram]:2 pa437 = R14; local pi438:2 = ((SW & 0xf) << 5) | 0x10 | (((a + 15)) >> 12); local pp438:3 = zext(*[pagefile]:2 pi438) & 0xff; local pa438:3 = (pp438 << 12) | zext(((a + 15)) & 0xfff); *[ram]:2 pa438 = R15; }
+
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=0 { push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=1 { push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=2 { push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=3 { push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=0 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=1 { push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=2 { push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=3 { push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=4 { push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=1 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=2 { push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=3 { push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=4 { push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=5 { push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=2 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=3 { push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=4 { push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=5 { push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=6 { push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=3 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=4 { push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=5 { push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=6 { push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=7 { push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=4 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=5 { push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=6 { push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=7 { push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=8 { push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=5 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=6 { push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=7 { push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=8 { push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=9 { push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=6 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=7 { push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=8 { push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=9 { push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=10 { push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=7 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=8 { push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=9 { push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=10 { push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=11 { push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=8 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=9 { push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=10 { push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=11 { push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=12 { push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=9 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=10 { push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=11 { push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=12 { push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=13 { push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=10 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); push(R10); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=11 { push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=12 { push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=13 { push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=14 { push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=11 & nlo=15 { push(R15); push(R14); push(R13); push(R12); push(R11); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=0 { push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=12 { push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=13 { push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=14 { push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=12 & nlo=15 { push(R15); push(R14); push(R13); push(R12); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=0 { push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=1 { push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=13 { push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=14 { push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=13 & nlo=15 { push(R15); push(R14); push(R13); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=0 { push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=1 { push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=2 { push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=14 { push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=14 & nlo=15 { push(R15); push(R14); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=0 { push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=1 { push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=2 { push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=3 { push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=4 { push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=5 { push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=6 { push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=7 { push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=8 { push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=9 { push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=10 { push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=11 { push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=12 { push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=13 { push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=14 { push(R14); push(R13); push(R12); push(R11); push(R10); push(R9); push(R8); push(R7); push(R6); push(R5); push(R4); push(R3); push(R2); push(R1); push(R0); push(R15); }
+:PSHM ra,rb is op8=0x9F & ra & rb & ccv=15 & nlo=15 { push(R15); }
+
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=0 { pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=1 { pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=2 { pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=3 { pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=4 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=5 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=6 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=7 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=8 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=9 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=10 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=11 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=12 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=13 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=14 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=0 & nlo=15 { pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=0 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=1 { pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=2 { pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=3 { pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=4 { pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=5 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=6 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=7 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=8 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=9 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=10 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=11 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=12 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=13 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=14 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=1 & nlo=15 { pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=0 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=1 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=2 { pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=3 { pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=4 { pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=5 { pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=6 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=7 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=8 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=9 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=10 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=11 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=12 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=13 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=14 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=2 & nlo=15 { pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=0 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=1 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=2 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=3 { pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=4 { pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=5 { pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=6 { pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=7 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=8 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=9 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=10 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=11 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=12 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=13 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=14 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=3 & nlo=15 { pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=0 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=1 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=2 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=3 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=4 { pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=5 { pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=6 { pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=7 { pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=8 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=9 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=10 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=11 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=12 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=13 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=14 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=4 & nlo=15 { pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=0 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=1 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=2 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=3 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=4 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=5 { pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=6 { pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=7 { pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=8 { pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=9 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=10 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=11 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=12 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=13 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=14 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=5 & nlo=15 { pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=0 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=1 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=2 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=3 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=4 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=5 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=6 { pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=7 { pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=8 { pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=9 { pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=10 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=11 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=12 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=13 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=14 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=6 & nlo=15 { pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=0 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=1 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=2 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=3 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=4 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=5 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=6 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=7 { pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=8 { pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=9 { pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=10 { pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=11 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=12 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=13 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=14 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=7 & nlo=15 { pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=0 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=1 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=2 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=3 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=4 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=5 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=6 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=7 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=8 { pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=9 { pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=10 { pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=11 { pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=12 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=13 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=14 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=8 & nlo=15 { pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=0 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=1 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=2 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=3 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=4 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=5 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=6 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=7 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=8 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=9 { pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=10 { pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=11 { pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=12 { pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=13 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=14 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=9 & nlo=15 { pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=0 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=1 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=2 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=3 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=4 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=5 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=6 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=7 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=8 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=9 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=10 { pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=11 { pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=12 { pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=13 { pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=14 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=10 & nlo=15 { pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=0 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=1 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=2 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=3 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=4 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=5 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=6 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=7 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=8 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=9 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=10 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=11 { pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=12 { pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=13 { pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=14 { pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=11 & nlo=15 { pop(R11); pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=0 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=1 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=2 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=3 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=4 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=5 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=6 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=7 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=8 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=9 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=10 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=11 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=12 { pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=13 { pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=14 { pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=12 & nlo=15 { pop(R12); pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=0 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=1 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=2 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=3 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=4 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=5 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=6 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=7 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=8 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=9 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=10 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=11 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=12 { pop(R13); pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=13 { pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=14 { pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=13 & nlo=15 { pop(R13); pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=0 { pop(R14); R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=1 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=2 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=3 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=4 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=5 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=6 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=7 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=8 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=9 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=10 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=11 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=12 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=13 { pop(R14); R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=14 { pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=14 & nlo=15 { pop(R14); R15 = R15 + 1; }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=0 { R15 = R15 + 1; pop(R0); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=1 { R15 = R15 + 1; pop(R0); pop(R1); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=2 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=3 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=4 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=5 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=6 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=7 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=8 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=9 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=10 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=11 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=12 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=13 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=14 { R15 = R15 + 1; pop(R0); pop(R1); pop(R2); pop(R3); pop(R4); pop(R5); pop(R6); pop(R7); pop(R8); pop(R9); pop(R10); pop(R11); pop(R12); pop(R13); pop(R14); }
+:POPM ra,rb is op8=0x8F & ra & rb & ccv=15 & nlo=15 { R15 = R15 + 1; }
