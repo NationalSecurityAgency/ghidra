@@ -1,0 +1,17 @@
+# Hint NOPs 0F 18-0F 1F. They overlap PREFETCHh, CLDEMOTE, MPX and CET without being more
+# specific, so SLEIGH picks whichever is defined first: keep this file included last and the
+# generic high5=3 lines at the end.
+
+# 0F 1F /0
+:NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x1f; rm16 & reg_opcode=0 ... { }
+:NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; byte=0x1f; rm32 & reg_opcode=0 ... { }
+@ifdef IA64
+:NOP rm64       is $(LONGMODE_ON) & vexMode=0 & mandover & opsize=2 & byte=0x0f; byte=0x1f; rm64 & reg_opcode=0 ... { }
+@endif
+
+# rest of 0F 18-0F 1F
+:NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16 ... { }
+:NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32 ... { }
+@ifdef IA64
+:NOP rm64       is $(LONGMODE_ON) & vexMode=0 & mandover & opsize=2 & byte=0x0f; high5=3; rm64 ... { }
+@endif
