@@ -341,6 +341,20 @@ int main(int argc,char **argv)
 }
 
 /*
+     Building sleighexample from the Ghidra source tree
+
+     "make sleighexample" is not a target of this directory's Makefile.
+     The decompiler Makefile first packs a standalone SLEIGH tree, and
+     the example is built from inside that tree:
+
+         gradle x86:sleighCompile
+         make sleighexamp_dir
+         cd sleigh-2.1.0
+         make sleighexample
+
+     The packaged Makefile and README are the "--" and "-a-" lines
+     below. They apply once you are inside sleigh-2.1.0.
+
      Example Makefile
 
 --# The C compiler
@@ -395,7 +409,7 @@ int main(int argc,char **argv)
 -a-
 -a-    make sleighexample
 -a-
--a- The "sleighexample" application expects a the x86 specification
+-a- The "sleighexample" application expects the x86 specification
 -a- file, named "x86.sla", to be in the "specfiles" directory.
 -a- Or, you can easily change the hard coded string in main.
 -a-
