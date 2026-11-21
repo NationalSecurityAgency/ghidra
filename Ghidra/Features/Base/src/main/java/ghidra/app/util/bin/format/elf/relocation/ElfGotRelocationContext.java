@@ -111,11 +111,8 @@ public abstract class ElfGotRelocationContext<H extends ElfRelocationHandler>
 				if (elfSymbol == null) {
 					continue;
 				}
-				long symbolValue = getSymbolValue(elfSymbol);
-				if (!uniqueSymbolValues.add(symbolValue)) {
-					System.out.println("Duplicate sym value 0x" + Long.toHexString(symbolValue) +
-						" for " + elfSymbol.getNameAsString());
-				}
+				// Relocations that share a symbol value share its GOT entry
+				uniqueSymbolValues.add(getSymbolValue(elfSymbol));
 			}
 		}
 		return Math.max(8, uniqueSymbolValues.size() * 8);
