@@ -16210,6 +16210,33 @@ define pcodeop vpcompressw_avx512_vbmi2 ;
 	ZmmReg2 = ZmmResult;
 }
 
+# AVX-VNNI: VEX forms have no writemask or broadcast.
+:VPDPBUSD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x50; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128 {
+	local src1:16 = vexVVVV_XmmReg;
+	local src2:16 = XmmReg2_m128;
+	local result:16 = XmmReg1;
+	result[0,32] = result[0,32] + (zext(src1[0,8]) * sext(src2[0,8])) + (zext(src1[8,8]) * sext(src2[8,8])) + (zext(src1[16,8]) * sext(src2[16,8])) + (zext(src1[24,8]) * sext(src2[24,8]));
+	result[32,32] = result[32,32] + (zext(src1[32,8]) * sext(src2[32,8])) + (zext(src1[40,8]) * sext(src2[40,8])) + (zext(src1[48,8]) * sext(src2[48,8])) + (zext(src1[56,8]) * sext(src2[56,8]));
+	result[64,32] = result[64,32] + (zext(src1[64,8]) * sext(src2[64,8])) + (zext(src1[72,8]) * sext(src2[72,8])) + (zext(src1[80,8]) * sext(src2[80,8])) + (zext(src1[88,8]) * sext(src2[88,8]));
+	result[96,32] = result[96,32] + (zext(src1[96,8]) * sext(src2[96,8])) + (zext(src1[104,8]) * sext(src2[104,8])) + (zext(src1[112,8]) * sext(src2[112,8])) + (zext(src1[120,8]) * sext(src2[120,8]));
+	ZmmReg1 = zext(result);
+}
+
+:VPDPBUSD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x50; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32 = YmmReg1;
+	result[0,32] = result[0,32] + (zext(src1[0,8]) * sext(src2[0,8])) + (zext(src1[8,8]) * sext(src2[8,8])) + (zext(src1[16,8]) * sext(src2[16,8])) + (zext(src1[24,8]) * sext(src2[24,8]));
+	result[32,32] = result[32,32] + (zext(src1[32,8]) * sext(src2[32,8])) + (zext(src1[40,8]) * sext(src2[40,8])) + (zext(src1[48,8]) * sext(src2[48,8])) + (zext(src1[56,8]) * sext(src2[56,8]));
+	result[64,32] = result[64,32] + (zext(src1[64,8]) * sext(src2[64,8])) + (zext(src1[72,8]) * sext(src2[72,8])) + (zext(src1[80,8]) * sext(src2[80,8])) + (zext(src1[88,8]) * sext(src2[88,8]));
+	result[96,32] = result[96,32] + (zext(src1[96,8]) * sext(src2[96,8])) + (zext(src1[104,8]) * sext(src2[104,8])) + (zext(src1[112,8]) * sext(src2[112,8])) + (zext(src1[120,8]) * sext(src2[120,8]));
+	result[128,32] = result[128,32] + (zext(src1[128,8]) * sext(src2[128,8])) + (zext(src1[136,8]) * sext(src2[136,8])) + (zext(src1[144,8]) * sext(src2[144,8])) + (zext(src1[152,8]) * sext(src2[152,8]));
+	result[160,32] = result[160,32] + (zext(src1[160,8]) * sext(src2[160,8])) + (zext(src1[168,8]) * sext(src2[168,8])) + (zext(src1[176,8]) * sext(src2[176,8])) + (zext(src1[184,8]) * sext(src2[184,8]));
+	result[192,32] = result[192,32] + (zext(src1[192,8]) * sext(src2[192,8])) + (zext(src1[200,8]) * sext(src2[200,8])) + (zext(src1[208,8]) * sext(src2[208,8])) + (zext(src1[216,8]) * sext(src2[216,8]));
+	result[224,32] = result[224,32] + (zext(src1[224,8]) * sext(src2[224,8])) + (zext(src1[232,8]) * sext(src2[232,8])) + (zext(src1[240,8]) * sext(src2[240,8])) + (zext(src1[248,8]) * sext(src2[248,8]));
+	ZmmReg1 = zext(result);
+}
+
 # VPDPBUSD 5-459 PAGE 2283 LINE 125092
 define pcodeop vpdpbusd_avx512_vnni ;
 :VPDPBUSD XmmReg1^XmmOpMask32, evexV5_XmmReg, XmmReg2_m128_m32bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask32 & evexV5_XmmReg; byte=0x50; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m32bcst
@@ -16270,6 +16297,33 @@ define pcodeop vpdpbusds_avx512_vnni ;
 	ZmmMask = ZmmReg1;
 	build ZmmOpMask32;
 	ZmmReg1 = ZmmResult;
+}
+
+# AVX-VNNI: VEX forms have no writemask or broadcast.
+:VPDPWSSD XmmReg1, vexVVVV_XmmReg, XmmReg2_m128 is $(VEX_NDS) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_XmmReg; byte=0x52; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128 {
+	local src1:16 = vexVVVV_XmmReg;
+	local src2:16 = XmmReg2_m128;
+	local result:16 = XmmReg1;
+	result[0,32] = result[0,32] + (sext(src1[0,16]) * sext(src2[0,16])) + (sext(src1[16,16]) * sext(src2[16,16]));
+	result[32,32] = result[32,32] + (sext(src1[32,16]) * sext(src2[32,16])) + (sext(src1[48,16]) * sext(src2[48,16]));
+	result[64,32] = result[64,32] + (sext(src1[64,16]) * sext(src2[64,16])) + (sext(src1[80,16]) * sext(src2[80,16]));
+	result[96,32] = result[96,32] + (sext(src1[96,16]) * sext(src2[96,16])) + (sext(src1[112,16]) * sext(src2[112,16]));
+	ZmmReg1 = zext(result);
+}
+
+:VPDPWSSD YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_YmmReg; byte=0x52; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32 = YmmReg1;
+	result[0,32] = result[0,32] + (sext(src1[0,16]) * sext(src2[0,16])) + (sext(src1[16,16]) * sext(src2[16,16]));
+	result[32,32] = result[32,32] + (sext(src1[32,16]) * sext(src2[32,16])) + (sext(src1[48,16]) * sext(src2[48,16]));
+	result[64,32] = result[64,32] + (sext(src1[64,16]) * sext(src2[64,16])) + (sext(src1[80,16]) * sext(src2[80,16]));
+	result[96,32] = result[96,32] + (sext(src1[96,16]) * sext(src2[96,16])) + (sext(src1[112,16]) * sext(src2[112,16]));
+	result[128,32] = result[128,32] + (sext(src1[128,16]) * sext(src2[128,16])) + (sext(src1[144,16]) * sext(src2[144,16]));
+	result[160,32] = result[160,32] + (sext(src1[160,16]) * sext(src2[160,16])) + (sext(src1[176,16]) * sext(src2[176,16]));
+	result[192,32] = result[192,32] + (sext(src1[192,16]) * sext(src2[192,16])) + (sext(src1[208,16]) * sext(src2[208,16]));
+	result[224,32] = result[224,32] + (sext(src1[224,16]) * sext(src2[224,16])) + (sext(src1[240,16]) * sext(src2[240,16]));
+	ZmmReg1 = zext(result);
 }
 
 # VPDPWSSD 5-463 PAGE 2287 LINE 125329
