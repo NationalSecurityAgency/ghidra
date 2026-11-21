@@ -320,16 +320,18 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 			}
 		}
 
+		// an UndefinedFunction has no symbol, so it cannot be a namespace parent
 		Function func = decompilerResults.getFunction();
+		Namespace parent = (func instanceof UndefinedFunction) ? null : func;
 
 		// put switch table cases into a new switch namespace
 		Namespace space = null;
 		String switchName = "switchD_" + table.getSwitchAddress();
 		try {
-			space = program.getSymbolTable().createNameSpace(func, switchName, SourceType.ANALYSIS);
+			space = program.getSymbolTable().createNameSpace(parent, switchName, SourceType.ANALYSIS);
 		}
 		catch (DuplicateNameException e) {
-			space = program.getSymbolTable().getNamespace(switchName, null);
+			space = program.getSymbolTable().getNamespace(switchName, parent);
 		}
 		catch (InvalidInputException e) {
 			// just go with default space
