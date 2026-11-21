@@ -112,10 +112,11 @@ private:
   PcodeOp *fallthruOp(PcodeOp *op) const;		///< Find fallthru pcode-op for given op
   void newAddress(PcodeOp *from,const Address &to);	///< Register a new (non fall-thru) flow target
   void deleteRemainingOps(list<PcodeOp *>::const_iterator oiter);
-  PcodeOp *xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &startbasic,bool &isfallthru,FuncCallSpecs *fc);
+  PcodeOp *xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &startbasic,
+			  bool &isfallthru,uintm endtime,FuncCallSpecs *fc);
   bool processInstruction(const Address &curaddr,bool &startbasic);
   void fallthru(void);					///< Process (the next) sequence of instructions in fall-thru order
-  PcodeOp *findRelTarget(PcodeOp *op,Address &res) const;
+  PcodeOp *findRelTarget(PcodeOp *op,Address &res,const uintm *endtime) const;
   void findUnprocessed(void);				///< Add any remaining un-followed addresses to the \b unprocessed list
   void dedupUnprocessed(void);				///< Get rid of duplicates in the \b unprocessed list
   void fillinBranchStubs(void);				///< Fill-in artificial HALT p-code for \b unprocessed addresses

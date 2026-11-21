@@ -148,23 +148,17 @@ PcodeOp *FlowInfo::target(const Address &addr) const
 /// Otherwise an exception is thrown.
 /// \param op is the given branching p-code op
 /// \param res is a reference to the fall-thru address being passed back
+/// \param endtime is the end-exclusive time of the original p-code emission, or NULL
 /// \return the target PcodeOp or NULL if the fall-thru address is passed back instead
-PcodeOp *FlowInfo::findRelTarget(PcodeOp *op,Address &res) const
+PcodeOp *FlowInfo::findRelTarget(PcodeOp *op,Address &res,const uintm *endtime) const
 
 {
   const Address &addr(op->getIn(0)->getAddr());
   uintm id = op->getTime() + addr.getOffset();
-  SeqNum seqnum(op->getAddr(),id);
-  PcodeOp *retop = obank.findOp(seqnum);
-  if (retop != (PcodeOp *)0)	// Is this a "properly" internal branch
-    return retop;
-
-  // Check if the relative branch is to the next instruction
-  retop = obank.findLastOp(op->getAddr()); // Find the last op at this address
-  if (retop != (PcodeOp *)0 && retop->getTime() < id) {
-    // Branch is beyond the last op.  Treat as branch to next instruction.
+  // Check if the relative branch is to the end of the original p-code emission
+  if (endtime != (const uintm *)0 && id == *endtime) {
     map<Address,VisitStat>::const_iterator miter;
-    miter = visited.upper_bound(retop->getAddr());
+    miter = visited.upper_bound(op->getAddr());
     if (miter != visited.begin()) {
       --miter;
       res = (*miter).first + (*miter).second.size;
@@ -172,6 +166,13 @@ PcodeOp *FlowInfo::findRelTarget(PcodeOp *op,Address &res) const
 	return (PcodeOp *)0;	// Indicate that res has the fallthru address
     }
   }
+  else {
+    SeqNum seqnum(op->getAddr(),id);
+    PcodeOp *retop = obank.findOp(seqnum);
+    if (retop != (PcodeOp *)0)	// Is this a "properly" internal branch
+      return retop;
+  }
+
   ostringstream errmsg;
   errmsg << "Bad relative branch at instruction : (";
   errmsg << op->getAddr().getSpace()->getName() << ',';
@@ -192,7 +193,7 @@ PcodeOp *FlowInfo::branchTarget(PcodeOp *op) const
   const Address &addr(op->getIn(0)->getAddr());
   if (addr.isConstant()) {	// This is a relative sequence number
     Address res;
-    PcodeOp *retop = findRelTarget(op,res);
+    PcodeOp *retop = findRelTarget(op,res,(const uintm *)0);
     if (retop != (PcodeOp *)0)
       return retop;
     return target(res);
@@ -261,9 +262,11 @@ void FlowInfo::deleteRemainingOps(list<PcodeOp *>::const_iterator oiter)
 /// \param oiter is the given iterator starting the list of p-code ops
 /// \param startbasic is the reference holding whether the current op starts a basic block
 /// \param isfallthru passes back if the instruction has fall-thru flow
+/// \param endtime is the end-exclusive time of the original p-code emission
 /// \param fc if the p-code is generated from an \e injection, this holds the reference to the injecting sub-function
 /// \return the last processed PcodeOp (or NULL if there were no ops in the instruction)
-PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &startbasic,bool &isfallthru,FuncCallSpecs *fc)
+PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &startbasic,
+				  bool &isfallthru,uintm endtime,FuncCallSpecs *fc)
 
 {
   PcodeOp *op = (PcodeOp *)0;
@@ -281,15 +284,17 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
 	const Address &destaddr( op->getIn(0)->getAddr() );
 	if (destaddr.isConstant()) {
 	  Address fallThruAddr;
-	  PcodeOp *destop = findRelTarget(op,fallThruAddr);
+	  PcodeOp *destop = findRelTarget(op,fallThruAddr,&endtime);
 	  if (destop != (PcodeOp *)0) {
 	    data.opMarkStartBasic(destop);	// Make sure the target op is a basic block start
 	    uintm newtime = destop->getTime();
 	    if (newtime > maxtime)
 	      maxtime = newtime;
 	  }
-	  else
+	  else {
+	    data.opSetInput(op,data.newCodeRef(fallThruAddr),0);
 	    isfallthru = true;		// Relative branch is to end of instruction
+	  }
 	}
 	else
 	  newAddress(op,destaddr); // Generate branch address
@@ -301,15 +306,17 @@ PcodeOp *FlowInfo::xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &s
 	const Address &destaddr( op->getIn(0)->getAddr() );
 	if (destaddr.isConstant()) {
 	  Address fallThruAddr;
-	  PcodeOp *destop = findRelTarget(op,fallThruAddr);
+	  PcodeOp *destop = findRelTarget(op,fallThruAddr,&endtime);
 	  if (destop != (PcodeOp *)0) {
 	    data.opMarkStartBasic(destop);	// Make sure the target op is a basic block start
 	    uintm newtime = destop->getTime();
 	    if (newtime > maxtime)
 	      maxtime = newtime;
 	  }
-	  else
+	  else {
+	    data.opSetInput(op,data.newCodeRef(fallThruAddr),0);
 	    isfallthru = true;		// Relative branch is to end of instruction
+	  }
 	}
 	else
 	  newAddress(op,destaddr); // Generate branch address
@@ -460,6 +467,7 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
   }
   VisitStat &stat(visited[curaddr]); // Mark that we visited this instruction
   stat.size = step;		// Record size of instruction
+  uintm endtime = obank.getUniqId(); // Record boundary before overrides append synthetic ops
 
   if (curaddr < minaddr)	// Update minimum and maximum address
     minaddr = curaddr;
@@ -476,7 +484,7 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
     data.opMarkStartInstruction(*oiter); // Mark the first op in the instruction
     if (pCodeOverride != (const Override::Record *)0)
       pCodeOverride->performOverride(curaddr,data);
-    xrefControlFlow(oiter,startbasic,isfallthru,(FuncCallSpecs *)0);
+    xrefControlFlow(oiter,startbasic,isfallthru,endtime,(FuncCallSpecs *)0);
   }
 
   if (isfallthru)
@@ -1181,6 +1189,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
   --iter;			// There must be at least one op
 
   payload->inject(icontext,emitter);		// Do the injection
+  uintm endtime = obank.getUniqId();		// Capture the boundary of the injection
 
   bool startbasic = op->isBlockStart();
   ++iter;			// Now points to first op in the injection
@@ -1188,7 +1197,7 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
     throw LowlevelError("Empty injection: " + payload->getName());
   PcodeOp *firstop = *iter;
   bool isfallthru = true;
-  PcodeOp *lastop = xrefControlFlow(iter,startbasic,isfallthru,fc);
+  PcodeOp *lastop = xrefControlFlow(iter,startbasic,isfallthru,endtime,fc);
 
   if (startbasic) {		// If the inject code does NOT fall thru
     iter = op->getInsertIter();
