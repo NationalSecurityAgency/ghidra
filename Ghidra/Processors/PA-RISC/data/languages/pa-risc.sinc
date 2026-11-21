@@ -376,7 +376,7 @@ attach names [ RegUnitCondSym ] [
 ];
 
 attach names [ InvUnitCondSym ] [
-	"" _ ",NBZ" ",NHZ" ",NDC" _ ",NBC" ",NHC"
+	",TR" _ ",NBZ" ",NHZ" ",NDC" _ ",NBC" ",NHC"
 ];
 
 attach names [ RegLogicCondSym ] [
@@ -384,7 +384,7 @@ attach names [ RegLogicCondSym ] [
 ];
 
 attach names [ InvLogicCondSym ] [
-	"" ",<>" ",>=" ",>" _ _ _ ",EV"
+	",TR" ",<>" ",>=" ",>" _ _ _ ",EV"
 ];
 
 # Table 5-4
@@ -393,7 +393,7 @@ attach names [ RegAddCondSym ] [
 ];
 
 attach names [ InvAddCondSym ] [
-	"" ",<>" ",>=" ",>" ",UV" ",VNZ" ",NSV" ",EV"
+	",TR" ",<>" ",>=" ",>" ",UV" ",VNZ" ",NSV" ",EV"
 ];
 
 attach names [ RegCSCondSym ] [
@@ -401,7 +401,7 @@ attach names [ RegCSCondSym ] [
 ];
 
 attach names [ InvCSCondSym ] [
-	"" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
+	",TR" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
 ];
 
 # the different tests used by the FTEST instruction
