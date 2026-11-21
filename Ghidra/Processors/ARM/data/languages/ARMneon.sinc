@@ -1619,7 +1619,7 @@ crot2021: "#"^270 is ($(AMODE) & c2021=3 ) | (TMode=1 & thv_c2021=3) { local tmp
 macro FloatVectorCompare(op1,op2,nanx) {
 	local tNG = op1 f< op2;
 	local tZR = op1 f== op2;	
-	local tCY = op2 f<= op1;
+	local tCY = !(op1 f< op2);  # not "op2 f<= op1": carry must be set when unordered (NaN)
 	tOV:1 = nan(op1) | nan(op2);  # this is really a comparison with NAN and may also raise an exception when NAN
 	
 	fpscr = (fpscr & 0x0fffffff) | (zext(tNG) << 31) | (zext(tZR) << 30) | (zext(tCY) << 29) | (zext(tOV) << 28);
