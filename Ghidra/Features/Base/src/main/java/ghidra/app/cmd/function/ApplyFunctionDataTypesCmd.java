@@ -139,7 +139,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 
 		while (symbols.hasNext()) {
 			Symbol sym = symbols.next();
-			if (sym.isDynamic()) {
+			if (sym.isDynamic() || !isArchiveSignatureCandidate(sym, source)) {
 				continue;
 			}
 
@@ -154,6 +154,11 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 				list.add(sym);
 			}
 		}
+	}
+
+	static boolean isArchiveSignatureCandidate(Symbol sym, SourceType source) {
+		return source != SourceType.IMPORTED || sym.isExternal() ||
+			sym.getParentNamespace().isGlobal();
 	}
 
 	/**
