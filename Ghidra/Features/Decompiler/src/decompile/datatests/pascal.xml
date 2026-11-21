@@ -1,0 +1,59 @@
+<decompilertest>
+<!--
+    Functions using a Pascal style calling convention, where parameters are pushed left-to-right.
+    The first parameter is at the highest stack address.  Functions pascalsub and sub3 have locked
+    prototypes. For pascalsub2, the parameters are recovered from data-flow, both in the function
+    and at the call site.
+-->
+<binaryimage arch="x86:LE:16:Real Mode:default">
+<bytechunk space="ram" offset="0x100" readonly="true">
+  5589e58b4606 2b46045dc20400
+</bytechunk>
+<bytechunk space="ram" offset="0x200" readonly="true">
+  683412 687856 e8f7fe c3
+</bytechunk>
+<bytechunk space="ram" offset="0x300" readonly="true">
+  5589e58b4606 2b46045dc20400
+</bytechunk>
+<bytechunk space="ram" offset="0x400" readonly="true">
+  683412 687856 e8f7fe c3
+</bytechunk>
+<bytechunk space="ram" offset="0x500" readonly="true">
+  5589e58b4608 2b4606 2b46045d c20600
+</bytechunk>
+<symbol space="ram" offset="0x100" name="pascalsub"/>
+<symbol space="ram" offset="0x200" name="caller"/>
+<symbol space="ram" offset="0x300" name="pascalsub2"/>
+<symbol space="ram" offset="0x400" name="caller2"/>
+<symbol space="ram" offset="0x500" name="sub3"/>
+</binaryimage>
+<script>
+  <com>parse line extern int2 __pascal16near pascalsub(int2 a,int2 b);</com>
+  <com>parse line extern int2 caller(void);</com>
+  <com>lo fu pascalsub</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu caller</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern int2 __pascal16near pascalsub2(int2 a,int2 b);</com>
+  <com>parse line extern int2 caller2(void);</com>
+  <com>lo fu pascalsub2</com>
+  <com>prototype unlock</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu caller2</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern int2 __pascal16near sub3(int2 a,int2 b,int2 c);</com>
+  <com>lo fu sub3</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Pascal #1" min="1" max="1">return a - b;</stringmatch>
+<stringmatch name="Pascal #2" min="1" max="1">pascalsub\(0x1234,0x5678\)</stringmatch>
+<stringmatch name="Pascal #3" min="1" max="1">return param_1 - param_2;</stringmatch>
+<stringmatch name="Pascal #4" min="1" max="1">pascalsub2\(0x1234,0x5678\)</stringmatch>
+<stringmatch name="Pascal #5" min="1" max="1">return \(a - b\) - c;</stringmatch>
+</decompilertest>
