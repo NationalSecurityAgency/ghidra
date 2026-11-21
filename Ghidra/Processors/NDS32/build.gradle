@@ -27,4 +27,5 @@ sleighCompileOptions = [
 
 dependencies {
 	api project(':Base')
+	api project(':Decompiler')
 }

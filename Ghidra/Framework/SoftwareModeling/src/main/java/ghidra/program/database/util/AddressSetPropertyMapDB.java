@@ -15,7 +15,9 @@
  */
 package ghidra.program.database.util;
 
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -60,6 +62,23 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Return the names of every {@link AddressSetPropertyMap} stored
+	 * in the given program's database.  Names are extracted from table
+	 * names that begin with the AddressSet prefix.
+	 */
+	public static List<String> getPropertyMapNames(ProgramDB program) {
+		List<String> names = new ArrayList<>();
+		DBHandle dbh = program.getDBHandle();
+		for (Table t : dbh.getTables()) {
+			String n = t.getName();
+			if (n != null && n.startsWith(TABLE_PREFIX)) {
+				names.add(n.substring(TABLE_PREFIX.length()));
+			}
+		}
+		return names;
 	}
 
 	public static AddressSetPropertyMapDB createPropertyMap(ProgramDB program, String mapName,
