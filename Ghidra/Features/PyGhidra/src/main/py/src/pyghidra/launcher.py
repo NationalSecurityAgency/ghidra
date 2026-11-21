@@ -113,8 +113,15 @@ class _GhidraBundleFinder(importlib.machinery.PathFinder):
     """ (internal) Used to find modules in Ghidra bundle locations """
     
     def find_spec(self, fullname, path=None, target=None):
-        from ghidra.framework import Application
-        from ghidra.app.script import GhidraScriptUtil
+        # Avoid importing Ghidra packages here because that re-enters this finder.
+        fw = sys.modules.get('ghidra.framework')
+        scr = sys.modules.get('ghidra.app.script')
+        if fw is None or scr is None:
+            return None
+
+        Application = fw.Application
+        GhidraScriptUtil = scr.GhidraScriptUtil
+
         if Application.isInitialized():
             GhidraScriptUtil.acquireBundleHostReference()
             try:
@@ -468,6 +475,8 @@ class PyGhidraLauncher:
         sys.meta_path.append(_GhidraBundleFinder())
 
         imports.registerDomain("ghidra")
+        # Replace incomplete Python modules cached before the JVM started.
+        sys.modules["ghidra"] = _jpype._JPackage("ghidra")
 
     def _pre_launch_init(self):
         """
