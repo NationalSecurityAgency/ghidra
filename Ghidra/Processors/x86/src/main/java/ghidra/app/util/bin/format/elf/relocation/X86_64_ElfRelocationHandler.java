@@ -137,6 +137,10 @@ public class X86_64_ElfRelocationHandler extends
 				memory.setByte(relocationAddress, (byte) value);
 				byteLength = 1;
 				break;
+			case R_X86_64_PC64:
+				value = symbolValue + addend - offset;
+				memory.setLong(relocationAddress, value);
+				break;
 			case R_X86_64_PC32:
 				value = symbolValue + addend - offset;
 				value = value & 0xffffffff;
