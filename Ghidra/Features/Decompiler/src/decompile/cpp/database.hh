@@ -763,7 +763,8 @@ public:
   /// \param addr is the given address
   /// \param pc is the address at which the name is getting used
   /// \param ct is a data-type used to inform the name
-  /// \param index is a reference to an index used to make the name unique, which will be updated
+  /// \param index is the parameter index for a function parameter (negative for an \e irregular input);
+  ///        default names for other local variables are numbered independently for each name base
   /// \param flags are boolean properties of the variable we need the name for
   /// \return the new variable name
   virtual string buildVariableName(const Address &addr,
