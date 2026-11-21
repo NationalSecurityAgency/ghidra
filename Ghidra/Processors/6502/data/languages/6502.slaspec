@@ -192,7 +192,8 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BRK   is op=0x00
 {
-	*:2 (SP - 1) = inst_next;
+	local ret:2 = inst_start + 2;
+	*:2 (SP - 1) = ret;
 	SP = SP - 2;
 	B = 1;
 	pushSR();
@@ -313,7 +314,8 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :JSR   ADDR16    is op=0x20; ADDR16
 {
-	*:2 (SP-1) = inst_next;
+	local ret:2 = inst_next - 1;
+	*:2 (SP-1) = ret;
 	SP=SP-2; 
 	call ADDR16;
 }
@@ -417,6 +419,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
+	tmp = tmp + 1;
 	
 	return [tmp];
 }
