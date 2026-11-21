@@ -2047,23 +2047,34 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # DIV E[c], D[a], D[b] (RR)
 :div Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x201
 {
-	#TODO  divide
-	#TODO  flags
-	local divres = Rd0811 s/ Rd1215;
-	local divmod = Rd0811 s% Rd1215;
-	Ree2831 = divres;
-	Reo2831 = divmod;
+	# TriCore ISA DIV: quotient to E[c][31:0], remainder (sign of the dividend) to E[c][63:32]
+	local zero:1 = Rd1215 == 0;
+	local minneg:1 = (Rd1215 == 0xffffffff) && (Rd0811 == 0x80000000);
+	local special:1 = zero || minneg;
+	local safe:4 = (Rd1215 * zext(special == 0)) + zext(special != 0);
+	local q:4 = Rd0811 s/ safe;
+	local r:4 = Rd0811 s% safe;
+	local qs:4 = 0x7fffffff + zext(zero && (Rd0811 s< 0));
+	Ree2831 = (q * zext(special == 0)) + (qs * zext(special != 0));
+	Reo2831 = r * zext(special == 0);
+	$(PSW_V) = special;
+	$(PSW_SV) = special | $(PSW_SV);
+	$(PSW_AV) = 0;
 }
 
 # DIV.U E[c], D[a], D[b] (RR)
 :div.u Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x211
 {
-	#TODO  divide
-	#TODO  flags
-	local divres = Rd0811 / Rd1215;
-	local divmod = Rd0811 % Rd1215;
-	Ree2831 = divres;
-	Reo2831 = divmod;
+	# TriCore ISA DIV.U: quotient to E[c][31:0], remainder to E[c][63:32]; zero divisor -> FFFFFFFFH, 0
+	local zero:1 = Rd1215 == 0;
+	local safe:4 = Rd1215 + zext(zero);
+	local q:4 = Rd0811 / safe;
+	local r:4 = Rd0811 % safe;
+	Ree2831 = (q * zext(zero == 0)) + (0xffffffff * zext(zero != 0));
+	Reo2831 = r * zext(zero == 0);
+	$(PSW_V) = zero;
+	$(PSW_SV) = zero | $(PSW_SV);
+	$(PSW_AV) = 0;
 }
 
 @if defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
@@ -2207,26 +2218,25 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # DVSTEP E[c], E[d], D[b] (RRR)
 :dvstep Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xf0
 {
-	#TODO  divide sequence
-	local dividend_sign = Reo2427[31,1] == 1;
-	local divisor_sign = Rd1215[31,1] == 1;
-	local quotient_sign = dividend_sign != divisor_sign;
-	local addend:4;
-	ternary(addend, quotient_sign != 0, Rd1215, 0 - Rd1215);
+	# TriCore ISA DVSTEP: eight restoring steps; the remainder is exact (infinite precision, manual p49)
+	local dividend_sign:1 = Reo2427[31,1];
+	local quotient_sign:1 = dividend_sign != Rd1215[31,1];
+	local addend:8 = (sext(Rd1215) * zext(quotient_sign != 0)) + ((0 - sext(Rd1215)) * zext(quotient_sign == 0));
 	local dividend_quotient:4 = Ree2427;
-	local remainder:4 = Reo2427;
-	local temp:4 = 0;
+	local remainder:8 = sext(Reo2427);
+	local temp:8 = 0;
+	local take:1 = 0;
 	local index:1 = 0;
     <loop_start>
 	remainder = (remainder << 1) | zext(dividend_quotient[31,1]);
 	dividend_quotient = dividend_quotient << 1;
 	temp = remainder + addend;
-	ternary(remainder, (temp s< 0) == dividend_sign, temp, remainder);
-	ternary(temp, (temp s< 0) == dividend_sign, zext(!quotient_sign), zext(quotient_sign));
-	dividend_quotient = dividend_quotient | temp;
+	take = (temp s< 0) == dividend_sign;
+	remainder = (temp * zext(take != 0)) + (remainder * zext(take == 0));
+	dividend_quotient = dividend_quotient | zext((take != 0 && quotient_sign == 0) || (take == 0 && quotient_sign != 0));
 	index = index + 1;
 	if (index < 8) goto <loop_start>;
-	Reo2831 = remainder;
+	Reo2831 = remainder:4;
 	Ree2831 = dividend_quotient;
 }
 @endif
@@ -2236,22 +2246,22 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # DVSTEP.U E[c], E[d], D[b] (RRR)
 :dvstep.u Ree2831/Reo2831,Ree2427/Reo2427,Rd1215 is PCPMode=0 & Rd1215 & op0007=0x6b & op0811=0x0 ; Ree2427 & Reo2427 & Ree2831 & Reo2831 & op1623=0xe0
 {
-	#TODO  divide sequence
-	local divisor = Rd1215;
-	local dividend_quotient = Ree2427;
-	local remainder = Reo2427;
-	local temp:4 = 0;
+	# TriCore ISA DVSTEP.U: eight restoring steps on unsigned operands; exact remainder; result to E[c]
+	local divisor:8 = zext(Rd1215);
+	local dividend_quotient:4 = Ree2427;
+	local remainder:8 = zext(Reo2427);
+	local temp:8 = 0;
 	local index:1 = 0;
     <loop_start>
 	remainder = (remainder << 1) | zext(dividend_quotient[31,1]);
 	dividend_quotient = dividend_quotient << 1;
 	temp = remainder - divisor;
-	ternary(remainder, temp s< 0, remainder, temp);
+	remainder = (remainder * zext(temp s< 0)) + (temp * zext(!(temp s< 0)));
 	dividend_quotient = dividend_quotient | zext(!(temp s< 0));
 	index = index + 1;
 	if (index < 8) goto <loop_start>;
-	Reo2427 = remainder;
-	Ree2427 = dividend_quotient;
+	Reo2831 = remainder:4;
+	Ree2831 = dividend_quotient;
 }
 @endif
 
