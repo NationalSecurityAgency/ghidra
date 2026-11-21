@@ -88,16 +88,16 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
   EDirect = EDirect - 1;
 }
 :add Areg,EDirect is opfull=0xa5; opfull=0x25 & Areg; EDirect { 
-  addflags(ACC,EDirect); ACC = ACC + EDirect; resultflags(ACC);
+  addflags(ACC,EDirect); ACC = ACC + EDirect; setNZflags(ACC);
 }
 :addc Areg,EDirect is opfull=0xa5; opfull=0x35 & Areg; EDirect { 
-  tmp:1 =$(CY)+ EDirect; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC);
+  tmp:1 =$(CY)+ EDirect; addflags(ACC,tmp); ACC = ACC + tmp; setNZflags(ACC);
 }
 :orl Areg,EDirect is opfull=0xa5; opfull=0x45 & Areg; EDirect { 
   ACC = ACC | EDirect;
 }
 :anl Areg,EDirect is opfull=0xa5; opfull=0x55 & Areg; EDirect { 
-  ACC = ACC & EDirect; resultflags(ACC); 
+  ACC = ACC & EDirect; setNZflags(ACC); 
 }
 :xrl Areg,EDirect is opfull=0xa5; opfull=0x65 & Areg; EDirect { 
   ACC = ACC ^ EDirect;
@@ -136,7 +136,7 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
   EDirect = EDirect | ACC; 
 }
 :anl EDirect,Areg is opfull=0xa5; ophi=5 & oplo=2 & Areg; EDirect { 
-  tmp:1 = EDirect & ACC; EDirect = tmp; resultflags(tmp); 
+  tmp:1 = EDirect & ACC; EDirect = tmp; setNZflags(tmp); 
 }
 :xrl EDirect,Areg is opfull=0xa5; ophi=6 & oplo=2 & Areg; EDirect { 
   EDirect = EDirect ^ ACC; 
@@ -145,7 +145,7 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
   EDirect = EDirect ^ Data; 
 }
 :anl EDirect,Data is opfull=0xa5; ophi=5 & oplo=3; EDirect; Data  { 
-  tmp:1 = EDirect & Data; EDirect = tmp; resultflags(tmp); 
+  tmp:1 = EDirect & Data; EDirect = tmp; setNZflags(tmp); 
 }
 :orl EDirect,Data is opfull=0xa5; ophi=4 & oplo=3 & Areg; EDirect; Data { 
   EDirect = EDirect | Data; 
@@ -218,7 +218,7 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
 }
 
 # bit operations
-:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {tmp:1 = EBitByteAddr; $(CY)=$(CY)& ((tmp>>sfrbit)&1); resultflags(tmp); }
+:anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {tmp:1 = EBitByteAddr; $(CY)=$(CY)& ((tmp>>sfrbit)&1); setNZflags(tmp); }
 :anl CY,EBitAddr2  is opfull=0xa5; CY & ophi=11 & oplo=0; EBitAddr2 & bitaddr57=7 & sfrbit3=0 & sfrbit & EBitByteAddr {tmp:1 = EBitByteAddr; $(CY)=$(CY)& (~((tmp>>sfrbit)&1));  }
 @if BIT_OPS == "BIT_ADDRS"
 :anl CY,EBitAddr   is opfull=0xa5; CY & ophi=8  & oplo=2; EBitAddr  & sfrbit & EBitByteAddr {$(CY)=$(CY)& EBitAddr; }
