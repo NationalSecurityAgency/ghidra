@@ -75,6 +75,27 @@ public class ConstructState {
 		return hashcode;
 	}
 
+	/**
+	 * Tests whether two states describe the same resolved constructor tree.  Constructor identity
+	 * also ensures that the states belong to the same language generation.  This is deliberately
+	 * separate from {@link #equals(Object)} because parser contexts use state identity as map keys.
+	 *
+	 * @param other the other state
+	 * @return true if the resolved constructor trees are equivalent
+	 */
+	boolean isEquivalent(ConstructState other) {
+		if (other == null || ct != other.ct || length != other.length || offset != other.offset ||
+			resolvedStates.size() != other.resolvedStates.size()) {
+			return false;
+		}
+		for (int i = 0; i < resolvedStates.size(); i++) {
+			if (!resolvedStates.get(i).isEquivalent(other.resolvedStates.get(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public Constructor getConstructor() {
 		return ct;
 	}
