@@ -4252,7 +4252,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 {
 # TODO: GE bits have not been included
   build COND;
-  Rd = zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
+  Rd = (cpsr & 0x07ffffff) | (zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27);
 }
 
 :mrs^COND Rd,spsr 		is $(AMODE) & ARMcond=1 & COND & c2027=20 & c1619=15 & Rd & offset_12=0 & spsr
