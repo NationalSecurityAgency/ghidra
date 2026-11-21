@@ -56,7 +56,7 @@ struct PcodeData {
 /// The class acts as a pool of memory for PcodeData and VarnodeData objects
 /// that can be reused repeatedly to emit multiple instructions.
 class PcodeCacher {
-  static constexpr uint4 PAGE_SIZE = 512;///< Initial size of VarnodeData pool
+  static constexpr uint4 POOL_PAGE_SIZE = 512;///< Initial size of VarnodeData pool
   static constexpr uint4 MAX_ALLOCATION = 4096;	///< Maximum VarnodeData in a single instruction
   VarnodeData *curpool;			///< First unused VarnodeData
   VarnodeData *endpool;			///< End of the pool of VarnodeData objects
