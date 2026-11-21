@@ -1,0 +1,117 @@
+
+:TILEZERO tmmreg is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0x49; tmmreg ... { tmmreg = 0; }
+
+define pcodeop amx_store_tile;
+:TILESTORED Mem, tmmreg is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { *:1 Mem = amx_store_tile(tmmreg); }
+
+define pcodeop amx_release_tile;
+:TILERELEASE is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0x49; byte=0xC0 { amx_release_tile(); }
+
+define pcodeop amx_load_tile;
+:TILELOADDT1 tmmreg, Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { tmmreg = amx_load_tile(Mem); }
+:TILELOAD tmmreg, Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { tmmreg = amx_load_tile(Mem); }
+
+define pcodeop amx_tdpbuud;
+:TDPBUUD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbuud(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbusd;
+:TDPBUSD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbusd(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbsud;
+:TDPBSUD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbsud(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbssd;
+:TDPBSSD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbssd(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tdpfp16ps;
+:TDPFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5C; tmmreg1 & tmmreg { tmmreg = amx_tdpfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tcmmimfp16ps;
+:TCMMIMFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x6C; tmmreg1 & tmmreg { tmmreg = amx_tcmmimfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tcmmrlfp16ps;
+:TCMMRLFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x6C; tmmreg1 & tmmreg { tmmreg = amx_tcmmrlfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tdpbf16ps;
+:TDPBF16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5C; tmmreg1 & tmmreg { tmmreg = amx_tdpbf16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tile_cfg;
+:STTILECFG Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x49; reg_opcode=0 ... & Mem { *:64 Mem = amx_tile_cfg(); }
+
+define pcodeop amx_load_tile_cfg;
+:LDTILECFG Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0x49; reg_opcode=0 ... & Mem { amx_load_tile_cfg(*:64 Mem); }
+
+
+
+define pcodeop amx_tile_mov_row;
+:TILEMOVROW ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x4a; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_mov_row(tmmreg1, vexVVVV_r32); }
+:TILEMOVROW ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0); byte=0x07; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_mov_row(tmmreg1, imm8:1); }
+:TILEMOVROW tmmreg, ZmmReg2, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r32; byte=0x4a; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_tile_mov_row(tmmreg, ZmmReg2, vexVVVV_r32); }
+:TILEMOVROW tmmreg, ZmmReg2, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x07; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_tile_mov_row(tmmreg, ZmmReg2, imm8:1); }
+
+define pcodeop amx_tile_mov_col;
+:TILEMOVCOL tmmreg, ZmmReg2, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r32; byte=0x4b; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_tile_mov_col(tmmreg, ZmmReg2, vexVVVV_r32); }
+
+:TILEMOVCOL tmmreg, ZmmReg2, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1); byte=0x2f; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_tile_mov_col(tmmreg, ZmmReg2, imm8:1); }
+
+define pcodeop amx_tile_cvt_row_d2ps;
+:TCVTROWD2PS ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x4a; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_cvt_row_d2ps(tmmreg1, vexVVVV_r32); }
+:TCVTROWD2PS ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F3A) & $(VEX_W0); byte=0x07; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_cvt_row_d2ps(tmmreg1, imm8:1); }
+
+define pcodeop amx_tile_cvt_row_ps2bf16h;
+:TCVTROWPS2BF16H ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x6d; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_cvt_row_ps2bf16h(tmmreg1, vexVVVV_r32); }
+:TCVTROWPS2BF16H ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0); byte=0x07; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_cvt_row_ps2bf16h(tmmreg1, imm8:1); }
+
+define pcodeop amx_tile_cvt_row_ps2bf16l;
+:TCVTROWPS2BF16L ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x6d; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_cvt_row_ps2bf16l(tmmreg1, vexVVVV_r32); }
+:TCVTROWPS2BF16L ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F3A) & $(VEX_W0); byte=0x77; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_cvt_row_ps2bf16l(tmmreg1, imm8:1); }
+
+define pcodeop amx_tile_cvt_row_ps2phh;
+:TCVTROWPS2PHH ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x6d; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_cvt_row_ps2phh(tmmreg1, vexVVVV_r32); }
+:TCVTROWPS2PHH ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_0F3A) & $(VEX_W0); byte=0x07; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_cvt_row_ps2phh(tmmreg1, imm8:1); }
+
+define pcodeop amx_tile_cvt_row_ps2phl;
+:TCVTROWPS2PHL ZmmReg1, tmmreg1, vexVVVV_r32 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0x6d; mod=3 & ZmmReg1 & tmmreg1 { ZmmReg1 = amx_tile_cvt_row_ps2phl(tmmreg1, vexVVVV_r32); }
+:TCVTROWPS2PHL ZmmReg1, tmmreg1, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0); byte=0x77; mod=3 & ZmmReg1 & tmmreg1; imm8 { ZmmReg1 = amx_tile_cvt_row_ps2phl(tmmreg1, imm8:1); }
+
+define pcodeop amx_bsr_init;
+:BSRINIT BSR0 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W1); byte=0x49; byte=0xC0 & BSR0 { BSR0 = amx_bsr_init(); }
+
+define pcodeop amx_bsr_movf;
+:BSRMOVF BSR0, evexV5_ZmmReg, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP6) & $(VEX_W1) & evexV5_ZmmReg; byte=0x95; reg_opcode=0 ... & ZmmReg2_m512 & BSR0 { BSR0 = amx_bsr_movf(evexV5_ZmmReg, ZmmReg2_m512); }
+
+define pcodeop amx_bsr_movh;
+:BSRMOVH BSR0, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP6) & $(VEX_W1); byte=0x95; reg_opcode=0 ... & ZmmReg2_m512 & BSR0 { BSR0 = amx_bsr_movh(ZmmReg2_m512); }
+:BSRMOVH ZmmReg2_m512, BSR0 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP6) & $(VEX_W0); byte=0x95; reg_opcode=0 ... & ZmmReg2_m512 & BSR0 { ZmmReg2_m512 = amx_bsr_movh(BSR0); }
+
+define pcodeop amx_bsr_movl;
+:BSRMOVL BSR0, ZmmReg2_m512 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_MAP6) & $(VEX_W1); byte=0x95; reg_opcode=0 ... & ZmmReg2_m512 & BSR0 { BSR0 = amx_bsr_movl(ZmmReg2_m512); }
+
+:BSRMOVL ZmmReg2_m512, BSR0 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_MAP6) & $(VEX_W0); byte=0x95; reg_opcode=0 ... & ZmmReg2_m512 & BSR0 { ZmmReg2_m512 = amx_bsr_movl(BSR0); }
+
+define pcodeop amx_top4mxbf8ps;
+:TOP4MXBF8PS tmmreg, ZmmReg2, evexV5_ZmmReg, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_0F3A) & $(VEX_W0) & evexV5_ZmmReg; byte=0x8d; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_top4mxbf8ps(tmmreg, ZmmReg2, evexV5_ZmmReg, imm8:1, BSR0); }
+
+define pcodeop amx_top4mxbhf8ps;
+:TOP4MXBHF8PS tmmreg, ZmmReg2, evexV5_ZmmReg, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0) & evexV5_ZmmReg; byte=0x8d; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_top4mxbhf8ps(tmmreg, ZmmReg2, evexV5_ZmmReg, imm8:1, BSR0); }
+
+define pcodeop amx_top4mxhbf8ps;
+:TOP4MXHBF8PS tmmreg, ZmmReg2, evexV5_ZmmReg, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F3A) & $(VEX_W0) & evexV5_ZmmReg; byte=0x8d; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_top4mxhbf8ps(tmmreg, ZmmReg2, evexV5_ZmmReg, imm8:1, BSR0); }
+
+define pcodeop amx_top4mxhf8ps;
+:TOP4MXHF8PS tmmreg, ZmmReg2, evexV5_ZmmReg, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W0) & evexV5_ZmmReg; byte=0x8d; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_top4mxhf8ps(tmmreg, ZmmReg2, evexV5_ZmmReg, imm8:1, BSR0); }
+
+define pcodeop amx_top4mxbssps;
+:TOP4MXBSSPS tmmreg, ZmmReg2, evexV5_ZmmReg, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F3A) & $(VEX_W0) & evexV5_ZmmReg; byte=0x8f; mod=3 & tmmreg & ZmmReg2; imm8 { tmmreg = amx_top4mxbssps(tmmreg, ZmmReg2, evexV5_ZmmReg, imm8:1, BSR0); }
+
+define pcodeop amx_top2bf16ps;
+:TOP2BF16PS tmmreg, ZmmReg2, evexV5_ZmmReg is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x5c; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_top2bf16ps(tmmreg, ZmmReg2, evexV5_ZmmReg); }
+
+define pcodeop amx_top4bssd;
+:TOP4BSSD tmmreg, ZmmReg2, evexV5_ZmmReg is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x5e; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_top4bssd(tmmreg, ZmmReg2, evexV5_ZmmReg); }
+
+define pcodeop amx_top4bsud;
+:TOP4BSUD tmmreg, ZmmReg2, evexV5_ZmmReg is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x5e; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_top4bsud(tmmreg, ZmmReg2, evexV5_ZmmReg); }
+
+define pcodeop amx_top4busd;
+:TOP4BUSD tmmreg, ZmmReg2, evexV5_ZmmReg is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x5e; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_top4busd(tmmreg, ZmmReg2, evexV5_ZmmReg); }
+
+define pcodeop amx_top4buud;
+:TOP4BUUD tmmreg, ZmmReg2, evexV5_ZmmReg is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x5e; mod=3 & tmmreg & ZmmReg2 { tmmreg = amx_top4buud(tmmreg, ZmmReg2, evexV5_ZmmReg); }
