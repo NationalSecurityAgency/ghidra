@@ -1443,9 +1443,21 @@ bool ScopeLocal::restructure(MapState &state)
     else {
       if (!cur.attemptJoin(next)) {
 	if (cur.rangeType == RangeHint::open) {
-	  cur.size = next->sstart-cur.sstart;
-	  if (cur.size < 0)
-	    cur.size = 0x7fffffff;	// Maximum size for a data-type
+	  if (next->rangeType == RangeHint::endpoint && !fd->getFuncProto().isStackGrowsNegative()) {
+	    // If the stack grows toward larger addresses, the end of the local range is not the
+	    // end of the frame but only a bound on its size. With nothing above it, an open range
+	    // extends only as far as it is known to be used.
+	    if (cur.highind > 0) {
+	      int4 extent = (cur.highind + 1) * cur.type->getAlignSize();
+	      if (cur.size < extent)
+		cur.size = extent;
+	    }
+	  }
+	  else {
+	    cur.size = next->sstart-cur.sstart;
+	    if (cur.size < 0)
+	      cur.size = 0x7fffffff;	// Maximum size for a data-type
+	  }
 	}
 	if (adjustFit(cur))
 	  createEntry(cur);
