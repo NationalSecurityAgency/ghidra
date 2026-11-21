@@ -1411,14 +1411,14 @@ define pcodeop purgeTLB;
 :PDTLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x48 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
 :PDTLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x48 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
-:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x8 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
-:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x8 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
+:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshiftedshort=0x8 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
+:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshiftedshort=0x8 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
 :PDTLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x49 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
 :PDTLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x49 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
-:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x9 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
-:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x9 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
+:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshiftedshort=0x9 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
+:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshiftedshort=0x9 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
 define pcodeop insertTLBEntry;
 :IDTLBA R1,SRRB							is opfam=0x1 & sysopshifted=0x41 & m=0 & SRRB & R1 & SPCBASE & im5=0 { insertTLBEntry(SPCBASE, R1); }
