@@ -1383,9 +1383,11 @@ define pcodeop break;
 	RT = cr;
 }
 
-# this instruction is PA-RISC 2.0 only, but here to avoid disassembler comparison issues
+# this instruction is PA-RISC 2.0 only, but here to avoid disassembler comparison issues.
+# The front of the instruction address offset queue is the address of the MFIA itself,
+# which GCC uses to find PC-relative jump tables.
 :MFIA RT								is opfam=0x0 & sysop=0xA5 & RT & reg1=0 {
-	RT = iaoq_front;
+	RT = inst_start;
 }
 
 define pcodeop sync;
