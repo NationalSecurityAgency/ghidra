@@ -277,7 +277,7 @@ define token instr(32)
     im14		= (0,13)
     im14less0	= (1,13)
     im11		= (0,10) signed
-    im11less0	= (1,11)
+    im11less0	= (1,10)
     sim5		= (0,4) signed
     im5			= (0,4)
     im5less0	= (1,4)
