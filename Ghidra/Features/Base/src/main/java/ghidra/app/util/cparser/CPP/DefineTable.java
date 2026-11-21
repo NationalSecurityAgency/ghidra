@@ -16,7 +16,9 @@
  */
 package ghidra.app.util.cparser.CPP;
 
+import java.math.BigInteger;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import generic.expressions.ExpressionEvaluator;
 import ghidra.app.util.cparser.CPP.PreProcessor.PPToken;
@@ -25,6 +27,8 @@ import ghidra.util.Msg;
 
 public class DefineTable {
 	private static final String VARARG_ELLIPSIS = "...";
+	private static final Pattern INTEGER_SUFFIX =
+		Pattern.compile("(?i)(?:u(?:ll|l)?|(?:ll|l)u?)?");
 
 	// the macro substitution could be done on a very large string, not just
 	// a single line, Don't want it to go out of control replacing things
@@ -706,7 +710,7 @@ public class DefineTable {
 			}
 
 			// strip off any casting/parentheses
-			strValue = stripCast(strValue);
+			strValue = normalizeOctalConstants(stripCast(strValue));
 
 			long value = 0;
 			Long lvalue = getCValue(strValue);
@@ -765,7 +769,7 @@ public class DefineTable {
 			//    equivalent, return it
 			DataType candidateDT = openDTMgrs[i].getDataType(dt.getCategoryPath(), dt.getName());
 
-			if (candidateDT != null && candidateDT.isEquivalent(candidateDT)) {
+			if (candidateDT != null && candidateDT.isEquivalent(dt)) {
 				return candidateDT;
 			}
 		}
@@ -791,6 +795,59 @@ public class DefineTable {
 		strValue = strExpanded;
 
 		return strValue;
+	}
+
+	/**
+	 * Convert standalone C octal constants to decimal for the general expression evaluator.
+	 * Preserve quoted text, identifiers, hexadecimal constants and floating-point tokens.
+	 */
+	private static String normalizeOctalConstants(String expression) {
+		StringBuilder result = new StringBuilder();
+		int index = 0;
+		while (index < expression.length()) {
+			char ch = expression.charAt(index);
+			if (ch == '\'' || ch == '"') {
+				int start = index++;
+				while (index < expression.length()) {
+					char quoted = expression.charAt(index++);
+					if (quoted == '\\' && index < expression.length()) {
+						index++;
+					}
+					else if (quoted == ch) {
+						break;
+					}
+				}
+				result.append(expression, start, index);
+				continue;
+			}
+			if (ch == '0' && (index == 0 ||
+				(!Character.isJavaIdentifierPart(expression.codePointBefore(index)) &&
+					expression.charAt(index - 1) != '.'))) {
+				int end = index + 1;
+				while (end < expression.length() && expression.charAt(end) >= '0' &&
+					expression.charAt(end) <= '7') {
+					end++;
+				}
+				int suffixEnd = end;
+				while (suffixEnd < expression.length() &&
+					"uUlL".indexOf(expression.charAt(suffixEnd)) >= 0) {
+					suffixEnd++;
+				}
+				String suffix = expression.substring(end, suffixEnd);
+				if (end > index + 1 && INTEGER_SUFFIX.matcher(suffix).matches() &&
+					(suffixEnd == expression.length() ||
+						(!Character.isJavaIdentifierPart(expression.codePointAt(suffixEnd)) &&
+							expression.charAt(suffixEnd) != '.'))) {
+					result.append(new BigInteger(expression.substring(index, end), 8));
+					result.append(suffix);
+					index = suffixEnd;
+					continue;
+				}
+			}
+			result.append(ch);
+			index++;
+		}
+		return result.toString();
 	}
 
 	/**
