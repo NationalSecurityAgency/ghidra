@@ -3711,6 +3711,18 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   t_op2:4 = opc2;
   Rd = coprocessor_movefromRt(t_cpn,t_op1,t_op2,CRn,CRm);
 }
+
+:mrc2 cpn,opc1,"APSR_nzcv",CRn,CRm,opc2 is $(AMODE) & ARMcond=0 & cond=15 & c2427=14 & opc1 & c2020=1 & CRn & Rd=15 & cpn & opc2 & c0404=1 & CRm
+{
+  t_cpn:4 = cpn;
+  t_op1:4 = opc1;
+  t_op2:4 = opc2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,CRn,CRm);
+  NG = (tmp & 0x80000000) != 0;
+  ZR = (tmp & 0x40000000) != 0;
+  CY = (tmp & 0x20000000) != 0;
+  OV = (tmp & 0x10000000) != 0;
+}
 @endif # VERSION_5
 
 # ===== Start mrc
@@ -4245,6 +4257,20 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   t_op1:4 = opc1;
   t_opc2:4 = opc2;
   Rd = coprocessor_movefromRt(t_cpn,t_op1,t_opc2,CRn,CRm);
+}
+
+# Rt=15: N, Z, C, V from bits 31..28. cp15 is left to the named constructors above.
+:mrc^COND cpn,opc1,"APSR_nzcv",CRn,CRm,opc2 is $(AMODE) & ARMcond=1 & COND & c2427=14 & opc1 & c2020=1 & CRn & Rd=15 & cpn & opc2 & c0404=1 & CRm & (c1111=0 | c1010=0 | c0909=0 | c0808=0)
+{
+  build COND;
+  t_cpn:4 = cpn;
+  t_op1:4 = opc1;
+  t_opc2:4 = opc2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_opc2,CRn,CRm);
+  NG = (tmp & 0x80000000) != 0;
+  ZR = (tmp & 0x40000000) != 0;
+  CY = (tmp & 0x20000000) != 0;
+  OV = (tmp & 0x10000000) != 0;
 }
 
 
