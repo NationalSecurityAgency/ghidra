@@ -143,7 +143,7 @@ public class RustDemanglerParser {
 				if (ch == '<' || ch == '(') {
 					++depth;
 				}
-				else if ((ch == '>' || ch == ')') && depth != 0) {
+				else if ((ch == '>' || ch == ')') && depth != 0 && !(ch == '>' && last == '-')) {
 					--depth;
 				}
 
