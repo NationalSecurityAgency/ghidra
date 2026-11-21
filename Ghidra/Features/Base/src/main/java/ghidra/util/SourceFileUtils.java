@@ -187,7 +187,7 @@ public class SourceFileUtils {
 			throw new IllegalArgumentException("path not valid: " + e.getMessage());
 		}
 		int numDotDots = 0;
-		while (path.startsWith("/..")) {
+		while (path.equals("/..") || path.startsWith("/../")) {
 			path = path.substring(3);
 			numDotDots += 1;
 		}
@@ -195,7 +195,7 @@ public class SourceFileUtils {
 			if (!based) {
 				return path; // baseDir not necessary: path normalizes to absolute path without it 
 			}
-			if (path.startsWith("/" + baseDir)) {
+			if (path.equals("/" + baseDir) || path.startsWith("/" + baseDir + "/")) {
 				return path; // adding initial /baseDir was sufficient
 			}
 		}
