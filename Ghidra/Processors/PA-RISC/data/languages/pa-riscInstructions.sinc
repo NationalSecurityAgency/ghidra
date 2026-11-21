@@ -490,7 +490,7 @@ with : phase=1 {
 
 #### MOVIB
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & highlse5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -499,14 +499,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	R2dst = sext(im5:1);
-	nullifyCondResult = sext(im5:1);
+	R2dst = sext(highlse5);
+	nullifyCondResult = sext(highlse5);
 	build DepCond; # force the condition evaluation after the move
 	branchExecuted = 1;
 	branchCond = DepCond;
 }
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & highlse5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -515,8 +515,8 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	R2dst = sext(im5:1);
-	nullifyCondResult = sext(im5:1);
+	R2dst = sext(highlse5);
+	nullifyCondResult = sext(highlse5);
 	build DepCond; # force the condition evaluation after the move
 	branchCond = DepCond;
 	branchExecuted = 1;
