@@ -365,17 +365,20 @@ FSE_INLINE int fse_in_checked_flush64(fse_in_stream64 *s, const uint8_t **pbuf,
                                       const uint8_t *buf_start) {
   //  Get number of bits to add to bring us into the desired range.
   fse_bit_count nbits = (63 - s->accum_nbits) & -8;
-  //  Convert bits to bytes and decrement buffer address, then load new data.
-  const uint8_t *buf = (*pbuf) - (nbits >> 3);
-  if (buf < buf_start) {
-    return -1; // out of range
+
+  if (nbits > 0) {
+    //  Convert bits to bytes and decrement buffer address, then load new data.
+    const uint8_t *buf = (*pbuf) - (nbits >> 3);
+    if (buf < buf_start) {
+      return -1; // out of range
+    }
+    *pbuf = buf;
+    uint64_t incoming;
+    memcpy(&incoming, buf, 8);
+    // Update the state object and verify its validity (in DEBUG).
+    s->accum = (s->accum << nbits) | fse_mask_lsb64(incoming, nbits);
+    s->accum_nbits += nbits;
   }
-  *pbuf = buf;
-  uint64_t incoming;
-  memcpy(&incoming, buf, 8);
-  // Update the state object and verify its validity (in DEBUG).
-  s->accum = (s->accum << nbits) | fse_mask_lsb64(incoming, nbits);
-  s->accum_nbits += nbits;
   DEBUG_CHECK_INPUT_STREAM_PARAMETERS
   return 0; // OK
 }
