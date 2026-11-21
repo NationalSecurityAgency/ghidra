@@ -19,83 +19,98 @@
 # Vector Floating-Point Single-Precision Multiply-Add
 :evfsmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x282
 {
-	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
-	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
-	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+	local tmpAL:$(HREGSIZE) = A:$(HREGSIZE); local tmpAH:$(HREGSIZE) = A[$(HREGBITS),$(HREGBITS)];
+	local tmpBL:$(HREGSIZE) = B:$(HREGSIZE); local tmpBH:$(HREGSIZE) = B[$(HREGBITS),$(HREGBITS)];
+	local tmpDL:$(HREGSIZE) = D:$(HREGSIZE); local tmpDH:$(HREGSIZE) = D[$(HREGBITS),$(HREGBITS)];
 
 	tmpDL = ((tmpAL f* tmpBL) f+ tmpDL);
 	tmpDH = ((tmpAH f* tmpBH) f+ tmpDH);
-	D = (zext(tmpDH) << 32) | zext(tmpDL);
+	D = (zext(tmpDH) << $(HREGBITS)) | zext(tmpDL);
 }
 
 # evfsmsub rD,rA,rB
 # Vector Floating-Point Single-Precision Multiply-Substract
 :evfsmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x283
 {
-	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
-	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
-	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+	local tmpAL:$(HREGSIZE) = A:$(HREGSIZE); local tmpAH:$(HREGSIZE) = A[$(HREGBITS),$(HREGBITS)];
+	local tmpBL:$(HREGSIZE) = B:$(HREGSIZE); local tmpBH:$(HREGSIZE) = B[$(HREGBITS),$(HREGBITS)];
+	local tmpDL:$(HREGSIZE) = D:$(HREGSIZE); local tmpDH:$(HREGSIZE) = D[$(HREGBITS),$(HREGBITS)];
 
 	tmpDL = ((tmpAL f* tmpBL) f- tmpDL);
 	tmpDH = ((tmpAH f* tmpBH) f- tmpDH);
-	D = (zext(tmpDH) << 32) | zext(tmpDL);
+	D = (zext(tmpDH) << $(HREGBITS)) | zext(tmpDL);
 }
 
 # evfsnmadd
 # Vector Floating-Point Single-Precision Negative Multiply-Add
 :evfsnmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x28A
 {
-	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
-	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
-	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+	local tmpAL:$(HREGSIZE) = A:$(HREGSIZE); local tmpAH:$(HREGSIZE) = A[$(HREGBITS),$(HREGBITS)];
+	local tmpBL:$(HREGSIZE) = B:$(HREGSIZE); local tmpBH:$(HREGSIZE) = B[$(HREGBITS),$(HREGBITS)];
+	local tmpDL:$(HREGSIZE) = D:$(HREGSIZE); local tmpDH:$(HREGSIZE) = D[$(HREGBITS),$(HREGBITS)];
 
 	tmpDL = f- ((tmpAL f* tmpBL) f+ tmpDL);
 	tmpDH = f- ((tmpAH f* tmpBH) f+ tmpDH);
-	D = (zext(tmpDH) << 32) | zext(tmpDL);
+	D = (zext(tmpDH) << $(HREGBITS)) | zext(tmpDL);
 }
 
 # evfsnmsub
 # Vector Floating-Point Single-Precision Negative Multiply-Substract
 :evfsnmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x28B
 {
-	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
-	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
-	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+	local tmpAL:$(HREGSIZE) = A:$(HREGSIZE); local tmpAH:$(HREGSIZE) = A[$(HREGBITS),$(HREGBITS)];
+	local tmpBL:$(HREGSIZE) = B:$(HREGSIZE); local tmpBH:$(HREGSIZE) = B[$(HREGBITS),$(HREGBITS)];
+	local tmpDL:$(HREGSIZE) = D:$(HREGSIZE); local tmpDH:$(HREGSIZE) = D[$(HREGBITS),$(HREGBITS)];
 
 	tmpDL = f- ((tmpAL f* tmpBL) f- tmpDL);
 	tmpDH = f- ((tmpAH f* tmpBH) f- tmpDH);
-	D = (zext(tmpDH) << 32) | zext(tmpDL);
+	D = (zext(tmpDH) << $(HREGBITS)) | zext(tmpDL);
 }
 
 # efsmadd rD,rA,rB
 # Floating-Point Single-Precision Multiply-Add
 :efsmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C2
 {
-	local lo:4 = (A:4 f* B:4) f+ D:4;
+	local lo:$(HREGSIZE) = (A:$(HREGSIZE) f* B:$(HREGSIZE)) f+ D:$(HREGSIZE);
+@if REGISTER_SIZE == "4"
+	D = (D & 0xFFFF0000) | zext(lo);
+@else
 	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+@endif
 }
 
 # efsmsub rD,rA,rB
 # Floating-Point Single-Precision Multiply-Substract
 :efsmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C3
 {
-	local lo:4 = (A:4 f* B:4) f- D:4;
+	local lo:$(HREGSIZE) = (A:$(HREGSIZE) f* B:$(HREGSIZE)) f- D:$(HREGSIZE);
+@if REGISTER_SIZE == "4"
+	D = (D & 0xFFFF0000) | zext(lo);
+@else
 	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+@endif
 }
 
 # efsnmadd rD,rA,rB
 # Floating-Point Single-Precision Negative Multiply-Add
 :efsnmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x2CA
 {
-	local lo:4 = f- ((A:4 f* B:4) f+ D:4);
+	local lo:$(HREGSIZE) = f- ((A:$(HREGSIZE) f* B:$(HREGSIZE)) f+ D:$(HREGSIZE));
+@if REGISTER_SIZE == "4"
+	D = (D & 0xFFFF0000) | zext(lo);
+@else
 	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+@endif
 }
 
 # efsnmsub rD,rA,rB
 # Floating-Point Single-Precision Negative Multiply-Substract
 :efsnmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2CB
 {
-	local lo:4 = f- ((A:4 f* B:4) f- D:4);
+	local lo:$(HREGSIZE) = f- ((A:$(HREGSIZE) f* B:$(HREGSIZE)) f- D:$(HREGSIZE));
+@if REGISTER_SIZE == "4"
+	D = (D & 0xFFFF0000) | zext(lo);
+@else
 	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+@endif
 }
-
