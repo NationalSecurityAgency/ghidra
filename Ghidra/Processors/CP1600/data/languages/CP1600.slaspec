@@ -96,8 +96,9 @@ impliedval16: reg3_5 is reg3_5 & target3_5=6 & doublebyte=1 {
 }
 
 impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | target3_5=3 | target3_5=7) & doublebyte=1 {
-	local val:2 = *:1 reg3_5;
-	val = (zext(val) << 8) | zext(val);
+	local word:2 = *:2 reg3_5;
+	local low:2 = word & 0x00FF;
+	local val:2 = (low << 8) | low;
 	export val;
 }
 
