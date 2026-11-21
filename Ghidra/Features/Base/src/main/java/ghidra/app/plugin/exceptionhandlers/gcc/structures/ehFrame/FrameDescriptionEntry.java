@@ -474,6 +474,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 			if (program.getListing().getFunctionAt(pcBeginAddr) == null) {
 				AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 				analysisMgr.disassemble(new AddressSet(pcBeginAddr));
+                               analysisMgr.createFunction(pcBeginAddr, false);
 			}
 		}
 		catch (AddressOutOfBoundsException e) {
