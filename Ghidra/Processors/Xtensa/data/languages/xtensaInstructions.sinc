@@ -1155,6 +1155,16 @@ rfi_eps: ptr is op_s	[ ptr = $(EPS_BASE) + (4 * op_s); ] { export *[register]:4 
 	*:4 addr = at;
 }
 
+# SALT (RRR).
+:salt ar, as, at is op2 = 0b0111 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = zext(as s< at);
+}
+
+# SALTU (RRR).
+:saltu ar, as, at is op2 = 0b0110 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = zext(as < at);
+}
+
 # SDCT - Store Data Cache Tag (RRR), pg. 516.
 :sdct at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1001 & as & at & op0 = 0 {
 	sdct(as, at);
