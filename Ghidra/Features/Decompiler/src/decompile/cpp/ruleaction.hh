@@ -1032,6 +1032,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RuleEqual2Zero : public Rule {
+  static bool isPairedWithLess(PcodeOp *op,Varnode *vn1,Varnode *vn2);
 public:
   RuleEqual2Zero(const string &g) : Rule(g, 0, "equal2zero") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
