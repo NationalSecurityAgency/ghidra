@@ -1541,23 +1541,23 @@ define pcodeop diag;
     RB = RB + RX;
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
 	*addr = FPRT64:8; 
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 3);
 	*addr = FPRT64:8; 
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
 	*addr = FPRT64:8; 
     RB = RB + RX;
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=1 & m=1 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
 	*addr = FPRT64:8; 
     RB = RB + RX;
