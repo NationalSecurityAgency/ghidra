@@ -27,6 +27,8 @@ import ghidra.app.plugin.core.analysis.ConstantPropagationContextEvaluator;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.Undefined1DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -318,6 +320,41 @@ public class ConstantPropogationReferenceTest extends AbstractGenericTest {
 		Instruction instr = listing.getInstructionAt(addr("0x00040004"));
 		assertNoOperandReference(0, instr);
 		assertOperandReferenceTo(1, instr, addr("0x00040100"));
+	}
+
+	@Test
+	public void testUndefinedArrayKept_X86_64() throws Exception {
+
+		builder = new ProgramBuilder("thunk", ProgramBuilder._X64, "gcc", this);
+
+		// MOV      EAX,dword ptr [0x00040100]
+		// MOV      EAX,dword ptr [0x00040104]
+		// RET
+
+		builder.setBytes("0x00040000", "8b 04 25 00 01 04 00 8b 04 25 04 01 04 00 c3");
+
+		builder.setBytes("0x00040100", "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+
+		builder.disassemble("0x00040000", 15);
+
+		analyzer = new ConstantPropagationAnalyzer();
+
+		program = builder.getProgram();
+		program.startTransaction("Test");
+
+		// the undefined array that a loader gives a sized data symbol
+		Listing listing = program.getListing();
+		listing.createData(addr("0x00040100"),
+			new ArrayDataType(Undefined1DataType.dataType, 16, 1));
+
+		Address codeStart = addr("0x00040000");
+		AddressSet addressSet = new AddressSet(codeStart, codeStart.add(15));
+		analyze(addressSet);
+
+		assertOperandReferenceTo(1, listing.getInstructionAt(codeStart), addr("0x00040100"));
+		Data data = listing.getDataAt(addr("0x00040100"));
+		assertNotNull(data);
+		assertEquals(16, data.getLength());
 	}
 
 	@Test

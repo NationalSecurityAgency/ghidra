@@ -344,6 +344,13 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			return 0;
 		}
 
+		// Keep an undefined array, such as a loader's sized data symbol: replacing it with a
+		// narrower undefined loses its extent, and accesses to the rest of it find no data.
+		if (dt instanceof Undefined && Undefined.isUndefinedArray(data.getDataType()) &&
+			data.getLength() > dt.getLength()) {
+			return 0;
+		}
+
 		try {
 			// create data at the location so that we record the access size
 			//   the data is undefined, and SHOULD be overwritten if something
