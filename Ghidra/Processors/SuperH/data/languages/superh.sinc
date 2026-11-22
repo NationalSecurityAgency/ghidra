@@ -29,11 +29,19 @@ define register offset=0x180 size=4 [tbr];
 @define CS_FLAG  "sr[13,1]"
 @define BO_FLAG  "sr[14,1]"
 
+# FPU gating:
+#   FPU         - single-precision FPU (fr0-fr15, fpul, fpscr, FR-form instructions).
+#                 Defined by sh-2e.slaspec and sh-2a.slaspec.
+#   FPU_DOUBLE  - double-precision support (dr registers, fcnvds/fcnvsd, fschg,
+#                 FPSCR PR/SZ/QIS bits). Defined by sh-2a.slaspec only.
+#   SH_VERSION == "2A" additionally gates FSQRT and the 32-bit fmov.s @(disp12) forms.
 @if defined(FPU)
 
 # Floating-Point Registers
 define register offset=0x200 size=4 [ fr0     fr1     fr2     fr3     fr4     fr5     fr6     fr7     fr8     fr9     fr10    fr11    fr12    fr13    fr14    fr15  ];
+@if defined(FPU_DOUBLE)
 define register offset=0x200 size=8 [ dr0             dr2             dr4             dr6             dr8             dr10            dr12            dr14          ];
+@endif
 
 # Floating-Point System Registers
 define register offset=0x300 size=4 [fpscr fpul];
@@ -44,9 +52,11 @@ define register offset=0x300 size=4 [fpscr fpul];
 @define FP_ENABLE   "fpscr[7,5]"
 @define FP_CAUSE    "fpscr[12,6]"
 @define FP_DN       "fpscr[18,1]"
+@if defined(FPU_DOUBLE)
 @define FP_PR       "fpscr[19,1]"
 @define FP_SZ       "fpscr[20,1]"
 @define FP_QIS      "fpscr[22,1]"
+@endif
 
 @endif
 
@@ -131,13 +141,16 @@ define token finstr16(16)
     f_rm_04_07 =        (4,  7)
     f_rn_08_11 =        (8,  11)
 
+@if defined(FPU_DOUBLE)
     fdrn_09_11 =        (9,  11)
     fdrm_09_11 =        (9,  11)
     fdrn_05_07 =        (5,  7)
     fdrm_05_07 =        (5,  7)
+@endif
 ;
 
 
+@if SH_VERSION == "2A"
 define token finstr32(32)
     lfdisp_00_11 =       (0,  11)
     lfop_28_31 =         (28, 31)
@@ -150,14 +163,23 @@ define token finstr32(32)
     lffrn_20_23 =        (20, 23)
 ;
 
-attach variables [ ffrn_08_11 ffrm_08_11 ffrn_04_07 ffrm_04_07 lffrm_24_27 lffrn_24_27 lffrm_20_23 lffrn_20_23 ]
+attach variables [ lffrm_24_27 lffrn_24_27 lffrm_20_23 lffrn_20_23 ]
 [fr0 fr1 fr2 fr3 fr4 fr5 fr6 fr7 fr8 fr9 fr10 fr11 fr12 fr13 fr14 fr15];
 
-attach variables [ f_rm_04_07 f_rn_08_11 lf_rm_20_23 lf_rn_24_27 ]
+attach variables [ lf_rm_20_23 lf_rn_24_27 ]
+[r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
+@endif
+
+attach variables [ ffrn_08_11 ffrm_08_11 ffrn_04_07 ffrm_04_07 ]
+[fr0 fr1 fr2 fr3 fr4 fr5 fr6 fr7 fr8 fr9 fr10 fr11 fr12 fr13 fr14 fr15];
+
+attach variables [ f_rm_04_07 f_rn_08_11 ]
 [r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15];
 
+@if defined(FPU_DOUBLE)
 attach variables [ fdrn_09_11 fdrm_09_11 fdrn_05_07 fdrm_05_07 ]
 [dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14];
+@endif
 
 @endif
 
@@ -2021,6 +2043,7 @@ define pcodeop Sleep_Standby;
 
 # TODO: FCMP/GT DRm, DRn          1111nnn0mmm00101 (DRn>DRm)? 1:0 → T
 
+@if defined(FPU_DOUBLE)
 # FCNVDS DRm, FPUL          1111mmm010111101 (float) DRm → FPUL
 :fcnvds fdrm_09_11, fpul    is fpul & fop_12_15=0b1111 & fdrm_09_11 & fop_08_08=0b0 & fop_00_07=0b10111101
 {
@@ -2032,6 +2055,7 @@ define pcodeop Sleep_Standby;
 {
     fdrn_09_11 = float2float(fpul);
 }
+@endif
 
 # FDIV FRm, FRn             1111nnnnmmmm0011 FRn/FRm → FRn
 :fdiv ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0011
@@ -2107,6 +2131,7 @@ define pcodeop Sleep_Standby;
 
 # TODO: FMOV.D @Rm, DRn           1111nnn0mmmm1000 (Rm) → DRn
 
+@if SH_VERSION == "2A"
 # FMOV.S @(disp12,Rm),FRn     0011nnnnmmmm0001 0111dddddddddddd  (disp×4+Rm) → FRn
 :fmov.s @(disp12, lf_rm_20_23), lffrn_24_27
     is lfop_28_31=0b0011 & lffrn_24_27 & lf_rm_20_23 & lfop_12_19=0b00010111 & lfdisp_00_11
@@ -2114,6 +2139,7 @@ define pcodeop Sleep_Standby;
 {
     lffrn_24_27 = *:4 (disp12 + lf_rm_20_23);
 }
+@endif
 
 # TODO: FMOV.D @(disp12,Rm),DRn     0011nnn0mmmm0001 0111dddddddddddd  (disp×8+Rm) → DRn
 
@@ -2142,6 +2168,7 @@ define pcodeop Sleep_Standby;
 
 # TODO: FMOV.D DRm, @Rn             1111nnnnmmm01010 DRm → (Rn)
 
+@if SH_VERSION == "2A"
 # FMOV.S FRm, @(disp12,Rn)    0011nnnnmmmm0001 0011dddddddddddd FRm → (disp×4+Rn)
 :fmov.s lffrm_20_23, @(disp12, lf_rn_24_27)
     is lfop_28_31=0b0011 & lf_rn_24_27 & lffrm_20_23 & lfop_12_19=0b00010011 & lfdisp_00_11
@@ -2149,6 +2176,7 @@ define pcodeop Sleep_Standby;
 {
     *:4 (disp12 + lf_rn_24_27) = lffrm_20_23;
 }
+@endif
 
 
 # TODO: FMOV.D DRm, @(disp12,Rn)    0011nnnnmmm000010 011dddddddddddd DRm → (disp×8+Rn)
@@ -2167,17 +2195,21 @@ define pcodeop Sleep_Standby;
 }
 
 # TODO: FNEG DRn                    1111nnn001001101 -DRn → DRn
+@if defined(FPU_DOUBLE)
 # FSCHG                       1111001111111101 FPSCR.SZ = ~ FPSCR.SZ
 :fschg  is fop_00_15=0b1111001111111101
 {
     $(FP_SZ) = ~ $(FP_SZ);
 }
+@endif
 
+@if SH_VERSION == "2A"
 # FSQRT FRn                   1111nnnn01101101 √FRn → FRn
 :fsqrt ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01101101
 {
     ffrn_08_11 = sqrt(ffrn_08_11);
 }
+@endif
 
 # TODO: FSQRT DRn                   1111nnn001101101 √DRn → DRn
 # FSTS FPUL, FRn              1111nnnn00001101 FPUL → FRn

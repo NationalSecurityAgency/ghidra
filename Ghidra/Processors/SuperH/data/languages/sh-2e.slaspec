@@ -1,0 +1,6 @@
+# SH-2E: full SH-2 integer ISA plus the single-precision FPU (no double
+# precision, FSQRT, FSCHG or fmov.s @(disp12)). Used by the SH7058.
+@define SH_VERSION "2"
+@define FPU "1"
+
+@include "superh.sinc"

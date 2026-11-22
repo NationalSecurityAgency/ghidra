@@ -1,4 +1,5 @@
 @define SH_VERSION "2A"
 @define FPU "1"
+@define FPU_DOUBLE "1"
 
 @include "superh.sinc"
