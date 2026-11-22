@@ -108,20 +108,23 @@ with : phase=1 {
 
 #STWS
 :STW^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0xA & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:4 addr = RR:4; 
+	val:4 = RR:4;
+	build storeShortDispCmplt;
+	*[ram]:4 storeShortDispCmplt = val;
 }
 
 #STHS
 :STH^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x9 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:2 addr = RR:2; 
+	val:2 = RR:2;
+	build storeShortDispCmplt;
+	*[ram]:2 storeShortDispCmplt = val;
 }
 
 #STBS
 :STB^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x8 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:1 addr = RR:1; 
+	val:1 = RR:1;
+	build storeShortDispCmplt;
+	*[ram]:1 storeShortDispCmplt = val;
 }
 
 :LDWAS^shortDispCmplt^loadCC highlse5(RB),RT			is opfam=0x03 & subop=6 & one=1 & shortDispCmplt & loadCC & highlse5 & RB & RT {
@@ -136,8 +139,9 @@ with : phase=1 {
 }
 
 :STWAS^storeShortDispCmplt^storeCC RR,lse5(RB)			is opfam=0x03 & subop=0xE & one=1 & storeShortDispCmplt & storeCC & lse5 & RB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram] :4 addr = RR:4; 
+	val:4 = RR:4;
+	build storeShortDispCmplt;
+	*[ram]:4 storeShortDispCmplt = val;
 }
 
 # This is the "begin" version for big endian. I am not doing the little endian version.
