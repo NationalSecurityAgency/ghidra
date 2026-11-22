@@ -144,47 +144,36 @@ with : phase=1 {
 	*[ram]:4 storeShortDispCmplt = val;
 }
 
-# This is the "begin" version for big endian. I am not doing the little endian version.
-:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & storeCC & lse5 & SRRB & RR & u=0 {
-	# get the address, which is most likely not word aligned
+# STBYS, big endian (PSW E-bit 0). The beginning case stores the rightmost
+# bytes of r from the effective address to the end of its word; the ending
+# case stores the leftmost bytes from the start of the word up to, but not
+# including, the effective address. Base modification follows the read of r.
+:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & stbyMod & storeCC & lse5 & SRRB & RR & u=0 {
+	data:4 = RR:4;
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
-	# figure out how many bytes need to be written
-	local numBytes = 4 - (addr & 0x3);
-	# this is the address where we stop (one byte past the last address to which we write)
-	local finalAddr = addr + numBytes;
-	# copy the contents of RR
-	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
-	# use a for loop to write out the 1,2,3, or 4 bytes
-	<LOOP>
-	if (addr == finalAddr) goto <DONE>;
-	*[ram]:1 addr = data:1;
+	ptr:$(ADDRSIZE) = (addr & ~3) + 4;
+	<loop>
+	if (ptr == addr) goto <done>;
+	ptr = ptr - 1;
+	*[ram]:1 ptr = data:1;
 	data = data >> 8;
-	addr = addr + 1;
-	goto <LOOP>;
-	<DONE>
+	goto <loop>;
+	<done>
+	build stbyMod;
 }
 
-# This is the "end" version for big endian. I am not doing the little endian version.
-:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & storeCC & lse5 & SRRB & RR & u=1 {
-	# get the address, which is most likely not word aligned
+:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & stbyMod & storeCC & lse5 & SRRB & RR & u=1 {
+	data:4 = RR:4;
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
-	# figure out how many bytes need to be written
-	local numBytes = (addr & 0x3);
-	# now make a word aligned address
-	addr = addr & 0x3;
-	# this is the address where we stop (one byte past the last address to which we write)
-	local finalAddr = addr + numBytes;
-	# copy the contents of RR
-	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
-
-	# use a for loop to write out the 1,2,3, or 4 bytes
-	<LOOP>
-	if (addr == finalAddr) goto <DONE>;
-	*[ram]:1 addr = data:1;
-	data = data >> 8;
-	addr = addr + 1;
-	goto <LOOP>;
-	<DONE>
+	ptr:$(ADDRSIZE) = addr & ~3;
+	<loop>
+	if (ptr == addr) goto <done>;
+	*[ram]:1 ptr = data(3);
+	data = data << 8;
+	ptr = ptr + 1;
+	goto <loop>;
+	<done>
+	build stbyMod;
 }
 
 # Note: LDO and LDIL do not access memory, they just load an address into a register

@@ -1697,10 +1697,14 @@ storeShortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & lse5 { off:$(A
 storeShortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & lse5 { local lse = sext(lse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
 
 # Table 5-13 on page 5-26
-storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # none / beginning, don't modify base register
-storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE & RR & lse5  { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # beginning, modify base register
+storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # beginning, don't modify base register
+storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE { off:$(ADDRSIZE) = SPCBASE; export off; } # beginning, store at the base, then modify it
 storeBytesShortCmplt: ",E"				is u=1 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, don't modify
-storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & RR & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # ending, modify
+storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, modify
+
+# The STBYS base modification, which follows the store
+stbyMod: 							is m=0 { }
+stbyMod: 							is m=1 & RB & lse5 { RB = (RB + sext(lse5)) & ~3; }
 
 # u fixed at 0, Table 5-11 on page 5-22, for LPA and related system level opcodes
 sysCmplt: 							is m=0 { }
