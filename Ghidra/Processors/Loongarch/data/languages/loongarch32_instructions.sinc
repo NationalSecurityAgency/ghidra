@@ -976,7 +976,7 @@ define pcodeop bstrins.w;
 
 #la-bitops-32.txt bstrpick.w mask=0x00608000	[@orig_fmt=DJUm5Uk5, @la32, @qemu]
 #0x00608000	0xffe08000	r0:5,r5:5,u16:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm16_5_s0', 'imm10_5_s0']
-:bstrpick.w RD, RJ32src, imm16_5, imm10_5,  is op21_31=0x3 & op15_15=0x1 & RD & RJ32src & imm10_5 & imm16_5 {
+:bstrpick.w RD, RJ32src, imm16_5, imm10_5 is op21_31=0x3 & op15_15=0x1 & RD & RJ32src & imm10_5 & imm16_5 {
 	local msb:1 = imm16_5;
 	local lsb:1 = imm10_5;
 	local len:1 = msb + 1 - lsb;
