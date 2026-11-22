@@ -135,8 +135,8 @@ with : phase=1 {
     *[ram]:4 address = 0:4; 
 }
 
-:STWAS^shortDispCmplt^storeCC RR,lse5(RB)				is opfam=0x03 & subop=0xE & one=1 & shortDispCmplt & storeCC & lse5 & RB & RR {
-	addr:$(ADDRSIZE) = shortDispCmplt;
+:STWAS^storeShortDispCmplt^storeCC RR,lse5(RB)			is opfam=0x03 & subop=0xE & one=1 & storeShortDispCmplt & storeCC & lse5 & RB & RR {
+	addr:$(ADDRSIZE) = storeShortDispCmplt;
 	*[ram] :4 addr = RR:4; 
 }
 
