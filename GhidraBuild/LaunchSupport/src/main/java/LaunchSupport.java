@@ -298,7 +298,15 @@ public class LaunchSupport {
 				!GraphicsEnvironment.isHeadless() && !(javaFinder instanceof MacJavaFinder);
 			System.out.print("Enter path to " + javaName + " home directory");
 			System.out.print(supportsDialog ? " (ENTER for dialog): " : ": ");
-			String line = in.readLine().trim();
+			String line = in.readLine();
+			if (line == null) {
+				// End of stream: no interactive console (e.g., stdin redirected or closed)
+				System.out.println();
+				System.out.println("No input available. Set JAVA_HOME or the JAVA_HOME_OVERRIDE " +
+					"launch property to a supported " + javaName + " " + javaRange + " directory.");
+				return EXIT_FAILURE;
+			}
+			line = line.trim();
 			if (supportsDialog && line.isEmpty()) {
 				System.out.println("Opening selection dialog...");
 				JFileChooser chooser = new JFileChooser();
