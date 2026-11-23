@@ -35,8 +35,9 @@ public class SwiftCharacter extends DemangledStructure {
 			true);
 		setNamespace(SwiftDataTypeUtils.getSwiftNamespace());
 
-		DemangledDataType stringDt = new DemangledDataType(mangled, null, DemangledDataType.CHAR);
-		stringDt.incrementPointerLevels();
+		// _countAndFlagsBits: a UInt64, never a pointer
+		DemangledDataType stringDt =
+			new SwiftPrimitive(mangled, null, DemangledDataType.INT64, true);
 
 		DemangledDataType voidDt = new DemangledDataType(mangled, null, DemangledDataType.VOID);
 		voidDt.incrementPointerLevels();
