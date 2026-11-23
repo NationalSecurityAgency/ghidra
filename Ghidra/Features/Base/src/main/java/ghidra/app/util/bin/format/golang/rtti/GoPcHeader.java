@@ -70,16 +70,20 @@ public class GoPcHeader {
 	 * @return boolean true if program has a pclntab, false otherwise
 	 */
 	public static boolean hasPcHeader(Program program) {
+		return !getPcHeaderVersion(program).isInvalid();
+	}
+
+	static GoVer getPcHeaderVersion(Program program) {
 		Address addr = getPcHeaderAddress(program);
 		if (addr != null) {
 			try (ByteProvider provider = new MemoryByteProvider(program.getMemory(), addr)) {
-				return isPcHeader(provider);
+				return isPcHeader(provider) ? readMagic(provider).goVer() : GoVer.INVALID;
 			}
 			catch (IOException e) {
-				// fall thru
+				return GoVer.INVALID;
 			}
 		}
-		return false;
+		return GoVer.INVALID;
 	}
 
 	/**

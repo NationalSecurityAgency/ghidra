@@ -164,6 +164,9 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 		GoVer goVer = buildInfo.getGoVer();
 		if (goVer.isInvalid()) {
+			goVer = GoPcHeader.getPcHeaderVersion(program);
+		}
+		if (goVer.isInvalid()) {
 			throw new BootstrapInfoException(
 				"Invalid Go version string [%s]".formatted(buildInfo.getVersion()));
 		}
