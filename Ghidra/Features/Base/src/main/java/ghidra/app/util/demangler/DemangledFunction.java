@@ -745,7 +745,8 @@ public class DemangledFunction extends DemangledObject {
 		// If we don't know the parameters, and have already decided on 'this' calling
 		// convention, then return false to allow the new signature to be applied.
 		String callingConventionName = func.getCallingConventionName();
-		if (existingParameterCount == 0 && THIS_CALL.equals(callingConventionName)) {
+		boolean isThisCall = THIS_CALL.equals(callingConventionName);
+		if (existingParameterCount == 0 && isThisCall) {
 			return false;
 		}
 
@@ -761,17 +762,16 @@ public class DemangledFunction extends DemangledObject {
 			return false;
 		}
 
-		// If a function is in a namespace, must be VERY careful
-		int mangledParamterCount = parameters.size();
+		int mangledParameterCount = parameters.size();
 		if (hasVoidParams()) {
-			mangledParamterCount = 0;
+			mangledParameterCount = 0;
 		}
 
 		boolean hasVarArgs = false;
-		if (mangledParamterCount != 0) {
+		if (mangledParameterCount != 0) {
 			hasVarArgs = hasVarArgs();
 			if (hasVarArgs) {
-				--mangledParamterCount;
+				--mangledParameterCount;
 			}
 		}
 
@@ -779,7 +779,10 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 
-		if (existingParameterCount == mangledParamterCount) {
+		if (existingParameterCount == mangledParameterCount) {
+			return false;
+		}
+		else if (isThisCall && (existingParameterCount == mangledParameterCount + 1)) {
 			return false;
 		}
 
