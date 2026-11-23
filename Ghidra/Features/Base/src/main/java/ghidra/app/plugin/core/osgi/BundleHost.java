@@ -394,7 +394,12 @@ public class BundleHost {
 		if (!FileUtilities.mkdirs(cacheDir)) {
 			throw new IOException("Failed to make cache directory: " + cacheDir);
 		}
-		return cacheDir.getAbsolutePath();
+		// Felix rejects bundle data files whose canonical path does not start with the canonical
+		// path of their data directory.  When file system redirection is in effect (e.g., Windows
+		// MSIX package virtualization of %APPDATA%), the canonical path of an existing directory
+		// can differ from that of a not-yet-existing file beneath it.  Passing the canonical path
+		// to Felix keeps both paths in the same namespace.
+		return cacheDir.getCanonicalPath();
 	}
 
 	private void createAndConfigureFramework() throws IOException {
