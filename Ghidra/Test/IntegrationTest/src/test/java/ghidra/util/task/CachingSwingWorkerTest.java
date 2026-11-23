@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,10 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.SwingWorker;
-
 import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
-import sun.awt.AppContext;
-import sun.swing.AccumulativeRunnable;
+import ghidra.util.Msg;
 
 public class CachingSwingWorkerTest extends AbstractDockingTest {
 
@@ -59,15 +56,13 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 	@Test
 	public void testSimpleSwingThreadCase() {
 
-		disasbleTimerUsage();
-
 		TestWorker worker = new TestWorker();
 		worker.setTaskDialogDelay(0);
 
 		ClientRunnable runnable = new ClientRunnable(worker);
 		runSwing(runnable, false);
 
-		TaskDialog dialog = waitForDialogComponent(null, TaskDialog.class, 2000);
+		TaskDialog dialog = waitForDialogComponent(TaskDialog.class);
 		assertNotNull(dialog);
 
 		worker.setDone();
@@ -83,8 +78,6 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 	@Test
 	public void testSwingAndAnotherThreadCase() throws InterruptedException {
 
-		disasbleTimerUsage();
-
 		TestWorker worker = new TestWorker();
 		worker.setTaskDialogDelay(0);
 
@@ -93,16 +86,14 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 
 		MyThread r1 = new MyThread(100, worker);
 
-		TaskDialog dialog = waitForDialogComponent(null, TaskDialog.class, 2000);
-		assertNotNull(dialog);
+		TaskDialog taskDialog = waitForDialogComponent(TaskDialog.class);
 
 		worker.setDone();
 		worker.get(TaskMonitor.DUMMY);
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForSwing();
-		assertTrue(!dialog.isVisible());
+		waitFor(() -> !taskDialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
 		assertEquals(ITEM_COUNT, runnable.size());
@@ -110,8 +101,6 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 
 	@Test
 	public void testSwingAfterAnotherThreadCase() throws InterruptedException {
-
-		disasbleTimerUsage();
 
 		TestWorker worker = new TestWorker();
 		worker.setTaskDialogDelay(0);
@@ -121,16 +110,14 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		ClientRunnable runnable = new ClientRunnable(worker);
 		runSwing(runnable, false);
 
-		TaskDialog dialog = waitForDialogComponent(null, TaskDialog.class, 2000);
-		assertNotNull(dialog);
+		TaskDialog taskDialog = waitForDialogComponent(TaskDialog.class);
 
 		worker.setDone();
 		worker.get(TaskMonitor.DUMMY);
 		r1.join();
 		assertEquals(ITEM_COUNT, r1.size());
 
-		waitForSwing();
-		assertTrue(!dialog.isVisible());
+		waitFor(() -> !taskDialog.isVisible());
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
 		assertEquals(ITEM_COUNT, runnable.size());
@@ -145,15 +132,13 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 		runSwing(runnable, false);
 		runSwing(runnable, false);
 
-		TaskDialog dialog = waitForDialogComponent(null, TaskDialog.class, 2000);
-		assertTrue(dialog.getTitle().contains("Test Worker"));
-		assertNotNull(dialog);
+		TaskDialog taskDialog = waitForDialogComponent(TaskDialog.class);
+		assertTrue(taskDialog.getTitle().contains("Test Worker"));
 
-		dialog.cancel();
+		taskDialog.cancel();
 		worker.get(TaskMonitor.DUMMY);
 
-		waitForSwing();
-		assertTrue(!dialog.isVisible());
+		waitFor(() -> taskDialog);
 		assertEquals("number of runs", 1, worker.getNumRuns());
 
 		assertTrue(worker.wasCancelled);
@@ -163,23 +148,6 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
-
-	private void disasbleTimerUsage() {
-		AccumulativeRunnable<Runnable> nonTimerAccumulativeRunnable =
-			new AccumulativeRunnable<Runnable>() {
-				@Override
-				protected void run(List<Runnable> args) {
-					for (Runnable runnable : args) {
-						runnable.run();
-					}
-				}
-			};
-
-		Object key = getInstanceField("DO_SUBMIT_KEY", SwingWorker.class);
-
-		AppContext appContext = AppContext.getAppContext();
-		appContext.put(key, nonTimerAccumulativeRunnable);
-	}
 
 //==================================================================================================
 // Inner Classes
@@ -246,8 +214,7 @@ public class CachingSwingWorkerTest extends AbstractDockingTest {
 					Thread.sleep(10);
 				}
 				catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Msg.error(this, "Interrupted", e);
 				}
 
 				if (count > 600) {
