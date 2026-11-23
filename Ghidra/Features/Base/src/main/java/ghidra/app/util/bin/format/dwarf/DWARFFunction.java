@@ -566,8 +566,9 @@ public class DWARFFunction {
 	//---------------------------------------------------------------------------------------------
 
 	/**
+	 * {@return true if the specified DIE is a prototype func definition, otherwise false}
+	 * 
 	 * @param diea {@link DIEAggregate} for a subprogram (ie. function)
-	 * {@return boolean true if the specified DIE is a prototype func definition, otherwise false}
 	 */
 	public static boolean isPrototypeFuncdecl(DIEAggregate diea) {
 		return diea.getTag() == DW_TAG_subprogram && diea.isDanglingDeclaration();
