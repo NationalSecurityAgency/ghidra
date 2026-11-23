@@ -81,7 +81,7 @@ define pcodeop uncertain_fcsr;
 #la-fp.txt movfcc2gr mask=0x0114dc00	[@orig_name=movcf2gr]
 #0x0114dc00	0xffffff00	r0:5,c5:3	['reg0_5_s0', 'fcc5_3_s0']
 :movcf2gr  RD, fccJ                  is op10_31=0x4537 & RD & fccJ {
-	RD[0,1] = fccJ[0,1];
+	RD = zext(fccJ[0,1]);
 }
 
 
