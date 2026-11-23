@@ -613,7 +613,7 @@
 	tmp2:8 = zext(RJsrc[32,16]);
 	tmp3:8 = zext(RJsrc[48,16]);
 
-	RD = (tmp3 << 48) + (tmp2 << 32) + (tmp1 << 16) + tmp0;
+	RD = (tmp0 << 48) + (tmp1 << 32) + (tmp2 << 16) + tmp3;
 }
 
 
