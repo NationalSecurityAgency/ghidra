@@ -336,14 +336,14 @@ attach variables [ rD32 rJ32 rK32 ] [
 
 @if FREGSIZE == "8"
 # For 64-bit floating point single instruction operands use only the low part
-attach variables [ frD frJ frK ] [
+attach variables [ frD frJ frK frA ] [
 	fa0_lo	fa1_lo	fa2_lo	fa3_lo	fa4_lo	fa5_lo	fa6_lo	fa7_lo
 	ft0_lo	ft1_lo	ft2_lo	ft3_lo	ft4_lo	ft5_lo	ft6_lo	ft7_lo
 	ft8_lo	ft9_lo	ft10_lo	ft11_lo	ft12_lo	ft13_lo	ft14_lo	ft15_lo
 	fs0_lo	fs1_lo	fs2_lo	fs3_lo	fs4_lo	fs5_lo	fs6_lo	fs7_lo
 ];
 
-attach variables [ drD drJ drK ] [
+attach variables [ drD drJ drK drA ] [
 	fa0		fa1		fa2		fa3		fa4		fa5		fa6		fa7	
 	ft0		ft1		ft2		ft3		ft4		ft5		ft6		ft7	
 	ft8		ft9		ft10	ft11	ft12	ft13	ft14	ft15
@@ -352,7 +352,7 @@ attach variables [ drD drJ drK ] [
 
 @else
 
-attach variables [ frD frJ frK ] [
+attach variables [ frD frJ frK frA ] [
 	fa0		fa1		fa2		fa3		fa4		fa5		fa6		fa7	
 	ft0		ft1		ft2		ft3		ft4		ft5		ft6		ft7	
 	ft8		ft9		ft10	ft11	ft12	ft13	ft14	ft15
@@ -360,7 +360,7 @@ attach variables [ frD frJ frK ] [
 ];
 
 # For 64-bit floating point Double instruction operands need to bond two 32-bit FPRs
-attach variables [ drD drJ drK ] [
+attach variables [ drD drJ drK drA ] [
 	fa0_1	_	fa2_3	_	fa4_5	_	fa6_7	_
 	ft8_9	_	ft10_11	_	ft12_13	_	ft14_15	_
 	ft16_17	_	ft18_19	_	ft20_21	_	ft22_23	_
