@@ -167,11 +167,20 @@ public class SymbolPathParser {
 	}
 
 	/**
-	 * Checks for the '>' of an arrow, as in a Rust function pointer type such as
-	 * {@code fn(u8) -> u32}, which does not close a template
+	 * Checks for an arrow string '-&gt;', as in a Rust function pointer type such as in
+	 * {@code fn(u8) -> u32}. This is used to avoid considering an arrow string to be the closing
+	 * of a template. 
+	 * <p>
+	 * Note: the example above (and likely any real symbol names) will have a space before the arrow
+	 * symbol. However, symbols in Ghidra may have had all spaces removed, so we cannot rely on a
+	 * space before the arrow text.
 	 */
-	private static boolean isArrow(int i, String name) {
-		return i > 0 && name.charAt(i - 1) == '-';
+	private static boolean isArrow(int i, String s) {
+		int dash = i - 1;
+		if (i < 1) {
+			return false;
+		}
+		return s.charAt(dash) == '-';
 	}
 
 	private static boolean isAngleOperator(String component) {
