@@ -23,6 +23,7 @@ data/GolangFunctionsThatDoNotReturn||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
 data/RustFunctionsThatDoNotReturn||GHIDRA||||END|
+data/SomFunctionsThatDoNotReturn||GHIDRA||||END|
 data/base.file.extensions.icons.theme.properties||GHIDRA||||END|
 data/base.icons.theme.properties||GHIDRA||||END|
 data/base.listing.theme.properties||GHIDRA||||END|

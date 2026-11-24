@@ -1,0 +1,9 @@
+# SOM (HP-UX) function names which do not return
+# (names should not start with '_' since these are stripped during checking)
+exit
+abort
+longjmp
+siglongjmp
+assert
+panic
+pthread_exit
