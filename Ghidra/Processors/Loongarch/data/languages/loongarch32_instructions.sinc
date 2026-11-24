@@ -694,7 +694,7 @@
 
 #la-atomics-32.txt amswap.w mask=0x38600000	[@orig_fmt=DKJ]
 #0x38600000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amswap.w  RD, RJsrc, RK32src  is op15_31=0x70c0 & RD & RJsrc & RK32src {
+:amswap.w  RD, RK32src, RJsrc  is op15_31=0x70c0 & RD & RJsrc & RK32src {
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
 	*[ram]:4 RJsrc = RK32src;
@@ -703,7 +703,7 @@
 
 #la-atomics-32.txt amadd.w mask=0x38610000	[@orig_fmt=DKJ]
 #0x38610000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amadd.w  RD, RJsrc, RK32src   is op15_31=0x70c2 & RD & RJsrc & RK32src {
+:amadd.w  RD, RK32src, RJsrc   is op15_31=0x70c2 & RD & RJsrc & RK32src {
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
 	*[ram]:4 RJsrc = (RK32src + val);
@@ -712,7 +712,7 @@
 
 #la-atomics-32.txt amand.w mask=0x38620000	[@orig_fmt=DKJ]
 #0x38620000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amand.w  RD, RJsrc, RK32src   is op15_31=0x70c4 & RD & RJsrc & RK32src {
+:amand.w  RD, RK32src, RJsrc   is op15_31=0x70c4 & RD & RJsrc & RK32src {
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
 	*[ram]:4 RJsrc = (RK32src & val);
@@ -721,7 +721,7 @@
 
 #la-atomics-32.txt amor.w mask=0x38630000	[@orig_fmt=DKJ]
 #0x38630000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amor.w  RD, RJsrc, RK32src    is op15_31=0x70c6 & RD & RJsrc & RK32src {
+:amor.w  RD, RK32src, RJsrc    is op15_31=0x70c6 & RD & RJsrc & RK32src {
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
 	*[ram]:4 RJsrc = (RK32src | val);
@@ -730,7 +730,7 @@
 
 #la-atomics-32.txt amxor.w mask=0x38640000	[@orig_fmt=DKJ]
 #0x38640000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amxor.w  RD, RJsrc, RK32src   is op15_31=0x70c8 & RD & RJsrc & RK32src {
+:amxor.w  RD, RK32src, RJsrc   is op15_31=0x70c8 & RD & RJsrc & RK32src {
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
 	*[ram]:4 RJsrc = (RK32src ^ val);
@@ -739,7 +739,7 @@
 
 #la-atomics-32.txt ammax.w mask=0x38650000	[@orig_fmt=DKJ]
 #0x38650000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:ammax.w  RD, RJsrc, RK32src   is op15_31=0x70ca & RD & RJsrc & RK32src {
+:ammax.w  RD, RK32src, RJsrc   is op15_31=0x70ca & RD & RJsrc & RK32src {
 	local val1:4 = *[ram]:4 RJsrc;
 	local val2:4 = RK32src;
 	local test = (val1 s>= val2);
@@ -750,7 +750,7 @@
 
 #la-atomics-32.txt ammin.w mask=0x38660000	[@orig_fmt=DKJ]
 #0x38660000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:ammin.w  RD, RJsrc, RK32src   is op15_31=0x70cc & RD & RJsrc & RK32src {
+:ammin.w  RD, RK32src, RJsrc   is op15_31=0x70cc & RD & RJsrc & RK32src {
 	local val1:4 = *[ram]:4 RJsrc;
 	local val2:4 = RK32src;
 	local test = (val1 s<= val2);
@@ -761,7 +761,7 @@
 
 #la-atomics-32.txt amswap_db.w mask=0x38690000	[@orig_fmt=DKJ]
 #0x38690000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amswap_db.w  RD, RJsrc, RK32src  is op15_31=0x70d2 & RD & RJsrc & RK32src {
+:amswap_db.w  RD, RK32src, RJsrc  is op15_31=0x70d2 & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val:4 = *[ram]:4 RJsrc;
 	RD = zext(val);
@@ -771,7 +771,7 @@
 
 #la-atomics-32.txt amadd_db.w mask=0x386a0000	[@orig_fmt=DKJ]
 #0x386a0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amadd_db.w  RD, RJsrc, RK32src is op15_31=0x70d4 & RD & RJsrc & RK32src {
+:amadd_db.w  RD, RK32src, RJsrc is op15_31=0x70d4 & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
@@ -781,7 +781,7 @@
 
 #la-atomics-32.txt amand_db.w mask=0x386b0000	[@orig_fmt=DKJ]
 #0x386b0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amand_db.w  RD, RJsrc, RK32src is op15_31=0x70d6 & RD & RJsrc & RK32src {
+:amand_db.w  RD, RK32src, RJsrc is op15_31=0x70d6 & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
@@ -791,7 +791,7 @@
 
 #la-atomics-32.txt amor_db.w mask=0x386c0000	[@orig_fmt=DKJ]
 #0x386c0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amor_db.w  RD, RJsrc, RK32src is op15_31=0x70d8 & RD & RJsrc & RK32src {
+:amor_db.w  RD, RK32src, RJsrc is op15_31=0x70d8 & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
@@ -801,7 +801,7 @@
 
 #la-atomics-32.txt amxor_db.w mask=0x386d0000	[@orig_fmt=DKJ]
 #0x386d0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:amxor_db.w  RD, RJsrc, RK32src is op15_31=0x70da & RD & RJsrc & RK32src {
+:amxor_db.w  RD, RK32src, RJsrc is op15_31=0x70da & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val:4 = *[ram]:4 RJsrc;
 	RD = sext(val);
@@ -811,7 +811,7 @@
 
 #la-atomics-32.txt ammax_db.w mask=0x386e0000	[@orig_fmt=DKJ]
 #0x386e0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:ammax_db.w  RD, RJsrc, RK32src is op15_31=0x70dc & RD & RJsrc & RK32src {
+:ammax_db.w  RD, RK32src, RJsrc is op15_31=0x70dc & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val1:4 = *[ram]:4 RJsrc;
 	local val2:4 = RK32src;
@@ -823,7 +823,7 @@
 
 #la-atomics-32.txt ammin_db.w mask=0x386f0000	[@orig_fmt=DKJ]
 #0x386f0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
-:ammin_db.w  RD, RJsrc, RK32src is op15_31=0x70de & RD & RJsrc & RK32src {
+:ammin_db.w  RD, RK32src, RJsrc is op15_31=0x70de & RD & RJsrc & RK32src {
 	dbar(0:1);
 	local val1:4 = *[ram]:4 RJsrc;
 	local val2:4 = RK32src;
