@@ -845,8 +845,8 @@ public class FunctionEditorModel {
 				if (!hasSignificantParameterChanges &&
 					functionData.hasParameterNamesChanged(originalFunctionData)) {
 
-					// Names may move between parameters (e.g., two parameters of the same type
-					// swapped), so first give each renamed parameter its default name, then the
+					// Names may move between parameters (e.g., when two parameters of the same type
+					// are swapped), so first give each renamed parameter its default name, then the
 					// new name, to avoid a temporary duplicate
 					List<Parameter> renamed = new ArrayList<>();
 					List<String> newNames = new ArrayList<>();
@@ -869,9 +869,6 @@ public class FunctionEditorModel {
 				return true;
 			}
 
-			SourceType sigSource =
-				hasSignificantParameterChanges ? SourceType.USER_DEFINED : SourceType.ANALYSIS;
-
 			SymbolTable symbolTable = program.getSymbolTable();
 
 			List<Parameter> params = new ArrayList<>();
@@ -888,6 +885,8 @@ public class FunctionEditorModel {
 			}
 
 			// TODO: How should we handle conflicts with locals?
+			SourceType sigSource =
+				hasSignificantParameterChanges ? SourceType.USER_DEFINED : SourceType.ANALYSIS;
 			function.updateFunction(callingConventionName,
 				functionData.getReturnInfo().getParameter(SourceType.DEFAULT), params,
 				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
@@ -895,7 +894,7 @@ public class FunctionEditorModel {
 				true, sigSource);
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, "Function Edit Error", e.getMessage());
+			Msg.showError(this, null, "Function Edit Error", e.getMessage(), e);
 			return false;
 		}
 
