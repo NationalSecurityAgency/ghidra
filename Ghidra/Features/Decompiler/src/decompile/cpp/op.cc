@@ -529,6 +529,11 @@ void PcodeOp::collapseConstantSymbol(Varnode *newConst) const
 {
  const Varnode *copyVn = (const Varnode *)0;
   switch(code()) {
+    case CPUI_PIECE:
+      if (getIn(0)->getOffset() != 0)
+	return;
+      copyVn = getIn(1);
+      break;
     case CPUI_SUBPIECE:
       if (getIn(1)->getOffset() != 0)
 	return;				// Must be truncating high bytes
