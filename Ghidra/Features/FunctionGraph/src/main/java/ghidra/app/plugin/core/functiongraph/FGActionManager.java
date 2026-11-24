@@ -789,6 +789,7 @@ public class FGActionManager {
 		selectAllAction
 				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Code_Unit_Selection"));
 
+
 		addLocalAction(chooseFormatsAction);
 		addLocalAction(homeAction);
 		addLocalAction(zoomInAction);

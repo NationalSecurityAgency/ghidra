@@ -115,7 +115,7 @@ public class FGModel {
 		controller.setFunctionGraphData(graphData);
 	}
 
-	synchronized boolean isBusy() {
+	public synchronized boolean isBusy() {
 		return currentGraphRunnable != null || pendingGraphRunnable != null;
 	}
 

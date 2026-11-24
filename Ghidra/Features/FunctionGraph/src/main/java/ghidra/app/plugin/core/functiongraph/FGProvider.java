@@ -19,6 +19,7 @@ import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -26,6 +27,7 @@ import javax.swing.*;
 
 import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.options.OptionsService;
 import docking.widgets.fieldpanel.FieldPanel;
 import edu.uci.ics.jung.graph.Graph;
@@ -58,6 +60,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
+import ghidra.util.task.TaskLauncher;
 
 public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, FunctionGraph>
 		implements Navigatable, DomainObjectListener {
@@ -141,6 +144,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	}
 
+	// Note: these are actions that only appear in the FGProvider windows and not other function
+	// graph windows, such as the function compare windows.
 	private void createActions() {
 
 		actionManager = new FGActionManager(controller, plugin.getName());
@@ -189,8 +194,52 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			new MenuData(new String[] { "Properties" }, null, popupVeryLastGroup));
 		optionsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Options"));
 
+		String popupEndPopupGroup = "zzzoom";
+		DockingAction saveGraphViewImageAction = new ActionBuilder("Save Graph View Image", owner)
+				.popupMenuPath("Save Image", "Current View...")
+				.popupMenuGroup(popupEndPopupGroup)
+				.helpLocation(new HelpLocation(getOwner(), "Save_Image"))
+				.withContext(FunctionGraphValidGraphActionContextIf.class)
+				.onAction(c -> saveImage(false))
+				.build();
+
+		DockingAction saveFullGraphImageAction = new ActionBuilder("Save Graph Full Image", owner)
+				.popupMenuPath("Save Image", "Full Graph...")
+				.popupMenuGroup(popupEndPopupGroup)
+				.helpLocation(new HelpLocation(getOwner(), "Save_Image"))
+				.withContext(FunctionGraphValidGraphActionContextIf.class)
+				.onAction(c -> saveImage(true))
+				.build();
+
+		tool.setMenuGroup(new String[] { "Save Image" }, popupEndPopupGroup, "zzzsubgroup");
+
 		addLocalAction(cloneAction);
 		addLocalAction(optionsAction);
+		addLocalAction(saveGraphViewImageAction);
+		addLocalAction(saveFullGraphImageAction);
+	}
+
+	private void saveImage(boolean fullGraph) {
+
+		TaskLauncher.launchModal("Preparing to Save Graph Image", tm -> {
+
+			try {
+				FGImageSaver saver = new FGImageSaver(controller.getView());
+				if (fullGraph) {
+					saver.saveFullGraphToImage();
+				}
+				else {
+					saver.saveGraphViewToImage();
+				}
+				setStatusInfo("Saved image file");
+			}
+			catch (IOException e) {
+				Msg.error(this, "Error saving graph image", e);
+				tool.setStatusInfo("Error saving image. See log.", true);
+			}
+
+		});
+
 	}
 
 	@Override

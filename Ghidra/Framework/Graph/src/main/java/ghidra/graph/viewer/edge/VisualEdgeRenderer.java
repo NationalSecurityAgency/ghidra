@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import edu.uci.ics.jung.graph.util.Context;
 import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
-import edu.uci.ics.jung.visualization.transform.LensTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
+import edu.uci.ics.jung.visualization.transform.MutableTransformerDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.util.VertexShapeFactory;
 import generic.theme.GThemeDefaults.Colors.Palette;
@@ -212,6 +212,22 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		return e.getEmphasis() != 0;
 	}
 
+	protected boolean shapeHit(RenderContext<V, E> rc, Shape s) {
+		Rectangle deviceRectangle = null;
+		JComponent vv = rc.getScreenDevice();
+		if (vv != null) {
+			Dimension d = vv.getSize();
+			deviceRectangle = new Rectangle(0, 0, d.width, d.height);
+		}
+
+		MutableTransformer vt = rc.getMultiLayerTransformer().getTransformer(Layer.VIEW);
+		if (vt instanceof MutableTransformerDecorator) {
+			vt = ((MutableTransformerDecorator) vt).getDelegate();
+		}
+
+		return vt.transform(s).intersects(deviceRectangle);
+	}
+
 	@Override
 	public void drawSimpleEdge(RenderContext<V, E> rc, Layout<V, E> layout, E e) {
 
@@ -258,23 +274,10 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		float y2 = (float) p2.getY();
 
 		boolean isLoop = v1.equals(v2);
-		Rectangle deviceRectangle = null;
-		JComponent vv = rc.getScreenDevice();
-		if (vv != null) {
-			Dimension d = vv.getSize();
-			deviceRectangle = new Rectangle(0, 0, d.width, d.height);
-		}
 
 		Shape vs1 = getCompactShape(rc, layout, v1);
 		Shape edgeShape = getEdgeShape(rc, graph, e, x1, y1, x2, y2, isLoop, vs1);
-
-		MutableTransformer vt = multiLayerTransformer.getTransformer(Layer.VIEW);
-		if (vt instanceof LensTransformer) {
-			vt = ((LensTransformer) vt).getDelegate();
-		}
-
-		Context<Graph<V, E>, E> context = Context.<Graph<V, E>, E> getInstance(graph, e);
-		boolean edgeHit = vt.transform(edgeShape).intersects(deviceRectangle);
+		boolean edgeHit = shapeHit(rc, edgeShape);
 		if (!edgeHit) {
 			return;
 		}
@@ -343,6 +346,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		//
 		// Arrow Head
 		//
+		Context<Graph<V, E>, E> context = Context.<Graph<V, E>, E> getInstance(graph, e);
 		Predicate<Context<Graph<V, E>, E>> predicate = rc.getEdgeArrowPredicate();
 		boolean drawArrow = predicate.apply(context);
 		if (!drawArrow) {
@@ -358,7 +362,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 		Shape vs2 = getVertexShapeForArrow(rc, layout, v2);	// end vertex
 
-		boolean arrowHit = vt.transform(vs2).intersects(deviceRectangle);
+		boolean arrowHit = shapeHit(rc, vs2);
 		if (!arrowHit) {
 			g.setPaint(oldPaint);
 			return;
