@@ -640,10 +640,7 @@ define pcodeop bytepick.d;
 #0x000c0000	0xfffc0000	r0:5,r5:5,r10:5,u15:3	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_3_s0']
 :bytepick.d RD, RJsrc, RKsrc, imm15_3 is op18_31=0x3 & RD & RJsrc & RKsrc & imm15_3 {
 	local bitstop:1 = 8 * (8 - imm15_3);
-	local mask:8 = (1 <<  bitstop) - 1;
-	local tmp_hi:8 = RKsrc & ~mask;
-	local tmp_lo:8 = (RJsrc & (mask << (64-bitstop)) >> (64-bitstop));
-	RD = tmp_hi + tmp_lo;
+	RD = (RKsrc << (64 - bitstop)) | (RJsrc >> bitstop);
 }
 
 define pcodeop crc.w.d.w;
