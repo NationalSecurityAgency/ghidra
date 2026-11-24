@@ -994,14 +994,14 @@ define pcodeop bstrins.w;
 #la-bound.txt asrtle mask=0x00010000	[@orig_name=asrtle.d]
 #0x00010000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
 :asrtle.d RJsrc, RKsrc         is op15_31=0x2 & op0_4=0x0 & RJsrc & RKsrc {
-	if (RJsrc <= RKsrc) goto inst_next;
+	if (RJsrc s<= RKsrc) goto inst_next;
 	addr_bound_exception(RJsrc, RKsrc);
 }
 
 #la-bound.txt asrtgt mask=0x00018000	[@orig_name=asrtgt.d]
 #0x00018000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
 :asrtgt.d RJsrc, RKsrc         is op15_31=0x3 & op0_4=0x0 & RJsrc & RKsrc {
-	if (RJsrc > RKsrc) goto inst_next;
+	if (RJsrc s> RKsrc) goto inst_next;
 	addr_bound_exception(RJsrc, RKsrc);
 }
 
