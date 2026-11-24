@@ -892,7 +892,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 
 			if (results.isEmpty() && isAbsoluteLibraryPath(library)) {
-				if (library.startsWith("\\\\")) {
+				if (library.startsWith("\\\\") || library.startsWith("//")) {
 					log.appendMsg("Skipping library '%s' with UNC path".formatted(library));
 					return results;
 				}
