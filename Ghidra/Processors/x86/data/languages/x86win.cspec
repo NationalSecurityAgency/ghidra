@@ -329,12 +329,28 @@
  
 <callfixup name="alloca_probe">
   <target name="__alloca_probe"/>
-  <target name="__alloca_probe_8"/>
-  <target name="__alloca_probe_16"/>
   <target name="__chkstk"/>
   <pcode>
    <body><![CDATA[
      ESP = ESP + 4 - EAX;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="alloca_probe_8">
+  <target name="__alloca_probe_8"/>
+  <pcode>
+   <body><![CDATA[
+     ESP = (ESP + 4 - EAX) & 0xfffffff8;
+   ]]></body>
+  </pcode>
+</callfixup>
+
+<callfixup name="alloca_probe_16">
+  <target name="__alloca_probe_16"/>
+  <pcode>
+   <body><![CDATA[
+     ESP = (ESP + 4 - EAX) & 0xfffffff0;
    ]]></body>
   </pcode>
 </callfixup>
