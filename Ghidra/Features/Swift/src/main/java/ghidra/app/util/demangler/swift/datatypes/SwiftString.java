@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,9 @@ public class SwiftString extends DemangledStructure {
 			true);
 		setNamespace(SwiftDataTypeUtils.getSwiftNamespace());
 
-		DemangledDataType stringDt = new DemangledDataType(mangled, null, DemangledDataType.CHAR);
-		stringDt.incrementPointerLevels();
+		// _countAndFlagsBits: a UInt64, never a pointer
+		DemangledDataType stringDt =
+			new SwiftPrimitive(mangled, null, DemangledDataType.INT64, true);
 
 		DemangledDataType voidDt = new DemangledDataType(mangled, null, DemangledDataType.VOID);
 		voidDt.incrementPointerLevels();
