@@ -32,6 +32,8 @@ import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -264,8 +266,12 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 		//       offset from the instruction address). This is obviously problematic because we
 		//       aren't dealing with 'real' instructions that map to an address in a program;
 		//       we're just loading bytes and trying to figure out what instructions they
-		//       might represent. In these cases we just use the minimum address of the loaded
-		//       program as the base address.
+		//       might represent. In these cases we just use the minimum address of the intersection
+		//		 of initialized memory and executable memory.
+
+		AddressSetView executeSet = program.getMemory().getExecuteSet();
+		AddressSetView initializedAddressSet = program.getMemory().getAllInitializedAddressSet();
+		Address minExecInitAddress = executeSet.findFirstAddressInCommon(initializedAddressSet);
 
 		List<InstructionMetadata> instructions = new ArrayList<>();
 
@@ -276,8 +282,14 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 				Byte[] bytearray = new Byte[allBytes.size()];
 				bytearray = allBytes.toArray(bytearray);
 
-				PseudoInstruction instruction = disassembler.disassemble(program.getMinAddress(),
+				PseudoInstruction instruction = disassembler.disassemble(minExecInitAddress,
 					InstructionSearchUtils.toPrimitive(bytearray));
+
+				if (instruction == null) {
+					msgPanel.setMessageText("Input invalid: unknown disassembly error.",
+						Messages.ERROR);
+					return;
+				}
 
 				// Now create the metadata for the instruction and operands.
 				InstructionMetadata instructionMD = createInstructionMetadata(instruction);
@@ -306,7 +318,6 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 				msgPanel.setMessageText("Input invalid: unknown disassembly error.",
 					Messages.ERROR);
 				Msg.debug(this, "Error disassembling instruction", e);
-
 				return;
 			}
 		}
