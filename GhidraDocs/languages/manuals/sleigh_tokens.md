@@ -85,11 +85,12 @@ equal to zero yields the first register (a specific varnode) from the list as th
 field in the context of that instruction. Note that both the display and semantic meaning of the
 field are now taken from the new register.
 
-A particular integer can remain unspecified by putting a ‘\_’ character in the appropriate position
-of the register list or also if the length of the register list is less than the integer. A specific
-integer encoding of the field that is unspecified like this does *not* revert to the original
-semantic and display meaning. Instead this encoding is flagged as an invalid form of the
-instruction.
+The register list must contain exactly one entry for each possible value of the field, so an
+*n*-bit field requires 2<sup>*n*</sup> entries. A list that is shorter or longer is reported as an
+error by the compiler. A particular integer can remain unspecified by putting a ‘\_’ character in
+the appropriate position of the register list. A specific integer encoding of the field that is
+unspecified like this does *not* revert to the original semantic and display meaning. Instead this
+encoding is flagged as an invalid form of the instruction.
 
 ### 6.3.2. Attaching Other Integers
 
@@ -103,8 +104,10 @@ attach values <fieldlist> <integerlist>;
 
 The *integerlist* is surrounded by square brackets and is a space separated list of integers. In the
 same way that a new register interpretation is assigned to fields with an **attach variables**
-statement, the integers in the list are assigned to each field specified in the *fieldlist*.
-(Currently SLEIGH does not support unspecified positions in the list using a ‘\_’)
+statement, the integers in the list are assigned to each field specified in the *fieldlist*. The
+list must contain exactly one entry for each possible value of the field. A particular integer can
+remain unspecified by putting a ‘\_’ character in the appropriate position of the list, and that
+encoding of the field is flagged as an invalid form of the instruction.
 
 ### 6.3.3. Attaching Names
 
@@ -126,8 +129,9 @@ attach names <fieldlist> <stringlist>;
 
 The *stringlist* is assigned to each of the fields in the same manner as the **attach variables**
 and **attach values** statements. A specific encoding of the field now displays as the string in the
-list at that integer position. Field values greater than the size of the list are interpreted as
-invalid encodings.
+list at that integer position. As with the other attach statements, the list must contain exactly
+one entry for each possible value of the field. An encoding can be marked as invalid by putting a
+‘\_’ character in the appropriate position of the list.
 
 ## 6.4. Context Variables
 
