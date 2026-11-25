@@ -845,19 +845,29 @@ public class FunctionEditorModel {
 				if (!hasSignificantParameterChanges &&
 					functionData.hasParameterNamesChanged(originalFunctionData)) {
 
+					// Names may move between parameters (e.g., when two parameters of the same type
+					// are swapped), so first give each renamed parameter its default name, then the
+					// new name, to avoid a temporary duplicate
+					List<Parameter> renamed = new ArrayList<>();
+					List<String> newNames = new ArrayList<>();
 					for (ParamInfo paramInfo : functionData.getParameters()) {
 						Parameter param = function.getParameter(paramInfo.getOrdinal());
-						if (param != null && !param.isAutoParameter()) {
-							param.setName(paramInfo.getName(), SourceType.USER_DEFINED);
+						if (param != null && !param.isAutoParameter() &&
+							!param.getName().equals(paramInfo.getName())) {
+							renamed.add(param);
+							newNames.add(paramInfo.getName());
 						}
+					}
+					for (Parameter param : renamed) {
+						param.setName(null, SourceType.DEFAULT);
+					}
+					for (int i = 0; i < renamed.size(); i++) {
+						renamed.get(i).setName(newNames.get(i), SourceType.USER_DEFINED);
 					}
 				}
 
 				return true;
 			}
-
-			SourceType sigSource =
-				hasSignificantParameterChanges ? SourceType.USER_DEFINED : SourceType.ANALYSIS;
 
 			SymbolTable symbolTable = program.getSymbolTable();
 
@@ -875,6 +885,8 @@ public class FunctionEditorModel {
 			}
 
 			// TODO: How should we handle conflicts with locals?
+			SourceType sigSource =
+				hasSignificantParameterChanges ? SourceType.USER_DEFINED : SourceType.ANALYSIS;
 			function.updateFunction(callingConventionName,
 				functionData.getReturnInfo().getParameter(SourceType.DEFAULT), params,
 				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
@@ -882,7 +894,7 @@ public class FunctionEditorModel {
 				true, sigSource);
 		}
 		catch (Exception e) {
-			Msg.showError(this, null, "Function Edit Error", e.getMessage());
+			Msg.showError(this, null, "Function Edit Error", e.getMessage(), e);
 			return false;
 		}
 
