@@ -125,9 +125,6 @@ public class ByteProviderInputStream extends InputStream {
 	@Override
 	public int read(byte[] b, int bufferOffset, int len) throws IOException {
 		Objects.checkFromIndexSize(bufferOffset, len, b.length);
-		if (len == 0) {
-			return 0;
-		}
 		long eof = provider.length();
 		if (currentPosition >= eof) {
 			return -1;
