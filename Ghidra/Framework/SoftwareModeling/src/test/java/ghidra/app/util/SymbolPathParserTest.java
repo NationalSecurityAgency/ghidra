@@ -166,4 +166,15 @@ public class SymbolPathParserTest extends AbstractGTest {
 		assertListEqualOrdered(expected, list);
 	}
 
+	@Test
+	public void testArrowOperatorInTemplate() {
+
+		// this is a Rust style name
+		String name = "<std::Map<&str, for<'a> fn(&'a str) -> usize, std::Class>>::function";
+		List<String> list = SymbolPathParser.parse(name);
+		List<String> expected = new ArrayList<>();
+		expected.add("<std::Map<&str, for<'a> fn(&'a str) -> usize, std::Class>>");
+		expected.add("function");
+		assertListEqualOrdered(expected, list);
+	}
 }

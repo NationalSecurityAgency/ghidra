@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -144,7 +144,9 @@ public class RustDemanglerParser {
 					++depth;
 				}
 				else if ((ch == '>' || ch == ')') && depth != 0) {
-					--depth;
+					if (!isArrow(i, name)) {
+						--depth;
+					}
 				}
 
 				if (depth > 0 && ch == ' ') {
@@ -162,6 +164,23 @@ public class RustDemanglerParser {
 			}
 
 			return parts.stream().map(p -> p.condensed).collect(Collectors.joining()).trim();
+		}
+
+		/**
+		 * Checks for an arrow string '-&gt;', as in a Rust function pointer type such as in
+		 * {@code fn(u8) -> u32}. This is used to avoid considering an arrow string to be the closing
+		 * of a template. 
+		 * <p>
+		 * Note: the example above (and likely any real symbol names) will have a space before the arrow
+		 * symbol. However, symbols in Ghidra may have had all spaces removed, so we cannot rely on a
+		 * space before the arrow text.
+		 */
+		private static boolean isArrow(int i, String s) {
+			int dash = i - 1;
+			if (i < 1) {
+				return false;
+			}
+			return s.charAt(dash) == '-';
 		}
 
 		private boolean isSurroundedByCharacters(char last, char next) {
