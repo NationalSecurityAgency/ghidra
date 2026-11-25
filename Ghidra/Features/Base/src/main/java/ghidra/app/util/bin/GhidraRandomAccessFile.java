@@ -26,7 +26,10 @@ import ghidra.util.Msg;
  * or index into the implied array, called the <em>file pointer</em>.
  * This implementation relies on java.net.RandomAccessFile,
  * but adds buffering to limit the amount.
+ * 
+ * @deprecated use {@link RandomAccessFile} instead (this class is buggy)
  */
+@Deprecated(since = "12.3", forRemoval = true)
 public class GhidraRandomAccessFile implements AutoCloseable {
 	private static final byte[] EMPTY = new byte[0];
 	private static final int BUFFER_SIZE = 0x100000;
