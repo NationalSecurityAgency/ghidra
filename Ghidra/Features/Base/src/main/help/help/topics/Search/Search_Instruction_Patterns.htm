@@ -175,6 +175,22 @@
       hex string here (full bytes, no nibbles!) and if the string represents a valid set of
       instructions for the loaded program, then activating the <I>Apply</I> button will cause them
       to be displayed in the <I>Instruction Table</I>.</P>
+	  
+	  <P>NOTE: A known limitation of this manual byte entry feature is that there is no way for 
+		the user to specify the context register settings used to form the instruction(s)/operand(s)
+		for the given bytes. The context register settings that are used are the ones set for the 
+		first initialized address in the program's executable memory set. If the needed context 
+		settings do not match, the result may be completely different valid instruction(s) or 
+		invalid one(s). One workaround would be to temporarily change the appropriate context 
+		register settings at the above mentioned address. Another workaround would be to temporarily 
+		modify some program bytes to be the searched for bytes, update their context register 
+		settings, redisassemble then use the select instruction method to populate the 
+		<I>Instruction Table</I> instead of the manual entry method. To inspect/edit the context 
+		register settings, open the Register Manager Window and filter on "contextreg" and expand
+		the resulting item to see the various context registers and their settings. Clicking on each 
+		will show what memory ranges contain values for those registers. Clicking on the green "+" 
+		for a particular context register will enable adding a new address range and value for that
+	    register. </P>
 
       <H3>Search Results</H3>
 
