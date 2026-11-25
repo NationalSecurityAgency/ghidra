@@ -45,6 +45,7 @@ public:
   void matchList(vector<string> &res,const string &match,bool isSuffix) const; // List of files with suffix
   static bool isSeparator(char c);
   static bool isDirectory(const string &path);
+  static bool isFile(const string &path);
   static void matchListDir(vector<string> &res,const string &match,bool isSuffix,const string &dir,bool allowdot);
   static void directoryList(vector<string> &res,const string &dirname,bool allowdot=false);
   static void scanDirectoryRecursive(vector<string> &res,const string &matchname,const string &rootpath,int maxdepth);
