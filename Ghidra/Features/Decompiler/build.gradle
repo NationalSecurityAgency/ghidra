@@ -104,11 +104,7 @@ task yaccSleigh {
 
 def buildDir = "../../../build" // Relative to the 'workingDir' Exec task property.
 
-def installPoint = "$rootDir/GhidraDocs/languages/html"
-
 def installHelpPoint = "../help/help"
-
-def defaultStylePoint = "$rootDir/Ghidra/Framework/Help/src/main/resources/help/shared/DefaultStyle.css"
 
 task buildDecompilerHelpHtml(type: Exec) {
 
@@ -230,163 +226,6 @@ task buildDecompilerHelpPdf(type: Exec) {
 	}
 }
 
-/**
- * Build the pdfs docs for the decompiler and place them in the '$buildDir' directory.
- * A build (ex: 'gradle buildGhidra') will place the pdfs in the distribution zip file.
- * This task will fail gracefully and allow any distribution task (like buildGhidra) to continue,
- * without pdfs in the distribution zip.
- * There is an associated, auto-generated clean task.
- */
-task buildDecompilerDocumentationPdfs(type: Exec) {
-	// Check the OS before enabling task.
-	if (!(rootProject.isCurrentLinux() || rootProject.isCurrentMac())) {
-		it.enabled = false
-	}
-
-	workingDir 'src/main/doc'
-
-	// Gradle will provide a cleanBuildDecompilerDocumentationPdfs task that will remove these
-	// declared outputs.
-	outputs.file "$workingDir/$buildDir/pcoderef.fo"
-	outputs.file "$workingDir/$buildDir/pcoderef.pdf"
-	outputs.file "$workingDir/$buildDir/sleigh.fo"
-	outputs.file "$workingDir/$buildDir/sleigh.pdf"
-
-	// 'which' returns the number of failed arguments
-	// Using 'which' first will allow the entire command to fail if the required 
-	// executables are not installed.
-	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
-	// messages print in sequence
-	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
-		echo '** Checking if required executables are installed. **'
-		which fop 2>&1
-		which xsltproc 2>&1
-		mkdir -p $buildDir 2>&1
-		cp $installPoint/Diagram*.png $buildDir 2>&1
-
-		echo '** Building sleigh.fo **'
-		xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
-
-		echo '** Building sleigh.pdf **'
-		fop $buildDir/sleigh.fo $buildDir/sleigh.pdf 2>&1
-
-		echo '** Building pcoderef.fo **'
-		xsltproc --output $buildDir/pcoderef.fo pcoderef_pdf.xsl pcoderef.xml 2>&1
-
-		echo '** Building pcoderef.pdf **'
-		fop $buildDir/pcoderef.fo $buildDir/pcoderef.pdf  2>&1
-
-		echo '** Done. **'
-		"""
-
-	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
-	ignoreExitValue = true
-
-	// Store the output instead of printing to the console.
-	standardOutput = new ByteArrayOutputStream()
-	ext.output = { standardOutput.toString() }
-	ext.errorOutput = { standardOutput.toString() }
-
-	// Print the output of the commands and check the return value.
-	doLast {
-		println output()
-		if (executionResult.get().getExitValue()) {
-			println "$it.name: An error occurred with this task. Here is the output:\n" + output()
-			println "Skipping task $it.name\n"
-		}
-	}
-}
-
-/**
- * Build the html docs for the decompiler and place them in the '$installPoint' directory.
- * This gradle task will overwrite the html docs currently in the git repo.
- * A build (ex: 'gradle buildGhidra') will place the html files in the distribution, but buildGhidra
- * does not depend on buildDecompilerDocumentationHtml.
- * There is an associated, auto-generated clean task.
- **/
-task buildDecompilerDocumentationHtml(type: Exec) {
-
-	workingDir 'src/main/doc'
-
-	// Gradle will provide a cleanBuildDecompilerDocumentationHtml task that will remove these
-	// declared outputs.
-	outputs.file "$workingDir/$buildDir/index.html"
-	outputs.dir  "$workingDir/$buildDir/html"
-	
-
-	// 'which' returns the number of failed arguments
-	// Using the 'which' command first will allow the task to fail if the required 
-	// executables are not installed.
-	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
-	// messages print in sequence
-	//
-	// 'commandLine' takes one command, so wrap multiple commands in bash.
-	commandLine 'bash', '-e', '-c', """
-		echo '** Checking if required executables are installed. **'
-		which sed 2>&1
-		which xsltproc 2>&1
-
-		echo -e '** Building index.html **'
-		xsltproc --output $buildDir/index.html main_html.xsl main.xml 2>&1
-		sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="../../shared/languages.css"Q; }' $buildDir/index.html
-
-		echo '** Building html/sleigh.html **'
-		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
-		cp $defaultStylePoint $buildDir/html 2>&1
-		cp $installPoint/languages.css $buildDir/html
-		cp $installPoint/Diagram1.png $buildDir/html
-		cp $installPoint/Diagram2.png $buildDir/html
-		cp $installPoint/Diagram3.png $buildDir/html
-
-		echo '** Building html/pcoderef.html **'
-		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
-
-		sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="languages.css"Q; }' $buildDir/html/*.html
-		cp $defaultStylePoint $buildDir/html
-		cp $installPoint/languages.css $buildDir/html
-
-		echo '** Installing html documentation. **'
-		cp $buildDir/index.html $installPoint/index.html
-		rm $installPoint/*.html $installPoint/*.png
-		cp $buildDir/html/*.html $buildDir/html/*.png $installPoint/
-		echo '** Done. **'
-		"""
-
-		// Allows doLast block regardless of exit value.
-		ignoreExitValue = true
-
-		// Store the output instead of printing to the console.
-		standardOutput = new ByteArrayOutputStream()
-		ext.output = { standardOutput.toString() }
-		ext.errorOutput = { standardOutput.toString() }
-
-		// Check the OS before executing command.
-		doFirst {
-			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
-				|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
-				throw new TaskExecutionException( it,
-					new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
-			}
-		}
-
-		// Print the output of the commands and check the return value.
-		doLast {
-			println output()
-			if (executionResult.get().getExitValue()) {
-				logger.error("$it.name: An error occurred. Here is the output:\n" + output())
-				throw new TaskExecutionException( it,
-					new Exception( "$it.name: The command: '${commandLine.join(' ')}'" +
-						"\nfailed with exit code ${executionResult.get().getExitValue()}; see task output for details." )
-			)
-		}
-	}
-}
-
-
 // Perform simple dependency change detection for generated files 
 // produced by bison or flex.  A 5-second tolerance is used
 // to avoid arbitrary last-modified times which may be produced 
@@ -460,27 +299,5 @@ Task createLexTask(String filename, String binaryName) {
 		
 		// tell flex the input file
 		args "${lexFile}"
-	}
-}
-
-rootProject.createInstallationZip {
-	dependsOn buildDecompilerDocumentationPdfs
-	
-	
-	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
-
-	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
-	// (if there was an error or wrong platform), the zip task will move on.
-	buildDecompilerDocumentationPdfs.outputs.each { output ->
-		output.files.each { file ->
-			if (file.name.endsWith("pdf")) {
-				logger.debug("$project.name: Adding Decompiler documentation (if it exists) $file.name to $decompilerPdfZipPath")
-				rootProject.createInstallationZip.from (file) {
-					into {
-						decompilerPdfZipPath
-					}
-				}
-			}
-		}
 	}
 }

@@ -194,9 +194,12 @@ public class MarkdownToHtml {
 				return;
 			}
 
-			// Convert .md links to .html links
-			if (href.toLowerCase().endsWith(".md")) {
-				href = href.substring(0, href.length() - 2) + "html";
+			// Convert .md links to .html links, preserving any anchor
+			int anchorIndex = href.indexOf('#');
+			String path = anchorIndex != -1 ? href.substring(0, anchorIndex) : href;
+			String anchor = anchorIndex != -1 ? href.substring(anchorIndex) : "";
+			if (path.toLowerCase().endsWith(".md")) {
+				href = path.substring(0, path.length() - 2) + "html" + anchor;
 			}
 
 			// Fixup known differences between repository link and release links

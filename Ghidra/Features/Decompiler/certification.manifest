@@ -113,16 +113,6 @@ src/main/doc/decompileplugin.xml||GHIDRA||||END|
 src/main/doc/decompileplugin_common.xsl||GHIDRA||||END|
 src/main/doc/decompileplugin_html.xsl||GHIDRA||||END|
 src/main/doc/decompileplugin_pdf.xsl||GHIDRA||||END|
-src/main/doc/main.xml||GHIDRA||||END|
-src/main/doc/main_html.xsl||GHIDRA||||END|
-src/main/doc/pcoderef.xml||GHIDRA||||END|
-src/main/doc/pcoderef_common.xsl||GHIDRA||||END|
-src/main/doc/pcoderef_html.xsl||GHIDRA||||END|
-src/main/doc/pcoderef_pdf.xsl||GHIDRA||||END|
-src/main/doc/sleigh.xml||GHIDRA||||END|
-src/main/doc/sleigh_common.xsl||GHIDRA||||END|
-src/main/doc/sleigh_html.xsl||GHIDRA||||END|
-src/main/doc/sleigh_pdf.xsl||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/DecompilerAnnotations.html||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/DecompilerConcepts.html||GHIDRA||||END|
