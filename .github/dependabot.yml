@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Keep the commit SHAs pinned in .github/workflows current. Without this,
+  # pinning to a SHA freezes the actions at whatever version was current when
+  # the pin was written, which trades a supply-chain risk for a staleness one.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
