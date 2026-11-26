@@ -2,7 +2,7 @@
 
 *A Language for Rapid Processor Specification*
 
-Last updated November 23, 2026
+Last updated November 25, 2026
 
 Originally published December 16, 2005
 
