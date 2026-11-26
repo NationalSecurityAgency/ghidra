@@ -13,14 +13,14 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Read Ghidra JDK Version
         shell: bash
         run: echo "JDK_VER=$(awk -F'=' '$1=="application.java.min" {print $2}' Ghidra/application.properties)" >> $GITHUB_ENV 
 
       - name: Setup JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: 'temurin'
           java-version: '${{ env.JDK_VER }}'
@@ -32,21 +32,21 @@ jobs:
         run: ./gradlew buildGhidra --parallel
 
       - name: Upload Linux Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: matrix.platform == 'ubuntu-latest'
         with:
           name: ghidra-linux
           path: build/dist/ghidra_*.zip
 
       - name: Upload Windows Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: matrix.platform == 'windows-latest'
         with:
           name: ghidra-windows
           path: build/dist/ghidra_*.zip
 
       - name: Upload macOS Artifact
-        uses: actions/upload-artifact@v7      
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7      
         if: matrix.platform == 'macos-latest'
         with:
           name: ghidra-macos
@@ -58,7 +58,7 @@ jobs:
     steps:
 
       - name: Download Platform-Specific Artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: artifacts
           skip-decompress: true
@@ -76,7 +76,7 @@ jobs:
           zip -r $(basename $FNAME) *
 
       - name: Upload Merged Artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           path: merged/ghidra_*.zip
           archive: false
