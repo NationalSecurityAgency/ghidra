@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language version="1" endian="big">
+    <description>
+        <id>pa-risc:BE:32:default</id>
+        <processor>PA-RISC</processor>
+        <variant>default</variant>
+        <size>32</size>
+    </description>
+    <compiler name="default" id="default" />
+    <spaces>
+        <space name="ram" type="ram" size="4" default="yes" />
+        <space name="register" type="register" size="4" />
+    </spaces>
+    <registers>
+        <context_register name="contextreg" offset="0x7200" bitsize="96">
+            <field name="temp32" range="64,95" />
+            <field name="branchImmDest" range="32,63" />
+            <field name="padding" range="10,31" />
+            <field name="branchIsReturn" range="10,10" />
+            <field name="branchType" range="7,9" />
+            <field name="branchEnable" range="6,6" />
+            <field name="branchCouldBeNullified" range="5,5" />
+            <field name="nullifyEnable" range="4,4" />
+            <field name="temp1" range="3,3" />
+            <field name="phase" range="0,2" />
+        </context_register>
+        <register name="r0" offset="0x0" bitsize="32" />
+        <register name="r1" offset="0x4" bitsize="32" />
+        <register name="rp" offset="0x8" bitsize="32" />
+        <register name="r3" offset="0xc" bitsize="32" />
+        <register name="r4" offset="0x10" bitsize="32" />
+        <register name="r5" offset="0x14" bitsize="32" />
+        <register name="r6" offset="0x18" bitsize="32" />
+        <register name="r7" offset="0x1c" bitsize="32" />
+        <register name="r8" offset="0x20" bitsize="32" />
+        <register name="r9" offset="0x24" bitsize="32" />
+        <register name="r10" offset="0x28" bitsize="32" />
+        <register name="r11" offset="0x2c" bitsize="32" />
+        <register name="r12" offset="0x30" bitsize="32" />
+        <register name="r13" offset="0x34" bitsize="32" />
+        <register name="r14" offset="0x38" bitsize="32" />
+        <register name="r15" offset="0x3c" bitsize="32" />
+        <register name="r16" offset="0x40" bitsize="32" />
+        <register name="r17" offset="0x44" bitsize="32" />
+        <register name="r18" offset="0x48" bitsize="32" />
+        <register name="r19" offset="0x4c" bitsize="32" />
+        <register name="r20" offset="0x50" bitsize="32" />
+        <register name="r21" offset="0x54" bitsize="32" />
+        <register name="r22" offset="0x58" bitsize="32" />
+        <register name="r23" offset="0x5c" bitsize="32" />
+        <register name="r24" offset="0x60" bitsize="32" />
+        <register name="r25" offset="0x64" bitsize="32" />
+        <register name="r26" offset="0x68" bitsize="32" />
+        <register name="dp" offset="0x6c" bitsize="32" />
+        <register name="r28" offset="0x70" bitsize="32" />
+        <register name="r29" offset="0x74" bitsize="32" />
+        <register name="sp" offset="0x78" bitsize="32" />
+        <register name="r31" offset="0x7c" bitsize="32" />
+        <register name="fr0" offset="0x1000" bitsize="64" />
+        <register name="fpe23" offset="0x1008" bitsize="64" />
+        <register name="fpe45" offset="0x1010" bitsize="64" />
+        <register name="fpe67" offset="0x1018" bitsize="64" />
+        <register name="fr4" offset="0x1020" bitsize="64" />
+        <register name="fr5" offset="0x1028" bitsize="64" />
+        <register name="fr6" offset="0x1030" bitsize="64" />
+        <register name="fr7" offset="0x1038" bitsize="64" />
+        <register name="fr8" offset="0x1040" bitsize="64" />
+        <register name="fr9" offset="0x1048" bitsize="64" />
+        <register name="fr10" offset="0x1050" bitsize="64" />
+        <register name="fr11" offset="0x1058" bitsize="64" />
+        <register name="fr12" offset="0x1060" bitsize="64" />
+        <register name="fr13" offset="0x1068" bitsize="64" />
+        <register name="fr14" offset="0x1070" bitsize="64" />
+        <register name="fr15" offset="0x1078" bitsize="64" />
+        <register name="fr16" offset="0x1080" bitsize="64" />
+        <register name="fr17" offset="0x1088" bitsize="64" />
+        <register name="fr18" offset="0x1090" bitsize="64" />
+        <register name="fr19" offset="0x1098" bitsize="64" />
+        <register name="fr20" offset="0x10a0" bitsize="64" />
+        <register name="fr21" offset="0x10a8" bitsize="64" />
+        <register name="fr22" offset="0x10b0" bitsize="64" />
+        <register name="fr23" offset="0x10b8" bitsize="64" />
+        <register name="fr24" offset="0x10c0" bitsize="64" />
+        <register name="fr25" offset="0x10c8" bitsize="64" />
+        <register name="fr26" offset="0x10d0" bitsize="64" />
+        <register name="fr27" offset="0x10d8" bitsize="64" />
+        <register name="fr28" offset="0x10e0" bitsize="64" />
+        <register name="fr29" offset="0x10e8" bitsize="64" />
+        <register name="fr30" offset="0x10f0" bitsize="64" />
+        <register name="fr31" offset="0x10f8" bitsize="64" />
+        <register name="fr0R" offset="0x1000" bitsize="32" />
+        <register name="fr0L" offset="0x1004" bitsize="32" />
+        <register name="fpe2" offset="0x1008" bitsize="32" />
+        <register name="fpe3" offset="0x100c" bitsize="32" />
+        <register name="fpe4" offset="0x1010" bitsize="32" />
+        <register name="fpe5" offset="0x1014" bitsize="32" />
+        <register name="fpe6" offset="0x1018" bitsize="32" />
+        <register name="fpe7" offset="0x101c" bitsize="32" />
+        <register name="fr4L" offset="0x1020" bitsize="32" />
+        <register name="fr4R" offset="0x1024" bitsize="32" />
+        <register name="fr5L" offset="0x1028" bitsize="32" />
+        <register name="fr5R" offset="0x102c" bitsize="32" />
+        <register name="fr6L" offset="0x1030" bitsize="32" />
+        <register name="fr6R" offset="0x1034" bitsize="32" />
+        <register name="fr7L" offset="0x1038" bitsize="32" />
+        <register name="fr7R" offset="0x103c" bitsize="32" />
+        <register name="fr8L" offset="0x1040" bitsize="32" />
+        <register name="fr8R" offset="0x1044" bitsize="32" />
+        <register name="fr9L" offset="0x1048" bitsize="32" />
+        <register name="fr9R" offset="0x104c" bitsize="32" />
+        <register name="fr10L" offset="0x1050" bitsize="32" />
+        <register name="fr10R" offset="0x1054" bitsize="32" />
+        <register name="fr11L" offset="0x1058" bitsize="32" />
+        <register name="fr11R" offset="0x105c" bitsize="32" />
+        <register name="fr12L" offset="0x1060" bitsize="32" />
+        <register name="fr12R" offset="0x1064" bitsize="32" />
+        <register name="fr13L" offset="0x1068" bitsize="32" />
+        <register name="fr13R" offset="0x106c" bitsize="32" />
+        <register name="fr14L" offset="0x1070" bitsize="32" />
+        <register name="fr14R" offset="0x1074" bitsize="32" />
+        <register name="fr15L" offset="0x1078" bitsize="32" />
+        <register name="fr15R" offset="0x107c" bitsize="32" />
+        <register name="fr16L" offset="0x1080" bitsize="32" />
+        <register name="fr16R" offset="0x1084" bitsize="32" />
+        <register name="fr17L" offset="0x1088" bitsize="32" />
+        <register name="fr17R" offset="0x108c" bitsize="32" />
+        <register name="fr18L" offset="0x1090" bitsize="32" />
+        <register name="fr18R" offset="0x1094" bitsize="32" />
+        <register name="fr19L" offset="0x1098" bitsize="32" />
+        <register name="fr19R" offset="0x109c" bitsize="32" />
+        <register name="fr20L" offset="0x10a0" bitsize="32" />
+        <register name="fr20R" offset="0x10a4" bitsize="32" />
+        <register name="fr21L" offset="0x10a8" bitsize="32" />
+        <register name="fr21R" offset="0x10ac" bitsize="32" />
+        <register name="fr22L" offset="0x10b0" bitsize="32" />
+        <register name="fr22R" offset="0x10b4" bitsize="32" />
+        <register name="fr23L" offset="0x10b8" bitsize="32" />
+        <register name="fr23R" offset="0x10bc" bitsize="32" />
+        <register name="fr24L" offset="0x10c0" bitsize="32" />
+        <register name="fr24R" offset="0x10c4" bitsize="32" />
+        <register name="fr25L" offset="0x10c8" bitsize="32" />
+        <register name="fr25R" offset="0x10cc" bitsize="32" />
+        <register name="fr26L" offset="0x10d0" bitsize="32" />
+        <register name="fr26R" offset="0x10d4" bitsize="32" />
+        <register name="fr27L" offset="0x10d8" bitsize="32" />
+        <register name="fr27R" offset="0x10dc" bitsize="32" />
+        <register name="fr28L" offset="0x10e0" bitsize="32" />
+        <register name="fr28R" offset="0x10e4" bitsize="32" />
+        <register name="fr29L" offset="0x10e8" bitsize="32" />
+        <register name="fr29R" offset="0x10ec" bitsize="32" />
+        <register name="fr30L" offset="0x10f0" bitsize="32" />
+        <register name="fr30R" offset="0x10f4" bitsize="32" />
+        <register name="fr31L" offset="0x10f8" bitsize="32" />
+        <register name="fr31R" offset="0x10fc" bitsize="32" />
+        <register name="compareBit" offset="0x1100" bitsize="8" />
+        <register name="compareQueue" offset="0x1101" bitsize="8" />
+        <register name="shr0" offset="0x2000" bitsize="32" />
+        <register name="shr1" offset="0x2004" bitsize="32" />
+        <register name="shr2" offset="0x2008" bitsize="32" />
+        <register name="shr3" offset="0x200c" bitsize="32" />
+        <register name="shr4" offset="0x2010" bitsize="32" />
+        <register name="shr5" offset="0x2014" bitsize="32" />
+        <register name="shr6" offset="0x2018" bitsize="32" />
+        <register name="sr0" offset="0x3000" bitsize="32" />
+        <register name="sr1" offset="0x3004" bitsize="32" />
+        <register name="sr2" offset="0x3008" bitsize="32" />
+        <register name="sr3" offset="0x300c" bitsize="32" />
+        <register name="sr4" offset="0x3010" bitsize="32" />
+        <register name="sr5" offset="0x3014" bitsize="32" />
+        <register name="sr6" offset="0x3018" bitsize="32" />
+        <register name="sr7" offset="0x301c" bitsize="32" />
+        <register name="pswY" offset="0x4000" bitsize="8" />
+        <register name="pswZ" offset="0x4001" bitsize="8" />
+        <register name="pswE" offset="0x4002" bitsize="8" />
+        <register name="pswS" offset="0x4003" bitsize="8" />
+        <register name="pswT" offset="0x4004" bitsize="8" />
+        <register name="pswH" offset="0x4005" bitsize="8" />
+        <register name="pswL" offset="0x4006" bitsize="8" />
+        <register name="pswN" offset="0x4007" bitsize="8" />
+        <register name="pswX" offset="0x4008" bitsize="8" />
+        <register name="pswB" offset="0x4009" bitsize="8" />
+        <register name="pswC" offset="0x400a" bitsize="8" />
+        <register name="pswV" offset="0x400b" bitsize="8" />
+        <register name="pswM" offset="0x400c" bitsize="8" />
+        <register name="pswCB" offset="0x400d" bitsize="8" />
+        <register name="pswG" offset="0x400e" bitsize="8" />
+        <register name="pswF" offset="0x400f" bitsize="8" />
+        <register name="pswR" offset="0x4010" bitsize="8" />
+        <register name="pswQ" offset="0x4011" bitsize="8" />
+        <register name="pswP" offset="0x4012" bitsize="8" />
+        <register name="pswD" offset="0x4013" bitsize="8" />
+        <register name="pswI" offset="0x4014" bitsize="8" />
+        <register name="cr0" offset="0x5000" bitsize="32" />
+        <register name="cr1" offset="0x5004" bitsize="32" />
+        <register name="cr2" offset="0x5008" bitsize="32" />
+        <register name="cr3" offset="0x500c" bitsize="32" />
+        <register name="cr4" offset="0x5010" bitsize="32" />
+        <register name="cr5" offset="0x5014" bitsize="32" />
+        <register name="cr6" offset="0x5018" bitsize="32" />
+        <register name="cr7" offset="0x501c" bitsize="32" />
+        <register name="cr8" offset="0x5020" bitsize="32" />
+        <register name="cr9" offset="0x5024" bitsize="32" />
+        <register name="cr10" offset="0x5028" bitsize="32" />
+        <register name="sar" offset="0x502c" bitsize="32" />
+        <register name="cr12" offset="0x5030" bitsize="32" />
+        <register name="cr13" offset="0x5034" bitsize="32" />
+        <register name="cr14" offset="0x5038" bitsize="32" />
+        <register name="cr15" offset="0x503c" bitsize="32" />
+        <register name="cr16" offset="0x5040" bitsize="32" />
+        <register name="cr17" offset="0x5044" bitsize="32" />
+        <register name="cr18" offset="0x5048" bitsize="32" />
+        <register name="cr19" offset="0x504c" bitsize="32" />
+        <register name="cr20" offset="0x5050" bitsize="32" />
+        <register name="cr21" offset="0x5054" bitsize="32" />
+        <register name="cr22" offset="0x5058" bitsize="32" />
+        <register name="cr23" offset="0x505c" bitsize="32" />
+        <register name="cr24" offset="0x5060" bitsize="32" />
+        <register name="cr25" offset="0x5064" bitsize="32" />
+        <register name="cr26" offset="0x5068" bitsize="32" />
+        <register name="cr27" offset="0x506c" bitsize="32" />
+        <register name="cr28" offset="0x5070" bitsize="32" />
+        <register name="cr29" offset="0x5074" bitsize="32" />
+        <register name="cr30" offset="0x5078" bitsize="32" />
+        <register name="cr31" offset="0x507c" bitsize="32" />
+        <register name="iasq_front" offset="0x6000" bitsize="32" />
+        <register name="iasq_back" offset="0x6004" bitsize="32" />
+        <register name="iaoq_front" offset="0x6008" bitsize="32" />
+        <register name="iaoq_back" offset="0x600c" bitsize="32" />
+        <register name="nullifyCond" offset="0x7000" bitsize="8" />
+        <register name="nullifyNextCond" offset="0x7001" bitsize="8" />
+        <register name="branchCond" offset="0x7002" bitsize="8" />
+        <register name="branchExecuted" offset="0x7003" bitsize="8" />
+        <register name="branchIndDest" offset="0x7100" bitsize="32" />
+        <register name="nullifyCondResult" offset="0x7104" bitsize="32" />
+    </registers>
+</language>
