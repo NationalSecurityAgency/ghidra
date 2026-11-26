@@ -116,7 +116,7 @@ public class AppConfig {
 	 */
 	public File getSavedJavaHome() throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(javaHomeSaveFile))) {
-			String line = reader.readLine().trim();
+			String line = reader.readLine();
 			if (line != null) {
 				line = line.trim();
 				if (!line.isEmpty()) {
