@@ -23,6 +23,9 @@ ConstTpl::ConstTpl(const_type tp)
 
 {
   type = tp;
+  value_real = 0;
+  value.handle_index = 0;
+  select = v_space;
 }
 
 /// \param tp is constant type: either \b real or \b j_relative
@@ -67,6 +70,8 @@ ConstTpl::ConstTpl(AddrSpace *sid)
 {
   type = spaceid;
   value.spaceid = sid;
+  value_real = 0;
+  select = v_space;
 }
 
 bool ConstTpl::isConstSpace(void) const

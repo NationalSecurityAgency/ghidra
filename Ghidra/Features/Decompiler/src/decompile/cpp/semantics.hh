@@ -83,7 +83,7 @@ private:
   uintb value_real;		///< An immediate constant value or other constant offset a ConstTpl represents
   v_field select;		///< Assuming ConstTpl is a \b handle, the part of the \b handle to use as constant
 public:
-  ConstTpl(void) { type = real; value_real = 0; }	///< Construct a zero constant
+  ConstTpl(void) { type = real; value_real = 0; value.handle_index = 0; select = v_space; }	///< Construct a zero constant
   ConstTpl(const ConstTpl &op2) {
     type=op2.type; value=op2.value; value_real=op2.value_real; select=op2.select; }	///< Copy constructor
   ConstTpl(const_type tp,uintb val);					///< Constructor for real constants or relative offsets
