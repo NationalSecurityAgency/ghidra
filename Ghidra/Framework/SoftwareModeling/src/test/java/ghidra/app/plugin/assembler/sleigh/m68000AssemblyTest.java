@@ -35,4 +35,14 @@ public class m68000AssemblyTest extends AbstractAssemblyTest {
 		assertOneCompatRestExact("fmove.d #0x4010000000000000,FP1",
 			"f2:3c:54:80:40:10:00:00:00:00:00:00");
 	}
+
+	@Test
+	public void testAssemble_movec_BUSCR_D0() {
+		assertOneCompatRestExact("movec BUSCR,D0", "4e:7a:00:08");
+	}
+
+	@Test
+	public void testAssemble_movec_D0_BUSCR() {
+		assertOneCompatRestExact("movec D0,BUSCR", "4e:7b:00:08");
+	}
 }
