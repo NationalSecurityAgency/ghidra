@@ -344,6 +344,34 @@ public class BinaryReaderTest {
 		}
 	}
 
+	@Test
+	public void testReadIntArray_countOverflow() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextIntArray(0x40000000);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
+	@Test
+	public void testReadLongArray_countOverflow() {
+		BinaryReader br =
+			staticValueBR(true, NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG * 100, (byte) 0xaa);
+
+		try {
+			br.readNextLongArray(0x20000000);
+			fail();
+		}
+		catch (IOException e) {
+			// good
+		}
+	}
+
 	// ------------------------------------------------------------------------------------
 	// UTF-16 Unicode String
 	// ------------------------------------------------------------------------------------
