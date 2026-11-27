@@ -994,9 +994,9 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
   }
   else {
     Varnode *basevn = indir->getIn(0);
-    Varnode *small1 = RulePullsubMulti::findSubpiece(basevn,newSize,op->getIn(1)->getOffset());
+    Varnode *small1 = RulePullsubMulti::findSubpiece(basevn,newSize,minByte);
     if (small1 == (Varnode *)0)
-      small1 = RulePullsubMulti::buildSubpiece(basevn,newSize,op->getIn(1)->getOffset(),data);
+      small1 = RulePullsubMulti::buildSubpiece(basevn,newSize,minByte,data);
     // Create new indirect near original indirect
     new_ind = data.newIndirect(targ_op);
     small2 = data.newVarnodeOut(newSize,smalladdr2,new_ind);
