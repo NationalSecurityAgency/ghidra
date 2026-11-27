@@ -35,7 +35,7 @@ ConstTpl::ConstTpl(const_type tp,uintb val)
 {
   type = tp;
   value_real = val;
-  value.handle_index = 0;
+  value.spaceid = (AddrSpace *)0;
   select = v_space;
 }
 
