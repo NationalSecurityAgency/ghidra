@@ -39,6 +39,7 @@ extern AttributeId ATTRIB_MODELLOCK;	///< Marshaling attribute "modellock"
 extern AttributeId ATTRIB_NORETURN;	///< Marshaling attribute "noreturn"
 extern AttributeId ATTRIB_POINTERMAX;	///< Marshaling attribute "pointermax"
 extern AttributeId ATTRIB_SEPARATEFLOAT;	///< Marshaling attribute "separatefloat"
+extern AttributeId ATTRIB_STACKLTR;	///< Marshaling attribute "stackltr"
 extern AttributeId ATTRIB_STACKSHIFT;	///< Marshaling attribute "stackshift"
 extern AttributeId ATTRIB_STRATEGY;	///< Marshaling attribute "strategy"
 extern AttributeId ATTRIB_THISBEFORERETPOINTER;	///< Marshaling attribute "thisbeforeretpointer"
@@ -320,6 +321,7 @@ public:
   void setMaxPass(int4 val) { maxpass = val; }			///< Set the maximum number of passes
   void finishPass(void) { numpasses += 1; }			///< Mark that an analysis pass has completed
   void sortTrials(void) { sort(trial.begin(),trial.end()); }	///< Sort the trials in formal parameter order
+  void reverseTrials(int4 start,int4 stop) { reverse(trial.begin()+start,trial.begin()+stop); }	///< Reverse the order of a range of trials
   void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
   void deleteUnusedTrials(void);				///< Remove trials that were found not to be parameters
   void splitTrial(int4 i,int4 sz);				///< Split the given trial in two
@@ -605,6 +607,7 @@ protected:
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
   bool autoKilledByCall;		///< Are storage locations in \b this list automatically \e killed \e by \e call
+  bool stackLtr;			///< Are stack parameters pushed left-to-right (first parameter at the highest address)
   vector<int4> resourceStart;		///< The starting group for each resource section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
@@ -619,6 +622,7 @@ protected:
   static void forceExclusionGroup(ParamActive *active);
   static void forceNoUse(ParamActive *active,int4 start,int4 stop);
   static void forceInactiveChain(ParamActive *active,int4 maxchain,int4 start,int4 stop,int4 groupstart);
+  void mirrorStack(const vector<int4> &status,vector<ParameterPieces> &res) const;	///< Reverse the order of assigned stack parameters
   void calcDelay(void);		///< Calculate the maximum heritage delay for any potential parameter in this list
   void addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position);
   void populateResolver(void);	///< Build the ParamEntry resolver maps
@@ -627,7 +631,7 @@ protected:
   void parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
 		  int4 groupid,bool normalstack,bool splitFloat);
 public:
-  ParamListStandard(void) {}						///< Construct for use with decode()
+  ParamListStandard(void) { stackLtr = false; }				///< Construct for use with decode()
   ParamListStandard(const ParamListStandard &op2);			///< Copy constructor
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries

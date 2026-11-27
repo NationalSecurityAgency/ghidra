@@ -1435,6 +1435,11 @@ to proceed.
 </tr>
 <tr>
   <td/>
+  <td><code>stackltr</code></td>
+  <td>(Optional) <emphasis>true</emphasis> if stack parameters are pushed left-to-right</td>
+</tr>
+<tr>
+  <td/>
   <td><code>&lt;pentry&gt;</code></td>
   <td>(1 or more) Storage resources</td>
 </tr>
@@ -1542,6 +1547,12 @@ The <emphasis>thisbeforeretpointer</emphasis> indicates how the two hidden param
 in the rare case where both occur in a single prototype. If
 the attribute is true, the <emphasis>this</emphasis> pointer comes first. By default,
 the hidden return will come first.
+</para>
+<para>
+The <emphasis>stackltr</emphasis> attribute indicates that parameters passed on the stack are pushed
+left-to-right, as in the Pascal calling convention. The first parameter then sits at the highest
+address, and the last parameter is closest to the return address. Parameters passed in
+registers are not affected. This attribute is not supported when the stack grows positively.
 </para>
 <para>
 The following is an example tag using the standard allocation strategy with 3 integer registers and 2
