@@ -1541,23 +1541,23 @@ define pcodeop diag;
     RB = RB + RX;
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
 	*addr = FPRT64:8; 
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 3);
 	*addr = FPRT64:8; 
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
 	*addr = FPRT64:8; 
     RB = RB + RX;
 }
 
-:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=1 & m=1 {
+:FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & sfu=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
 	*addr = FPRT64:8; 
     RB = RB + RX;
@@ -1636,19 +1636,19 @@ define pcodeop diag;
 }
 
 # Floating Point Format Conversion Instructions
-:FCNV^fpsf^fpdf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf {
+:FCNV^fpsf^fpdf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf & fpsfraw<2 & fpdfraw<2 & bit5=0 & bit8=0 {
 	FPRT32 = float2float(FPR232);
 }
  
-:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fpdf & freg2sgl & fptsgl {
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fpdf & FPR2SGL & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
 # and we don't support quad right now	
-	FPRT64 = float2float(freg2sgl);
+	FPRT64 = float2float(FPR2SGL);
 }
 
-:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fpdf & freg2sgl & fptsgl {
+:FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fpdf & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
@@ -1656,140 +1656,152 @@ define pcodeop diag;
 	fptsgl = float2float(FPR264);
 }
  
-:FCNVXF^fpsf^fpdf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf {
+:FCNVXF^fpsf^fpdf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf & fpsfraw<2 & fpdfraw<2 & bit5=0 & bit8=0 {
 	FPRT32 = int2float(FPR232);
 } 
 
 # int2float -- support single/double size ints and single/double floats
 # so handle 4 different cases
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=0 {
-	fptsgl = int2float(freg2sgl);
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & FPR2SGL & fpsfraw=0 & fpdfraw=0 & bit5=0 {
+	fptsgl = int2float(FPR2SGL);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=0 & fpdfraw=1 {
-	FPRT64 = int2float(freg2sgl);
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & FPR2SGL & fpsfraw=0 & fpdfraw=1 & bit5=0 {
+	FPRT64 = int2float(FPR2SGL);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=0 {
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & fpsfraw=1 & fpdfraw=0 & bit5=0 {
 	fptsgl = int2float(FPR264);
 }
 
-:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fptsgl & freg2sgl & fpsfraw=1 & fpdfraw=1 {
+:FCNVXF^fixedsf^fpdf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR264 & FPRT64 & sfu=0 & fixedsf & fpdf & fpsfraw=1 & fpdfraw=1 & bit5=0 {
 	FPRT64 = int2float(FPR264);
 }
 
-:FCNVFX^fpsf^fixeddf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
+:FCNVFX^fpsf^fixeddf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf & fpsfraw<2 & fpdfraw<2 & bit5=0 & bit8=0 {
 	temp:4 = round(FPR232);
 	FPRT32 = trunc(temp);
 }
 
-:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & freg2sgl {
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & bit5=0 {
 	local temp:8 = FPR264; 
 	temp = round(temp);
 	FPRT64 = trunc(temp);
 } 
 
-:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & freg2sgl {
-	local temp:8 = float2float(freg2sgl); # convert single precision to double
+:FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & FPR2SGL & bit5=0 {
+	local temp:8 = float2float(FPR2SGL); # convert single precision to double
 	temp = round(temp);
 	FPRT64 = trunc(temp);
 }
  
-:FCNVFXT^fpsf^fixeddf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
+:FCNVFXT^fpsf^fixeddf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf & fpsfraw<2 & fpdfraw<2 & bit5=0 & bit8=0 {
 	FPRT32 = trunc(FPR232);
 } 
 
-:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fpsfraw & fptsgl & freg2sgl {
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=1 & fixeddf & fptsgl & bit5=0 {
 	local value:4 = float2float(FPR264); # convert double precision to single
 	fptsgl = trunc(value);
 }
 
-:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fpsfraw & fptsgl & freg2sgl {
-	local value:4 = freg2sgl; # get single precision value from left half of 64 bit register
+:FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fpsfraw=0 & fixeddf & fptsgl & FPR2SGL & bit5=0 {
+	local value:4 = FPR2SGL; # get single precision value from left half of 64 bit register
 	fptsgl = trunc(value);
 }
 
  # Floating Point Functions
-:FCPY^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=2 & freg1=0 & FPR232 & FPRT32 & fpfmt {
+:FCPY^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=2 & freg1=0 & FPR232 & FPRT32 & fpfmt & fpr1x=0 & bit5=0 & bit8=0 {
 	FPRT32 = FPR232;
 } 
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & fptsgl & freg2sgl {
-	fptsgl = freg2sgl;
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & bits59=0 {
+	fptsgl = FPR2SGL;
 }
 
-:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & freg2sgl {
+:FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & bits59=0 {
 	FPRT64 = FPR264;
 }
 
-:FABS^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=3 & freg1=0 & bit5=0 & bit8=0 & FPR232 & FPRT32 & fpfmt {
+:FABS^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=3 & freg1=0 & bit5=0 & bit8=0 & FPR232 & FPRT32 & fpfmt & fpr1x=0 {
 	FPRT32 = abs(FPR232);
 } 
 
-:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt {
+:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL {
+	fptsgl = abs(FPR2SGL);
+}
+
+:FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 {
 	FPRT64 = abs(FPR264);
 }
 
-:FSQRT^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=4 & freg1=0 & FPR232 & FPRT32 & fpfmt {
+:FSQRT^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=4 & freg1=0 & FPR232 & FPRT32 & fpfmt & fpr1x=0 & bit5=0 & bit8=0 {
 	FPRT32 = sqrt(FPR232);
 } 
-:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt {
+:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & bits59=0 {
+	fptsgl = sqrt(FPR2SGL);
+}
+
+:FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & bits59=0 {
 	FPRT64 = sqrt(FPR264);
 }
 
-:FRND^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=5 & FPR232 & FPRT32 & fpfmt {
+:FRND^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=5 & FPR232 & FPRT32 & fpfmt & freg1=0 & fpr1x=0 & bit5=0 & bit8=0 {
 	FPRT32 = round(FPR232);
  } 
 
-:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt {
+:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=0 & fptsgl & FPR2SGL & freg1=0 & bits59=0 {
+	fptsgl = round(FPR2SGL);
+}
+
+:FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt & fpsfraw=1 & freg1=0 & bits59=0 {
 	FPRT64 = round(FPR264);
 }
 
-:FADD^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=0 & FPR232 & FPR132 & FPRT32 & fpfmt {
+:FADD^fpfmt1bit FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=0 & FPR232 & FPR132 & FPRT32 & fpfmt1bit & bit5=0 {
 	FPRT32 = FPR132 f+ FPR232;
 } 
 
-:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & freg1sgl & freg2sgl & fptsgl {
-	fptsgl = freg1sgl f+ freg2sgl;
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & FPR1SGL & FPR2SGL & fptsgl & sfu=0 & bit5=0 {
+	fptsgl = FPR1SGL f+ FPR2SGL;
 }
 
-:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & freg1sgl & freg2sgl & fptsgl {
+:FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR164 f+ FPR264;
 }
 
-:FSUB^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=1 & FPR232 & FPR132 & FPRT32 & fpfmt {
+:FSUB^fpfmt1bit FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=1 & FPR232 & FPR132 & FPRT32 & fpfmt1bit & bit5=0 {
 	FPRT32 = FPR232 f- FPR132;
 } 
 
-:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
-	fptsgl = freg2sgl f- freg1sgl;
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR2SGL f- FPR1SGL;
 }
 
-:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+:FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR264 f- FPR164;
 }
 
-:FMPY^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=0 & FPR232 & FPR132 & FPRT32 & fpfmt {
+:FMPY^fpfmt1bit FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=0 & FPR232 & FPR132 & FPRT32 & fpfmt1bit & bit5=0 {
 	FPRT32 = FPR132 f* FPR232;
 } 
 
-:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
-	fptsgl = freg1sgl f* freg2sgl;
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR1SGL f* FPR2SGL;
 }
 
-:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+:FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR164 f* FPR264;
 }
 
-:FDIV^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=3 & FPR232 & FPR132 & FPRT32 & fpfmt {
+:FDIV^fpfmt1bit FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=3 & FPR232 & FPR132 & FPRT32 & fpfmt1bit & bit5=0 {
 	FPRT32 = FPR232 f/ FPR132;
 } 
 
-:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & freg1sgl & freg2sgl {
-	fptsgl = freg2sgl f/ freg1sgl;
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=0 & fptsgl & FPR1SGL & FPR2SGL & sfu=0 & bit5=0 {
+	fptsgl = FPR2SGL f/ FPR1SGL;
 }
 
-:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & fptsgl & freg1sgl & freg2sgl {
+:FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fpsfraw=1 & sfu=0 & bit5=0 {
 	FPRT64 = FPR264 f/ FPR164;
 }
 
@@ -1817,7 +1829,7 @@ define pcodeop diag;
 }
 
 # Fixed Point / Integer Multiply
-:XMPYU^fpfmt FPR232,FPR132,FPRT64								is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=1 & FPR232 & FPR132 & FPRT64 & fpfmt & fptsgl {
+:XMPYU FPR232,FPR132,FPRT64								is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=1 & FPR232 & FPR132 & FPRT64 & fpfmt1bit=0 & fptsgl & bit5=0 {
 	arg1:8 = zext(FPR232);
 	arg2:8 = zext(FPR132);
 	prod:8 = arg1 * arg2;
@@ -1826,50 +1838,30 @@ define pcodeop diag;
 
 # Floating Point Compare
 # 32 bit register comparison
-:FCMP^fpfmt1bit^fpcmp FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=0 & fpcmp {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp;
-	compareBit = result;
+:FCMP^fpfmt1bit^fpcmp FPR232,FPR132						is opfam=0x0E & bit5=0 & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=0 & fpcmp {
+	setCompareBit(fpcmp);
 }
 
-:FCMP^fpfmt1bit^fpcmp64 FPR232,FPR132						is opfam=0x0E & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=1 & fpcmp64 {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp64;
-	compareBit = result;
+:FCMP^fpfmt1bit^fpcmp64 FPR232,FPR132						is opfam=0x0E & bit5=0 & fpclass=2 & fpsub=0 & FPR232 & FPR132 & fpfmt1bit & bit11=1 & fpcmp64 {
+	setCompareBit(fpcmp64);
 }
 
 # 64 bit register comparison 
-:FCMP^fpfmt^fpcmp FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=0 & fpcmp {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp;
-	compareBit = result;
+:FCMP^fpfmt^fpcmp FPR264,FPR164						is opfam=0x0C & bit5=0 & sfu=0 & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=0 & fpcmp {
+	setCompareBit(fpcmp);
 }
 
-:FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=1 & fpcmp64 {
-	local result:1 = 0:1;
-	# shift the previous compareBit onto the compareQueue
-	compareQueue = (compareQueue << 1);
-	compareQueue = compareQueue | compareBit;
-	result = fpcmp64;
-	compareBit = result;
+:FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & bit5=0 & sfu=0 & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpsfraw=1 & fpcmp64 {
+	setCompareBit(fpcmp64);
 }
 
-:FTEST^fptest										is opfam=0x0C & fpclass=2 & fpsub=1 & fptest & $(COMMON)
+:FTEST^ftestcond										is opfam=0x0C & sfu=0 & fpclass=2 & fpsub=1 & freg2=0 & freg1=0 & fpsfraw=0 & bit5=1 & ftestcond & $(COMMON)
 	[
 	  nullifyEnable = 1;
 	  globalset(inst_next, nullifyEnable);
 	] 
 {
-	nullifyNextCond = compareBit;
+	nullifyNextCond = ftestcond;
 }
 
 # Misc Floating Point Functions
