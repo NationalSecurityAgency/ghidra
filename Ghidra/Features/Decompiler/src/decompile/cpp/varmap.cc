@@ -1409,7 +1409,18 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
 
   state.sortAlias();
   if (aliasyes) {
-    markUnaliased(state.getAlias());
+    const vector<uintb> &pointerAlias( state.getAlias() );
+    vector<uintb> alias( pointerAlias );
+    const list<LoadGuard> &loadGuard( fd->getLoadGuards() );
+    for(list<LoadGuard>::const_iterator iter=loadGuard.begin();iter!=loadGuard.end();++iter) {
+      if (!(*iter).isValid(CPUI_LOAD)) continue;
+      uintb off = AddrSpace::addressToByte((*iter).getMinimum(),space->getWordSize());
+      vector<uintb>::const_iterator aiter = upper_bound(pointerAlias.begin(),pointerAlias.end(),off);
+      if (aiter != pointerAlias.begin() && off - *(aiter-1) <= 0xffff)	// A guarded LOAD above an alias start extends the alias
+	alias.push_back(off);
+    }
+    sort(alias.begin(),alias.end());
+    markUnaliased(alias);
     checkUnaliasedReturn(state.getAlias());
   }
   if (!state.getAlias().empty() && state.getAlias()[0] == 0)	// If a zero offset use of the stack pointer exists
