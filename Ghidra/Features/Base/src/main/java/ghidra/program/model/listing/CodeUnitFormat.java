@@ -115,17 +115,19 @@ public class CodeUnitFormat {
 		if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
 			int n = instr.getNumOperands();
+			String sep = instr.getSeparator(0);
+			if (sep != null || n != 0) {
+				stringBuffer.append(' ');
+			}
+			if (sep != null) {
+				stringBuffer.append(sep);
+			}
 			for (int i = 0; i < n; i++) {
-				if (i == 0) {
-					stringBuffer.append(" ");
-				}
-				else {
-					String separator = instr.getSeparator(i);
-					if (separator != null && separator.length() != 0) {
-						stringBuffer.append(separator);
-					}
-				}
 				stringBuffer.append(getOperandRepresentationString(cu, i));
+				sep = instr.getSeparator(i + 1);
+				if (sep != null) {
+					stringBuffer.append(sep);
+				}
 			}
 		}
 		else {
