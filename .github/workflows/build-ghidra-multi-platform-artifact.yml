@@ -46,7 +46,7 @@ jobs:
           path: build/dist/ghidra_*.zip
 
       - name: Upload macOS Artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7      
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: matrix.platform == 'macos-latest'
         with:
           name: ghidra-macos
