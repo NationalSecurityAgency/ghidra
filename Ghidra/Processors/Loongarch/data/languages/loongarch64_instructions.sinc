@@ -281,6 +281,7 @@
 #0x23000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
 :sc.d  RD, ldstptr_addr               is op24_31=0x23 & RD & ldstptr_addr {
 	*[ram]:8 ldstptr_addr = RD;
+	RD = check_llbit();
 }
 
 

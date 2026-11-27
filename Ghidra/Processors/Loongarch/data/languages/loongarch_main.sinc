@@ -472,6 +472,7 @@ simm52i: immed  is simm10_12 [immed = simm10_12 << 52; ] { export *[const]:$(REG
 # general pcodeops
 define pcodeop break;
 define pcodeop cpucfg;
+define pcodeop check_llbit;
 
 define pcodeop addr_bound_exception;
 define pcodeop bound_check_exception;

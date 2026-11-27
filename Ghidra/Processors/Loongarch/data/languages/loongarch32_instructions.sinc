@@ -689,6 +689,7 @@
 #0x21000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
 :sc.w  RD, ldstptr_addr        is op24_31=0x21 & RD & ldstptr_addr {
 	*[ram]:4 ldstptr_addr = RD:4;
+	RD = check_llbit();
 }
 
 
