@@ -254,6 +254,13 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
+	public String getName() {
+		// The element type may have been renamed, so re-create this array name.
+		name = DataTypeUtilities.getName(this, true);
+		return super.getName();
+	}
+
+	@Override
 	public void setName(String name) throws InvalidNameException {
 		// unsupported - ignore
 	}
