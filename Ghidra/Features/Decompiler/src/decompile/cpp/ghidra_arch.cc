@@ -796,12 +796,11 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
     size ^= ((c-0x20)<<6);
     isTrunc = (sin.get() != 0);
     buffer.reserve(size);
-    uint1 *dblbuf = new uint1[size * 2];
-    sin.read((char *)dblbuf,size*2);
+    unique_ptr<uint1[]> dblbuf(new uint1[size * 2]);
+    sin.read((char *)dblbuf.get(),size*2);
     for (int4 i=0; i < size; i++) {
       buffer.push_back(((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A'));
     }
-    delete [] dblbuf;
     type = readToAnyBurst(sin);
     if (type != 13)
       throw JavaError("alignment","Expecting byte alignment end");
