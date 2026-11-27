@@ -111,6 +111,14 @@ bool FileManage::isDirectory(const string &path)
   return ((attribs & FILE_ATTRIBUTE_DIRECTORY)!=0);
 }
 
+bool FileManage::isFile(const string &path)
+
+{
+  DWORD attribs = GetFileAttributes(path.c_str());
+  if (attribs == INVALID_FILE_ATTRIBUTES) return false;
+  return ((attribs & FILE_ATTRIBUTE_DIRECTORY)==0);
+}
+
 #else
 bool FileManage::isDirectory(const string &path)
 
@@ -120,6 +128,16 @@ bool FileManage::isDirectory(const string &path)
     return false;
   }
   return S_ISDIR(buf.st_mode);
+}
+
+bool FileManage::isFile(const string &path)
+
+{
+  struct stat buf;
+  if (stat(path.c_str(),&buf) < 0) {
+    return false;
+  }
+  return S_ISREG(buf.st_mode);
 }
 
 #endif
@@ -359,11 +377,11 @@ bool FileManage::testInstallPath(const vector<string> &pathels,int level,string 
   if (level + 1 >= pathels.size()) return false;
   root = buildPath(pathels,level+1);
   vector<string> testpaths1;
-  vector<string> testpaths2;
   scanDirectoryRecursive(testpaths1,"server",root,1);
   if (testpaths1.size() != 1) return false;
-  scanDirectoryRecursive(testpaths2,"server.conf",testpaths1[0],1);
-  return (testpaths2.size() == 1);
+  // server.conf is a regular file, which scanDirectoryRecursive never
+  // returns (it only walks directories), so test for it directly.
+  return isFile(testpaths1[0] + separator + "server.conf");
 }
 
 string FileManage::discoverGhidraRoot(const char *argv0)
