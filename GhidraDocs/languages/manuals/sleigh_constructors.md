@@ -865,10 +865,11 @@ from instruction semantics at higher levels.
 This section discusses statements that generate p-code branching operations. These are listed in
 [Table 7, “Branching Statements”](sleigh_ref.md#branchref.htmltable), in the Appendix.
 
-There are six forms covering the gamut of typical assembly language branches, but in terms of actual
-semantics there are really only three. With p-code,
+There are six forms covering the gamut of typical assembly language branches, but their branch
+semantics fall into three categories. With p-code,
 
 * *CALL* is semantically equivalent to *BRANCH*,
+* *CBRANCH* is a conditional form of *BRANCH*,
 * *CALLIND* is semantically equivalent to *BRANCHIND*, and
 * *RETURN* is semantically equivalent to *BRANCHIND*.
 
@@ -891,7 +892,7 @@ Branching”](#7726-p-code-relative-branching)), but for the remainder of this s
 destination is ultimately given as an address.
 
 There are two ways to specify a branching operation’s destination address; directly and indirectly.
-Where a direct address is needed, as for the *BRANCH*, *CBRANCH*, and *CALL* instructions, The
+Where a direct address is needed, as for the *BRANCH*, *CBRANCH*, and *CALL* instructions, the
 specification can give the integer offset of the jump destination within the address space of the
 current instruction. Optionally, the offset can be followed by the name of another address space in
 square brackets, if the destination is in another address space.
@@ -942,11 +943,9 @@ destination annotation.
 :bcc dest is opcode=5 & dest { if (carryflag==0) goto dest; }
 ```
 
-As in the above example, the *CBRANCH* operation takes two inputs, a boolean value indicating
-whether or operation is invoked with the **if goto** operation takes two inputs, a boolean value
-indicating whether or syntax. The condition of the **if** operation takes two inputs, a boolean
-value indicating whether or can be any semantic expression that results in a boolean value. The
-destination must be an annotation varnode.
+As in the above example, the *CBRANCH* operation is invoked with the **if goto** syntax. The
+condition of the **if** operation can be any semantic expression that results in a boolean value.
+The destination must be an annotation varnode.
 
 The operators *BRANCHIND*, *CALLIND*, and *RETURN* all have the same semantic meaning and all use
 the same syntax to specify an indirect address.
