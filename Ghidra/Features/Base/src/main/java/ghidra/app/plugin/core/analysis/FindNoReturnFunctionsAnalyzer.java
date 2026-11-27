@@ -336,6 +336,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		AddressSet checkedSet = new AddressSet();
+		Map<Address, Set<Address>> suspiciousCallersByTarget = new LinkedHashMap<>();
 
 		boolean hadSuspiciousFunctions = false;
 
@@ -366,7 +367,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				continue;
 			}
 
-			// detected a calling issue, check other instructions calling the same place
+			// Detected a calling issue. Gather targets first so the complete caller set
+			// can be evaluated together when resolving evidence for each target.
 			Address[] flows = getAllFlows(inst);
 			if (flows == null) {
 				continue;
@@ -379,53 +381,118 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				if (hasCallFixupWithFallThrough(cp, target)) {
 					continue;
 				}
-
-				int count = 1;
-				ReferenceIterator refsTo = cp.getReferenceManager().getReferencesTo(target);
-				for (Reference reference : refsTo) {
-					if (!reference.getReferenceType().isCall()) {
-						continue;
-					}
-
-					Address fromAddress = reference.getFromAddress();
-					if (checkedSet.contains(fromAddress)) {
-						continue;
-					}
-					checkedSet.add(fromAddress);
-
-					// call is already on the list
-					// done here so all other calls don't get re-checked
-					if (noReturnSet.contains(target)) {
-						continue;
-					}
-					Instruction oinst = cp.getListing().getInstructionAt(fromAddress);
-					if (oinst == null || !checkNonReturningIndicators(oinst, noReturnSet)) {
-						continue;
-					}
-
-					// add one to count, if passes threshold, tag as non-returning
-					count++;
-					if (count >= evidenceThresholdFunctions) {
-						noReturnSet.add(target);
-						break;
-					}
-				}
-
-				// was suspicious, but evidence didn't pass threshold
-				if (count < evidenceThresholdFunctions) {
-					// if function only calls non-returning functions
-					if (targetOnlyCallsNoReturn(cp, target, noReturnSet)) {
-						NoReturnLocations location =
-							new NoReturnLocations(target, null, "Calls only non-returing function");
-						reasonList.add(location);
-						noReturnSet.add(target);
-						continue;
-					}
-					hadSuspiciousFunctions = true;
-				}
+				suspiciousCallersByTarget.computeIfAbsent(target, t -> new HashSet<>())
+					.add(address);
 			}
 		}
+
+		Map<Address, Map<Address, Boolean>> returningFallThroughCache = new HashMap<>();
+		for (Map.Entry<Address, Set<Address>> entry : suspiciousCallersByTarget.entrySet()) {
+			monitor.checkCancelled();
+			Address target = entry.getKey();
+			if (noReturnSet.contains(target)) {
+				continue;
+			}
+
+			int count = 0;
+			boolean hasReturningCallSite = false;
+			Set<Address> seenCallers = new HashSet<>();
+			ReferenceIterator refsTo = cp.getReferenceManager().getReferencesTo(target);
+			while (refsTo.hasNext()) {
+				monitor.checkCancelled();
+				Reference reference = refsTo.next();
+				if (!reference.getReferenceType().isCall()) {
+					continue;
+				}
+
+				Address fromAddress = reference.getFromAddress();
+				if (!seenCallers.add(fromAddress)) {
+					continue;
+				}
+				Instruction caller = cp.getListing().getInstructionAt(fromAddress);
+				if (caller == null) {
+					continue;
+				}
+				if (hasReturningFallThrough(cp, caller, noReturnSet,
+					returningFallThroughCache)) {
+					hasReturningCallSite = true;
+				}
+				if (entry.getValue().contains(fromAddress) ||
+					checkNonReturningIndicators(caller, noReturnSet)) {
+					count++;
+				}
+			}
+
+			if (count >= evidenceThresholdFunctions && !hasReturningCallSite) {
+				noReturnSet.add(target);
+				continue;
+			}
+
+			if (!hasReturningCallSite && targetOnlyCallsNoReturn(cp, target, noReturnSet)) {
+				NoReturnLocations location =
+					new NoReturnLocations(target, null, "Calls only non-returing function");
+				reasonList.add(location);
+				noReturnSet.add(target);
+				continue;
+			}
+			hadSuspiciousFunctions = true;
+		}
 		return hadSuspiciousFunctions;
+	}
+
+	/**
+	 * Return true when the call's fall-through path reaches a return instruction by
+	 * straight-line flow inside the same caller function. This is static evidence
+	 * against treating the target as non-returning; unknown or branching continuations
+	 * do not contradict the existing call-site heuristic.
+	 */
+	private boolean hasReturningFallThrough(Program cp, Instruction call,
+			AddressSet noReturnSet,
+			Map<Address, Map<Address, Boolean>> resultCacheByFunction) throws CancelledException {
+		Function caller = cp.getFunctionManager().getFunctionContaining(call.getMinAddress());
+		if (caller == null || caller.hasNoReturn() || noReturnSet.contains(caller.getEntryPoint())) {
+			return false;
+		}
+		Map<Address, Boolean> resultCache = resultCacheByFunction.computeIfAbsent(
+			caller.getEntryPoint(), entry -> new HashMap<>());
+
+		Address address = call.getFallThrough();
+		List<Address> path = new ArrayList<>();
+		Set<Address> visited = new HashSet<>();
+		boolean returns = false;
+		while (address != null && caller.getBody().contains(address)) {
+			monitor.checkCancelled();
+			Boolean cached = resultCache.get(address);
+			if (cached != null) {
+				returns = cached;
+				break;
+			}
+			if (!visited.add(address)) {
+				break;
+			}
+			path.add(address);
+			Instruction instruction = cp.getListing().getInstructionAt(address);
+			if (instruction == null) {
+				break;
+			}
+			for (PcodeOp op : instruction.getPcode()) {
+				if (op.getOpcode() == PcodeOp.RETURN) {
+					returns = true;
+					break;
+				}
+			}
+			if (returns) {
+				break;
+			}
+			if (!instruction.getFlowType().isFallthrough()) {
+				break;
+			}
+			address = instruction.getFallThrough();
+		}
+		for (Address pathAddress : path) {
+			resultCache.put(pathAddress, returns);
+		}
+		return returns;
 	}
 
 	/**
