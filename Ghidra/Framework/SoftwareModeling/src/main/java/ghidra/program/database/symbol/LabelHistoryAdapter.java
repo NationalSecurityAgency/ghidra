@@ -142,4 +142,21 @@ abstract class LabelHistoryAdapter {
 			Set<Address> doNotDeleteSet, TaskMonitor monitor)
 			throws CancelledException, IOException;
 
+	/**
+	 * Anonymize all label history records by replacing the userName field with the given anonymousName.
+	 * @param anonymousName the name to replace the userName field with
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	abstract void anonymizeAllRecords(String anonymousName)
+			throws IOException;
+
+	/**
+	 * Anonymize label history records for a specific address by replacing the userName field with the given username.
+	 * @param anonymousName the name to replace the userName field with
+	 * @param addr the address key of the records to anonymize
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	abstract void anonymizeRecordsByAddress(String anonymousName, long addr)
+			throws IOException;
+
 }
