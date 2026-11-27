@@ -736,14 +736,13 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   readToResponse(sin);
   int4 type = readToAnyBurst(sin);
   if (type == 12) {
-    uint1 *dblbuf = new uint1[size * 2];
-    sin.read((char *)dblbuf,size*2);
+    unique_ptr<uint1[]> dblbuf(new uint1[size * 2]);
+    sin.read((char *)dblbuf.get(),size*2);
     if (sin.gcount() != size*2)
       throw JavaError("alignment","Could not read expected number of bytes");
     for (int4 i=0; i < size; i++) {
       buf[i] = ((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A');
     }
-    delete [] dblbuf;
   }
   else if ((type&1)==1) {
     ostringstream errmsg;
