@@ -2067,6 +2067,47 @@ int4 ActionReturnRecovery::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Collect starting offsets of pointers into the stack that are a constant offset from the stack pointer
+///
+/// Pointers built with a variable index, like array accesses, are not included.
+/// \param data is the function being analyzed
+/// \param spc is the stack address space
+/// \param alias will hold the sorted list of offsets
+void ActionRestrictLocal::collectDirectAlias(Funcdata &data,AddrSpace *spc,vector<uintb> &alias)
+
+{
+  AliasChecker aliasCheck;
+  aliasCheck.gather(&data,spc,false);
+  const vector<AliasChecker::AddBase> &addBase( aliasCheck.getAddBase() );
+  for(int4 i=0;i<addBase.size();++i) {
+    if (addBase[i].index != (Varnode *)0) continue;
+    uintb offset = AliasChecker::gatherOffset(addBase[i].base);
+    alias.push_back(AddrSpace::addressToByte(offset,spc->getWordSize()));
+  }
+  sort(alias.begin(),alias.end());
+}
+
+/// \brief Check if a pointer to a stack slot holding a saved register escapes
+///
+/// Some compilers allocate space for local variables by pushing registers, for instance
+/// \e push \e {r7,lr} instead of \e sub \e sp,#4 on ARM.  The slot initially receives the value
+/// of an \e unaffected register, but its address is then taken, typically to pass the local variable
+/// to a sub-function. Such a slot must stay mapped. Otherwise it is treated as having no aliases, and
+/// values stored in it are incorrectly propagated across calls that can modify it.
+/// \param saveOp is the COPY saving the unaffected register into the stack slot
+/// \param alias is the sorted list of starting offsets of direct pointers into the stack space
+/// \return \b true if a pointer to the slot exists
+bool ActionRestrictLocal::isSaveSlotAliased(PcodeOp *saveOp,const vector<uintb> &alias)
+
+{
+  Varnode *slotvn = saveOp->getOut();
+  uintb first = slotvn->getOffset();
+  uintb last = first + slotvn->getSize() - 1;
+  if (last < first) return false;	// Slot wraps around the address space
+  vector<uintb>::const_iterator iter = lower_bound(alias.begin(),alias.end(),first);
+  return (iter != alias.end() && *iter <= last);
+}
+
 int4 ActionRestrictLocal::apply(Funcdata &data)
 
 {
@@ -2106,6 +2147,8 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
     }
   }
 
+  vector<uintb> alias;
+  bool aliasGathered = false;
   eiter = data.getFuncProto().effectBegin();
   endeiter = data.getFuncProto().effectEnd();
   for(;eiter!=endeiter;++eiter) { // Iterate through saved registers
@@ -2119,6 +2162,12 @@ int4 ActionRestrictLocal::apply(Funcdata &data)
 	if (op->code() != CPUI_COPY) continue;
 	Varnode *outvn = op->getOut();
 	if (!data.getScopeLocal()->isUnaffectedStorage(outvn))	// Is this where unaffected values get saved
+	  continue;
+	if (!aliasGathered) {
+	  collectDirectAlias(data,outvn->getSpace(),alias);
+	  aliasGathered = true;
+	}
+	if (isSaveSlotAliased(op,alias))	// Slot also holds a local variable
 	  continue;
 	data.getScopeLocal()->markNotMapped(outvn->getSpace(),outvn->getOffset(),outvn->getSize(),false);
       }
