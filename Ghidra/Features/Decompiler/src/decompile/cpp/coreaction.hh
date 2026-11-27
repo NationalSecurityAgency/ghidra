@@ -571,6 +571,7 @@ class ActionDeadCode : public Action {
   static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
   static uintb gatherConsumedReturn(Funcdata &data);
   static bool lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist);
+  static bool isGuardedStore(Varnode *vn,const list<LoadGuard> &guards);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {

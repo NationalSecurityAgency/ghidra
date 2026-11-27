@@ -4161,6 +4161,54 @@ bool ActionDeadCode::lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist)
   return res;
 }
 
+/// \brief Is the given Varnode a stack store that a guarded LOAD may read
+///
+/// The Varnode must lie in the range of a valid LOAD guard and be written by a STORE, or
+/// reach one through INDIRECTs and MULTIEQUALs on the same storage. Copy propagation may have
+/// replaced the STORE with its source, which then feeds an INDIRECT directly.
+/// \param vn is the given Varnode
+/// \param guards are the function's LoadGuards
+/// \return \b true if \b vn is such a store
+bool ActionDeadCode::isGuardedStore(Varnode *vn,const list<LoadGuard> &guards)
+
+{
+  list<LoadGuard>::const_iterator giter;
+  for(giter=guards.begin();giter!=guards.end();++giter) {
+    if ((*giter).isValid(CPUI_LOAD) && (*giter).isGuarded(vn->getAddr())) break;
+  }
+  if (giter == guards.end()) return false;
+  vector<Varnode *> worklist;
+  bool res = false;
+  vn->setMark();
+  worklist.push_back(vn);
+  for(int4 i=0;i<worklist.size();++i) {
+    Varnode *curVn = worklist[i];
+    if (curVn->isStackStore()) {
+      res = true;
+      break;
+    }
+    if (!curVn->isWritten()) continue;
+    PcodeOp *op = curVn->getDef();
+    if (op->code() != CPUI_INDIRECT && op->code() != CPUI_MULTIEQUAL) continue;
+    if (op->isIndirectCreation()) continue;
+    int4 num = (op->code() == CPUI_INDIRECT) ? 1 : op->numInput();
+    for(int4 j=0;j<num;++j) {
+      Varnode *inVn = op->getIn(j);
+      if (inVn->getAddr() != curVn->getAddr()) {	// The STORE's source, propagated into the op
+	res = true;
+	break;
+      }
+      if (inVn->isMark()) continue;
+      inVn->setMark();
+      worklist.push_back(inVn);
+    }
+    if (res) break;
+  }
+  for(int4 i=0;i<worklist.size();++i)
+    worklist[i]->clearMark();
+  return res;
+}
+
 int4 ActionDeadCode::apply(Funcdata &data)
 
 {
@@ -4180,7 +4228,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
     vn->clearConsumeList();
     vn->clearConsumeVacuous();
     vn->setConsume(0);
-    if (vn->isAddrForce()&&(!vn->isDirectWrite()))
+    if (vn->isAddrForce()&&(!vn->isDirectWrite())&&!isGuardedStore(vn,data.getLoadGuards()))
       vn->clearAddrForce();
   }
 
