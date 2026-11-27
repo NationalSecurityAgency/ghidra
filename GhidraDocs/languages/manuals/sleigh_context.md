@@ -82,6 +82,15 @@ be chosen. An engine doing the disassembly will have global state associated wit
 variable that will make the final decision about which form to generate. The setting of this state
 is (at least partially) out of the control of SLEIGH, although see the following sections.
 
+Note that a context variable is tied to a specific register (in the example above, it is
+*statusreg*). Although this register can be one that is used by the actual processor for the same
+purpose, it is often convenient to use a separate register, as context variables can be used for
+purposes where the real processor does not have an (exposed) register. Context variables are not
+updated in the semantic actions section of a constructor, only in the disassembly actions section
+(see below), which also makes using the same register awkward. Lastly, note that due to
+implementation constraints, the register associated with a context variable must have a size that is
+a multiple of 4 bytes, though each context variable itself can be any size up to 32 bits.
+
 ## 8.2. Local Context Change
 
 SLEIGH can make direct modifications to context variables through statements in the disassembly
