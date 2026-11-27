@@ -1,0 +1,79 @@
+<dwarf>
+	<!--
+	  Register numbers used by GCC in DWARF debug info for 32-bit PA-RISC
+	  (DEBUGGER_REGNO in gcc/config/pa/pa32-regs.h):
+	    0-31   general registers
+	    32     shift amount register (sar)
+	    72-127 single-precision halves of fr4-fr31, left half first;
+	           a double in frN is described as the pair 72+2*(N-4), 73+2*(N-4)
+	  .debug_frame uses GCC's internal numbering for FP registers
+	  (32 = fr4L), which this mapping does not describe.
+	-->
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="r0" auto_count="2"/> <!-- r0..r1 -->
+		<register_mapping dwarf="2" ghidra="rp"/>
+		<register_mapping dwarf="3" ghidra="r3" auto_count="24"/> <!-- r3..r26 -->
+		<register_mapping dwarf="27" ghidra="dp"/>
+		<register_mapping dwarf="28" ghidra="r28" auto_count="2"/> <!-- r28..r29 -->
+		<register_mapping dwarf="30" ghidra="sp" stackpointer="true"/>
+		<register_mapping dwarf="31" ghidra="r31"/>
+		<register_mapping dwarf="32" ghidra="sar"/>
+		<register_mapping dwarf="72" ghidra="fr4L"/>
+		<register_mapping dwarf="73" ghidra="fr4R"/>
+		<register_mapping dwarf="74" ghidra="fr5L"/>
+		<register_mapping dwarf="75" ghidra="fr5R"/>
+		<register_mapping dwarf="76" ghidra="fr6L"/>
+		<register_mapping dwarf="77" ghidra="fr6R"/>
+		<register_mapping dwarf="78" ghidra="fr7L"/>
+		<register_mapping dwarf="79" ghidra="fr7R"/>
+		<register_mapping dwarf="80" ghidra="fr8L"/>
+		<register_mapping dwarf="81" ghidra="fr8R"/>
+		<register_mapping dwarf="82" ghidra="fr9L"/>
+		<register_mapping dwarf="83" ghidra="fr9R"/>
+		<register_mapping dwarf="84" ghidra="fr10L"/>
+		<register_mapping dwarf="85" ghidra="fr10R"/>
+		<register_mapping dwarf="86" ghidra="fr11L"/>
+		<register_mapping dwarf="87" ghidra="fr11R"/>
+		<register_mapping dwarf="88" ghidra="fr12L"/>
+		<register_mapping dwarf="89" ghidra="fr12R"/>
+		<register_mapping dwarf="90" ghidra="fr13L"/>
+		<register_mapping dwarf="91" ghidra="fr13R"/>
+		<register_mapping dwarf="92" ghidra="fr14L"/>
+		<register_mapping dwarf="93" ghidra="fr14R"/>
+		<register_mapping dwarf="94" ghidra="fr15L"/>
+		<register_mapping dwarf="95" ghidra="fr15R"/>
+		<register_mapping dwarf="96" ghidra="fr16L"/>
+		<register_mapping dwarf="97" ghidra="fr16R"/>
+		<register_mapping dwarf="98" ghidra="fr17L"/>
+		<register_mapping dwarf="99" ghidra="fr17R"/>
+		<register_mapping dwarf="100" ghidra="fr18L"/>
+		<register_mapping dwarf="101" ghidra="fr18R"/>
+		<register_mapping dwarf="102" ghidra="fr19L"/>
+		<register_mapping dwarf="103" ghidra="fr19R"/>
+		<register_mapping dwarf="104" ghidra="fr20L"/>
+		<register_mapping dwarf="105" ghidra="fr20R"/>
+		<register_mapping dwarf="106" ghidra="fr21L"/>
+		<register_mapping dwarf="107" ghidra="fr21R"/>
+		<register_mapping dwarf="108" ghidra="fr22L"/>
+		<register_mapping dwarf="109" ghidra="fr22R"/>
+		<register_mapping dwarf="110" ghidra="fr23L"/>
+		<register_mapping dwarf="111" ghidra="fr23R"/>
+		<register_mapping dwarf="112" ghidra="fr24L"/>
+		<register_mapping dwarf="113" ghidra="fr24R"/>
+		<register_mapping dwarf="114" ghidra="fr25L"/>
+		<register_mapping dwarf="115" ghidra="fr25R"/>
+		<register_mapping dwarf="116" ghidra="fr26L"/>
+		<register_mapping dwarf="117" ghidra="fr26R"/>
+		<register_mapping dwarf="118" ghidra="fr27L"/>
+		<register_mapping dwarf="119" ghidra="fr27R"/>
+		<register_mapping dwarf="120" ghidra="fr28L"/>
+		<register_mapping dwarf="121" ghidra="fr28R"/>
+		<register_mapping dwarf="122" ghidra="fr29L"/>
+		<register_mapping dwarf="123" ghidra="fr29R"/>
+		<register_mapping dwarf="124" ghidra="fr30L"/>
+		<register_mapping dwarf="125" ghidra="fr30R"/>
+		<register_mapping dwarf="126" ghidra="fr31L"/>
+		<register_mapping dwarf="127" ghidra="fr31R"/>
+	</register_mappings>
+	<call_frame_cfa value="0"/>
+</dwarf>

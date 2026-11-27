@@ -12,7 +12,9 @@
             id="pa-risc:BE:32:default">
     <description>Generic PA-RISC 32-bit big endian</description>
     <compiler name="default" spec="pa-risc32.cspec" id="default"/>
+    <compiler name="HP-UX" spec="pa-risc32-hpux.cspec" id="hpux"/>
     <external_name tool="gnu" name="hppa2.0w"/>
     <external_name tool="IDA-PRO" name="hppa"/>
+    <external_name tool="DWARF.register.mapping.file" name="pa-risc32.dwarf"/>
   </language>
 </language_definitions>

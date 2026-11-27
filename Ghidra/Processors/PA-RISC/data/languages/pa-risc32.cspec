@@ -1,44 +1,188 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+  32-bit PA-RISC calling conventions.
+
+  References: "PA-RISC Procedure Calling Conventions Reference Manual"
+  (HP 09740-90015) and "The 32-bit PA-RISC Run-time Architecture Document"
+  (HP-UX 11.0), and GCC's gcc/config/pa/pa.h, pa.cc and pa32-linux.h.
+
+  The first four argument words are passed in r26, r25, r24 and r23. The
+  allocation is positional: a single-precision float in argument word n is
+  passed in fr(4+n)L instead of the general register, a double occupies an
+  aligned pair of argument words and is passed in fr5 (words 0 and 1) or
+  fr7 (words 2 and 3), and a 64-bit integer occupies an aligned pair of
+  general registers with the most significant word in the higher-numbered
+  argument word (r25:r26, r23:r24). Argument word n beyond the fourth lives
+  at sp-36-4*n; the stack grows toward higher addresses.
+
+  Ghidra's resource groups track each argument word as one slot, and fr5
+  and fr7 belong to the groups of words 1 and 3 only. The rules below claim
+  the other word of each pair. The hidden return pointer goes in r28; it
+  is listed first so that it forms its own resource section and is not
+  mistaken for a missing first argument.
+-->
 <compiler_spec>
+  <data_organization>
+    <absolute_max_alignment value="0" />
+    <machine_alignment value="8" />
+    <default_alignment value="1" />
+    <default_pointer_alignment value="4" />
+    <pointer_size value="4" />
+    <wchar_size value="4" />
+    <short_size value="2" />
+    <integer_size value="4" />
+    <long_size value="4" />
+    <long_long_size value="8" />
+    <float_size value="4" />
+    <double_size value="8" />
+    <long_double_size value="8" /> <!-- GCC on Linux; HP-UX uses a 16 byte quad -->
+    <size_alignment_map>
+      <entry size="1" alignment="1" />
+      <entry size="2" alignment="2" />
+      <entry size="4" alignment="4" />
+      <entry size="8" alignment="8" />
+    </size_alignment_map>
+  </data_organization>
+
   <global>
     <range space="ram"/>
     <range space="register" first="0x3000" last="0x3fff"/> <!-- Space registers -->
     <range space="register" first="0x5000" last="0x5fff"/> <!-- Control registers -->
   </global>
-  
+
   <stackpointer register="sp" space="ram" growth="positive" />
+
+  <returnaddress>
+    <register name="rp"/>
+  </returnaddress>
 
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
-      <input>
-        <pentry minsize="1" maxsize="4">
-          <register name="r26"/>
+      <input pointermax="8">
+        <pentry minsize="4" maxsize="4" storage="hiddenret">
+          <register name="r28"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="r25"/>
+        <group>
+          <pentry minsize="1" maxsize="4" metatype="float">
+            <register name="fr4L"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4">
+            <register name="r26"/>
+          </pentry>
+        </group>
+        <group>
+          <pentry minsize="1" maxsize="4" metatype="float">
+            <register name="fr5L"/>
+          </pentry>
+          <pentry minsize="5" maxsize="8" metatype="float">
+            <register name="fr5"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4">
+            <register name="r25"/>
+          </pentry>
+        </group>
+        <group>
+          <pentry minsize="1" maxsize="4" metatype="float">
+            <register name="fr6L"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4">
+            <register name="r24"/>
+          </pentry>
+        </group>
+        <group>
+          <pentry minsize="1" maxsize="4" metatype="float">
+            <register name="fr7L"/>
+          </pentry>
+          <pentry minsize="5" maxsize="8" metatype="float">
+            <register name="fr7"/>
+          </pentry>
+          <pentry minsize="1" maxsize="4">
+            <register name="r23"/>
+          </pentry>
+        </group>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r25" piece2="r26"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="r24"/>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r23" piece2="r24"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="r23"/>
-        </pentry>
+        <!-- Argument word 4 is at sp-52; the range grows downward from sp-48 -->
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="0xfffffddc" space="stack"/>
         </pentry>
+        <!-- A value larger than 8 bytes is passed as a pointer to a copy -->
+        <rule>
+          <datatype name="any" minsize="9"/>
+          <convert_to_ptr/>
+        </rule>
+        <!-- Variadic arguments, including doubles, are passed in general registers -->
+        <rule>
+          <datatype name="float" minsize="5" maxsize="8"/>
+          <varargs first="0"/>
+          <join align="true" reversesignif="true"/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <varargs first="0"/>
+          <consume storage="general"/>
+        </rule>
+        <!--
+          A double occupies an aligned pair of argument words. As the first
+          argument it takes fr5 and claims r26 as well. Otherwise it takes
+          fr7, which belongs to the group of word 3 only. Claim the next
+          free word before taking fr7 and the next one after. If two words
+          were used, these are word 2 and nothing; if one word was used,
+          they are the padding word 1 and word 2. If three words were used,
+          fr7 is unavailable and the double goes on the stack.
+        -->
+        <rule>
+          <datatype name="float" minsize="5" maxsize="8"/>
+          <position index="0"/>
+          <consume storage="float"/>
+          <consume_extra storage="general" matchsize="false"/>
+        </rule>
+        <rule>
+          <datatype name="float" minsize="5" maxsize="8"/>
+          <consume_extra storage="general" matchsize="false"/>
+          <consume storage="float"/>
+          <consume_extra storage="general" matchsize="false"/>
+        </rule>
+        <rule>
+          <datatype name="any" minsize="5" maxsize="8"/>
+          <join align="true" reversesignif="true"/>
+        </rule>
       </input>
 
       <output>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="fr4L"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <register name="fr4"/>
+        </pentry>
         <pentry minsize="1" maxsize="4">
           <register name="r28"/>
         </pentry>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r28" piece2="r29"/>
+        </pentry>
+        <!-- GCC on Linux returns aggregates of up to 8 bytes in r28:r29 -->
+        <rule>
+          <datatype name="any" minsize="9"/>
+          <hidden_return/>
+        </rule>
+        <rule>
+          <datatype name="float"/>
+          <consume storage="float"/>
+        </rule>
+        <rule>
+          <datatype name="any"/>
+          <join/>
+        </rule>
       </output>
-      
+
       <unaffected>
-        <register name="r0"/>
-        <register name="r1"/>
-        <register name="rp"/>
         <register name="r3"/>
         <register name="r4"/>
         <register name="r5"/>
@@ -55,16 +199,131 @@
         <register name="r16"/>
         <register name="r17"/>
         <register name="r18"/>
+        <register name="dp"/>
+        <register name="sp"/>
+        <register name="fr12"/>
+        <register name="fr13"/>
+        <register name="fr14"/>
+        <register name="fr15"/>
+        <register name="fr16"/>
+        <register name="fr17"/>
+        <register name="fr18"/>
+        <register name="fr19"/>
+        <register name="fr20"/>
+        <register name="fr21"/>
+      </unaffected>
+
+      <killedbycall>
+        <register name="r1"/>
+        <register name="rp"/>
         <register name="r19"/>
         <register name="r20"/>
         <register name="r21"/>
         <register name="r22"/>
-        <register name="dp"/>
-        <register name="sp"/>
+        <register name="r23"/>
+        <register name="r24"/>
+        <register name="r25"/>
+        <register name="r26"/>
+        <register name="r28"/>
+        <register name="r29"/>
         <register name="r31"/>
-      </unaffected>
-      
+        <register name="sar"/>
+        <register name="fr4"/>
+        <register name="fr5"/>
+        <register name="fr6"/>
+        <register name="fr7"/>
+        <register name="fr8"/>
+        <register name="fr9"/>
+        <register name="fr10"/>
+        <register name="fr11"/>
+        <register name="fr22"/>
+        <register name="fr23"/>
+        <register name="fr24"/>
+        <register name="fr25"/>
+        <register name="fr26"/>
+        <register name="fr27"/>
+        <register name="fr28"/>
+        <register name="fr29"/>
+        <register name="fr30"/>
+        <register name="fr31"/>
+      </killedbycall>
     </prototype>
   </default_proto>
-    
+
+  <!--
+    Millicode routines ($$mulI, $$divI, $$remI, ...) take their operands in
+    r26 and r25, return the result in r29, and return through r31. They
+    clobber only r1, r25, r26, r29 and r31.
+  -->
+  <prototype name="__millicode" extrapop="0" stackshift="0">
+    <input>
+      <pentry minsize="1" maxsize="4">
+        <register name="r26"/>
+      </pentry>
+      <pentry minsize="1" maxsize="4">
+        <register name="r25"/>
+      </pentry>
+    </input>
+    <output>
+      <pentry minsize="1" maxsize="4">
+        <register name="r29"/>
+      </pentry>
+    </output>
+    <returnaddress>
+      <register name="r31"/>
+    </returnaddress>
+    <unaffected>
+      <register name="rp"/>
+      <register name="r3"/>
+      <register name="r4"/>
+      <register name="r5"/>
+      <register name="r6"/>
+      <register name="r7"/>
+      <register name="r8"/>
+      <register name="r9"/>
+      <register name="r10"/>
+      <register name="r11"/>
+      <register name="r12"/>
+      <register name="r13"/>
+      <register name="r14"/>
+      <register name="r15"/>
+      <register name="r16"/>
+      <register name="r17"/>
+      <register name="r18"/>
+      <register name="r19"/>
+      <register name="r20"/>
+      <register name="r21"/>
+      <register name="r22"/>
+      <register name="r23"/>
+      <register name="r24"/>
+      <register name="dp"/>
+      <register name="r28"/>
+      <register name="sp"/>
+    </unaffected>
+    <killedbycall>
+      <register name="r1"/>
+      <register name="r25"/>
+      <register name="r26"/>
+      <register name="r29"/>
+      <register name="r31"/>
+    </killedbycall>
+  </prototype>
+
+  <!--
+    Indirect calls go through $$dyncall with the target in r22. If bit 1
+    of r22 is set, it points 2 bytes into a function descriptor holding
+    the entry point and the callee's linkage table pointer (r19).
+  -->
+  <callfixup name="$$dyncall">
+    <target name="$$dyncall"/>
+    <pcode>
+      <body><![CDATA[
+        if ((r22 & 2) == 0) goto <plain>;
+        r19 = *:4 ((r22 & 0xfffffffc) + 4);
+        r22 = *:4 (r22 & 0xfffffffc);
+        <plain>
+        call [r22];
+      ]]></body>
+    </pcode>
+  </callfixup>
 </compiler_spec>
