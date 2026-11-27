@@ -251,6 +251,9 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 
 				int offset = segments[i].getOffsetShiftAligned();
 				int length = Short.toUnsignedInt(segments[i].getLength());
+				if (length == 0 && offset != 0) {
+					length = 0x10000;
+				}
 				int minalloc = Short.toUnsignedInt(segments[i].getMinAllocSize());
 				if (minalloc == 0) {
 					minalloc = 0x10000;
