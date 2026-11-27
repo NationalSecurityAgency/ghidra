@@ -1647,3 +1647,398 @@ define pcodeop vpmovuswb_avx512bw ;
 	ZmmReg1 = ZmmResult;
 }
 
+
+# AVX10_V1_AUX
+
+define pcodeop vcvtph2bf8_avx10v1aux;
+:VCVTPH2BF8 XmmReg1^XmmOpMask8, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2bf8_avx10v1aux(XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2BF8 XmmReg1^XmmOpMask8, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2bf8_avx10v1aux(YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2BF8 YmmReg1^YmmOpMask8, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtph2bf8_avx10v1aux(ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtph2bf8s_avx10v1aux;
+:VCVTPH2BF8S XmmReg1^XmmOpMask8, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2bf8s_avx10v1aux(XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2BF8S XmmReg1^XmmOpMask8, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2bf8s_avx10v1aux(YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2BF8S YmmReg1^YmmOpMask8, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtph2bf8s_avx10v1aux(ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtph2hf8_avx10v1aux;
+:VCVTPH2HF8 XmmReg1^XmmOpMask8, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x18; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2hf8_avx10v1aux(XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2HF8 XmmReg1^XmmOpMask8, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x18; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2hf8_avx10v1aux(YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2HF8 YmmReg1^YmmOpMask8, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & YmmOpMask8; byte=0x18; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtph2hf8_avx10v1aux(ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtph2hf8s_avx10v1aux;
+:VCVTPH2HF8S XmmReg1^XmmOpMask8, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x1B; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2hf8s_avx10v1aux(XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2HF8S XmmReg1^XmmOpMask8, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask8; byte=0x1B; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtph2hf8s_avx10v1aux(YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTPH2HF8S YmmReg1^YmmOpMask8, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F3) & $(VEX_MAP5) & $(VEX_W0) & YmmOpMask8; byte=0x1B; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtph2hf8s_avx10v1aux(ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvt2ph2bf8_avx10v1aux;
+:VCVT2PH2BF8 XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvt2ph2bf8_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVT2PH2BF8 YmmReg1^YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvt2ph2bf8_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVT2PH2BF8 ZmmReg1^ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x74; (ZmmReg1 & ZmmOpMask8) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvt2ph2bf8_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+define pcodeop vcvt2ph2bf8s_avx10v1aux;
+:VCVT2PH2BF8S XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvt2ph2bf8s_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVT2PH2BF8S YmmReg1^YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvt2ph2bf8s_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVT2PH2BF8S ZmmReg1^ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg; byte=0x74; (ZmmReg1 & ZmmOpMask8) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvt2ph2bf8s_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+define pcodeop vcvt2ph2hf8_avx10v1aux;
+:VCVT2PH2HF8 XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x18; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvt2ph2hf8_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVT2PH2HF8 YmmReg1^YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & YmmOpMask8; byte=0x18; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvt2ph2hf8_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVT2PH2HF8 ZmmReg1^ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg; byte=0x18; (ZmmReg1 & ZmmOpMask8) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvt2ph2hf8_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+define pcodeop vcvt2ph2hf8s_avx10v1aux;
+:VCVT2PH2HF8S XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x1B; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvt2ph2hf8s_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVT2PH2HF8S YmmReg1^YmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & YmmOpMask8; byte=0x1B; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvt2ph2hf8s_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVT2PH2HF8S ZmmReg1^ZmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg; byte=0x1B; (ZmmReg1 & ZmmOpMask8) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvt2ph2hf8s_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask8;
+	ZmmReg1 = ZmmResult;
+}
+
+define pcodeop vcvtbiasph2bf8_avx10v1aux;
+:VCVTBIASPH2BF8 XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2bf8_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2BF8 XmmReg1^XmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & evexV5_YmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2bf8_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2BF8 YmmReg1^YmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtbiasph2bf8_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtbiasph2bf8s_avx10v1aux;
+:VCVTBIASPH2BF8S XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2bf8s_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2BF8S XmmReg1^XmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & XmmOpMask8; byte=0x74; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2bf8s_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2BF8S YmmReg1^YmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg & YmmOpMask8; byte=0x74; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtbiasph2bf8s_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtbiasph2hf8_avx10v1aux;
+:VCVTBIASPH2HF8 XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x18; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2hf8_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2HF8 XmmReg1^XmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & XmmOpMask8; byte=0x18; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2hf8_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2HF8 YmmReg1^YmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg & YmmOpMask8; byte=0x18; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtbiasph2hf8_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+define pcodeop vcvtbiasph2hf8s_avx10v1aux;
+:VCVTBIASPH2HF8S XmmReg1^XmmOpMask8, evexV5_XmmReg, XmmReg2_m128_m16bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_XmmReg & XmmOpMask8; byte=0x1B; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2hf8s_avx10v1aux(evexV5_XmmReg, XmmReg2_m128_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2HF8S XmmReg1^XmmOpMask8, evexV5_YmmReg, YmmReg2_m256_m16bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_YmmReg & XmmOpMask8; byte=0x1B; (XmmReg1 & ZmmReg1) ... & YmmReg2_m256_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvtbiasph2hf8s_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m16bcst);
+	XmmMask = XmmReg1;
+	build XmmOpMask8;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTBIASPH2HF8S YmmReg1^YmmOpMask8, evexV5_ZmmReg, ZmmReg2_m512_m16bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_NONE) & $(VEX_MAP5) & $(VEX_W0) & evexV5_ZmmReg & YmmOpMask8; byte=0x1B; (YmmReg1 & ZmmReg1) ... & ZmmReg2_m512_m16bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvtbiasph2hf8s_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m16bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask8;
+	ZmmReg1 = zext(YmmResult);
+}
+
+
+define pcodeop vcvthf82ph_avx10v1aux;
+:VCVTHF82PH XmmReg1^XmmOpMask16, XmmReg2_m64 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & XmmOpMask16; byte=0x1E; (XmmReg1 & ZmmReg1) ... & XmmReg2_m64
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvthf82ph_avx10v1aux(XmmReg2_m64);
+	XmmMask = XmmReg1;
+	build XmmOpMask16;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVTHF82PH YmmReg1^YmmOpMask16, XmmReg2_m128 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0) & YmmOpMask16; byte=0x1E; (YmmReg1 & ZmmReg1) ... & XmmReg2_m128
+[ evexD8Type = 0; evexTType = 0; ] 
+{
+	YmmResult = vcvthf82ph_avx10v1aux(XmmReg2_m128);
+	YmmMask = YmmReg1;
+	build YmmOpMask16;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVTHF82PH ZmmReg1^ZmmOpMask16, YmmReg2_m256 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_F2) & $(VEX_MAP5) & $(VEX_W0); byte=0x1E; (ZmmReg1 & ZmmOpMask16) ... & YmmReg2_m256
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvthf82ph_avx10v1aux(YmmReg2_m256);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask16;
+	ZmmReg1 = ZmmResult;
+}
+
+define pcodeop vcvt2ps2phx_avx10v1aux;
+:VCVT2PS2PHX XmmReg1^XmmOpMask16, evexV5_XmmReg, XmmReg2_m128_m32bcst is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & XmmOpMask16 & evexV5_XmmReg; byte=0x67; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128_m32bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	XmmResult = vcvt2ps2phx_avx10v1aux( evexV5_XmmReg, XmmReg2_m128_m32bcst );
+	XmmMask = XmmReg1;
+	build XmmOpMask16;
+	ZmmReg1 = zext(XmmResult);
+}
+
+:VCVT2PS2PHX YmmReg1^YmmOpMask16, evexV5_YmmReg, YmmReg2_m256_m32bcst is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & YmmOpMask16 & evexV5_YmmReg; byte=0x67; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256_m32bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	YmmResult = vcvt2ps2phx_avx10v1aux(evexV5_YmmReg, YmmReg2_m256_m32bcst);
+	YmmMask = YmmReg1;
+	build YmmOpMask16;
+	ZmmReg1 = zext(YmmResult);
+}
+
+:VCVT2PS2PHX ZmmReg1^ZmmOpMask16, evexV5_ZmmReg, ZmmReg2_m512_m32bcst is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & evexV5_ZmmReg; byte=0x67; (ZmmReg1 & ZmmOpMask16) ... & ZmmReg2_m512_m32bcst
+[ evexD8Type = 0; evexTType = 0; ]
+{
+	ZmmResult = vcvt2ps2phx_avx10v1aux(evexV5_ZmmReg, ZmmReg2_m512_m32bcst);
+	ZmmMask = ZmmReg1;
+	build ZmmOpMask16;
+	ZmmReg1 = ZmmResult;
+}
