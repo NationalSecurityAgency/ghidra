@@ -322,7 +322,7 @@ public class IntelHexExporter extends ProgramExporter {
 				return DEFAULT_RECORD_SIZE;
 			}
 
-			return Integer.valueOf(val);
+			return Integer.decode(val);
 		}
 
 		public boolean dropExtraBytes() {
