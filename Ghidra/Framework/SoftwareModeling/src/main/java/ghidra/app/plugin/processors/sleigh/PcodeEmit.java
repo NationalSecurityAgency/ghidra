@@ -429,6 +429,79 @@ public abstract class PcodeEmit {
 	}
 
 	/**
+	 * Return the masked version of an offset, and keep the sign.
+	 *
+	 * Apply a MASK to an OFFSET.  If the OFFSET is from a SIGNED
+	 * address space, restore the sign to an OFFSET already given
+	 * as a negative value, or establish for positive values when
+	 * the OFFSET should be considered as negative by its SIZE in
+	 * bytes.  The SIZE is to compute the highest signed positive
+	 * number, beyond of which the OFFSET is considered negative.
+	 *
+	 * Instructions as 'ADD ESP,-0x8' require a signed subtrahend
+	 * in the addition.  A simple '-0x8 & ConstTpl.calc_mask[4]',
+	 * for a 4 bytes number, i.e. -0x8 & 4294967295 = 4294967288,
+	 * will result in an unsigned integer number with a different
+	 * inferred value, meaning 'ESP + 4294967288' rather than the
+	 * expected 'ESP - 8'.  After masking, a signed address space
+	 * would require negative offset values to have both sign and
+	 * meaning restored.
+	 *
+	 * Instructions as 'ADD ESP,0xfffffc10' may also bring issues
+	 * when the sign of the hexadecimal constant isn't preserved.
+	 *
+	 * As explained above, in arithmetic calculations, a negative
+	 * value requires to be evaluated along with its own sign.  A
+	 * stack, a stack depth, and a function's base pointer, could
+	 * be misaligned by a negative offset improperly unsigned.
+	 *
+	 * After compiling Borland C++ v5.02 EXAMPLES\WINDOWS\WHELLO:
+	 *
+	 * entry
+	 *
+	 *   ...
+	 *   00401026          PUSH       0x0
+	 *   00401028          CALL       FUN_00401657
+	 *   ...
+	 *
+	 * FUN_00401657
+	 *
+	 *   void *            Stack[0x4]:4   param_1
+	 *   undefined4        Stack[-0x8]:4  local_8
+	 *   undefined         Stack[-0xc]:1  local_c
+	 *
+	 *   00401657          PUSH       EBP
+	 *   00401658          MOV        EBP,ESP
+	 *   0040165a          ADD        ESP,-0x8
+	 *   ...
+	 *
+	 * @param signed TRUE if an address space is signed
+	 * @param size the size in bytes of the offset/mask
+	 * @param offset the offset to be masked and signed
+	 * @param mask the mask to be applied to the offset
+	 * @return the offset masked and signed if required
+	 */
+	private long calcMaskAndKeepSign(boolean signed, int size, long offset, long mask) {
+		long maskedValue = offset & mask;
+		// Restore/Preserve the sign if the offset is from a
+		// signed address space.
+		if (signed) {
+			// An offset could already have a negative sign,
+			// as -0x8 from 'ADD ESP,-0x8'.
+			if (offset < 0) {
+				return -(mask - maskedValue + 1);
+			}
+			// The negative sign could be implied in numbers
+			// as 0xfffffc10 from 'ADD ESP,0xfffffc10'.
+			long maxSigned = (1L << (size * 8 - 1)) - 1;
+			if (offset > maxSigned) {
+				return maskedValue - (1L << (size * 8));
+			}
+		}
+		return maskedValue;
+	}
+
+	/**
 	 * Convert a varnode template into a concrete varnode
 	 * @param vntpl is the varnode template
 	 * @param vn is the resulting concrete varnode
@@ -437,8 +510,9 @@ public abstract class PcodeEmit {
 		vn.space = vntpl.getSpace().fixSpace(walker);
 		vn.size = (int) vntpl.getSize().fix(walker);
 		if (vn.space == const_space) {
-			vn.offset =
-				vntpl.getOffset().fix(walker) & ConstTpl.calc_mask[vn.size > 8 ? 8 : vn.size];
+			int size = vn.size > 8 ? 8 : vn.size;
+			vn.offset = calcMaskAndKeepSign(vn.space.hasSignedOffset(), size,
+				vntpl.getOffset().fix(walker), ConstTpl.calc_mask[size]);
 		}
 		else if (vn.space == uniq_space) {
 			vn.offset = vntpl.getOffset().fix(walker) | uniqueoffset;
@@ -459,7 +533,8 @@ public abstract class PcodeEmit {
 		vn.space = hand.offset_space;
 		vn.size = hand.offset_size;
 		if (vn.space == const_space) {
-			vn.offset = hand.offset_offset & ConstTpl.calc_mask[vn.size];
+			vn.offset = calcMaskAndKeepSign(vn.space.hasSignedOffset(), vn.size,
+				hand.offset_offset, ConstTpl.calc_mask[vn.size]);
 		}
 		else if (vn.space == uniq_space) {
 			vn.offset = hand.offset_offset | uniqueoffset;
