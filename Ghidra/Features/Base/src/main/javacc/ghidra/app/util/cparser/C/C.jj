@@ -108,6 +108,11 @@ public class CParser {
     private Map<String, DataType> functions = new HashMap<String, DataType>();    
     private Map<String, DataType> enums = new HashMap<String, DataType>();
 
+    // Enumerator constants declared in this parser and its current lexical scope.
+    private Map<String, Long> enumConstants = new HashMap<String, Long>();
+    private Map<DataType, Map<String, Long>> parameterConstants =
+        new IdentityHashMap<DataType, Map<String, Long>>();
+
     private Map<String, DataType> declarations = new HashMap<String, DataType>();
     
     private Map<String, DataType> internalTypes = new HashMap<String, DataType>();
@@ -640,6 +645,10 @@ public class CParser {
    */
     private void defineAndReplaceFunction(Declaration dec, FunctionDefinitionDataType funcDT) {
         DataType newDT = addDef(functions, dec.getName(), funcDT);
+        Map<String, Long> bindings = parameterConstants.remove(funcDT);
+        if (bindings != null) {
+            parameterConstants.put(newDT, bindings);
+        }
         DataType newDecDT = newDT;
         DataType repDT = dec.getDataType();
         DataType origDT = repDT;
@@ -987,6 +996,7 @@ public class CParser {
             Msg.warn(this, e, e);
             throw new ParseException(parseMessage);
         } finally {
+            parameterConstants.clear();
             dtMgr.endTransaction(transactionID, true);
         }
     }
@@ -1511,11 +1521,11 @@ void TranslationUnit() : {}
     }
 }
 
-void ExternalDeclaration() : {}
+void ExternalDeclaration() : { DataType functionType; }
 {
     (
         LOOKAHEAD( FunctionDefinition() "{" )
-          (FunctionDefinition() "{" [ StatementList() ] "}")
+          (functionType= FunctionDefinition() "{" ScopedStatementList(parameterConstants.remove(functionType)) "}")
         |
 //        <INLINE> FunctionDefinition() 
 //        |
@@ -1534,6 +1544,7 @@ void ExternalDeclaration() : {}
            throw new ParseException("Parsing Canceled");
         }
         typedefParsingStack.clear();
+        parameterConstants.clear();
     }
 }
 
@@ -1560,21 +1571,46 @@ DataType ObjcDef() : {
     }
 }
 
-void FunctionDefinition() : {
+DataType FunctionDefinition() : {
     Declaration retDT = new Declaration();
     Declaration dec = null;
+    Map<String, Long> outerConstants = enumConstants;
 }
 {
     [
         LOOKAHEAD(DeclarationSpecifiers(retDT))
         retDT = DeclarationSpecifiers(retDT) 
     ]
-    {typedefParsingStack.push(Boolean.FALSE);}
-    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();}
     {
-        if (dec.getDataType() instanceof FunctionDefinition) {
-            addDef(functions, dec.getName(), dec.getDataType());
+        typedefParsingStack.push(Boolean.FALSE);
+        enumConstants = new HashMap<String, Long>(outerConstants);
+    }
+    try {
+        dec= Declarator(retDT, null)
+        {
+            Map<String, Long> bindings = parameterConstants.remove(dec.getDataType());
+            if (bindings != null) {
+                enumConstants.putAll(bindings);
+            }
+            if (dec.getDataType() instanceof FunctionDefinition) {
+                for (ParameterDefinition parameter : ((FunctionDefinition) dec.getDataType()).getArguments()) {
+                    if (parameter.getName() != null) {
+                        enumConstants.put(parameter.getName(), null);
+                    }
+                }
+            }
         }
+        [ DeclarationList() ] {typedefParsingStack.pop();}
+        {
+            if (dec.getDataType() instanceof FunctionDefinition) {
+                addDef(functions, dec.getName(), dec.getDataType());
+            }
+            parameterConstants.put(dec.getDataType(), new HashMap<String, Long>(enumConstants));
+            return dec.getDataType();
+        }
+    }
+    finally {
+        enumConstants = outerConstants;
     }
 }
 
@@ -2151,7 +2187,13 @@ void InitDeclaratorList(Declaration dt) : {
 
 void InitDeclarator(Declaration dt) : { Declaration dec; }
 {
-    dec = Declarator(dt, null) [ "=" Initializer() ] 
+    dec = Declarator(dt, null)
+    {
+        if (dec.getName() != null) {
+            enumConstants.put(dec.getName(), null);
+        }
+    }
+    [ "=" Initializer() ] 
     {
         if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
             addTypedef(dec.getName(), dec.getDataType());
@@ -2336,6 +2378,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
             value = evalue;
         }
         list.add(new EnumMember(t.image, value));
+        enumConstants.put(t.image, (long) value);
         return value;
     }
     |
@@ -2346,6 +2389,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
             value = evalue;
         }
         list.add(new EnumMember(t.image, value));
+        enumConstants.put(t.image, (long) value);
         return value;
     }
 }
@@ -2472,8 +2516,11 @@ Declaration TypeQualifierList(Declaration dec) : {}
 Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT) : {
     ArrayList<Declaration> list;
     Token varargs= null;
+    Map<String, Long> outerConstants = enumConstants;
 }
 {
+    { enumConstants = new HashMap<String, Long>(outerConstants); }
+    try {
     list= ParameterList() [ "," varargs = "..." ] 
     {
         checkReturnDataType(retDT);
@@ -2504,7 +2551,12 @@ Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT)
         if (firstDeclaration != null) {
             dec.addQualifiers(firstDeclaration);
         }
+        parameterConstants.put(funcDT, new HashMap<String, Long>(enumConstants));
         return dec;
+    }
+    }
+    finally {
+        enumConstants = outerConstants;
     }
 }
 
@@ -2546,6 +2598,9 @@ void ParameterDeclaration(ArrayList<Declaration> list) : {
                throw new ParseException("'"+decDT.getName()+"'" + " is not fixed length.  Function parameters must use fixed length data type.");
             } else {
                list.add(dec);
+               if (dec.getName() != null) {
+                   enumConstants.put(dec.getName(), null);
+               }
             }
         }
     }
@@ -2744,7 +2799,21 @@ void CompoundStatement() : {}
 //        LOOKAHEAD(DeclarationList())
 //        DeclarationList() 
 //    ]
-    [ StatementList() ] "}" 
+    ScopedStatementList(null) "}" 
+}
+
+// Isolate enumerators declared in function bodies and nested blocks.
+void ScopedStatementList(Map<String, Long> bindings) : {
+    Map<String, Long> outerConstants = enumConstants;
+}
+{
+    { enumConstants = new HashMap<String, Long>(bindings == null ? outerConstants : bindings); }
+    try {
+        [ StatementList() ]
+    }
+    finally {
+        enumConstants = outerConstants;
+    }
 }
 
 void StatementList() : {}
@@ -3085,7 +3154,14 @@ Object PrimaryExpression() : {
     Object obj = null;
 }
 {
-    ( obj = <IDENTIFIER> |
+    ( obj = <IDENTIFIER>
+      {
+          Long value = enumConstants.get(((Token) obj).image);
+          if (value != null) {
+              obj = value;
+          }
+      }
+      |
       obj = Constant() |
       "(" obj = Expression() ")" )
     {
