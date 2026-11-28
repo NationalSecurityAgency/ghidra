@@ -24,7 +24,7 @@
 namespace ghidra {
 
 class ProtoModel;
-class ParameterPieces;
+struct ParameterPieces;
 class ParamListStandard;
 class ParamEntry;
 class ParamActive;

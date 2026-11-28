@@ -750,7 +750,7 @@ public:
 };
 
 class FuncProto;		// Forward declaration
-class PrototypePieces;
+struct PrototypePieces;
 
 /// \brief Datatype object representing executable code.
 ///
