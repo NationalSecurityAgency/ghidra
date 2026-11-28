@@ -1318,7 +1318,7 @@ define pcodeop idle;
 define pcodeop invtlb;
 #la-privileged-32.txt tlbinv mask=0x06498000	[@orig_name=invtlb, @orig_fmt=Ud5JK, @primary]
 #0x06498000	0xffff8000	u0:5,r5:5,r10:5	['imm0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
-:invtlb  RJsrc, RKsrc, imm0_5 is op15_31=0xc93 & RJsrc & RKsrc & imm0_5 {
+:invtlb  imm0_5, RJsrc, RKsrc is op15_31=0xc93 & RJsrc & RKsrc & imm0_5 {
 	invtlb(RJsrc, RKsrc, imm0_5:1);
 }
 
