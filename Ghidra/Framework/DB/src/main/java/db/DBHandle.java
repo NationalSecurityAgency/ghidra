@@ -382,14 +382,6 @@ public class DBHandle {
 	}
 
 	/**
-	 * Enable and start source file pre-cache if appropriate.
-	 * WARNING! EXPERIMENTAL !!!
-	 */
-	public void enablePreCache() {
-		bufferMgr.enablePreCache();
-	}
-
-	/**
 	 * @return the database parameters
 	 */
 	DBParms getDBParms() {
