@@ -22,6 +22,8 @@
 #include "filemanage.hh"
 #include "architecture.hh"
 #include "sleigh.hh"
+#include <memory>
+#include <mutex>
 
 namespace ghidra {
 
@@ -107,7 +109,10 @@ public:
 /// object is able to automatically load in configuration and construct the Translate object.
 class SleighArchitecture : public Architecture {
   static map<int4,Sleigh> translators;		///< Map from language index to instantiated translators
+  static map<string,std::unique_ptr<const Document>> specxmls;	///< Cache of parsed immutable .pspec/.cspec XML documents
+  static std::mutex specxmls_mutex;			///< Mutex protecting specxmls cache
   static vector<LanguageDescription> description;	///< List of languages we know about
+  static const Document *getSpecDocument(const string &filename);	///< Parse or retrieve cached immutable XML spec document
   int4 languageindex;					///< Index (within LanguageDescription array) of the active language
   string filename;					///< Name of active load-image file
   string target;					///< The \e language \e id of the active load-image
