@@ -637,8 +637,20 @@ macro extract_bit(bit, result) {
 }
 
 # L32R - Load 32-bit PC-relative (RI6), pg. 382.
-:l32r at, srel_oex_sh2 is srel_oex_sh2 & at & op0 = 0b0001 {
-    at = srel_oex_sh2;
+:l32r at, srel_oex_sh2_imm is srel_oex_sh2_imm & at & op0 = 0b0001 {
+	tmp_pc = (((inst_start + 3) & ~3) + srel_oex_sh2_imm);
+	tmp_lb = ((LITBASE & ~1) + srel_oex_sh2_imm);
+
+	if ((LITBASE & 1) == 1) goto <use_litbase>;
+
+	at = *:4 tmp_pc;
+	goto <end>;
+
+	<use_litbase>
+
+	at = *:4 tmp_lb;
+
+	<end>
 }
 
 # LDCT - Load Data Cache Tag (RRR), pg. 384.
