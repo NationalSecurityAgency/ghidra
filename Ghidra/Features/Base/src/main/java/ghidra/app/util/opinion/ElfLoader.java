@@ -21,6 +21,8 @@ import java.util.*;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
+import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.golang.GoConstants;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.framework.model.DomainObject;
@@ -213,6 +215,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		if (GoRttiMapper.hasGolangSections(sectionNames)) {
 			return GoConstants.GOLANG_CSPEC_NAME;
 		}
-		return null;
+		ElfLoadAdapter extension = ElfExtensionFactory.getLoadAdapter(elf);
+		return extension != null ? extension.getCompilerName(elf) : null;
 	}
 }
