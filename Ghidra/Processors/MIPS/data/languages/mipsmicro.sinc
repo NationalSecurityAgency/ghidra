@@ -2553,7 +2553,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmpb:$(ADDRSIZE) = 0;
 	ValCast(tmpb,tmpa);
     tmp:4 = *[ram]:4 tmpb;
-    micb_fd = (micb_fd ^ 0xffffffff) + zext(tmp);
+    micb_fd[0,32] = tmp;
 }
 
 :madd RS0L, RT5L  						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RT5L & RS0L ; micb_poolax=0b111100 & micb_axf=0b1100101100 {
