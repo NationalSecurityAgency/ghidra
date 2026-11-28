@@ -213,7 +213,7 @@ public class DWARFFunctionImporter {
 
 		dfunc.runFixups();
 
-		String defaultCC = prog.getImportOptions().getDefaultCC();
+		String defaultCC = importOptions.getDefaultCC();
 		if (defaultCC != null && defaultCC.isBlank()) {
 			defaultCC = null;
 		}
@@ -366,7 +366,7 @@ public class DWARFFunctionImporter {
 						DWARFVariable localVar =
 							DWARFVariable.readLocalVariable(childDIEA, dfunc, offsetFromFuncStart);
 						if (!localVar.isMissingStorage()) {
-							if (prog.getImportOptions().isImportLocalVariables() ||
+							if (importOptions.isImportLocalVariables() ||
 								localVar.isRamStorage()) {
 								// only retain the local var if option is turned on, or global/static variable
 								dfunc.localVars.add(localVar);
