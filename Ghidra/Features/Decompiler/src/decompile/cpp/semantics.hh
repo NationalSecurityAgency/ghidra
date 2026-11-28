@@ -77,13 +77,13 @@ public:
 private:
   const_type type;		///< The type of constant
   union {
-    AddrSpace *spaceid;		///< Id referring to a registered address space
+    AddrSpace *spaceid = (AddrSpace *)0;	///< Id referring to a registered address space (zeroes the union for every ctor)
     int4 handle_index;		///< For a \b handle, the index of the specific sub-constructor passing back the value
   } value;			///< Specialized values a ConstTpl can represent
   uintb value_real;		///< An immediate constant value or other constant offset a ConstTpl represents
   v_field select;		///< Assuming ConstTpl is a \b handle, the part of the \b handle to use as constant
 public:
-  ConstTpl(void) { type = real; value_real = 0; value.spaceid = (AddrSpace *)0; select = v_space; }	///< Construct a zero constant
+  ConstTpl(void) { type = real; value_real = 0; select = v_space; }	///< Construct a zero constant (value zeroed by the union member initialiser)
   ConstTpl(const ConstTpl &op2) {
     type=op2.type; value=op2.value; value_real=op2.value_real; select=op2.select; }	///< Copy constructor
   ConstTpl(const_type tp,uintb val);					///< Constructor for real constants or relative offsets
