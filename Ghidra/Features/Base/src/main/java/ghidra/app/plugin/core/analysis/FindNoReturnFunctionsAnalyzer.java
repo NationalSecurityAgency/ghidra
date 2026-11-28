@@ -122,11 +122,14 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 
 			// mark all detected non-returning functions
+			AddressSet markedNoReturnSet = new AddressSet();
 			AddressIterator noreturns = noReturnSet.getAddresses(true);
 			for (Address address : noreturns) {
 				monitor.checkCancelled();
 
-				setFunctionNonReturning(program, address);
+				if (setFunctionNonReturning(program, address)) {
+					markedNoReturnSet.add(address);
+				}
 
 				monitor.setMessage("NoReturn - Clearing fallthrough at: " + address);
 				setNoFallThru(program, address);
@@ -137,7 +140,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 			// repair the damage for all non-returning functions
 			if (repairDamageEnabled) {
-				noreturns = noReturnSet.getAddresses(true);
+				noreturns = markedNoReturnSet.getAddresses(true);
 				for (Address address : noreturns) {	
 					AddressSet potentialDamagedLocations = findPotentialDamagedLocations(program, address);
 
@@ -194,19 +197,20 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	 * 
 	 * @param cp program
 	 * @param entry function entry to change to non-returning
+	 * @return true if the function was marked non-returning
 	 */
-	private void setFunctionNonReturning(Program cp, Address entry) {
+	private boolean setFunctionNonReturning(Program cp, Address entry) {
 		Function func = cp.getFunctionManager().getFunctionAt(entry);
 		if (func == null) {
 			CreateFunctionCmd createFunctionCmd = new CreateFunctionCmd(entry);
 			createFunctionCmd.applyTo(cp);
 			func = cp.getFunctionManager().getFunctionAt(entry);
 			if (func == null) {
-				return;
+				return false;
 			}
 		}
-		// if func is null, create one at entry
 		func.setNoReturn(true);
+		return true;
 	}
 
 	/**
