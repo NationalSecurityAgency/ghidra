@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- MIL-STD-1750A defines no calling convention. This default assumes SJS/URS with R15 as the stack pointer. -->
+<compiler_spec>
+  <data_organization>
+    <pointer_size value="2"/>
+    <integer_size value="2"/>
+    <long_size value="4"/>
+  </data_organization>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="R15" space="ram" growth="negative"/>
+  <returnaddress>
+    <varnode space="stack" offset="0" size="2"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="default" extrapop="1" stackshift="1">
+      <input>
+        <pentry minsize="1" maxsize="2"><register name="R0"/></pentry>
+        <pentry minsize="1" maxsize="2"><register name="R1"/></pentry>
+        <pentry minsize="1" maxsize="2"><register name="R2"/></pentry>
+        <pentry minsize="1" maxsize="500" align="1"><addr offset="1" space="stack"/></pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="2"><register name="R0"/></pentry>
+      </output>
+      <unaffected>
+        <register name="R15"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>
