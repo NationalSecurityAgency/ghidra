@@ -316,13 +316,19 @@ void Varnode::printInfo(ostream &s) const
 void Varnode::eraseDescend(PcodeOp *op)
 
 {
-  list<PcodeOp *>::iterator iter;
+  list<PcodeOp *>::iterator iter = descend.begin();
 
-  iter = descend.begin();
-  while (*iter != op)		// Find this op in list of vn's descendants
-    iter++;
-  descend.erase(iter);		// Remove it from list
-  setFlags(Varnode::coverdirty);
+  while(iter != descend.end()) {	// Find this op in list of vn's descendants
+    if (*iter == op) {
+      descend.erase(iter);		// Remove it from list
+      setFlags(Varnode::coverdirty);
+      return;
+    }
+    ++iter;
+  }
+#ifdef OPACTION_DEBUG
+  throw LowlevelError("Attempted to erase non-existent PcodeOp descendant");
+#endif
 }
 
 /// Put a new operator in the descendant list and set the cover dirty flag
