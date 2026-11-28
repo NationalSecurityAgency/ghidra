@@ -1535,6 +1535,7 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
   markModel(true);
 
   int4 countaddsub=0;
+  int4 countleftright=0;
   int4 countext=0;
   PcodeOp *normop = (PcodeOp *)0;
   while(i<pathMeld.numCommonVarnode()) {
@@ -1551,6 +1552,16 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
       countaddsub += 1;
       if (countaddsub > maxaddsub) break;
       if (!normop->getIn(1-j)->isConstant()) break;
+      switchvn = testvn;
+      break;
+    case CPUI_INT_LEFT:
+      // An index scaled by a shift (i << c, e.g. a word table indexed by i*2) is labeled
+      // by i, not by the byte offset.  backup2Switch reverses it through
+      // OpBehaviorIntLeft::recoverInputBinary.
+      countleftright += 1;
+      if (countleftright > maxleftright) break;
+      if (j != 0 || !normop->getIn(1)->isConstant()) break;
+      if (normop->getIn(1)->getOffset() >= 8*normop->getOut()->getSize()) break;
       switchvn = testvn;
       break;
     case CPUI_INT_ZEXT:
