@@ -10,23 +10,25 @@ macro lzcntflags(input, output) {
 
 
 :LZCNT Reg16, rm16	is vexMode=0 & opsize=0 & $(PRE_66) & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg16 ... & rm16 {
-
-  Reg16 = lzcount(rm16);
-  lzcntflags(rm16, Reg16);
+  local tmp = rm16;
+  Reg16 = lzcount(tmp);
+  lzcntflags(tmp, Reg16);
 }
 
 :LZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg32 ... & check_Reg32_dest ... & rm32 {
 
-  Reg32 = lzcount(rm32);
-  lzcntflags(rm32, Reg32);
+  local tmp = rm32;
+  Reg32 = lzcount(tmp);
+  lzcntflags(tmp, Reg32);
   build check_Reg32_dest;
 }
 
 @ifdef IA64
 :LZCNT Reg64, rm64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBD; Reg64 ... & rm64 {
 
-  Reg64 = lzcount(rm64);
-  lzcntflags(rm64, Reg64);
+  local tmp = rm64;
+  Reg64 = lzcount(tmp);
+  lzcntflags(tmp, Reg64);
 }
 @endif
 
