@@ -94,7 +94,7 @@
            add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
            bx         ip                   |   bx lr
        -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart label="switch8_r3"/>
   </pattern>
@@ -108,7 +108,7 @@
            add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
            bx         ip                   |   bx lr
        -->
-      <align mark="0" bits="3"/>
+      <align mark="0" bits="2"/>
       <setcontext name="TMode" value="0"/>
       <funcstart label="switch8_r3"/>
   </pattern>
