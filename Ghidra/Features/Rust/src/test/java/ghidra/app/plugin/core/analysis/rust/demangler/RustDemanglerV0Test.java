@@ -152,6 +152,15 @@ public class RustDemanglerV0Test {
 	}
 
 	@Test
+	public void demangleConstIntegersWithTopBitSet() {
+		assertConst("yffffffffffffffff_", "18446744073709551615", "18446744073709551615u64");
+		assertConst("j8000000000000000_", "9223372036854775808", "9223372036854775808usize");
+		assertConst("offffffffffffffff_", "18446744073709551615", "18446744073709551615u128");
+		assertConst("xn8000000000000000_", "-9223372036854775808", "-9223372036854775808i64");
+		assertConst("nn8000000000000000_", "-9223372036854775808", "-9223372036854775808i128");
+	}
+
+	@Test
 	public void upstream_demangleConstStr() {
 		assertConst("e616263_", "{*\"abc\"}", null);
 		assertConst("e27_", "{*\"'\"}", null);
