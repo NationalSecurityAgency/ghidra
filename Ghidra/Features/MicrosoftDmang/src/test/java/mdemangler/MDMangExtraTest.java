@@ -230,4 +230,52 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		assertEquals(truth, demangled);
 	}
 
+	// C++17 auto non-type template parameters ($M<type><value>).  Symbols are from LLVM's
+	// llvm/test/Demangle/ms-auto-templates.test.
+	@Test
+	public void testAutoNonTypeTemplateParameters() throws Exception {
+		String[][] cases = {
+			{ "??0?$AutoNTTPClass@$MPEAH1?i@@3HA@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<&int i>::AutoNTTPClass<&int i>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MPEAH1?i@@3HA$MPEAH1?j@@3HA@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<&int i,&int j>::AutoNTTPClass<&int i,&int j>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MP6AHXZ1?Func@@YAHXZ@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<&int __cdecl Func(void)>::AutoNTTPClass<&int __cdecl Func(void)>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MP6AHXZ1?Func@@YAHXZ$MP6AHXZ1?Func2@@YAHXZ@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<&int __cdecl Func(void),&int __cdecl Func2(void)>::AutoNTTPClass<&int __cdecl Func(void),&int __cdecl Func2(void)>(void) __ptr64" },
+			{ "??$AutoFunc@$MPEAH1?i@@3HA@@YA?A?<auto>@@XZ",
+				"<auto> __cdecl AutoFunc<&int i>(void)" },
+			{ "??$AutoFunc@$MP6AHXZ1?Func@@YAHXZ@@YA?A?<auto>@@XZ",
+				"<auto> __cdecl AutoFunc<&int __cdecl Func(void)>(void)" },
+			{ "??$AutoFunc@$MH00@@YA?A?<auto>@@XZ",
+				"<auto> __cdecl AutoFunc<1>(void)" },
+			{ "??0?$AutoNTTPClass@$MH0A@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<0>::AutoNTTPClass<0>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MH0A@$M_N0A@$MD0GB@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<0,0,97>::AutoNTTPClass<0,0,97>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$M$$T0A@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<0>::AutoNTTPClass<0>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MP8S@@EAAXXZ1?f@1@QEAAXXZ@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<&public: void __cdecl S::f(void) __ptr64>::AutoNTTPClass<&public: void __cdecl S::f(void) __ptr64>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MP8M@@EAAXXZH?f@1@QEAAXXZA@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<{public: void __cdecl M::f(void) __ptr64,0}>::AutoNTTPClass<{public: void __cdecl M::f(void) __ptr64,0}>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MP8V@@EAAXXZI?f@1@QEAAXXZA@A@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<{public: void __cdecl V::f(void) __ptr64,0,0}>::AutoNTTPClass<{public: void __cdecl V::f(void) __ptr64,0,0}>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MPEQS@@H07@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<8>::AutoNTTPClass<8>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MPEQM@@H0M@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<12>::AutoNTTPClass<12>(void) __ptr64" },
+			{ "??0?$AutoNTTPClass@$MPEQV@@HFBA@A@@@QEAA@XZ",
+				"public: __cdecl AutoNTTPClass<{16,0}>::AutoNTTPClass<{16,0}>(void) __ptr64" },
+		};
+		for (String[] c : cases) {
+			MDMangGhidra demangler = new MDMangGhidra();
+			demangler.setMangledSymbol(c[0]);
+			demangler.setErrorOnRemainingChars(true);
+			demangler.setDemangleOnlyKnownPatterns(true);
+			MDParsableItem item = demangler.demangle();
+			assertEquals(c[0], c[1], item.toString());
+		}
+	}
+
 }

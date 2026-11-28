@@ -50,6 +50,13 @@ public class MDTemplateConstant extends MDParsableItem {
 		switch (code) {
 			case '$': {
 				code = dmang.getAndIncrement();
+				if (code == 'M') {
+					// C++17 auto non-type template parameter: $M<type><value>, where <value> uses
+					// the codes below without their leading '$'.  The deduced type is not output.
+					MDDataType type = MDDataTypeParser.parseDataType(dmang, true);
+					type.parse();
+					code = dmang.getAndIncrement();
+				}
 				switch (code) {
 					case '0':
 						nameNum = new MDSignedEncodedNumber(dmang);
