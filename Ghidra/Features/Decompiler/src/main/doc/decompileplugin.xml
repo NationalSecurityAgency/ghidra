@@ -5444,6 +5444,43 @@
   </para>
 </sect2>
 
+<sect2 id="ActionIsolateExpr">
+  <title>Split Out As New Expression</title>
+  <para>
+    Split a high-level expression so that the selected <link linkend="ConceptOperatorTokens">P-code Operator Token</link>
+	becomes encapsulated in a new variable.
+  </para>
+  <para>
+    The output <link linkend="ConceptVarnode">varnode</link> becomes encapsulated in the new variable.
+    So, splitting on the <code>*</code> in
+  </para>
+  <informalexample>
+    <itemizedlist mark='none'>
+      <listitem>
+		<code>a * b + c</code>
+      </listitem>
+    </itemizedlist>
+  </informalexample>
+  <para>
+	and renaming it to <code>d</code> becomes
+  </para>
+  <informalexample>
+    <itemizedlist mark='none'>
+      <listitem>
+		<code>d = a * b</code>
+      </listitem>
+      <listitem>
+		<code>d + c</code>
+      </listitem>
+    </itemizedlist>
+  </informalexample>
+  <para>
+    This command is only available if the selected operation does not already have a designated
+	<xref linkend="ConceptHighVariable"/> which, for most cases, means the output varnode is in
+	the unique or register <xref linkend="ConceptAddressSpace"/>.
+  </para>
+</sect2>
+
 </section>
 
 </chapter>
