@@ -20,6 +20,7 @@ import java.util.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.framework.cmd.BackgroundCommand;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -213,7 +214,9 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 			}
 
 			FunctionDefinition fdef = (FunctionDefinition) dt;
-			String name = fdef.getName();
+			// Overloads of one function (same name, same category) are stored as "name",
+			// "name.conflict", ...; use the plain name so that they are treated as dupes below
+			String name = DataTypeUtilities.getNameWithoutConflict(fdef);
 			if (functionNameMap.containsKey(name)) {
 				FunctionDefinition dupeFdef = functionNameMap.get(name);
 				if (!fdef.isEquivalent(dupeFdef)) {
