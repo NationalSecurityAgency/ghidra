@@ -1,0 +1,9 @@
+<!-- Copyright 2023 The Johns Hopkins University Applied Physics Laboratory LLC
+     Authors: Dan Genin and Tommy Johnson
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+</processor_spec>
