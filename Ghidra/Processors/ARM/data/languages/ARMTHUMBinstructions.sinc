@@ -4416,12 +4416,12 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
 
-:stmia^ItCond	Rn_exclaim,stbrace	is TMode=1 & ItCond & op11=0x18 & Rn_exclaim & stbrace & Rn_exclaim_WB
+:stmia^ItCond	Rn0810!,stbrace	is TMode=1 & ItCond & op11=0x18 & Rn0810 & stbrace
 {
   build ItCond;
-  build Rn_exclaim;
+  mult_addr = Rn0810;
   build stbrace;
-  build Rn_exclaim_WB;
+  Rn0810 = mult_addr;
 }
 
 :str^ItCond	Rd0002,RnIndirect4	is TMode=1 & ItCond & op11=0xc & RnIndirect4 & Rd0002
