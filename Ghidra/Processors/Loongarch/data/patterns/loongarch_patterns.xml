@@ -34,5 +34,14 @@
       <possiblefuncstart/>
     </postpatterns>
   </patternpairs>
-  
+
+  <pattern> <!-- .plt entry thunk -->
+      <data>
+          ...01111 ........ ........ 0001110. <!-- pcaddu12i t3, x -->
+              0xef ......01 11...... 0x28     <!-- ld.d t3, t3(x) -->
+              0xed 0x01 0x00 0x4c             <!-- jirl t1, t3, 0 -->
+      </data>
+    <codeboundary />  <!-- definitely code -->
+    <funcstart validcode="function" thunk="true"/>
+  </pattern>
 </patternlist>
