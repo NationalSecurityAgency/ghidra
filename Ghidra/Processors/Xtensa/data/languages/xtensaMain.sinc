@@ -281,18 +281,14 @@ Ret4: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x40000000; ] { re
 Ret8: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x80000000; ] { ret:4 = loc; export ret; }
 Ret12: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0xc0000000; ] { ret:4 = loc; export ret; }
 
-:^instruction is phase=0 & loopMode=1 & instruction [ phase=1; ] {
+:^instruction is phase=0 & loopEnd=1 & instruction [ phase=1; ] {
 	build instruction;
-	if (LCOUNT == 0 || $(PS_EXCM)) goto inst_next;
+	if (inst_next != LEND || LCOUNT == 0 || $(PS_EXCM)) goto <loop_done>;
 	LCOUNT = LCOUNT - 1;
 	goto [LBEG];
+<loop_done>
 }
-:^instruction is phase=0 & loopMode=1 & loopEnd=1 & instruction
-	[ loopMode=0; phase=1; ] {
-	build instruction;
-}
-
-:^instruction is phase=0 & loopMode=0 & instruction
+:^instruction is phase=0 & loopEnd=0 & instruction
 	[ phase=1; ] {
 	build instruction;
 }
