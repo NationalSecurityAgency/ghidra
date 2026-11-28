@@ -276,6 +276,7 @@ bool PrintLanguage::parentheses(const OpToken *op2)
   switch(topToken->type) {
   case OpToken::space:
   case OpToken::binary:
+  case OpToken::binary_trailspace:
     if (topToken->precedence > op2->precedence) return true;
     if (topToken->precedence < op2->precedence) return false;
     if (topToken->associative && (topToken == op2)) return false;
@@ -297,7 +298,7 @@ bool PrintLanguage::parentheses(const OpToken *op2)
     if (topToken->precedence < op2->precedence) return false;
     // If the precedences are equal, we know this postsurround
     // comes after, so op2 being first doesn't need parens
-    if ((op2->type==OpToken::postsurround)||(op2->type==OpToken::binary)) return false;
+    if ((op2->type==OpToken::postsurround)||(op2->type==OpToken::binary)||(op2->type==OpToken::binary_trailspace)) return false;
     //    if (associative && (this == &op2)) return false;
     return true;
   case OpToken::presurround:
@@ -311,7 +312,7 @@ bool PrintLanguage::parentheses(const OpToken *op2)
     if ((stage==0)&&(revpol.size() > 1)) {	// If there is an unresolved previous token
       // New token is printed next to the previous token.
       const OpToken *prevToken = revpol[revpol.size()-2].tok;
-      if (prevToken->type != OpToken::binary && prevToken->type != OpToken::unary_prefix)
+      if (prevToken->type != OpToken::binary && prevToken->type != OpToken::unary_prefix && prevToken->type != OpToken::binary_trailspace)
 	return false;
       if (prevToken->precedence < op2->precedence) return false;
       // If precedence is equal, make sure we don't treat two tokens as associative,
@@ -335,6 +336,11 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     emit->spaces(entry.tok->spacing,entry.tok->bump); // Spacing around operator
     emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
+    break;
+  case OpToken::binary_trailspace:
+    if (entry.visited!=1) return;
+    emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
+    emit->spaces(entry.tok->spacing,entry.tok->bump); // Spacing around operator
     break;
   case OpToken::unary_prefix:
     if (entry.visited!=0) return;
