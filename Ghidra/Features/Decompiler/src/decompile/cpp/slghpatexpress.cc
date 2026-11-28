@@ -976,7 +976,9 @@ intb LeftShiftExpression::getValue(ParserWalker &walker) const
 {
   intb leftval = getLeft()->getValue(walker);
   intb rightval = getRight()->getValue(walker);
-  return leftval << rightval;
+  if (rightval <= 0) return leftval;
+  if (rightval >= 8 * (intb)sizeof(uintb)) return 0;
+  return (intb)((uintb)leftval << rightval);
 }
 
 intb LeftShiftExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
@@ -984,7 +986,9 @@ intb LeftShiftExpression::getSubValue(const vector<intb> &replace,int4 &listpos)
 {
   intb leftval = getLeft()->getSubValue(replace,listpos); // Must be left first
   intb rightval = getRight()->getSubValue(replace,listpos);
-  return leftval << rightval;
+  if (rightval <= 0) return leftval;
+  if (rightval >= 8 * (intb)sizeof(uintb)) return 0;
+  return (intb)((uintb)leftval << rightval);
 }
 
 void LeftShiftExpression::encode(Encoder &encoder) const
@@ -1000,6 +1004,8 @@ intb RightShiftExpression::getValue(ParserWalker &walker) const
 {
   intb leftval = getLeft()->getValue(walker);
   intb rightval = getRight()->getValue(walker);
+  if (rightval <= 0) return leftval;
+  if (rightval >= 8 * (intb)sizeof(intb)) return (leftval < 0) ? (intb)-1 : (intb)0;
   return leftval >> rightval;
 }
 
@@ -1008,6 +1014,8 @@ intb RightShiftExpression::getSubValue(const vector<intb> &replace,int4 &listpos
 {
   intb leftval = getLeft()->getSubValue(replace,listpos); // Must be left first
   intb rightval = getRight()->getSubValue(replace,listpos);
+  if (rightval <= 0) return leftval;
+  if (rightval >= 8 * (intb)sizeof(intb)) return (leftval < 0) ? (intb)-1 : (intb)0;
   return leftval >> rightval;
 }
 

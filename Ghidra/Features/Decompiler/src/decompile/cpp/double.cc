@@ -66,9 +66,9 @@ void SplitVarnode::initPartial(int4 sz,Varnode *l,Varnode *h)
       lo = l;
   }
   else {
-    if (l->isConstant() && h->isConstant()) {
-      val = h->getOffset();
-      val <<= (l->getSize()*8);
+    if (l->isConstant() && h->isConstant() && (sz <= (int4)sizeof(uintb))) {
+      int4 loBits = l->getSize() * 8;
+      val = (loBits <= 0 || loBits >= 8 * (int4)sizeof(uintb)) ? 0 : (h->getOffset() << loBits);
       val |= l->getOffset();
       lo = (Varnode *)0;
       hi = (Varnode *)0;
@@ -1902,8 +1902,9 @@ bool Equal2Form::replace(Funcdata &data)
 
 {
   if (hi2->isConstant()&&lo2->isConstant()) {
+    if (in.getSize() > (int4)sizeof(uintb) || lo1->getSize() >= (int4)sizeof(uintb)) return false;
     uintb val = hi2->getOffset();
-    val <<= 8*lo1->getSize();
+    val <<= 8 * lo1->getSize();
     val |= lo2->getOffset();
     param2.initPartial(in.getSize(),val);
     return SplitVarnode::prepareBoolOp(in,param2,boolAndOr);
@@ -2170,6 +2171,7 @@ bool LessThreeWay::normalizeHi(void)
       hival &= calc_mask(in.getSize());
       hilessequalform = false;
     }
+    if (in.getLo()->getSize() >= (int4)sizeof(uintb)) return false;
     hival >>= in.getLo()->getSize() * 8;
   }
   else {
@@ -2207,7 +2209,8 @@ bool LessThreeWay::normalizeMid(void)
     if (vnhie2->getSize() == in.getSize()) {
       // Convert to comparison on high part
       uintb lopart = midval & calc_mask(in.getLo()->getSize());
-      midval >>= in.getLo()->getSize()*8;
+      if (in.getLo()->getSize() >= (int4)sizeof(uintb)) return false;
+      midval >>= in.getLo()->getSize() * 8;
       if (midlessform) {
 	if (midlessequal) {
 	  if (lopart!=calc_mask(in.getLo()->getSize())) return false;
@@ -2432,6 +2435,7 @@ bool LessThreeWay::testReplace(void)
 {
   setOpCode();
   if (hiconstform) {
+    if (in.getSize() > (int4)sizeof(uintb) || in.getLo()->getSize() >= (int4)sizeof(uintb)) return false;
     in2.initPartial(in.getSize(),(hival<<(8*in.getLo()->getSize()))|loval);
     if (!setBoolOp()) return false;
   }
@@ -2501,6 +2505,7 @@ bool LessConstForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata
   signcompare = ((op->code()==CPUI_INT_SLESSEQUAL)||(op->code()==CPUI_INT_SLESS));
   hilessequalform = ((op->code()==CPUI_INT_SLESSEQUAL)||(op->code()==CPUI_INT_LESSEQUAL));
 
+  if (in.getSize() > (int4)sizeof(uintb) || losize <= 0 || losize >= (int4)sizeof(uintb)) return false;
   uintb val = cvn->getOffset() << 8*losize;
   if (hilessequalform != (inslot==1))
     val |= calc_mask(losize);
