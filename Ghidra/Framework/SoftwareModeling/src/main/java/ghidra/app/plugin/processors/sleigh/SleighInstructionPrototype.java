@@ -420,10 +420,14 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof SleighInstructionPrototype other)) {
 			return false;
 		}
-		return (hashCode() == obj.hashCode()); // Trust entirely in hash
+		return language == other.language && isindelayslot == other.isindelayslot &&
+			rootState.isEquivalent(other.rootState);
 	}
 
 	@Override

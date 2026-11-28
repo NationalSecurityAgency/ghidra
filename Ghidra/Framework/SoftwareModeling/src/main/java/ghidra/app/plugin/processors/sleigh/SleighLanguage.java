@@ -92,7 +92,8 @@ public class SleighLanguage implements Language {
 	/**
 	 * Cached instruction prototypes
 	 */
-	private ConcurrentHashMap<Integer, SleighInstructionPrototype> instructProtoMap;
+	private ConcurrentHashMap<SleighInstructionPrototype, SleighInstructionPrototype>
+		instructProtoMap;
 	private DecisionNode root = null;
 	/**
 	 * table of AddressSpaces
@@ -390,13 +391,11 @@ public class SleighLanguage implements Language {
 		try {
 			SleighInstructionPrototype newProto =
 				new SleighInstructionPrototype(this, buf, context, contextcache, inDelaySlot, null);
-			Integer hashcode = newProto.hashCode();
-
 			// get existing proto and use it
 			// if doesn't exist in map, cache info and store new proto
-			res = instructProtoMap.computeIfAbsent(hashcode, h -> {
-				newProto.cacheInfo(buf, context, true);
-				return newProto;
+			res = instructProtoMap.computeIfAbsent(newProto, proto -> {
+				proto.cacheInfo(buf, context, true);
+				return proto;
 			});
 
 			if (inDelaySlot && res.hasDelaySlots()) {
