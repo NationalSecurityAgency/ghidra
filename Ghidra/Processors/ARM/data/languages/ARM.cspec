@@ -94,7 +94,7 @@
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="r3"/>
         </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
+        <pentry minsize="1" maxsize="500" align="4" allocation="unbounded">
           <addr offset="0" space="stack"/>
         </pentry>
         <!-- Variadic calls do not use floating-point registers -->
@@ -238,7 +238,7 @@
         <pentry minsize="1" maxsize="4">
           <register name="r3"/>
         </pentry>
-        <pentry minsize="1" maxsize="500" align="4">
+        <pentry minsize="1" maxsize="500" align="4" allocation="unbounded">
           <addr offset="0" space="stack"/>
         </pentry>
         <rule>
