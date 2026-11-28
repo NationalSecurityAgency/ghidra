@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import org.jdesktop.animation.timing.Animator;
@@ -50,7 +51,7 @@ import help.HelpService;
  * source functionality.
  */
 public class DockableHeader extends GenericHeader
-		implements DragGestureListener, DragSourceListener {
+		implements DragGestureListener, DragSourceListener, DragSourceMotionListener {
 
 	private DockableComponent dockComp;
 
@@ -59,6 +60,19 @@ public class DockableHeader extends GenericHeader
 	private boolean isDocking;
 
 	private Animator focusAnimator;
+
+	// drag-N-drop key modifiers flags
+	private static boolean ALT_DOWN = false;
+	private static boolean CTRL_DOWN = false;
+	private static boolean SHIFT_DOWN = false;
+
+	// FIXME: This is a WORKAROUND to guess if a drag-N-drop operation was
+	// interrupted, by either a key press (ESC) or by another mouse button
+	// clicked.  It will work only while over a drop zone.
+	private static boolean confirmedDragExit = false;
+
+	// This is to tell when a drag-N-drop was started by pulling a header.
+	private static boolean draggingByHeader = false;
 
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
@@ -82,8 +96,24 @@ public class DockableHeader extends GenericHeader
 		toolBarMgr.dispose(); // reset the default manager before we create our own
 		toolBarMgr = new DockableToolBarManager(dockableComp, this);
 
+		// A drag-N-drop operation can be directed with key modifiers.
+		//
+		// ACTION_MOVE: pressing CTRL triggers dragExit while over a drop zone,
+		// but not pressing SHIFT (CTRL means "copy").
+		//
+		// ACTION_COPY: pressing SHIFT triggers dragExit while over a drop zone,
+		// but not pressing CTRL (SHIFT means "move").
+		//
+		// ACTION_LINK: either CTRL or SHIFT trigger dragExit while over a drop
+		// zone, but not pressing them together.  This helps to detect a toggle
+		// switch kept pressed, while over a drop zone.
+		//
+		// With any of the above, pressing ALT shouldn't trigger dragExit while
+		// over a drop zone.
 		dragSource.createDefaultDragGestureRecognizer(titlePanel.getDragComponent(),
 			DnDConstants.ACTION_MOVE, DockableHeader.this);
+
+		dragSource.addDragSourceMotionListener(DockableHeader.this);
 
 		resetComponents();
 	}
@@ -269,9 +299,30 @@ public class DockableHeader extends GenericHeader
 			(modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
 			return;
 		}
-		DockableComponent.DROP_CODE = DropCode.WINDOW;
+
+		confirmedDragExit = false;
+		DockableComponent.triggeredDragExit = false;
+
+		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
+
+		// NOTE: When the drag-N-drop operation was started by pulling
+		// a header, pressing ALT should mark the whole stack as group
+		// of selected placeholders to be moved.
+		draggingByHeader = this.isAncestorOf(event.getComponent());
+
+		// NOTE: This is a remainder to assume an invalid drop action,
+		// to prevent unexpected effects when voluntarily interrupting
+		// a drag-N-drop operation while outside of a drop zone.
+		DockableComponent.DROP_CODE = DropCode.INVALID;
 		DockableComponent.DROP_CODE_SET = true;
+		DockableComponent.DRAGGED_OVER_INFO = null;
+		DockableComponent.SOURCE_SECTION_INFO = null;
 		DockableComponent.SOURCE_INFO = dockComp.getComponentWindowingPlaceholder();
+
+		// NOTE: Get the title from the source placeholder, and not of
+		// the header.  This is to be consistent with tool tip updates
+		// which use titles of placeholders.
+		TransientWindow.showTransientWindow(DockableComponent.SOURCE_INFO.getTitle());
 
 		dragCursorManager.dragStarted();
 
@@ -284,9 +335,21 @@ public class DockableHeader extends GenericHeader
 		dragCursorManager.restoreCursorOnPreviousDraggedOverComponent();
 		dragCursorManager.dragEnded();
 
+		TransientWindow.hideTransientWindow();
+
+		// NOTE: This guesses a drag-N-drop voluntary interruption, by
+		// either a key press (ESC) or by another mouse button clicked
+		// while over a drop zone.  Only dragExit from DropTargetEvent
+		// should had been triggered in this context.
+		if (DockableComponent.triggeredDragExit != confirmedDragExit) {
+			resetStackSection();
+			return;
+		}
+
 		ComponentPlaceholder info = dockComp.getComponentWindowingPlaceholder();
 		DockingWindowManager winMgr = info.getNode().winMgr;
 		if (DockableComponent.DROP_CODE == DropCode.INVALID) {
+			resetStackSection();
 			return;
 		}
 
@@ -297,27 +360,73 @@ public class DockableHeader extends GenericHeader
 //		}
 //		else
 		if (DockableComponent.DROP_CODE == DropCode.WINDOW) {
-			winMgr.movePlaceholder(info, event.getLocation());
+			if (ALT_DOWN) {
+				winMgr.moveStackSection(DockableComponent.SOURCE_SECTION_INFO,
+					info, event.getLocation());
+			}
+			else {
+				winMgr.movePlaceholder(info, event.getLocation());
+			}
 		}
 		else {
-			winMgr.movePlaceholder(info, DockableComponent.TARGET_INFO,
-				DockableComponent.DROP_CODE.getWindowPosition());
+			if (ALT_DOWN) {
+				winMgr.moveStackSection(DockableComponent.SOURCE_SECTION_INFO,
+					info, DockableComponent.TARGET_INFO,
+					DockableComponent.DROP_CODE.getWindowPosition());
+			}
+			else {
+				winMgr.movePlaceholder(info, DockableComponent.TARGET_INFO,
+					DockableComponent.DROP_CODE.getWindowPosition());
+			}
 		}
+
+		resetStackSection();
 	}
 
 	@Override
 	public void dragEnter(DragSourceDragEvent event) {
 		setCursor(event);
+		confirmedDragExit = false;
 	}
 
 	@Override
 	public void dragExit(DragSourceEvent event) {
 		setCursor(event);
+		confirmedDragExit = true;
+		if (ALT_DOWN) {
+			if (isDraggingByHeader()) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+		}
+		else {
+			setStackSection(DockableComponent.SOURCE_INFO);
+		}
+		highlightStackSection();
 	}
 
 	@Override
 	public void dragOver(DragSourceDragEvent event) {
 		setCursor(event);
+		confirmedDragExit = false;
+		if (ALT_DOWN) {
+			if (isDraggingByHeader()) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					 DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+		}
+		else {
+			setStackSection(DockableComponent.SOURCE_INFO);
+		}
+		highlightStackSection();
 	}
 
 	/**
@@ -336,9 +445,293 @@ public class DockableHeader extends GenericHeader
 		dragCursorManager.setCursor(event, c);
 	}
 
+	/**
+	 * drag-N-drop ALT key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isAltModifierDown() {
+		return ALT_DOWN;
+	}
+
+	/**
+	 * drag-N-drop CTRL key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isCtrlModifierDown() {
+		return CTRL_DOWN;
+	}
+
+	/**
+	 * drag-N-drop SHIFT key modifier flag.
+	 *
+	 * @return TRUE is the key modifier is pressed, otherwise FALSE
+	 */
+	public static boolean isShiftModifierDown() {
+		return SHIFT_DOWN;
+	}
+
+	/**
+	 * Returns if the drag-N-drop was started by pulling a header.
+	 *
+	 * @return TRUE if the drag-n-drop was started by pulling a header
+	 */
+	public static boolean isDraggingByHeader() {
+		return draggingByHeader;
+	}
+
+	/**
+	 * Resets the current state of the stack section which was dragged
+	 * around, removing the highlights from tabs.
+	 */
+	private static void resetStackSection() {
+		DockableComponent.SOURCE_SECTION_INFO = null;
+		highlightStackSection();
+	}
+
+	/**
+	 * Repaints each tab to apply/remove highlights depending upon the
+	 * current state of the stack section dragged around.
+	 */
+	private static void highlightStackSection() {
+
+		// Get the source component.
+		DockableComponent comp = DockableComponent.SOURCE_INFO.getComponent();
+
+		// Loop over each tab of the tabbed pane associated
+		// with the source component to process highlights.
+		if (comp.getParent() instanceof JTabbedPane) {
+			JTabbedPane tabbedPane = (JTabbedPane) comp.getParent();
+			synchronized(tabbedPane.getTreeLock()) {
+				for (Component c : tabbedPane.getComponents()) {
+					if (c instanceof DockableComponent) {
+						int tabIndex = tabbedPane.indexOfComponent(c);
+						if (tabIndex != -1) {
+							tabbedPane.getTabComponentAt(tabIndex).repaint();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Updates the information about a multiple component selection as
+	 * a stack section is dragged around.
+	 *
+	 * The selection starts from a source placeholder, and ends either
+	 * with the first or last placeholder in the same window space, or
+	 * before the destination placeholder if it's in the same stack of
+	 * the source.
+	 *
+	 * @param source the placeholder from where the selection starts
+	 * @param destination the placeholder with the mouse cursor over
+	 * @param selectLeftSide if TRUE, select from the left of source
+	 */
+	private static void setStackSection(ComponentPlaceholder source,
+			ComponentPlaceholder destination, boolean selectLeftSide) {
+
+		// Collect the active placeholders found in
+		// the source's stack.
+		List<ComponentPlaceholder> placeholders = source.getNode().getActivePlaceholders();
+
+		// Pre-process the stack's selection range.
+		int infoIndex = placeholders.indexOf(source);
+
+		// The hovered placeholder has index -1, if
+		// in another window space than the source.
+		// Otherwise, it could also be the index of
+		// the currently focused placeholder, while
+		// hovering the header or content space.
+		int overIndex = placeholders.indexOf(destination);
+
+		if (selectLeftSide) {
+			// If the hovered placeholder is on the
+			// same window space of the source, and
+			// it's before it, the selection starts
+			// after it.
+			overIndex = overIndex < infoIndex ? overIndex + 1 : 0;
+
+			// Section of placeholders found on the
+			// left of the source placeholder.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(overIndex, infoIndex + 1);
+		}
+		else {
+			// If the hovered placeholder is on the
+			// same window space of the source, and
+			// it is after it, the selection should
+			// end before it.
+			overIndex = overIndex > infoIndex ? overIndex : placeholders.size();
+
+			// Section of placeholders found on the
+			// right of the source placeholder.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(infoIndex, overIndex);
+		}
+
+		// Join each selected placeholder title, to
+		// represent the stack section being moved.
+		String infoText = DockableComponent.SOURCE_SECTION_INFO.stream()
+				.map(p -> p.getTitle())
+				.collect(Collectors.joining(" | "));
+
+		// Update the transient tool tip text.
+		TransientWindow.updateTransientWindow(infoText);
+	}
+
+	/**
+	 * Updates the information about a multiple component selection as
+	 * a whole stack is dragged around.
+	 *
+	 * While in the same window space, the selection should either end
+	 * before the destination placeholder, if selecting from the first
+	 * placeholder to the last on the right, or after it, if selecting
+	 * from the last placeholder to the first on the left.
+	 *
+	 * @param sourceNode the source node, as a stack of placeholders
+	 * @param destination the placeholder with the mouse cursor over
+	 * @param invertDirection invert sorting, or selection direction
+	 */
+	private static void setStackSection(ComponentNode sourceNode,
+			ComponentPlaceholder destination, boolean invertDirection) {
+
+		// Collect the active placeholders found in
+		// the source node.
+		List<ComponentPlaceholder> placeholders = sourceNode.getActivePlaceholders();
+
+		// Pre-process the stack's selection range.
+		int infoIndex = (int) placeholders.stream()
+			.takeWhile(p -> !p.getComponent().isVisible()).count();
+
+		// The hovered placeholder has index -1, if
+		// in another window space than the source.
+		// Otherwise, it could also be the index of
+		// the currently focused placeholder, while
+		// hovering the header or content space.
+		int overIndex = placeholders.indexOf(destination);
+
+		// The hovered placeholder is in the source
+		// window space, and it's not the currently
+		// focused placeholder.
+		if (overIndex != -1 && overIndex != infoIndex) {
+
+			if (invertDirection) {
+				// Section of placeholders from the
+				// end to the placeholder after the
+				// hovered placeholder, or just the
+				// last placeholder.
+				int end = placeholders.size();
+				overIndex = (end - overIndex) > 1 ? overIndex : overIndex - 1;
+				DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(overIndex + 1, end);
+			}
+			else {
+				// Section of placeholders from the
+				// start, to the placeholder before
+				// the hovered placeholder, or just
+				// the first placeholder.
+				overIndex = overIndex > 0 ? overIndex : overIndex + 1;
+				DockableComponent.SOURCE_SECTION_INFO = placeholders.subList(0, overIndex);
+			}
+		}
+		// The hovered placeholder has focus, or it
+		// is from another window space.
+		else if (invertDirection) {
+			// Include all the source placeholders,
+			// inverting the stack section sorting.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders.reversed();
+		}
+		else {
+			// Include all the source placeholders.
+			DockableComponent.SOURCE_SECTION_INFO = placeholders;
+		}
+
+		// Join each selected placeholder title, to
+		// represent the stack section being moved.
+		String infoText = DockableComponent.SOURCE_SECTION_INFO.stream()
+				.map(p -> p.getTitle())
+				.collect(Collectors.joining(" | "));
+
+		// Update the transient tool tip text.
+		TransientWindow.updateTransientWindow(infoText);
+	}
+
+	/**
+	 * Updates the information about a multiple component selection as
+	 * a single placeholder, part of a stack, is dragged around.
+	 *
+	 * @param source the placeholder dragged around, part of a stack
+	 */
+	private static void setStackSection(ComponentPlaceholder source) {
+		DockableComponent.SOURCE_SECTION_INFO = new ArrayList<>(Arrays.asList(source));
+		TransientWindow.updateTransientWindow(source.getTitle());
+	}
+
+	/**
+	 * This is executed after a modifier is pressed or released.
+	 */
 	@Override
 	public void dropActionChanged(DragSourceDragEvent event) {
-		// don't care
+
+		// Before determining the current state, reset all
+		// key modifiers, and the default drop action too.
+		ALT_DOWN = SHIFT_DOWN = CTRL_DOWN = false;
+		DockableComponent.DROP_CODE = DropCode.INVALID;
+
+		// Clear the stack section dragged around, and
+		// reset all tabs highlights, while outside of
+		// any drop zone.
+		if (confirmedDragExit) {
+			setStackSection(DockableComponent.SOURCE_INFO);
+			highlightStackSection();
+		}
+
+		// Check if any key modifier is being pressed.
+		int modifiers = event.getGestureModifiersEx();
+
+		ALT_DOWN = ((modifiers & InputEvent.ALT_DOWN_MASK) != 0);
+		CTRL_DOWN = ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0);
+		SHIFT_DOWN = ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0);
+
+		if (ALT_DOWN && confirmedDragExit) {
+			// Temporarily mark a stack section, of which a
+			// placeholder is part of, as to be moved.
+			if (draggingByHeader) {
+				setStackSection(DockableComponent.SOURCE_INFO.getNode(),
+						DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			else {
+				setStackSection(DockableComponent.SOURCE_INFO,
+					DockableComponent.DRAGGED_OVER_INFO, SHIFT_DOWN);
+			}
+			// Highlight all tabs part of the stack section
+			// and turn off the unselected.
+			highlightStackSection();
+		}
+		// NOTE: While the ALT key is pressed, SHIFT should
+		// indicate a right-to-left stack selection, from a
+		// source placeholder.  In this context, it's not a
+		// toggle to mark the drag-N-drop as invalid.
+		else if (SHIFT_DOWN) {
+			// Temporarily mark the drag-N-drop as invalid,
+			// as an alternative to a sudden interruption.
+			DockableComponent.DROP_CODE = DropCode.INVALID;
+		}
+		if (CTRL_DOWN) {
+			// Temporarily mark the dragged component as to
+			// be moved in a new window.  Releasing the key
+			// press should revert to the default state.
+			DockableComponent.DROP_CODE = DropCode.WINDOW;
+		}
+
+		// Force a mouse cursor update, needed while outside of
+		// any drop zone, since no dragExit, Enter, Over should
+		// take place.
+		setCursor(event);
+	}
+
+	@Override
+	public void dragMouseMoved(DragSourceDragEvent event) {
+		TransientWindow.positionTransientWindow();
 	}
 
 	private DragCursorManager createDragCursorManager() {
