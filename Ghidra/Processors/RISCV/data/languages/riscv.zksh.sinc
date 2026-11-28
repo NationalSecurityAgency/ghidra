@@ -1,0 +1,5 @@
+# sm3p0 - Implements the P0 transformation function as used in the SM3 hash function
+:sm3p0 rd, rs1 is op2531=0x08 & op2024=0x08 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
+
+#sm3p1 - Implements the P1 transformation function as used in the SM3 hash function
+:sm3p1 rd, rs1 is op2531=0x08 & op2024=0x09 & rs1 & op1214=0x1 & rd & op0006=0x13 unimpl
