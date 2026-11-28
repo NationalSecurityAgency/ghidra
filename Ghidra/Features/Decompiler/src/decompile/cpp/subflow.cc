@@ -1593,6 +1593,7 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *vn = op->getIn(0);
   Varnode *outvn = op->getOut();
   int4 flowsize = outvn->getSize();
+  if (flowsize >= vn->getSize()) return 0;
   int4 sa = op->getIn(1)->getOffset();
   if (flowsize + sa > sizeof(uintb))	// Mask must fit in precision
     return 0;
@@ -1705,6 +1706,7 @@ int4 RuleSubvarZext::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *vn = op->getOut();
+  if (vn == (Varnode *)0) return 0;
   Varnode *invn = op->getIn(0);
   uintb mask = calc_mask(invn->getSize());
 
@@ -1724,6 +1726,7 @@ int4 RuleSubvarSext::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Varnode *vn = op->getOut();
+  if (vn == (Varnode *)0) return 0;
   Varnode *invn = op->getIn(0);
   uintb mask = calc_mask(invn->getSize());
 

@@ -4988,8 +4988,11 @@ int4 FuncCallSpecs::transferLockedInputParam(ProtoParameter *param)
     Address trialend = curtrial.getAddress() + (curtrial.getSize() - 1);
     if (trialend < lastaddr) continue;
     if (curtrial.isDefinitelyNotUsed()) return 0;	// Trial has already been stripped
+    int4 slot = curtrial.getSlot();
+    if (slot <= 0 || slot >= op->numInput()) return 0;
+    if (op->getIn(slot)->getSize() < sz) return 0;	// Input Varnode was already trimmed smaller than locked param
     curtrial.markUsed();	// Trial is definitely used, picked up by collectUnlockedTrials
-    return curtrial.getSlot();
+    return slot;
   }
   if (startaddr.getSpace()->getType() == IPTR_SPACEBASE)
     return -1;
