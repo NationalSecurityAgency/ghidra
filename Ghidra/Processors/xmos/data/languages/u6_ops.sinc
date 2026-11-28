@@ -1,0 +1,75 @@
+:blat u6ext is $(PRE) u6_op=0b0111001101 & u6ext $(POST) {
+	local ea:4 = r11 + u6ext*$(BPW);
+	local dest = *[ram]:4 ea;
+	lr = inst_next;
+	goto [dest];
+}
+
+:brbu dest is $(PRE) u6_op=0b0111011100 & u6_imm [ dest = inst_next - (u6_imm | (u6_ext << 6))*$(IW); ] {
+	local tmp:4 = dest;
+	goto [tmp];
+}
+
+:brfu dest is $(PRE) u6_op=0b0111001100 & u6_imm [ dest = inst_next + (u6_imm | (u6_ext << 6))*$(IW); ] {
+	local tmp:4 = dest;
+	goto [tmp];
+}
+
+:clrsr u6ext is $(PRE) u6_op=0b0111101100 & u6ext $(POST) {
+	clrsr(u6ext);
+}
+
+:dualentsp u6ext is $(PRE) u6_op=0b0111111110 & u6ext $(POST) {
+	if(u6ext:4 == 0) goto <skip>;
+	*[ram]:4 sp = lr;
+	sp = sp - u6ext*$(BPW);
+	<skip>
+	sr_di = 1;
+}
+
+:entsp u6ext is $(PRE) u6_op=0b0111011101 & u6ext $(POST) {
+	if (u6ext:4 == 0) goto inst_next;
+	
+	local tmp:4 = sp;
+	*[ram]:4 tmp = lr;
+	sp = sp - u6ext* $(BPW);
+	sr_di = 0; 
+}
+
+:extdp u6ext is $(PRE) u6_op=0b0111001110 & u6ext $(POST) {
+	dp = dp - u6ext*$(BPW);
+}
+
+:extsp u6ext is $(PRE) u6_op=0b0111011110 & u6ext $(POST) {
+	sp = sp - u6ext*$(BPW);
+}
+
+:getsr u6ext is $(PRE) u6_op=0b0111111100 & u6ext $(POST) {
+	r11 = getsr(u6ext);
+}
+
+:kcalli u6ext is $(PRE) u6_op=0b0111001111 & u6ext $(POST) {
+	kcalli(u6ext);
+}
+
+:kentsp u6ext is $(PRE) u6_op=0b0111101110 & u6ext $(POST) {
+	kentsp(u6ext:4);
+}
+
+:ldawcp u6ext is $(PRE) u6_op=0b0111111101 & u6ext $(POST) {
+	r11 = cp + u6ext*$(BPW);
+}
+
+:retsp u6ext is $(PRE) u6_op=0b0111011111 & u6ext $(POST) {
+	if (u6ext:4 == 0) goto <skip>;
+	sp = sp + u6ext * $(BPW);
+	local addr:4 = sp;
+	lr = *[ram]:4 addr;
+	<skip>
+	return [lr];
+	sr_di = (lr ^ 1) == 1;
+} 
+
+:setsr u6ext is $(PRE) u6_op=0b0111101101 & u6ext $(POST) {
+	setsr(u6ext:4);
+}
