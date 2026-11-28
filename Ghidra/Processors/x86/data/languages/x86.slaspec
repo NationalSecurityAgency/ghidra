@@ -20,4 +20,6 @@ with : lockprefx=0 {
 @include "cet.sinc"
 @include "rdrand.sinc"
 @include "rao.sinc"
+# must stay last (see nop_reserved.sinc)
+@include "nop_reserved.sinc"
 }

@@ -20,6 +20,7 @@ data/languages/lockable.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
 data/languages/macros.sinc||GHIDRA||||END|
 data/languages/mpx.sinc||GHIDRA||||END|
+data/languages/nop_reserved.sinc||GHIDRA||||END|
 data/languages/old/x86RealV1.lang||GHIDRA||||END|
 data/languages/old/x86RealV1.trans||GHIDRA||||END|
 data/languages/old/x86RealV2.lang||GHIDRA||||END|
