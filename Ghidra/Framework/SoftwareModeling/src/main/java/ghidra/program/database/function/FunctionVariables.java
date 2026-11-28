@@ -559,8 +559,8 @@ class FunctionVariables {
 	 */
 	private static boolean removeExplicitThisParameter(List<? extends Variable> params,
 			String callingConventionName) {
-		if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(callingConventionName)) {
-			int thisIndex = findExplicitThisParameter(params);
+		if (callingConventionName.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
+		int thisIndex = findExplicitThisParameter(params);
 			if (thisIndex >= 0) {
 				params.remove(thisIndex); // remove explicit 'this' parameter
 				return true;
@@ -575,7 +575,7 @@ class FunctionVariables {
 	 * @return true if 'this' parameter removed
 	 */
 	boolean removeExplicitThisParameter(FunctionDB function) {
-		if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(function.getCallingConventionName())) {
+		if (function.getCallingConventionName().startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			int thisIndex = findExplicitThisParameter(params);
 			if (thisIndex >= 0) {
 				removeParameter(thisIndex); // remove explicit 'this' parameter
