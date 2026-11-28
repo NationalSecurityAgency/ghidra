@@ -183,7 +183,7 @@ define token instr(32)
     freg1sgl	= (16,20)
     fr1half		= (16,20)
     r           = (16,20)
-    highIm5		= (16,20) signed
+    highIm5		= (16,20)
     highIm5less16	= (17,20)
     tr			= (16,20)
     x			= (16,20)
@@ -193,7 +193,7 @@ define token instr(32)
     srbit1		= (15,15)
     s			= (14,15)
     srbit0		= (14,14)
-    im13		= (13,25) signed
+    im13		= (13,25)
     SEDCondSym	= (13,15)
     RegUnitCondSym	= (13,15)
     InvUnitCondSym	= (13,15)
@@ -219,8 +219,8 @@ define token instr(32)
     one			= (12,12)
     subop1012	= (10,12)
     im15		= (11,25)
-    sopim10		= (11,20) signed
-    sopim5		= (11,15) signed
+    sopim10		= (11,20)
+    sopim5		= (11,15)
     fpta		= (11,15)
     fusedta		= (11,15)
     fpsf		= (11,12)
@@ -266,7 +266,7 @@ define token instr(32)
     w2_2		= (2,2)
     w2less2		= (3,12)
     n			= (1,1)
-    im26		= (0,25) signed
+    im26		= (0,25)
     sim21		= (0,20) signed
     sim14		= (0,13) signed
     im21less0	= (1,20)
@@ -277,7 +277,7 @@ define token instr(32)
     im14		= (0,13)
     im14less0	= (1,13)
     im11		= (0,10) signed
-    im11less0	= (1,11)
+    im11less0	= (1,10)
     sim5		= (0,4) signed
     im5			= (0,4)
     im5less0	= (1,4)
@@ -1697,10 +1697,14 @@ storeShortDispCmplt: ",MA"					is u=0 & m=1 & RB & RX & SPCBASE & lse5 { off:$(A
 storeShortDispCmplt: ",MB"					is u=1 & m=1 & RB & RX & SPCBASE & lse5 { local lse = sext(lse5); off:$(ADDRSIZE) = SPCBASE + sext(lse); RB = RB + lse; export off; } # modify before
 
 # Table 5-13 on page 5-26
-storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # none / beginning, don't modify base register
-storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE & RR & lse5  { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # beginning, modify base register
+storeBytesShortCmplt: 					is u=0 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # beginning, don't modify base register
+storeBytesShortCmplt: ",BM"				is u=0 & m=1 & SPCBASE { off:$(ADDRSIZE) = SPCBASE; export off; } # beginning, store at the base, then modify it
 storeBytesShortCmplt: ",E"				is u=1 & m=0 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, don't modify
-storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & RR & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); RR = (RR + sext(lse5)) & 0xFFFFFFFC; export off; } # ending, modify
+storeBytesShortCmplt: ",EM"				is u=1 & m=1 & SPCBASE & lse5 { off:$(ADDRSIZE) = SPCBASE + sext(lse5); export off; } # ending, modify
+
+# The STBYS base modification, which follows the store
+stbyMod: 							is m=0 { }
+stbyMod: 							is m=1 & RB & lse5 { RB = (RB + sext(lse5)) & ~3; }
 
 # u fixed at 0, Table 5-11 on page 5-22, for LPA and related system level opcodes
 sysCmplt: 							is m=0 { }

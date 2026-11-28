@@ -108,20 +108,23 @@ with : phase=1 {
 
 #STWS
 :STW^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0xA & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:4 addr = RR:4; 
+	val:4 = RR:4;
+	build storeShortDispCmplt;
+	*[ram]:4 storeShortDispCmplt = val;
 }
 
 #STHS
 :STH^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x9 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:2 addr = RR:2; 
+	val:2 = RR:2;
+	build storeShortDispCmplt;
+	*[ram]:2 storeShortDispCmplt = val;
 }
 
 #STBS
 :STB^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x8 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
-	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:1 addr = RR:1; 
+	val:1 = RR:1;
+	build storeShortDispCmplt;
+	*[ram]:1 storeShortDispCmplt = val;
 }
 
 :LDWAS^shortDispCmplt^loadCC highlse5(RB),RT			is opfam=0x03 & subop=6 & one=1 & shortDispCmplt & loadCC & highlse5 & RB & RT {
@@ -135,52 +138,42 @@ with : phase=1 {
     *[ram]:4 address = 0:4; 
 }
 
-:STWAS^shortDispCmplt^storeCC RR,lse5(RB)				is opfam=0x03 & subop=0xE & one=1 & shortDispCmplt & storeCC & lse5 & RB & RR {
-	addr:$(ADDRSIZE) = shortDispCmplt;
-	*[ram] :4 addr = RR:4; 
+:STWAS^storeShortDispCmplt^storeCC RR,lse5(RB)			is opfam=0x03 & subop=0xE & one=1 & storeShortDispCmplt & storeCC & lse5 & RB & RR {
+	val:4 = RR:4;
+	build storeShortDispCmplt;
+	*[ram]:4 storeShortDispCmplt = val;
 }
 
-# This is the "begin" version for big endian. I am not doing the little endian version.
-:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & storeCC & lse5 & SRRB & RR & u=0 {
-	# get the address, which is most likely not word aligned
+# STBYS, big endian (PSW E-bit 0). The beginning case stores the rightmost
+# bytes of r from the effective address to the end of its word; the ending
+# case stores the leftmost bytes from the start of the word up to, but not
+# including, the effective address. Base modification follows the read of r.
+:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & stbyMod & storeCC & lse5 & SRRB & RR & u=0 {
+	data:4 = RR:4;
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
-	# figure out how many bytes need to be written
-	local numBytes = 4 - (addr & 0x3);
-	# this is the address where we stop (one byte past the last address to which we write)
-	local finalAddr = addr + numBytes;
-	# copy the contents of RR
-	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
-	# use a for loop to write out the 1,2,3, or 4 bytes
-	<LOOP>
-	if (addr == finalAddr) goto <DONE>;
-	*[ram]:1 addr = data:1;
+	ptr:$(ADDRSIZE) = (addr & ~3) + 4;
+	<loop>
+	if (ptr == addr) goto <done>;
+	ptr = ptr - 1;
+	*[ram]:1 ptr = data:1;
 	data = data >> 8;
-	addr = addr + 1;
-	goto <LOOP>;
-	<DONE>
+	goto <loop>;
+	<done>
+	build stbyMod;
 }
 
-# This is the "end" version for big endian. I am not doing the little endian version.
-:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & storeCC & lse5 & SRRB & RR & u=1 {
-	# get the address, which is most likely not word aligned
+:STBYS^storeBytesShortCmplt^storeCC RR,lse5^SRRB 		is opfam=0x03 & subop=0xC & one=1 & storeBytesShortCmplt & stbyMod & storeCC & lse5 & SRRB & RR & u=1 {
+	data:4 = RR:4;
 	addr:$(ADDRSIZE) = storeBytesShortCmplt;
-	# figure out how many bytes need to be written
-	local numBytes = (addr & 0x3);
-	# now make a word aligned address
-	addr = addr & 0x3;
-	# this is the address where we stop (one byte past the last address to which we write)
-	local finalAddr = addr + numBytes;
-	# copy the contents of RR
-	data:$(REGSIZE) = RR >> ((4 - numBytes) * 8);
-
-	# use a for loop to write out the 1,2,3, or 4 bytes
-	<LOOP>
-	if (addr == finalAddr) goto <DONE>;
-	*[ram]:1 addr = data:1;
-	data = data >> 8;
-	addr = addr + 1;
-	goto <LOOP>;
-	<DONE>
+	ptr:$(ADDRSIZE) = addr & ~3;
+	<loop>
+	if (ptr == addr) goto <done>;
+	*[ram]:1 ptr = data(3);
+	data = data << 8;
+	ptr = ptr + 1;
+	goto <loop>;
+	<done>
+	build stbyMod;
 }
 
 # Note: LDO and LDIL do not access memory, they just load an address into a register
@@ -490,7 +483,7 @@ with : phase=1 {
 
 #### MOVIB
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & highlse5 & nullifyForBranch & branchTarget2W & DepCond & SEDCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -499,14 +492,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	R2dst = sext(im5:1);
-	nullifyCondResult = sext(im5:1);
+	R2dst = sext(highlse5);
+	nullifyCondResult = sext(highlse5);
 	build DepCond; # force the condition evaluation after the move
 	branchExecuted = 1;
 	branchCond = DepCond;
 }
 
-:MOVIB^SEDCondSym^nullifyForBranch im5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & im5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
+:MOVIB^SEDCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W		is opfam=0x33 & R2dst & highlse5 & nullifyForBranch & branchTarget2W & displacement2W & DepCond & SEDCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -515,8 +508,8 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	R2dst = sext(im5:1);
-	nullifyCondResult = sext(im5:1);
+	R2dst = sext(highlse5);
+	nullifyCondResult = sext(highlse5);
 	build DepCond; # force the condition evaluation after the move
 	branchCond = DepCond;
 	branchExecuted = 1;
@@ -652,7 +645,7 @@ with : phase=1 {
 }
 	
 #######################################
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & reg2=0 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -665,7 +658,7 @@ with : phase=1 {
 	branchExecuted = 1;
 }						
 
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & reg2=0 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -1390,9 +1383,11 @@ define pcodeop break;
 	RT = cr;
 }
 
-# this instruction is PA-RISC 2.0 only, but here to avoid disassembler comparison issues
+# this instruction is PA-RISC 2.0 only, but here to avoid disassembler comparison issues.
+# The front of the instruction address offset queue is the address of the MFIA itself,
+# which GCC uses to find PC-relative jump tables.
 :MFIA RT								is opfam=0x0 & sysop=0xA5 & RT & reg1=0 {
-	RT = iaoq_front;
+	RT = inst_start;
 }
 
 define pcodeop sync;
@@ -1411,14 +1406,14 @@ define pcodeop purgeTLB;
 :PDTLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x48 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
 :PDTLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x48 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
-:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x8 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
-:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshifted=0x8 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
+:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshiftedshort=0x8 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
+:PITLB^sysCmplt RX^SRRB3bit				is opfam=0x1 & sysopshiftedshort=0x8 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
 :PDTLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x49 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
 :PDTLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x49 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
-:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x9 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
-:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshifted=0x9 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
+:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshiftedshort=0x9 & RX & SRRB3bit & sysCmplt & m=0 & SPCBASE { purgeTLB(RX, SPCBASE); }
+:PITLBE^sysCmplt RX^SRRB3bit			is opfam=0x1 & sysopshiftedshort=0x9 & RX & SRRB3bit & sysCmplt & m=1 & SPCBASE & RB { RB = RB + RX; purgeTLB(RX, SPCBASE); }
 
 define pcodeop insertTLBEntry;
 :IDTLBA R1,SRRB							is opfam=0x1 & sysopshifted=0x41 & m=0 & SRRB & R1 & SPCBASE & im5=0 { insertTLBEntry(SPCBASE, R1); }
@@ -1449,10 +1444,10 @@ define pcodeop diag;
 #################################################
 # Coprocessor and Special Function Instructions
 #################################################
-:SPOP0,SFU^nullifyForSpecial sop					is opfam=0x04 & specop=0 & SFU & nullifyForSpecial & im5 & im15 [ sop=(im15 << 5) | im5; ] unimpl
-:SPOP1,SFU^nullifyForSpecial sop					is opfam=0x04 & specop=1 & SFU & nullifyForSpecial & im5 & sopim10 [ sop=(sopim10 << 5) | im5; ] unimpl
-:SPOP2,SFU^nullifyForSpecial sop R2					is opfam=0x04 & specop=2 & SFU & nullifyForSpecial & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
-:SPOP3,SFU^nullifyForSpecial sop R1,R2				is opfam=0x04 & specop=3 & SFU & nullifyForSpecial & R1 & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
+:SPOP0,SFU,sop^nullifyForSpecial				is opfam=0x04 & specop=0 & SFU & nullifyForSpecial & im5 & im15 [ sop=(im15 << 5) | im5; ] unimpl
+:SPOP1,SFU,im15^nullifyForSpecial RT				is opfam=0x04 & specop=1 & SFU & nullifyForSpecial & im15 & RT unimpl
+:SPOP2,SFU,sop^nullifyForSpecial R2				is opfam=0x04 & specop=2 & SFU & nullifyForSpecial & R2 & im5 & sopim10 [ sop=(sopim10 << 5) | im5; ] unimpl
+:SPOP3,SFU,sop^nullifyForSpecial R1,R2				is opfam=0x04 & specop=3 & SFU & nullifyForSpecial & R1 & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
 :COPR,SFU,sop^nullifyForSpecial						is opfam=0x0C & SFU & nullifyForSpecial & im5 & sopim17 [ sop=(sopim17 << 5) | im5; ] unimpl
 
 :CLDW,SFU^indexedWordAccessCmplt^loadCC RX^SRRB,RT		is opfam=0x09 & bit9=0 & zero=0 & RX & SRRB & RT & SFU & indexedWordAccessCmplt & loadCC unimpl 
@@ -1878,7 +1873,10 @@ define pcodeop diag;
 ###############################################################
 # Performance Montioring Unit Instructions
 ###############################################################
-:PMENB												is opfam=0x0C & bit5=0  & sfu=0x2 & pmuop=0x3 { }
-:PMDIS												is opfam=0x0C & bit5=0  & sfu=0x2 & pmuop=0x1 { }
+:PMENB												is opfam=0x0C & im26=0x680 { }
+:PMDIS												is opfam=0x0C & im26=0x280 { }
+# ,N nullifies the next instruction if measurement was enabled, which
+# is not known here
+:PMDIS^",N"											is opfam=0x0C & im26=0x2A0 { }
 
 } # end with : phase=1
