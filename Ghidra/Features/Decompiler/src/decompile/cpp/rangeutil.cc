@@ -475,8 +475,8 @@ bool CircleRange::minimalContainer(const CircleRange &op2,int4 maxStep)
     }
   }
 
-  uintb aRight = right - step + 1;		// Treat original ranges as having step=1
-  uintb bRight = op2.right - op2.step + 1;
+  uintb aRight = (right - step + 1) & mask;		// Treat original ranges as having step=1
+  uintb bRight = (op2.right - op2.step + 1) & op2.mask;
   step = 1;
   mask |= op2.mask;
   uintb vacantSize1,vacantSize2;
@@ -709,14 +709,14 @@ void CircleRange::setStride(int4 newStep,uintb rem)
 {
   bool iseverything = (!isempty) && (left==right);
   if (newStep == step) return;
-  uintb aRight = right - step;
+  uintb aRight = (right - step) & mask;
   step = newStep;
   if (step == 1) return;		// No remainder to fill in
   uintb curRem = left % step;
-  left = (left - curRem) + rem;
+  left = ((left - curRem) + rem) & mask;
   curRem = aRight % step;
-  aRight = (aRight - curRem) + rem;
-  right = aRight + step;
+  aRight = ((aRight - curRem) + rem) & mask;
+  right = (aRight + step) & mask;
   if ((!iseverything)&&(left == right))
     isempty = true;
 }
@@ -754,6 +754,7 @@ bool CircleRange::pullBackUnary(OpCode opc,int4 inSize,int4 outSize)
     case CPUI_INT_ZEXT:
     {
       val = calc_mask(inSize); // (smaller) input mask
+      if ((uintb)step > val) return false;
       uintb rem = left % step;
       CircleRange zextrange;
       zextrange.left = rem;
@@ -766,30 +767,27 @@ bool CircleRange::pullBackUnary(OpCode opc,int4 inSize,int4 outSize)
       left &= val;
       right &= val;
       mask &= val;		// Preserve the stride
+      normalize();
       break;
     }
     case CPUI_INT_SEXT:
     {
       val = calc_mask(inSize); // (smaller) input mask
-      uintb rem = left & step;
+      if ((uintb)step > val) return false;
+      uintb rem = left % step;
       CircleRange sextrange;
-      sextrange.left = val ^ (val >> 1); // High order bit for (small) input space
-      sextrange.left += rem;
-      sextrange.right = sign_extend(sextrange.left, inSize, outSize);
+      uintb highBit = val ^ (val >> 1); // High order bit for (small) input space
+      sextrange.left = sign_extend(highBit, inSize, outSize) + rem;
+      sextrange.right = highBit + rem;
       sextrange.mask = mask;
       sextrange.step = step;	// Keep the same stride
       sextrange.isempty = false;
-      if (sextrange.intersect(*this) != 0)
+      if (0 != intersect(sextrange))
 	return false;
-      else {
-	if (!sextrange.isEmpty())
-	  return false;
-	else {
-	  left &= val;
-	  right &= val;
-	  mask &= val;		// Preserve the stride
-	}
-      }
+      left &= val;
+      right &= val;
+      mask &= val;		// Preserve the stride
+      normalize();
       break;
     }
     default:
@@ -939,8 +937,10 @@ bool CircleRange::pullBackBinary(OpCode opc,uintb val,int4 slot,int4 inSize,int4
   	right = (right+val)&mask;
       }
       else {
-  	left = (val-left)&mask;
-  	right = (val-right)&mask;
+	uintb tmp = (val - left + step) & mask;
+	left = (val - right + step) & mask;
+	right = tmp;
+	normalize();
       }
       break;
     case CPUI_INT_RIGHT:
@@ -1231,27 +1231,43 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
       }
       else
 	return false;
-      uint4 tmp = (uint4)constVal;
-      while(step < maxStep) {
+      bool isNeg = ((constVal & (mask ^ (mask >> 1))) != 0);
+      uintb absMag = isNeg ? ((~constVal + 1) & mask) : (constVal & mask);
+      if (absMag == 0) {
+	step = 1;
+	left = 0;
+	right = 1;
+	return true;
+      }
+      uintb tmp = absMag;
+      while(step < maxStep && (uintb)(step << 1) <= mask) {
 	if ((tmp & 1) != 0) break;
 	step <<= 1;
 	tmp >>= 1;
       }
-      int4 wholeSize = 8*sizeof(uintb) - count_leading_zeros(mask);
-      if (in1.getMaxInfo() + in2.getMaxInfo() > wholeSize) {
+      const CircleRange &varRange = in1.isSingle() ? in2 : in1;
+      if (varRange.left == varRange.right) {
 	left = (in1.left * in2.left) % step;
-	right = left;				// Covered everything
+	right = left;
 	normalize();
 	return true;
       }
-      if ((constVal & (mask ^ (mask >> 1))) != 0) {	// Multiplying by negative number
+      uintb span = ((varRange.right - varRange.step) - varRange.left) & mask;
+      if (span > (mask - (uintb)step) / absMag) {
+	left = (in1.left * in2.left) % step;
+	right = left;
+	normalize();
+	return true;
+      }
+      if (isNeg) {
 	left = ((in1.right - in1.step) * (in2.right - in2.step)) & mask;
 	right = ((in1.left * in2.left) + step) & mask;
       }
       else {
-	left = (in1.left * in2.left)&mask;
+	left = (in1.left * in2.left) & mask;
 	right = ((in1.right - in1.step) * (in2.right - in2.step) + step) & mask;
       }
+      normalize();
       break;
     }
     case CPUI_INT_LEFT:
@@ -1259,41 +1275,66 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
       if (!in2.isSingle()) return false;
       isempty = false;
       mask = in1.mask;
+      if (in2.getMin() >= (uintb)(8 * outSize)) {
+	step = 1;
+	left = 0;
+	right = 1;
+	return true;
+      }
       step = in1.step;
       uint4 sa = (uint4)in2.getMin();
       uint4 tmp = sa;
-      while(step < maxStep && tmp > 0) {
+      while(step < maxStep && tmp > 0 && (uintb)(step << 1) <= mask) {
 	step <<= 1;
 	tmp -= 1;
       }
-      left = (in1.left << sa)&mask;
-      right = (in1.right << sa)&mask;
-      int4 wholeSize = 8*sizeof(uintb) - count_leading_zeros(mask);
-      if (in1.getMaxInfo() + sa > wholeSize) {
-	right = left;	// Covered everything
+      if (in1.left == in1.right) {
+	left = (in1.left << sa) % step;
+	right = left;
 	normalize();
 	return true;
       }
+      uintb span = ((in1.right - in1.step) - in1.left) & mask;
+      if (span > ((mask - (uintb)step) >> sa)) {
+	left = (in1.left << sa) % step;
+	right = left;
+	normalize();
+	return true;
+      }
+      left = (in1.left << sa) & mask;
+      right = (((in1.right - in1.step) << sa) + step) & mask;
+      normalize();
       break;
     }
     case CPUI_SUBPIECE:
     {
       if (!in2.isSingle()) return false;
       isempty = false;
-      int4 sa = (int4)in2.left * 8;
       mask = calc_mask(outSize);
-      step = (sa == 0) ? in1.step : 1;
-      uintb range = (in1.left < in1.right) ? in1.right-in1.left : in1.left - in1.right;
-
-      if (range == 0 || ((range >> sa) > mask )) {
-	left = right = 0;	// We cover everything
+      if (in2.left >= (uintb)sizeof(uintb)) {
+	step = 1;
+	left = 0;
+	right = 1;
+	return true;
+      }
+      int4 sa = (int4)in2.left * 8;
+      step = (sa == 0 && (uintb)in1.step <= mask) ? in1.step : 1;
+      if (in1.left == in1.right) {
+	left = right = (step != 1) ? (in1.left % step) : 0;
       }
       else {
-	left = in1.left >> sa;
-	right = ((in1.right - in1.step) >> sa) + step;
-	left &= mask;
-	right &= mask;
-	normalize();
+	uintb lastIn = (in1.right - in1.step) & in1.mask;
+	uintb span = (lastIn - in1.left) & in1.mask;
+	uintb lowMask = (sa > 0) ? (((uintb)1 << sa) - 1) : 0;
+	uintb blocks = (span >> sa) + (((in1.left & lowMask) + (span & lowMask)) >> sa);
+	if (blocks >= mask) {
+	  left = right = (step != 1) ? (in1.left % step) : 0;
+	}
+	else {
+	  left = (in1.left >> sa) & mask;
+	  right = (((lastIn >> sa) + step) & mask);
+	  normalize();
+	}
       }
       break;
     }
@@ -1301,27 +1342,41 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
     {
       if (!in2.isSingle()) return false;
       isempty = false;
-      int4 sa = (int4)in2.left;
       mask = calc_mask(outSize);
+      if (in2.left >= (uintb)(8 * inSize)) {
+	step = 1;
+	left = 0;
+	right = 1;
+	return true;
+      }
+      int4 sa = (int4)in2.left;
+      if (sa == 0 && outSize == inSize) {
+	*this = in1;
+	return true;
+      }
       step = 1;			// Lose any step
       if (in1.left < in1.right) {
-	left = in1.left >> sa;
-	right = ((in1.right - in1.step) >> sa) + 1;
+	left = (in1.left >> sa) & mask;
+	right = (((in1.right - in1.step) >> sa) + 1) & mask;
+	if (left == right)	// Don't truncate accidentally to everything
+	  right = (left + 1)&mask;
       }
       else {
 	left = 0;
-	right = in1.mask >> sa;
+	right = ((in1.mask >> sa) + 1) & mask;
       }
-      if (left == right)	// Don't truncate accidentally to everything
-	right = (left + 1)&mask;
       break;
     }
     case CPUI_INT_SRIGHT:
     {
       if (!in2.isSingle()) return false;
       isempty = false;
-      int4 sa = (int4)in2.left;
       mask = calc_mask(outSize);
+      int4 sa = (in2.left >= (uintb)(8 * inSize)) ? (8 * inSize - 1) : (int4)in2.left;
+      if (sa == 0 && outSize == inSize) {
+	*this = in1;
+	return true;
+      }
       step = 1;			// Lose any step
       int4 bitPos = 8*inSize - 1;
       intb valLeft = sign_extend(in1.left,bitPos);
