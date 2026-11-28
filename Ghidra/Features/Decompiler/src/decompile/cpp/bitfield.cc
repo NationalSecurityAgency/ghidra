@@ -199,7 +199,16 @@ bool BitFieldInsertTransform::isOriginalValue(BitFieldNodeState &state)
 bool BitFieldInsertTransform::addConstantWrite(BitFieldNodeState &state)
 
 {
-  uintb value = state.node->getOffset();
+  return addConstantValue(state,state.node->getOffset());
+}
+
+/// If the state is not following a specific field, \b false is returned.
+/// \param state describes the field
+/// \param value holds the bits of the whole container, from which the field is extracted
+/// \return \b true if an InsertRecord was created
+bool BitFieldInsertTransform::addConstantValue(BitFieldNodeState &state,uintb value)
+
+{
   state.node = (Varnode *)0;
   if (state.field == (const TypeBitField *)0) {
     return false;
@@ -264,7 +273,43 @@ bool BitFieldInsertTransform::handleAndBack(BitFieldNodeState &state,PcodeOp *op
   if (res == 0) {			// The field is zeroed out
     return addZeroOut(state);
   }
+  uintb value;
+  if (maskedConstant(state,op->getIn(0),cvn->getOffset(),CPUI_INT_OR,value))
+    return addConstantValue(state,value);	// (V | set) & clear writes a constant to the field
   return false;		// Partial zeroing
+}
+
+/// Compilers write a constant k into a bitfield as (V & clear) | set, where \e clear only needs to
+/// clear the bits that are 0 in k and not already set by \e set. For example, writing 5 to a 3-bit
+/// field at bit 1 may produce (V & 0xfffffffb) | 0xa. Neither operand covers the whole field, but
+/// every bit of the field is still determined: each is either cleared by the INT_AND or set by the
+/// INT_OR. The INT_OR may also come first: (V | set) & clear.
+/// \param state is the field being followed
+/// \param other is the operand opposite the constant \b c
+/// \param c is the constant operand of the outer op
+/// \param inner is the opcode (INT_AND or INT_OR) that must define \b other with a constant operand
+/// \param value passes back the resulting container bits
+/// \return \b true if every bit of the field is determined by the two constants
+bool BitFieldInsertTransform::maskedConstant(BitFieldNodeState &state,Varnode *other,uintb c,OpCode inner,uintb &value)
+
+{
+  if (state.field == (const TypeBitField *)0) return false;
+  if (!other->isWritten()) return false;
+  PcodeOp *innerOp = other->getDef();
+  if (innerOp->code() != inner || !innerOp->getIn(1)->isConstant()) return false;
+  uintb andMask,orMask;
+  if (inner == CPUI_INT_AND) {
+    andMask = innerOp->getIn(1)->getOffset();
+    orMask = c;
+  }
+  else {
+    andMask = c;
+    orMask = innerOp->getIn(1)->getOffset();
+  }
+  uintb mask = state.bitsField.getMask();
+  if (((~andMask | orMask) & mask) != mask) return false;	// Some field bit keeps the original value
+  value = orMask & andMask;
+  return true;
 }
 
 /// Follow the field through the input that has not masked off its bitrange.
@@ -287,6 +332,9 @@ bool BitFieldInsertTransform::handleOrBack(BitFieldNodeState &state,PcodeOp *op)
 	state.node = vn1;			// Follow the constant
 	return true;
       }
+      uintb value;
+      if (maskedConstant(state,vn0,vn1->getOffset(),CPUI_INT_AND,value))
+	return addConstantValue(state,value);	// (V & clear) | set writes a constant to the field
     }
     return false;			// Both inputs are unmasked (or both masked), can't follow field
   }
