@@ -674,7 +674,13 @@ public class DecompileDebugFormatManager {
 					String regName = setElement.getAttribute(ATTRIB_NAME.name());
 					BigInteger regVal = new BigInteger(setElement.getAttribute(ATTRIB_VAL.name()));
 					Register reg = pc.getRegister(regName);
-					pc.setValue(reg, addr, addr, regVal);
+					if (reg == null) {
+						log.appendMsg(parser.getLineNumber(),
+							"Unknown context register skipped: " + regName);
+					}
+					else {
+						pc.setValue(reg, addr, addr, regVal);
+					}
 					parser.end(setElement);
 				}
 			}

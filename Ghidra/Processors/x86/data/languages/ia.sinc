@@ -468,7 +468,7 @@ define context contextreg
   evexBType=(47,47)     # Used for Disp8*N (see table 2-34 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
   evexTType=(44,47)     # Used for Disp8*N (see table 2-35 in 325462-sdm-vol-1-2abcd-3abcd-4.pdf)
   evexDisp8=(44,46)
-  reservedHigh=(48,63)  # reserved for future use
+  cseg=(48,63) noflow   # stored: real-mode CS of the instruction, set by loaders; 0 if not known
 
 ;
 
@@ -1148,6 +1148,9 @@ Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide; addr32       		{ 
 Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide & highseg=1; addr32 	{ tmp:$(SIZE) = segWide + zext(addr32); export tmp; }
 
 rel8: reloc is simm8        [ reloc=inst_next+simm8; ] { export *[ram]:$(SIZE) reloc; }
+# Real mode: IP wraps in the code segment, cseg. The base is the last byte's address less its
+# offset in the segment (inst_next may be past seg:FFFF); with cseg=0 this is the 64K page.
+rel16: reloc is protectedMode=0 & simm16 [ reloc=(inst_next - 1 - ((inst_next - 1 - (cseg << 4)) & 0xFFFF)) + ((inst_next - (cseg << 4) + simm16) & 0xFFFF); ] { export *[ram]:$(SIZE) reloc; }
 rel16: reloc is simm16      [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ] { export *[ram]:$(SIZE) reloc; }
 rel32: reloc is simm32      [ reloc=inst_next+simm32; ] { export *[ram]:$(SIZE) reloc; }
 
