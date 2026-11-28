@@ -1323,7 +1323,8 @@ public class BinaryReader {
 		if (count < 0 || count > MAX_SANE_ARRAY_ELEMENT_COUNT) {
 			throw new IOException("Invalid number of elements specified: " + count);
 		}
-		if (!isValidRange(index, count * elementSize)) {
+		long byteCount = (long) count * elementSize;
+		if (byteCount > MAX_SANE_BUFFER || !isValidRange(index, (int) byteCount)) {
 			throw new IOException("Unable to read array at 0x%x, count=%d, size=%d".formatted(index,
 				count, elementSize));
 		}
