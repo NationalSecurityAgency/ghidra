@@ -1,0 +1,145 @@
+#
+# Apple AARCH64 proprietary instructions (non-AMX)
+# Based on Asahi Linux reverse-engineering documentation:
+#   https://asahilinux.org/docs/hw/cpu/apple-instructions/
+#
+# Covers: MUL53, WKDMC/WKDMD, GENTER/GEXIT, AT_AS1ELX, SDSB
+#
+
+# --- MUL53: 53-bit vector multiply ---
+# mul53lo.2d Vd, Vm - low 53 bits of product
+# mul53hi.2d Vd, Vm - product >> 53
+define pcodeop __apple_mul53lo;
+define pcodeop __apple_mul53hi;
+
+# --- WKdm memory page compression/decompression ---
+# wkdmc rS, rD - compress page at [rS] to [rD], status in rS
+# wkdmd rS, rD - decompress from [rS] to [rD], status in rS
+define pcodeop __apple_wkdmc;
+define pcodeop __apple_wkdmd;
+
+# --- Guarded Execution Mode ---
+# genter imm5  - enter guarded mode (used by macOS kernel)
+# gexit        - exit guarded mode
+define pcodeop __apple_genter;
+define pcodeop __apple_gexit;
+
+# --- Address Translation ---
+# at_as1elx rA - translate address; result in rA
+#   [63:56] = MAIR attributes, [??:12] = physical address, [11:0] = flags
+define pcodeop __apple_at_as1elx;
+
+# --- Synchronize Data Stream Buffer ---
+# sdsb {osh|nsh|ish|sy}
+define pcodeop __apple_sdsb;
+
+
+with : ImmS_ImmR_TestSet=1 {
+
+# =========================================================================
+# MUL53 - 53-bit vector multiply (Apple A11+)
+# Encoding space: 0x00200000–0x002003ff (lo), 0x00200400–0x002007ff (hi)
+# =========================================================================
+
+# mul53lo.2d Vd, Vm
+# Encoding: 0x00200000 | Vm<<5 | Vd
+# b_2431=0x00 b_1623=0x20 b_1215=0 b_1011=0 b_0509=Vm b_0004=Vd
+:mul53lo.2d Rd_VPR128, Rn_VPR128 is b_2431=0x00 & b_1623=0x20 & b_1215=0 & b_1011=0 & Rn_VPR128 & Rd_VPR128
+{
+    Rd_VPR128 = __apple_mul53lo(Rd_VPR128, Rn_VPR128);
+}
+
+# mul53hi.2d Vd, Vm
+# Encoding: 0x00200400 | Vm<<5 | Vd
+# b_2431=0x00 b_1623=0x20 b_1215=0 b_1011=1 b_0509=Vm b_0004=Vd
+:mul53hi.2d Rd_VPR128, Rn_VPR128 is b_2431=0x00 & b_1623=0x20 & b_1215=0 & b_1011=1 & Rn_VPR128 & Rd_VPR128
+{
+    Rd_VPR128 = __apple_mul53hi(Rd_VPR128, Rn_VPR128);
+}
+
+# =========================================================================
+# WKDMC / WKDMD - WKdm memory page compression/decompression
+# =========================================================================
+
+# wkdmc Xd, Xs — compress page at [Xs] to [Xd], status returned in Xs
+# Encoding: 0x00200800 | rD<<5 | rS
+# b_2431=0x00 b_1623=0x20 b_1215=0 b_1011=2 b_0509=rD b_0004=rS
+# Display order: rD(bits[9:5]) first, rS(bits[4:0]) second (matches Capstone)
+:wkdmc Rn_GPR64, Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=0 & b_1011=2 & Rn_GPR64 & Rd_GPR64
+{
+    Rd_GPR64 = __apple_wkdmc(Rd_GPR64, Rn_GPR64);
+}
+
+# wkdmd Xd, Xs — decompress from [Xs] to [Xd], status returned in Xs
+# Encoding: 0x00200c00 | rD<<5 | rS
+# b_2431=0x00 b_1623=0x20 b_1215=0 b_1011=3 b_0509=rD b_0004=rS
+# Display order: rD(bits[9:5]) first, rS(bits[4:0]) second (matches Capstone)
+:wkdmd Rn_GPR64, Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=0 & b_1011=3 & Rn_GPR64 & Rd_GPR64
+{
+    Rd_GPR64 = __apple_wkdmd(Rd_GPR64, Rn_GPR64);
+}
+
+# =========================================================================
+# GEXIT / GENTER - Guarded Execution Mode
+# =========================================================================
+
+# gexit
+# Encoding: 0x00201400 (fixed, no operands)
+# b_2431=0x00 b_1623=0x20 b_1215=1 b_1011=1 b_0509=0 b_0004=0
+:gexit is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=0 & b_0004=0
+{
+    __apple_gexit();
+}
+
+# genter imm5
+# Encoding: 0x00201420 | imm5
+# b_2431=0x00 b_1623=0x20 b_1215=1 b_1011=1 b_0509=1 b_0004=imm5
+AppleImm5: "#"^b_0004 is b_0004 { export *[const]:1 b_0004; }
+
+:genter AppleImm5 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=1 & AppleImm5
+{
+    __apple_genter(AppleImm5);
+}
+
+# =========================================================================
+# AT_AS1ELX - Apple proprietary address translation
+# Result: [63:56]=MAIR, [??:12]=PA, [11:0]=flags
+# =========================================================================
+
+# at_as1elx Xa
+# Encoding: 0x00201440 | rA
+# b_2431=0x00 b_1623=0x20 b_1215=1 b_1011=1 b_0509=2 b_0004=rA
+:at_as1elx Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=2 & Rd_GPR64
+{
+    Rd_GPR64 = __apple_at_as1elx(Rd_GPR64);
+}
+
+# =========================================================================
+# SDSB - Synchronize Data Stream Buffer
+# Four shareability domain variants
+# =========================================================================
+
+# Encoding: 0x00201460–0x00201463
+# b_2431=0x00 b_1623=0x20 b_1215=1 b_1011=1 b_0509=3 b_0004=variant
+
+:sdsb "osh" is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=3 & b_0004=0
+{
+    __apple_sdsb(0:1);
+}
+
+:sdsb "nsh" is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=3 & b_0004=1
+{
+    __apple_sdsb(1:1);
+}
+
+:sdsb "ish" is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=3 & b_0004=2
+{
+    __apple_sdsb(2:1);
+}
+
+:sdsb "sy" is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=1 & b_0509=3 & b_0004=3
+{
+    __apple_sdsb(3:1);
+}
+
+}
