@@ -77,32 +77,6 @@ void FileManage::findFile(string &res,const string &name) const
 }
 
 #ifdef _WINDOWS
-void FileManage::addCurrentDir(void)
-
-{
-  char dirname[256];
-  
-  if (0!=GetCurrentDirectoryA(256,dirname)) {
-    string filename(dirname);
-    addDir2Path(filename);
-  }
-}
-
-#else
-void FileManage::addCurrentDir(void)
-
-{				// Add current working directory to path
-  char dirname[256];
-  char *buf;
-
-  buf = getcwd(dirname,256);
-  if ((char *)0 == buf) return;
-  string filename(buf);
-  addDir2Path(filename);
-}
-#endif
-
-#ifdef _WINDOWS
 bool FileManage::isDirectory(const string &path)
 
 {
@@ -370,10 +344,19 @@ string FileManage::discoverGhidraRoot(const char *argv0)
 
 { // Find the root of the ghidra distribution based on current working directory and passed in path
   vector<string> pathels;
-  string cur(argv0);
   string base;
   int skiplevel = 0;
-  bool isAbs = isAbsolutePath(cur);
+
+#ifdef _WIN32
+  char buf[MAX_PATH];
+  if (_fullpath(buf, argv0, MAX_PATH) == NULL)
+#else
+  char buf[PATH_MAX];
+  if (realpath(argv0, buf) == NULL)
+#endif
+    return "";
+
+  string cur(buf);
 
   for(;;) {
     int sizebefore = cur.size();
@@ -387,17 +370,6 @@ string FileManage::discoverGhidraRoot(const char *argv0)
       skiplevel -= 1;
     else
       pathels.push_back(base);
-  }
-  if (!isAbs) {
-    FileManage curdir;
-    curdir.addCurrentDir();
-    cur = curdir.pathlist[0];
-    for(;;) {
-      int sizebefore = cur.size();
-      splitPath(cur,cur,base);
-      if (cur.size() == sizebefore) break;
-      pathels.push_back(base);
-    }
   }
 
   for(int i=0;i<pathels.size();++i) {
