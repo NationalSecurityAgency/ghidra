@@ -10636,6 +10636,44 @@ define pcodeop aesenclast;
 	YmmReg1 = zext(XmmReg1);
 }
 
+
+# VEX.256 VAES operates independently on each 128-bit lane.
+:VAESENC YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0xdc; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32;
+	result[0,128] = aesenc(src1[0,128], src2[0,128]);
+	result[128,128] = aesenc(src1[128,128], src2[128,128]);
+	ZmmReg1 = zext(result);
+}
+
+:VAESENCLAST YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0xdd; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32;
+	result[0,128] = aesenclast(src1[0,128], src2[0,128]);
+	result[128,128] = aesenclast(src1[128,128], src2[128,128]);
+	ZmmReg1 = zext(result);
+}
+
+:VAESDEC YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0xde; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32;
+	result[0,128] = aesdec(src1[0,128], src2[0,128]);
+	result[128,128] = aesdec(src1[128,128], src2[128,128]);
+	ZmmReg1 = zext(result);
+}
+
+:VAESDECLAST YmmReg1, vexVVVV_YmmReg, YmmReg2_m256 is $(VEX_NDS) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_WIG) & vexVVVV_YmmReg; byte=0xdf; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256 {
+	local src1:32 = vexVVVV_YmmReg;
+	local src2:32 = YmmReg2_m256;
+	local result:32;
+	result[0,128] = aesdeclast(src1[0,128], src2[0,128]);
+	result[128,128] = aesdeclast(src1[128,128], src2[128,128]);
+	ZmmReg1 = zext(result);
+}
+
 define pcodeop aesimc;
 :AESIMC XmmReg1, XmmReg2_m128  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xdb; XmmReg1 ... & XmmReg2_m128 {
 	XmmReg1 = aesimc(XmmReg2_m128);
