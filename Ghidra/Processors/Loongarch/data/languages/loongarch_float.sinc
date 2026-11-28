@@ -375,8 +375,8 @@ define pcodeop uncertain_fcsr;
 
 #la-fp-s.txt ffint.s.l mask=0x011d1800	
 #0x011d1800	0xfffffc00	f0:5,f5:5	['freg0_5_s0', 'freg5_5_s0']
-:ffint.s.l  frD, drD                  is op10_31=0x4746 & frD & drD {
-	frD = int2float(drD);
+:ffint.s.l  frD, drJ                  is op10_31=0x4746 & frD & drJ {
+	frD = int2float(drJ);
 }
 
 
