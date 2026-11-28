@@ -75,8 +75,7 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			return buf.getByte(0) != 0;
-		}
-		catch (MemoryAccessException e) {
+		} catch (MemoryAccessException e) {
 			return null;
 		}
 	}
@@ -118,6 +117,15 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 	public AbstractIntegerDataType getOppositeSignednessDataType() {
 		// TODO: only unsigned supported
 		return this;
+	}
+
+	private static final String EOL = System.getProperty("line.separator");
+
+	@Override
+	public String getCTypeDeclaration(DataOrganization dataOrganization) {
+		// In C++ and C23 and onwards bool is no longer a type that has to be declared first.
+		String declaration = super.getCTypeDeclaration(dataOrganization);
+		return "#if !defined(__cplusplus) && __STDC_VERSION__ < 202311L" + EOL + declaration + EOL + "#endif";
 	}
 
 }
