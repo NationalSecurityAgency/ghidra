@@ -1647,3 +1647,21 @@ define pcodeop vpmovuswb_avx512bw ;
 	ZmmReg1 = ZmmResult;
 }
 
+define pcodeop vpmldsabflydq;
+
+:VPMLDSABFLYDQ XmmReg1, evexV5_XmmReg, XmmReg2_m128, imm8 is $(EVEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & evexV5_XmmReg; byte=0xDC; (XmmReg1 & ZmmReg1) ... & XmmReg2_m128; imm8
+{
+	XmmResult = vpmldsabflydq(XmmReg1, evexV5_XmmReg, XmmReg2_m128, imm8:1);
+    ZmmReg1 = zext(XmmResult);
+}
+
+:VPMLDSABFLYDQ YmmReg1, evexV5_YmmReg, YmmReg2_m256, imm8 is $(EVEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & evexV5_YmmReg; byte=0xDC; (YmmReg1 & ZmmReg1) ... & YmmReg2_m256; imm8
+{
+	YmmResult = vpmldsabflydq(YmmReg1, evexV5_YmmReg, YmmReg2_m256, imm8:1);
+    ZmmReg1 = zext(YmmResult);
+}
+
+:VPMLDSABFLYDQ ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512, imm8 is $(EVEX_NONE) & $(EVEX_L512) & $(VEX_PRE_66) & $(VEX_0F3A) & $(VEX_W1) & evexV5_ZmmReg; byte=0xDC; ZmmReg1 ... & ZmmReg2_m512; imm8
+{
+	ZmmReg1 = vpmldsabflydq(ZmmReg1, evexV5_ZmmReg, ZmmReg2_m512, imm8:1);
+}
