@@ -1,0 +1,62 @@
+# V830 Family:
+# (7) Logical instructions
+
+# V810 Family:
+# (7) Logical instructions
+
+
+#####################################################
+#####		 	Logic			#####
+#####################################################
+
+
+# AND reg1, reg2 - 001101rrrrrRRRRR
+:and R0004, R0509 is op1015=0x0D & R0004 & R0509
+{
+	R0509 = R0509 & R0004;
+	set_OV0_S_Z(R0509);
+}
+
+# ANDI imm16, reg1, reg2 - 101101rrrrrRRRRR|iiiiiiiiiiiiiiii
+:andi op1631, R0004, R0509 is op1015=0x2D & R0509 & R0004; op1631
+{
+	R0509 = R0004 & op1631;
+	set_OV0_S_Z(R0509);
+}
+
+# NOT reg1, reg2 - 001111rrrrrRRRRR
+:not R0004, R0509 is op1015=0x0F & R0004 & R0509
+{
+	R0509 = ~R0004;
+	set_OV0_S_Z(R0509);
+}
+
+# OR reg1, reg2 - 001100rrrrrRRRRR
+:or R0004, R0509 is op1015=0x0C & R0004 & R0509
+{
+	R0509 = R0509 | R0004;
+	set_OV0_S_Z(R0509);
+}
+
+# ORI imm16, reg1, reg2 - 101100rrrrrRRRRR|iiiiiiiiiiiiiiii
+:ori op1631, R0004, R0509 is op1015=0x2C & R0509 & R0004; op1631
+{
+	R0509 = R0004 | op1631;
+	set_OV0_S_Z(R0509);
+}
+
+# XOR reg1, reg2 - 001110rrrrrRRRRR
+:xor R0004, R0509 is op1015=0x0E & R0004 & R0509
+{
+	R0509 = R0509 ^ R0004;
+	set_OV0_S_Z(R0509);
+}
+
+# XORI imm16, reg1, reg2 - 101110rrrrrRRRRR|iiiiiiiiiiiiiiii
+:xori op1631, R0004, R0509 is op1015=0x2E & R0509 & R0004; op1631
+{
+	R0509 = R0004 ^ op1631;
+	set_OV0_S_Z(R0509);
+}
+
+
