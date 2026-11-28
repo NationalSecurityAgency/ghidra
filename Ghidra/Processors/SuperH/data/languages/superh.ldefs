@@ -17,6 +17,18 @@
   <language processor="SuperH"
             endian="big"
             size="32"
+            variant="SH-2E"
+            version="1.0"
+            slafile="sh-2e.sla"
+            processorspec="superh.pspec"
+            manualindexfile="../manuals/superh2e.idx"
+            id="SuperH:BE:32:SH-2E">
+    <description>SuperH SH-2E processor (single-precision FPU) 32-bit big-endian</description>
+    <compiler name="default" spec="superh2e.cspec" id="default"/>
+  </language>
+  <language processor="SuperH"
+            endian="big"
+            size="32"
             variant="SH-2"
             version="1.0"
             slafile="sh-2.sla"

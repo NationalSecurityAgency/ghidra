@@ -4,9 +4,12 @@ README.md||GHIDRA||||END|
 data/languages/sh-1.slaspec||GHIDRA||||END|
 data/languages/sh-2.slaspec||GHIDRA||||END|
 data/languages/sh-2a.slaspec||GHIDRA||||END|
+data/languages/sh-2e.slaspec||GHIDRA||||END|
 data/languages/superh.cspec||GHIDRA||||END|
 data/languages/superh.ldefs||GHIDRA||||END|
 data/languages/superh.pspec||GHIDRA||||END|
 data/languages/superh.sinc||GHIDRA||||END|
 data/languages/superh2a.cspec||GHIDRA||||END|
+data/languages/superh2e.cspec||GHIDRA||||END|
 data/manuals/superh.idx||GHIDRA||||END|
+data/manuals/superh2e.idx||GHIDRA||||END|
