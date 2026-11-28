@@ -269,7 +269,7 @@ with : phase=1 {
 ################################################################################
 # conditional immediate branches - comparison with registers
 ################################################################################
-:CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond & $(COMMON)
+:CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegArithCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -278,11 +278,13 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = RegCSCond;
+	arithSub(R1, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 }
 
- :CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond & $(COMMON)
+ :CMPBT^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x20 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegArithCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -291,12 +293,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = RegCSCond;
+	arithSub(R1, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
 
-:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegCSCond & $(COMMON)
+:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=0 & branchTarget2W & RegCSCondSym & RegArithCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -305,11 +309,13 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = ! RegCSCond;
+	arithSub(R1, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 }
 
-:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegCSCond & $(COMMON)
+:CMPBF^RegCSCondSym^nullifyForBranch R1,R2,branchTarget2W		is opfam=0x22 & R1 & R2 & nullifyForBranch & n=1 & branchTarget2W & displacement2W & RegCSCondSym & RegArithCond & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -318,7 +324,9 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = ! RegCSCond;
+	arithSub(R1, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
@@ -326,7 +334,7 @@ with : phase=1 {
 ################################################################################
 # conditional immediate branches -- comparison with immediates
 ################################################################################
-:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 & $(COMMON)
+:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegArithCond & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -335,11 +343,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = RegCSCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithSub(imm, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 }
 
-:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 & $(COMMON)
+:CMPIBT^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x21 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegArithCond & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -348,12 +359,15 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = RegCSCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithSub(imm, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
 
-:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegCSCondI & n=0 & $(COMMON)
+:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & RegCSCondSym & RegArithCond & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -362,11 +376,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = !RegCSCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithSub(imm, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 }
 
-:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegCSCondI & n=1 & $(COMMON)
+:CMPIBF^RegCSCondSym^nullifyForBranch highlse5,R2,branchTarget2W	is opfam=0x23 & highlse5 & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegCSCondSym & RegArithCond & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -375,7 +392,10 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	branchCond = !RegCSCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithSub(imm, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 }
@@ -524,7 +544,7 @@ with : phase=1 {
 }
 
 ###########################
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegArithCond & RegAddCondSym & n=0 & $(COMMON) 
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -533,13 +553,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCond; # force the condition evaluation before the move
-	branchCond = RegAddCond;
+	arithAdd(R1, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
-	R2dst = R1 + R2;
+	R2dst = condResult;
 }
 
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegAddCond & RegAddCondSym & n=1 & $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegArithCond & RegAddCondSym & n=1 & $(COMMON) 
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -548,16 +569,17 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCond; # force the condition evaluation before the move
-	branchCond = RegAddCond;
+	arithAdd(R1, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 
-	R2dst = R1 + R2;
+	R2dst = condResult;
 }
 
 ###########################
-:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON)
+:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegArithCond & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -566,13 +588,14 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCond; # force the condition evaluation before the move
-	branchCond = !RegAddCond;
+	arithAdd(R1, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
-	R2dst = R1 + R2;
+	R2dst = condResult;
 }
 
-:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondSym & RegAddCond & n=1 & $(COMMON)
+:ADDBF^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x2A & R1 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondSym & RegArithCond & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -581,15 +604,16 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCond; # force the condition evaluation before the move
-	branchCond = !RegAddCond;
+	arithAdd(R1, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
-	R2dst = R1 + R2;
+	R2dst = condResult;
 }
 
 ###########################
-:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 & $(COMMON)
+:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegArithCond & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -598,13 +622,15 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCondI; # force the condition evaluation before the move
-	branchCond = RegAddCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithAdd(imm, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
-	R2dst = R2 + sext(highlse5);
+	R2dst = condResult;
 }
 
-:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 & $(COMMON)
+:ADDIBT^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x29 & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegArithCond & RegAddCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -613,14 +639,16 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCondI; # force the condition evaluation before the move
-	branchCond = RegAddCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithAdd(imm, R2);
+	build RegArithCond;
+	branchCond = RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
-	R2dst = R2 + sext(highlse5);
+	R2dst = condResult;
 }
 
-:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegAddCondI & RegAddCondSym & n=0 & $(COMMON)
+:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & RegArithCond & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -629,13 +657,15 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCondI; # force the condition evaluation before the move
-	branchCond = ! RegAddCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithAdd(imm, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
-	R2dst = R2 + sext(highlse5);
+	R2dst = condResult;
 }
 
-:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegAddCondI & RegAddCondSym & n=1 & $(COMMON)
+:ADDIBF^RegAddCondSym^nullifyForBranch highlse5,R2dst,branchTarget2W	is opfam=0x2B & highlse5 & R2 & R2dst & nullifyForBranch & branchTarget2W & displacement2W & RegArithCond & RegAddCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -644,11 +674,13 @@ with : phase=1 {
 	  globalset(inst_next, branchCouldBeNullified);
 	]
 {
-	build RegAddCondI; # force the condition evaluation before the move
-	branchCond = ! RegAddCondI;
+	imm:$(REGSIZE) = sext(highlse5);
+	arithAdd(imm, R2);
+	build RegArithCond;
+	branchCond = !RegArithCond;
 	branchExecuted = 1;
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
-	R2dst = R2 + sext(highlse5);
+	R2dst = condResult;
 }
 	
 #######################################
@@ -787,161 +819,174 @@ define pcodeop getCurrentSpace;
 #######################################
 define pcodeop trap;
 
-:ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x18 & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	pswCB = carry(R1,R2);
-	RT = R1 + R2;
-	build AddCondNullify;
+# Set unitResult and unitCarries for the unit conditions from the sum
+# a + b. The carry into bit i of a sum is bit i of a ^ b ^ sum.
+macro unitAdd(a, b) {
+	unitResult = a + b;
+	unitCarries = ((a ^ b ^ unitResult) >> 4) | (zext(carry(a, b)) << 28);
+}
+
+:ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x18 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithAdd(R1, R2);
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
 }
 
 # this version intentionally does not set the carry bits
-:ADD^",L"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x28 & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	RT = R1 + R2;
-	build AddCondNullify;
+:ADD^",L"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x28 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithAdd(R1, R2);
+	build ArithCondNullify;
+	RT = condResult;
 }
 
-:ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x38 & m=0 & R1 & R2 & RT & AddCondSym & AddCondNullify {
-	if (scarry(R1,R2)) goto <TRAP>;
-	pswCB = carry(R1,R2);
-	RT = R1 + R2;
-	goto <DONE>;
-	<TRAP>
-	trap();
-	<DONE>
-	build AddCondNullify;
-}
-
-:ADD^",C"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1C & m=0 & R1 & R2 & RT & AddCondSym & AddCondNullify {
-	local partialSum = R2 + zext(pswCB);
-	pswCB = carry(partialSum, R1);
-	RT = partialSum + R1;
-	build AddCondNullify;
-}
-
-# TODO This may need some work
-:ADD^",CO"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3C & m=0 & R1 & R2 & RT & AddCondSym & AddCondNullify {
-	local partialSum = R2 + zext(pswCB);
-	partialCarry:1 = carry(R2, zext(pswCB));
-	partialOverflow:1 = scarry(R2, zext(pswCB));
-	takeTrap:1 = partialOverflow == 0x1:1; 
-	if (takeTrap) goto <TRAP>;
-	RT = partialSum + R1;
-	finalCarry:1 = carry(partialSum, R1);
-	finalOverflow:1 = scarry(partialSum, R1);
-	takeTrap = finalOverflow == 0x1:1;
-	if (takeTrap) goto <TRAP>;
-	goto <DONE>;
-	<TRAP>
-	trap();
-	<DONE>
-	pswCB = partialCarry ^ finalCarry;
-	build AddCondNullify;
-}
-
-:SH1ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x19 & m=0 & R1 & R2 & RT & AddCond & AddCondSym & AddCondNullify {
-	local shiftedR1 = R1 << 1;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH1ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x29 & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 1;
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH1ADDO^SEDCondSym R1,R2,RT	is opfam=0x02 & op=0x39 & m=0 & R1 & R2 & RT & AddCondNullify & SEDCondSym {
-	local shiftedR1 = R1 << 1;
-	if (scarry(shiftedR1, R2)) goto <TRAP>;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	goto <DONE>;
-	<TRAP>
-	trap();
-	<DONE>
-	build AddCondNullify;
-}
-
-:SH2ADD^SEDCondSym R1,R2,RT	is opfam=0x02 & op=0x1A & m=0 & R1 & R2 & RT & AddCondNullify & SEDCondSym {
-	local shiftedR1 = R1 << 2;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH2ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2A & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 2;
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH2ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3A & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 2;
-	if (scarry(shiftedR1, R2)) goto <TRAP>;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	goto <DONE>;
-	<TRAP>
-	trap();
-	<DONE>
-	build AddCondNullify;
-}
-
-:SH3ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 3;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH3ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 3;
-	RT = shiftedR1 + R2;
-	build AddCondNullify;
-}
-
-:SH3ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3B & m=0 & R1 & R2 & RT & AddCondNullify & AddCondSym {
-	local shiftedR1 = R1 << 3;
-	if (scarry(shiftedR1, R2)) goto <TRAP>;
-	pswCB = carry(shiftedR1,R2);
-	RT = shiftedR1 + R2;
-	goto <DONE>;
-	<TRAP>
-	trap();
-	<DONE>
-	build AddCondNullify;
-}
-
-:SUB^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x10 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
-	pswCB = ! (R1 < R2);
-	RT = R1 - R2;
-	build CSCondNullify;
-}
-
-:SUB",O"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x30 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
-	if (sborrow(R1,R2)) goto <TRAP>;
-	pswCB = ! (R1 < R2);
-	RT = R1 - R2;
-	build CSCondNullify;
+:ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x38 & m=0 & R1 & R2 & RT & AddCondSym & ArithCondNullify {
+	arithAdd(R1, R2);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
 }
 
-:SUB",B"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x14 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
-	right:$(REGSIZE) = ~R2 + zext(pswCB);
-	pswCB =  ! (R1 < right); #! carry(R1, right);
-	RT = R1 + right;
-	build CSCondNullify;
+:ADD^",C"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1C & m=0 & R1 & R2 & RT & AddCondSym & ArithCondNullify {
+	arithAddCarry(R1, R2, pswCB);
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
 }
 
-:SUB",BO"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x34 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
-	right:$(REGSIZE) = ~R2 + zext(pswCB);
-	if (sborrow(R1,right)) goto <TRAP>;
-	pswCB =  ! (R1 < right);
-	RT = R1 + right;
-	build CSCondNullify;
+:ADD^",CO"^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3C & m=0 & R1 & R2 & RT & AddCondSym & ArithCondNullify {
+	arithAddCarry(R1, R2, pswCB);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
+	goto <DONE>;
+	<TRAP>
+	trap();
+	<DONE>
+}
+
+:SH1ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x19 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 1, R2);
+	setCarryBorrow();
+	shAddCarry(R1, 1);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH1ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x29 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 1, R2);
+	shAddCarry(R1, 1);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH1ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x39 & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 1, R2);
+	if (condOverflow) goto <TRAP>;
+	setCarryBorrow();
+	shAddCarry(R1, 1);
+	build ArithCondNullify;
+	RT = condResult;
+	goto <DONE>;
+	<TRAP>
+	trap();
+	<DONE>
+}
+
+:SH2ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1A & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 2, R2);
+	setCarryBorrow();
+	shAddCarry(R1, 2);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH2ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2A & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 2, R2);
+	shAddCarry(R1, 2);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH2ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3A & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 2, R2);
+	if (condOverflow) goto <TRAP>;
+	setCarryBorrow();
+	shAddCarry(R1, 2);
+	build ArithCondNullify;
+	RT = condResult;
+	goto <DONE>;
+	<TRAP>
+	trap();
+	<DONE>
+}
+
+:SH3ADD^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x1B & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 3, R2);
+	setCarryBorrow();
+	shAddCarry(R1, 3);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH3ADDL^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x2B & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 3, R2);
+	shAddCarry(R1, 3);
+	build ArithCondNullify;
+	RT = condResult;
+}
+
+:SH3ADDO^AddCondSym R1,R2,RT	is opfam=0x02 & op=0x3B & m=0 & R1 & R2 & RT & ArithCondNullify & AddCondSym {
+	arithShAdd(R1, 3, R2);
+	if (condOverflow) goto <TRAP>;
+	setCarryBorrow();
+	shAddCarry(R1, 3);
+	build ArithCondNullify;
+	RT = condResult;
+	goto <DONE>;
+	<TRAP>
+	trap();
+	<DONE>
+}
+
+:SUB^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x10 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
+	arithSub(R1, R2);
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
+}
+
+:SUB",O"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x30 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
+	arithSub(R1, R2);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
+	goto <DONE>;
+	<TRAP>
+	trap();
+	<DONE>
+}
+
+:SUB",B"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x14 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
+	arithAddCarry(R1, ~R2, pswCB);
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
+}
+
+:SUB",BO"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x34 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
+	arithAddCarry(R1, ~R2, pswCB);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
@@ -950,56 +995,57 @@ define pcodeop trap;
 
 # subtract and trap on condition
 # this instruction does not have a nullify form
-:SUB",T"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x13 & m=0 & R1 & R2 & RT & CSCondSym & CSCond {
-	pswCB = ! (R1 < R2);
-	RT = R1 - R2;
-	build CSCond;
-	if (CSCond) goto <TRAP>;
+:SUB",T"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x13 & m=0 & R1 & R2 & RT & CSCondSym & ArithCond {
+	arithSub(R1, R2);
+	build ArithCond;
+	if (ArithCond) goto <TRAP>;
+	setCarryBorrow();
+	RT = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
 }
 
-:SUB",TO"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x33 & m=0 & R1 & R2 & RT & CSCondSym & CSCond {
-	if (sborrow(R1,R2)) goto <TRAP>;
-	pswCB = ! (R1<R2);
-	RT = R1 - R2;
-	build CSCond;
-	if (CSCond) goto <TRAP>;
+:SUB",TO"^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x33 & m=0 & R1 & R2 & RT & CSCondSym & ArithCond {
+	arithSub(R1, R2);
+	if (condOverflow) goto <TRAP>;
+	build ArithCond;
+	if (ArithCond) goto <TRAP>;
+	setCarryBorrow();
+	RT = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
 }
 
-# R1 is partial remainder, R2 is denominator, RT is updated partial remainder
-:DS^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x11 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify {
+# R1 is partial remainder, R2 is denominator, RT is updated partial remainder.
+# The condition is that of the add or subtract that PSW[V] selects.
+:DS^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x11 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify {
 	local origR2 = R2;
 	left:$(REGSIZE) =  (R1 << 1) | zext(pswCB);
 	if (pswV) goto <MINUS>;
-		right:$(REGSIZE) = R2;
+		arithAdd(left, R2);
 		goto <CONTINUE>;
 	<MINUS>
-		right = ~R2 + 1;
-	<CONTINUE>	
+		arithAddCarry(left, ~R2, 1:1);
+	<CONTINUE>
 
-	RT = left + right;
+	build ArithCondNullify;
+	setCarryBorrow();
+	RT = condResult;
 
-	pswCB = carry(left,right);
-
-# handle pswV -- I'm using R2 here, the book says R2, but non-restoring algorithms usually use R1, so
-# this could be the error.
-	shiftBit:1 = ((origR2 >> 31) & 0x1) == 1;
-	pswV = pswCB ^ shiftBit;
-		
-# handle nullification -- TODO This condition is special and the stock CSCondNullify won't work -- broken -- see page 5-103
-	build CSCondNullify;
+	# PSW[V] <- xor(carry_borrows{0}, GR[r2]{0}): the carry out of the
+	# leftmost digit xor the sign of the divisor. It selects whether the
+	# next step adds or subtracts.
+	pswV = pswCB ^ (origR2 s< 0);
 }
 
-:CMPCLR^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x22 & m=0 & R1 & R2 & RT & CSCondSym & CSCondNullify
+:CMPCLR^CSCondSym R1,R2,RT	is opfam=0x02 & op=0x22 & m=0 & R1 & R2 & RT & CSCondSym & ArithCondNullify
 {
-	build CSCondNullify; # must do this before setting register
+	arithSub(R1, R2);
+	build ArithCondNullify;
 	RT = 0;
 }
 
@@ -1032,52 +1078,56 @@ define pcodeop trap;
 }
 
 :UXOR^UnitCondSym R1,R2,RT		is opfam=0x02 & op=0x0E & m=0 & R1 & R2 & RT & UnitCondSym & UnitCondNullify {
-	RT = R1 ^ R2;
+	unitResult = R1 ^ R2;
+	unitCarries = 0;
+	RT = unitResult;
 	build UnitCondNullify;
 }
 
 :UADDCM^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x26 & m=0 & R1 & R2 & RT & UnitCondSym & UnitCondNullify {
-	RT = R1 + ~R2;
+	unitAdd(R1, ~R2);
+	RT = unitResult;
 	build UnitCondNullify;
-	
 }
 
 :UADDCMT^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x27 & m=0 & R1 & R2 & RT & UnitCond & UnitCondSym {
+	unitAdd(R1, ~R2);
+	build UnitCond;
 	if (UnitCond) goto <TRAP>;
-	RT = R1 + ~R2;
+	RT = unitResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
 }
 
-:ADDI^AddCondSym lse11,R2,R1dst	is opfam=0x2D & bit11=0 & lse11 & R2 & R1dst & AddCondSym & AddCondI11Nullify {
-	tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	R1dst = R2 + lse11;
-	pswCB = carry(tmp,lse11);
-	build AddCondI11Nullify;
+:ADDI^AddCondSym lse11,R2,R1dst	is opfam=0x2D & bit11=0 & lse11 & R2 & R1dst & AddCondSym & ArithCondNullify {
+	arithAdd(lse11, R2);
+	build ArithCondNullify;
+	setCarryBorrow();
+	R1dst = condResult;
 }
 
 # PA1.1 this is ADDIO, PA2.0 is ADDI,TSV (trap on signed overflow)
-:ADDI^",TSV"^AddCondSym lse11,R2,R1dst	is opfam=0x2D & bit11=1 & lse11 & R2 & R1dst & AddCondSym & AddCondI11Nullify {
-        tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	if (scarry(R2, lse11) == 1:1) goto <TRAP>;
-	R1dst = R2 + lse11;
-	pswCB = carry(tmp,sext(lse11));
+:ADDI^",TSV"^AddCondSym lse11,R2,R1dst	is opfam=0x2D & bit11=1 & lse11 & R2 & R1dst & AddCondSym & ArithCondNullify {
+	arithAdd(lse11, R2);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
-	build AddCondI11Nullify;
 }
 
 # PA11 this is ADDIT, PA2.0 this is ADDI,TC
-:ADDI^",TC"^AddCondSym lse11,R2,R1dst	is opfam=0x2C & bit11=0 & lse11 & R2 & R1dst & AddCondSym & AddCondI11 {
-        tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	R1dst = R2 + lse11;
-	build AddCondI11;
-	if (AddCondI11) goto <TRAP>;
-	pswCB = carry(tmp,lse11);
+:ADDI^",TC"^AddCondSym lse11,R2,R1dst	is opfam=0x2C & bit11=0 & lse11 & R2 & R1dst & AddCondSym & ArithCond {
+	arithAdd(lse11, R2);
+	build ArithCond;
+	if (ArithCond) goto <TRAP>;
+	setCarryBorrow();
+	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
@@ -1085,40 +1135,42 @@ define pcodeop trap;
 }
 
 # PA11 this is ADDITO, PA2.0 this is ADDI,TC,TSV
-:ADDI^",TC,TSV"^AddCondSym lse11,R2,R1dst	is opfam=0x2C & bit11=1 & lse11 & R2 & R1dst & AddCondSym & AddCondI11 {
-        tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	R1dst = R2 + lse11;
-	build AddCondI11;
-	if (AddCondI11) goto <TRAP>;
-	if (scarry(tmp, lse11) == 1:1) goto <TRAP>;
-	pswCB = carry(tmp,lse11);
+:ADDI^",TC,TSV"^AddCondSym lse11,R2,R1dst	is opfam=0x2C & bit11=1 & lse11 & R2 & R1dst & AddCondSym & ArithCond {
+	arithAdd(lse11, R2);
+	build ArithCond;
+	if (ArithCond) goto <TRAP>;
+	if (condOverflow) goto <TRAP>;
+	setCarryBorrow();
+	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
 }
 
-:SUBI^CSCondSym lse11,R2,R1dst		is opfam=0x25 & bit11=0 & lse11 & R2 & R1dst & CSCondI11Nullify & CSCondSym {
-        tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	R1dst = lse11 - R2;
-	pswCB = !(lse11 < tmp);
-	build CSCondI11Nullify;
+:SUBI^CSCondSym lse11,R2,R1dst		is opfam=0x25 & bit11=0 & lse11 & R2 & R1dst & ArithCondNullify & CSCondSym {
+	arithSub(lse11, R2);
+	build ArithCondNullify;
+	setCarryBorrow();
+	R1dst = condResult;
 }
 
-:SUBI^",TSV"^CSCondSym lse11,R2,R1dst	is opfam=0x25 & bit11=1 & lse11 & R2 & R1dst & CSCondI11 & CSCondSym & CSCondI11Nullify {
-        tmp:$(REGSIZE) = R2; # Don't clobber the original value, when R1 is the same as R2
-	if (sborrow(lse11, R2) == 1:1) goto <TRAP>;
-	R1dst = lse11 - R2;
-	pswCB = !(lse11 < tmp);
+:SUBI^",TSV"^CSCondSym lse11,R2,R1dst	is opfam=0x25 & bit11=1 & lse11 & R2 & R1dst & CSCondSym & ArithCondNullify {
+	arithSub(lse11, R2);
+	if (condOverflow) goto <TRAP>;
+	build ArithCondNullify;
+	setCarryBorrow();
+	R1dst = condResult;
 	goto <DONE>;
 	<TRAP>
 	trap();
 	<DONE>
-	build CSCondI11Nullify;
 }
 
-:CMPICLR^CSCondSym lse11,R2,R1dst	is opfam=0x24 & bit11=0 & lse11 & R2 & R1dst & CSCondI11Nullify & CSCondSym
+:CMPICLR^CSCondSym lse11,R2,R1dst	is opfam=0x24 & bit11=0 & lse11 & R2 & R1dst & ArithCondNullify & CSCondSym
 {
+	arithSub(lse11, R2);
+	build ArithCondNullify;
 	R1dst = 0;
 }
 
@@ -1284,8 +1336,22 @@ define pcodeop trap;
 
 
 # BCD instructions
-:DCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2E & R2 & reg1=0x0 & RT & UnitCond & UnitCondSym { } # TODO
-:IDCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2F & R2 & reg1=0x0 & RT & UnitCond & UnitCondSym { } # TODO
+:DCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2E & R2 & reg1=0x0 & RT & UnitCondSym & UnitCondNullify {
+	# Subtract 6 from each digit whose C/B bit is 0. The carry conditions
+	# test the digit carries of this subtraction, R2 + ~correction + 1.
+	local correction = (~pswCBDigits & 0x11111111) * 6;
+	unitResult = R2 - correction;
+	unitCarries = ((R2 ^ ~correction ^ unitResult) >> 4) | (zext(!(R2 < correction)) << 28);
+	RT = unitResult;
+	build UnitCondNullify;
+}
+
+:IDCOR^UnitCondSym R2,RT		is opfam=0x02 & op=0x2F & R2 & reg1=0x0 & RT & UnitCondSym & UnitCondNullify {
+	# Add 6 to each digit whose C/B bit is 1
+	unitAdd(R2, (pswCBDigits & 0x11111111) * 6);
+	RT = unitResult;
+	build UnitCondNullify;
+}
 
 #################################################
 # System Instructions

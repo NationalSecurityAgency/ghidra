@@ -4,8 +4,6 @@
 
 # Known Issues:
 #  The branch target is annotated onto the line following the branch, not the branch itself
-#  There may still be issues with condition codes and instructions like INST,=,N r2,r3,r2 that write back into one of the input argument registers.
-#    The condition uses the final value in r2, when it should use the value passed in to r2 before the operation.
 #  The implementation of space registers is incorrect. There should really be a 64 bit address space with space register in the upper 64 bits.
 #     Right now, the space register is either ignored or else just added to the base address.
 #  Some of the pcode could be simplified.
@@ -135,6 +133,20 @@ define register offset=0x6000 size=4 [
 # special hidden registers to support the nullify and delay slot features of PA-RISC
 define register offset=0x7000 size=1 [nullifyCond nullifyNextCond branchCond branchExecuted]; 
 define register offset=0x7100 size=4 [branchIndDest nullifyCondResult];
+# Result and digit carries of a unit operation, for the unit conditions.
+# Bit 4i of unitCarries is the carry out of the 4-bit digit at bits 4i+3..4i.
+define register offset=0x7108 size=4 [unitResult unitCarries];
+# Result, carry and signed overflow of an arithmetic operation, for the
+# arithmetic conditions.
+define register offset=0x7110 size=$(REGSIZE) [condResult];
+define register offset=0x7004 size=1 [condCarry condOverflow];
+# Whether the operands compare signed less than, for conditions 2 and 3
+define register offset=0x7006 size=1 [condLess];
+# The carries out of the eight 4-bit digits of an arithmetic operation,
+# and the PSW C/B bits that the last carry/borrow update left. Bit 4i
+# holds the carry out of the digit at bits 4i+3..4i, so bit 28 is the
+# carry out of the whole word, which pswCB holds as well.
+define register offset=0x7118 size=4 [condDigitCarries pswCBDigits];
 
 define register offset=0x7200 size=12   contextreg;
 define context contextreg
@@ -364,7 +376,7 @@ attach names [ RegUnitCondSym ] [
 ];
 
 attach names [ InvUnitCondSym ] [
-	"" _ ",NBZ" ",NHZ" ",NDC" _ ",NBC" ",NHC"
+	",TR" _ ",NBZ" ",NHZ" ",NDC" _ ",NBC" ",NHC"
 ];
 
 attach names [ RegLogicCondSym ] [
@@ -372,7 +384,7 @@ attach names [ RegLogicCondSym ] [
 ];
 
 attach names [ InvLogicCondSym ] [
-	"" ",<>" ",>=" ",>" _ _ _ ",EV"
+	",TR" ",<>" ",>=" ",>" _ _ _ ",EV"
 ];
 
 # Table 5-4
@@ -381,7 +393,7 @@ attach names [ RegAddCondSym ] [
 ];
 
 attach names [ InvAddCondSym ] [
-	"" ",<>" ",>=" ",>" ",UV" ",VNZ" ",NSV" ",EV"
+	",TR" ",<>" ",>=" ",>" ",UV" ",VNZ" ",NSV" ",EV"
 ];
 
 attach names [ RegCSCondSym ] [
@@ -389,7 +401,7 @@ attach names [ RegCSCondSym ] [
 ];
 
 attach names [ InvCSCondSym ] [
-	"" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
+	",TR" ",<>" ",>=" ",>" ",>>=" ",>>" ",NSV" ",EV"
 ];
 
 # the different tests used by the FTEST instruction
@@ -1412,8 +1424,7 @@ lse21: off				is im21less0 & bit0 & im21_1_12 & im21_12_14 & im21_14_16 & im21_1
 #
 #lse11: immed				is im11 & bit0
 lse11: immed				is im11less0 & bit0
-	[ immed	= ((-1*bit0) << 10) | im11less0; temp32 = immed; ]
-#	[ immed = (bit0 * 0xFFFFFFFFFFFFFC00) | ( (im11 >> 1) & 0x3FF ); temp32 = immed; ]
+	[ immed	= ((-1*bit0) << 10) | im11less0; ]
 	{ temp:4 = immed; export temp; }
 
 OFF_BASE_14: lse14^SRRB	is lse14 & SRRB & SPCBASE { temp:$(ADDRSIZE) = SPCBASE + sext(lse14); export temp; }
@@ -1482,11 +1493,12 @@ BBCond:					is c=6 & R1 & bboffset { tmp:1 = ((R1 >> (31-bboffset)) & 0x1) == 0 
 # unit conditions for checking byte ranges within a word
 #
 RegUnitCond:		is c=0 { export 0:1; } # never
-RegUnitCond:		is c=2 & RT  { tmp:1 = (RT:1 == 0) || ((RT:2 & 0xFF00) == 0) || ((RT:3 & 0xFF0000) == 0) || ((RT & 0xFF000000) == 0)   ; export tmp; } # some byte zero
-RegUnitCond:		is c=3 & RT { tmp:1 = ((RT:2 & 0xFFFF) == 0) || ((RT & 0xFFFF0000) == 0) ; export tmp; } # some halfword zero
-RegUnitCond:		is c=4  { export 0:1; } # some digit carry -- TODO FIGURE OUT BCD
-RegUnitCond:		is c=6  { export 0:1; } # some byte carry -- TODO BCD
-RegUnitCond:		is c=7  { export 0:1; } # some halfword carry -- TODO BCD
+# These test unitResult and unitCarries, which the instruction sets first.
+RegUnitCond:		is c=2 { tmp:1 = ((unitResult & 0xFF) == 0) || ((unitResult & 0xFF00) == 0) || ((unitResult & 0xFF0000) == 0) || ((unitResult & 0xFF000000) == 0); export tmp; } # some byte zero
+RegUnitCond:		is c=3 { tmp:1 = ((unitResult & 0xFFFF) == 0) || ((unitResult & 0xFFFF0000) == 0); export tmp; } # some halfword zero
+RegUnitCond:		is c=4 { tmp:1 = (unitCarries & 0x11111111) != 0; export tmp; } # some digit carry
+RegUnitCond:		is c=6 { tmp:1 = (unitCarries & 0x10101010) != 0; export tmp; } # some byte carry
+RegUnitCond:		is c=7 { tmp:1 = (unitCarries & 0x10001000) != 0; export tmp; } # some halfword carry
 
 UnitCond: ""			is RegUnitCond & fv=0 { export RegUnitCond; }
 UnitCond: ""			is RegUnitCond & fv=1 { tmp:1 = ! RegUnitCond; export tmp; }
@@ -1501,139 +1513,92 @@ UnitCondSym: RegUnitCondSym	is RegUnitCondSym & fv=0 { }
 UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 
 #
+##### The arithmetic conditions from table 5-1 on page 5-3
+#
+# An arithmetic instruction first sets condResult, condCarry and
+# condOverflow (see the arithAdd macros) and then builds the condition,
+# so the condition sees its operands even when the target is one of them.
+# Condition 2 is the leftmost bit of the result xor signed overflow, which
+# for a subtract is simply opd1 < opd2; condLess holds it in that form.
+# For subtracts, condCarry is the carry out of opd1 + ~opd2 + 1, which is
+# 1 when there is no borrow. Conditions 4 and 5 then read the same way
+# for adds and subtracts.
+
+# Set condResult, condCarry, condOverflow and condLess from a + b, or
+# a + b + cin.
+macro arithAdd(a, b) {
+	condResult = a + b;
+	condCarry = carry(a, b);
+	condOverflow = scarry(a, b);
+	condLess = (condResult s< 0) != condOverflow;
+	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
+}
+
+macro arithSub(a, b) {
+	condResult = a - b;
+	condCarry = !(a < b);
+	condOverflow = sborrow(a, b);
+	condLess = a s< b;
+	condDigitCarries = ((a ^ ~b ^ condResult) >> 4) | (zext(condCarry) << 28);
+}
+
+macro arithAddCarry(a, b, cin) {
+	condResult = a + b + zext(cin);
+	condCarry = carry(a, b) || carry(a + b, zext(cin));
+	condOverflow = ((a ^ condResult) & (b ^ condResult)) s< 0;
+	condLess = (condResult s< 0) != condOverflow;
+	condDigitCarries = ((a ^ b ^ condResult) >> 4) | (zext(condCarry) << 28);
+}
+
+# Update the PSW C/B bits from the last arithmetic operation
+macro setCarryBorrow() {
+	pswCB = condCarry;
+	pswCBDigits = condDigitCarries;
+}
+
+# In a shift and add, the shift takes part in the overflow conditions. A
+# bit shifted out of a that differs from the sign after the shift is a
+# signed overflow, and one that is 1 an unsigned overflow. PSW[C/B] gets
+# the carry of the addition alone, so shAddCarry comes after it is set.
+macro arithShAdd(a, k, b) {
+	arithAdd(a << k, b);
+	condOverflow = condOverflow || (((a << k) s>> k) != a);
+	condLess = (condResult s< 0) != condOverflow;
+}
+
+macro shAddCarry(a, k) {
+	condCarry = condCarry || ((a >> (32 - k)) != 0);
+}
+
+RegArithCond:		is c=0 { export 0:1; } # never
+RegArithCond:		is c=1 { tmp:1 = condResult == 0; export tmp; } # all bits are 0
+RegArithCond:		is c=2 { export condLess; } # leftmost bit xor signed overflow
+RegArithCond:		is c=3 { tmp:1 = (condResult == 0) || condLess; export tmp; }
+RegArithCond:		is c=4 { tmp:1 = !condCarry; export tmp; } # no unsigned overflow (adds), borrow (subtracts)
+RegArithCond:		is c=5 { tmp:1 = (condResult == 0) || !condCarry; export tmp; }
+RegArithCond:		is c=6 { tmp:1 = condOverflow; export tmp; } # signed overflow
+RegArithCond:		is c=7 { tmp:1 = (condResult & 1) != 0; export tmp; } # rightmost bit is 1
+
+ArithCond:		is RegArithCond & fv=0 { export RegArithCond; }
+ArithCond:		is RegArithCond & fv=1 { tmp:1 = !RegArithCond; export tmp; }
+
+ArithCondNullify:	is c=0 & fv=0 { }
+ArithCondNullify:	is ArithCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
+{
+	nullifyNextCond = ArithCond;
+}
+
+#
 ##### The Add Conditions from table 5-4 on page 5-5
 #
-RegAddCond: 		is c = 0 { export 0:1; } # never
-RegAddCond: 		is c = 1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
-RegAddCond: 		is c = 2 & R1 & R2 { tmp:1 = (R1 s< -R2) ; export tmp; } # signed less than negative of R2 
-RegAddCond: 		is c = 3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than or equal to R2
-RegAddCond: 		is c = 4 & R1 & R2 { tmp:1 = ! carry(R1,R2) ; export tmp; } # unsigned sum does not overflow
-RegAddCond: 		is c = 5 & R1 & R2 { tmp:1 = (R1 + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-RegAddCond: 		is c = 6 & R1 & R2 { tmp:1 = scarry(R1,R2); export tmp; } # signed sum overflows
-RegAddCond: 		is c = 7 & R1 & R2 { tmp:1 = ((R1+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-AddCond:			is RegAddCond & fv=0 { export RegAddCond; }
-AddCond:			is RegAddCond & fv=1 { tmp:1 = ! RegAddCond; export tmp; }
-
-AddCondNullify:	is c=0 & fv=0 { }
-AddCondNullify:	is AddCond [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = AddCond;
-}
-
 AddCondSym: RegAddCondSym	is RegAddCondSym & fv=0 { }
 AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
-
-RegAddCondI: 		is c = 0 { export 0:1; } # never
-RegAddCondI: 		is c = 1 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val == -R2) ; export tmp; } # equal to negated
-RegAddCondI: 		is c = 2 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s< -R2) ; export tmp; } # signed less than negated R2 
-RegAddCondI: 		is c = 3 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s<= -R2) ; export tmp; } # signed less than or equal to R2
-RegAddCondI: 		is c = 4 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
-RegAddCondI: 		is c = 5 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-RegAddCondI: 		is c = 6 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
-RegAddCondI: 		is c = 7 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ((val+R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-
-# Some notes-
-#	lse11 is derived from an 11-bit immediate, so we need to take 2 bytes, not 1 byte as in the original coding
-# 	R2 must sometimes be negated before the comparison, as per the manual, Table 5-4
-#	The arithmetic comparison must be performed on a larger size temp than the original, so that negating 0x80000000 works correctly
-#	temp32 is used because the value of lse11 in the pcode does not flow so well to here - maybe a compiler bug?
-#
-
-RegAddCondI11: is c = 0 { export 0:1; } # never
-
-RegAddCondI11: is temp32 & c = 1 & lse11 & R2 {
-                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val == -tmp_R2) ; export tmp; } # equal
-
-RegAddCondI11: is temp32 & c = 2 & lse11 & R2 {
-                                val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val s< -tmp_R2) ; export tmp; } # signed less than negative of R2
-
-RegAddCondI11: is temp32 & c = 3 & lse11 & R2 {
-				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = (val s<= -tmp_R2) ; export tmp; } # signed less than or equal to R2
-
-RegAddCondI11: is temp32 & c = 4 & lse11 & R2 {
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
-
-RegAddCondI11: is temp32 & c = 5 & lse11 & R2 {
-				# Don't need 64-bit arithmetic here
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
-
-RegAddCondI11: is temp32 & c = 6 & lse11 & R2 {
-				val:$(REGSIZE) = sext(temp32:2);
-				tmp:1 = scarry(val,R2); export tmp; } # signed sum overflows
-
-RegAddCondI11: is temp32 & c = 7 & lse11 & R2 {
-				val:8 = sext(temp32:2); tmp_R2:8 = sext(R2);
-				tmp:1 = ((val+tmp_R2) & 0x1) == 0x1 ; export tmp; } # sum is odd
-
-AddCondI11:		is RegAddCondI11 & fv=0 { export RegAddCondI11; }
-AddCondI11:		is RegAddCondI11 & fv=1 { temp:1 = ! RegAddCondI11; export temp; }
-
-AddCondI11Nullify:	is c=0 & fv=0 { }
-AddCondI11Nullify:	is AddCondI11 [ nullifyEnable=1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = AddCondI11;
-}
 
 #
 #### Compare / Subtract Instructions
 #
-RegCSCond: 		is c=0 & R1 & R2 { export 0:1; }  # never
-RegCSCond: 		is c=1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
-RegCSCond: 		is c=2 & R1 & R2 { tmp:1 = (R1 s< R2) ; export tmp; } # signed less than
-RegCSCond: 		is c=3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than equal
-RegCSCond: 		is c=4 & R1 & R2 { tmp:1 = (R1 < R2) ; export tmp; } # unsigned less than 
-RegCSCond: 		is c=5 & R1 & R2 { tmp:1 = (R1 <= R2) ; export tmp; } # unsigned less than equal
-RegCSCond: 		is c=6 & R1 & R2 { tmp:1 = sborrow(R1,R2) ; export tmp; } # signed minus overflows (borrows)
-RegCSCond: 		is c=7 & R1 & R2 { tmp:1 = ((R1 - R2) & 0x1) == 1 ; export tmp; } # odd
-
-CSCond: 	is fv=0 & RegCSCond { export RegCSCond; }
-CSCond: 	is fv=1 & RegCSCond { tmp:1 = ! RegCSCond; export tmp; }
-
-CSCondNullify:	is c=0 & fv=0 { }
-CSCondNullify:	is CSCond [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = CSCond;
-}
-
 CSCondSym: RegCSCondSym	is RegCSCondSym & fv=0 { }
 CSCondSym: InvCSCondSym	is InvCSCondSym & fv=1 { }
-
-# The Compare or Subtract conditions compared with 5 bit immediates
-# This is used in the COMIB[TF] instructions. The inverted versions are never used.
-RegCSCondI: 		is  c=0 & R2 & highlse5 { export 0:1; }  # never
-RegCSCondI: 		is  c=1 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val == R2) ; export tmp; } # equal
-RegCSCondI: 		is  c=2 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s< R2) ; export tmp; } # signed less than
-RegCSCondI: 		is  c=3 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
-RegCSCondI: 		is  c=5 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
-RegCSCondI: 		is  c=7 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
-
-# The Compare or Subtract conditions compared with 11 bit immediates. These are used with the SUBI[O] and COMICLR instructions. Both regular and inverted forms are used.
-RegCSCondI11: 		is  c=0 & R2 & lse11 { export 0:1; }  # never
-RegCSCondI11: 		is  c=1 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val == R2) ; export tmp; } # equal
-RegCSCondI11: 		is  c=2 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s< R2) ; export tmp; } # signed less than
-RegCSCondI11: 		is  c=3 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
-RegCSCondI11: 		is  c=5 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
-RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
-RegCSCondI11: 		is  c=7 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
-
-CSCondI11:		is RegCSCondI11 & fv=0 { export RegCSCondI11; }
-CSCondI11:		is RegCSCondI11 & fv=1 { temp:1 = ! RegCSCondI11; export temp; }
-
-CSCondI11Nullify:	is c=0 & fv=0 { }
-CSCondI11Nullify:	is CSCondI11 [ nullifyEnable = 1; globalset(inst_next, nullifyEnable); ]
-{
-	nullifyNextCond = CSCondI11;
-}
 
 #
 #### Logical Conditions
