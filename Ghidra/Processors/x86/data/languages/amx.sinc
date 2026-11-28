@@ -1,0 +1,39 @@
+
+:TILEZERO tmmreg is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0x49; tmmreg ... { tmmreg = 0; }
+
+define pcodeop amx_store_tile;
+:TILESTORED Mem, tmmreg is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { *:1 Mem = amx_store_tile(tmmreg); }
+
+define pcodeop amx_release_tile;
+:TILERELEASE is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0x49; byte=0xC0 { amx_release_tile(); }
+
+define pcodeop amx_load_tile;
+:TILELOADDT1 tmmreg, Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { tmmreg = amx_load_tile(Mem); }
+:TILELOAD tmmreg, Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0); byte=0x4B; tmmreg ... & Mem { tmmreg = amx_load_tile(Mem); }
+
+define pcodeop amx_tdpbuud;
+:TDPBUUD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbuud(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbusd;
+:TDPBUSD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbusd(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbsud;
+:TDPBSUD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbsud(vexVVVV_tmm, tmmreg1); }
+define pcodeop amx_tdpbssd;
+:TDPBSSD tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5E; tmmreg1 & tmmreg { tmmreg = amx_tdpbssd(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tdpfp16ps;
+:TDPFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F2) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5C; tmmreg1 & tmmreg { tmmreg = amx_tdpfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tcmmimfp16ps;
+:TCMMIMFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x6C; tmmreg1 & tmmreg { tmmreg = amx_tcmmimfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tcmmrlfp16ps;
+:TCMMRLFP16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x6C; tmmreg1 & tmmreg { tmmreg = amx_tcmmrlfp16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tdpbf16ps;
+:TDPBF16PS tmmreg, vexVVVV_tmm, tmmreg1 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_F3) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_tmm; byte=0x5C; tmmreg1 & tmmreg { tmmreg = amx_tdpbf16ps(vexVVVV_tmm, tmmreg1); }
+
+define pcodeop amx_tile_cfg;
+:STTILECFG Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_66) & $(VEX_0F38) & $(VEX_W0); byte=0x49; reg_opcode=0 ... & Mem { *:64 Mem = amx_tile_cfg(); }
+
+define pcodeop amx_load_tile_cfg;
+:LDTILECFG Mem is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0); byte=0x49; reg_opcode=0 ... & Mem { amx_load_tile_cfg(*:64 Mem); }
