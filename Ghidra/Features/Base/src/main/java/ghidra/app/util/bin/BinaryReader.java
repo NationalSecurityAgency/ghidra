@@ -36,6 +36,9 @@ public class BinaryReader {
 
 	private static final int MAX_SANE_ARRAY_ELEMENT_COUNT = Integer.MAX_VALUE - 1024; // same as MAX_SANE_BUFFER for now
 
+	// max total size in bytes of an array or fixed length string that will be read
+	private static final int MAX_SANE_ARRAY_BYTESIZE = MAX_SANE_ARRAY_ELEMENT_COUNT; // same for now
+
 	/**
 	 * The size of a BYTE in Java.
 	 */
@@ -664,7 +667,7 @@ public class BinaryReader {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
 		}
-		byte[] bytes = readByteArray(currentIndex, charCount * charLen);
+		byte[] bytes = readByteArray(currentIndex, getSafeStringByteCount(charCount, charLen));
 		currentIndex += bytes.length;
 
 		int strLen = getLengthWithoutTrailingNullTerms(bytes, charLen);
@@ -930,7 +933,7 @@ public class BinaryReader {
 		if (charCount < 0) {
 			throw new IllegalArgumentException(String.format("Invalid charCount: %d", charCount));
 		}
-		byte[] bytes = readByteArray(index, charCount * charLen);
+		byte[] bytes = readByteArray(index, getSafeStringByteCount(charCount, charLen));
 
 		int strLen = getLengthWithoutTrailingNullTerms(bytes, charLen);
 		String result = new String(bytes, 0, strLen, charset);
@@ -1319,11 +1322,21 @@ public class BinaryReader {
 		}
 	}
 
+	private static int getSafeStringByteCount(int charCount, int charLen) throws IOException {
+		long byteCount = (long) charCount * charLen; // long math to avoid int overflow
+		if (byteCount > MAX_SANE_ARRAY_BYTESIZE) {
+			throw new IOException(
+				"Invalid string length, charCount=%d, charLen=%d".formatted(charCount, charLen));
+		}
+		return (int) byteCount;
+	}
+
 	private void ensureArrayRead(long index, int count, int elementSize) throws IOException {
 		if (count < 0 || count > MAX_SANE_ARRAY_ELEMENT_COUNT) {
 			throw new IOException("Invalid number of elements specified: " + count);
 		}
-		if (!isValidRange(index, count * elementSize)) {
+		long byteCount = (long) count * elementSize; // long math to avoid int overflow
+		if (byteCount > MAX_SANE_ARRAY_BYTESIZE || !isValidRange(index, (int) byteCount)) {
 			throw new IOException("Unable to read array at 0x%x, count=%d, size=%d".formatted(index,
 				count, elementSize));
 		}
