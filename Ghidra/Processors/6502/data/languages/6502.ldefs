@@ -11,7 +11,7 @@
             processorspec="6502.pspec"
             manualindexfile="../manuals/6502.idx"
             id="6502:LE:16:default">
-    <description>6502 Microcontroller Family</description>
+    <description>6502 Microprocessor Family</description>
     <compiler name="default" spec="6502.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="m6502"/>
   </language>
@@ -25,9 +25,22 @@
             processorspec="6502.pspec"
             manualindexfile="../manuals/65c02.idx"
             id="65C02:LE:16:default">
-    <description>65C02 Microcontroller Family</description>
+    <description>65C02 Microprocessor Family</description>
     <compiler name="default" spec="6502.cspec" id="default"/>
 	<external_name tool="IDA-PRO" name="m65c02"/>
   </language>
-  
+
+  <language processor="MELPS740"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="melps740.sla"
+            processorspec="melps740.pspec"
+            manualindexfile="../manuals/65c02.idx"
+            id="MELPS740:LE:16:default">
+    <description>Mitsubishi MELPS-740 Microprocessor Family</description>
+    <compiler name="default" spec="6502.cspec" id="default"/>
+	<external_name tool="IDA-PRO" name="m65c02"/>
+  </language>
 </language_definitions>
