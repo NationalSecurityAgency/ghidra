@@ -1644,8 +1644,8 @@ If an output varnode matches no <code>&lt;pentry&gt;</code>, then it is rejected
   <td align='right'><code>metatype</code></td>
   <td/>
   <td>(Optional) Restriction on datatype:
-  <emphasis>unknown</emphasis>, <emphasis>float</emphasis>, <emphasis>int</emphasis>, <emphasis>uint</emphasis>,
-  or <emphasis>ptr</emphasis></td>
+  <emphasis>general</emphasis>, <emphasis>float</emphasis>, <emphasis>ptr</emphasis>, <emphasis>hiddenret</emphasis>,
+  <emphasis>vector</emphasis>, or <emphasis>class1</emphasis> through <emphasis>class4</emphasis></td>
 </tr>
 <tr>
   <td align='right'><code>extension</code></td>
@@ -1700,8 +1700,8 @@ attribute restricts the type of the parameter.
 </para>
 <para>
 Metatype refers to the <emphasis>class</emphasis>
-of the datatype, independent of size: integer, unsigned integer, floating-point, or pointer. The
-default is <code>unknown</code> or no type restriction. The <code>&lt;metatype&gt;</code> can
+of the datatype, independent of size: general purpose, floating-point, or pointer, for instance. The
+default is <code>general</code> or no type restriction. The <code>&lt;metatype&gt;</code> can
 be used to split out a separate floating-point resource list for some allocation strategies.
 In the <emphasis>standard</emphasis> strategy for instance, any <code>&lt;pentry&gt;</code> that
 has the attribute <code>metatype="float"</code> is pulled out into a separate list from all the other entries.
