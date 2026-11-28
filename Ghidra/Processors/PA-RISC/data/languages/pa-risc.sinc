@@ -427,6 +427,10 @@ attach names [ fusedfmt ] [
 # This case should result in a red bookmark due to the disassembly context difference
 # These all also assume that the instruction following a branch (in the delay slot)
 # does not nullify its succeeding instruction 
+#
+# A conditional call must be the last p-code op of its constructor. When the
+# callee does not return, the decompiler drops the ops after the call, so a
+# branch around the call to a later label would have no target.
 #######################################################################################
 # no branch, no nullify
 # previous instruction was not a branch and did not nullify this instruction
@@ -441,10 +445,11 @@ attach names [ fusedfmt ] [
 	local wasNullified = nullifyCond;
 	nullifyCond = 0;
 	nullifyNextCond=0;
-	if (wasNullified) goto <skip>;
-		build instruction;
-		nullifyCond=nullifyNextCond;
-	<skip>	
+	# A nullified branch is not taken; the next instruction reads this
+	branchExecuted = 0;
+	if (wasNullified) goto inst_next;
+	build instruction;
+	nullifyCond=nullifyNextCond;
 }
 
 #
@@ -491,10 +496,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
-	if ( ! previousBranchExecuted ) goto <skip>;
-	call immediateDest;
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 1, unconditional immediate call
@@ -546,10 +550,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
-	if ( ! (previousBranchCond && previousBranchExecuted) ) goto <skip>;
-	call immediateDest;
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! (previousBranchCond && previousBranchExecuted) ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 3, conditional immediate call, (currently not used, may not exist in PA-RISC)
@@ -559,10 +562,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
-	if ( ! (previousBranchCond) ) goto <skip>;
-	call immediateDest;
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! (previousBranchCond) ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 4, unconditional indirect branch
@@ -608,10 +610,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	local previousBranchExecuted = branchExecuted;
 	branchExecuted = 0;
 	build instruction;
-	if ( ! previousBranchExecuted ) goto <skip>;
-		call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted ) goto inst_next;
+	call [branchIndDest];
 }
 
 # branchType = 5, unconditional indirect call
@@ -665,10 +666,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
         branchCond = 0;
 	branchExecuted = 0;
 	build instruction;
-	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
-	call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto inst_next;
+	call [branchIndDest];
 }
 
 # branchType = 7, conditional indirect call
@@ -679,10 +679,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	local previousBranchCond= branchCond;
 	branchCond = 0;
 	build instruction;
-	if ( ! previousBranchCond) goto <skip>;
-	call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchCond) goto inst_next;
+	call [branchIndDest];
 }
 
 #
@@ -725,10 +724,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <skip>;
 	build instruction;
 	<skip>
-	if ( ! previousBranchExecuted ) goto <nobranch>;
-	call immediateDest;
-	<nobranch>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 1, unconditional immediate call
@@ -785,10 +783,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <wasnullified>;
 	build instruction;
 	<wasnullified>
-	if ( ! (previousBranchCond && previousBranchExecuted) ) goto <nobranch>;
-	call immediateDest;
-	<nobranch>
 	nullifyCond=nullifyNextCond;
+	if ( ! (previousBranchCond && previousBranchExecuted) ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 3, conditional immediate call
@@ -801,10 +798,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <wasnullified>;
 	build instruction;
 	<wasnullified>
-	if ( ! previousBranchCond ) goto <nobranch>;
-	call immediateDest;
-	<nobranch>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchCond ) goto inst_next;
+	call immediateDest;
 }
 
 # branchType = 4, unconditional indirect branch
@@ -845,10 +841,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <wasnullified>;
 		build instruction;
 	<wasnullified>
-	if ( ! previousBranchExecuted ) goto <skip>;
-	call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted ) goto inst_next;
+	call [branchIndDest];
 }
 
 # branchType = 5, unconditional indirect call
@@ -909,10 +904,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <wasnullified>;
 		build instruction;
 	<wasnullified>
-	if ( ! previousBranchExecuted || ! previousBranchCond) goto <skip>;
-	call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchExecuted || ! previousBranchCond) goto inst_next;
+	call [branchIndDest];
 }
 
 # branchType = 7, conditional indirect call
@@ -925,10 +919,9 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 	if (nullify) goto <wasnullified>;
 		build instruction;
 	<wasnullified>
-	if ( ! previousBranchCond ) goto <skip>;
-	call [branchIndDest];
-	<skip>
 	nullifyCond=nullifyNextCond;
+	if ( ! previousBranchCond ) goto inst_next;
+	call [branchIndDest];
 }
 
 ############################################################
@@ -1728,6 +1721,9 @@ nullifyForBranch: ",N"					is n=1 [ nullifyEnable = 1; globalset(inst_next, null
 
 nullifySymForBranch:					is n=0 { }
 nullifySymForBranch: ",N"				is n=1 { }
+
+# Where a call returns to, past its delay slot
+afterDelaySlot: loc						is epsilon [ loc = inst_start + 8; ] { export *:$(ADDRSIZE) loc; }
 
 # nullification as used with special function unit ops
 nullifyForSpecial:						is spn=0 { }
