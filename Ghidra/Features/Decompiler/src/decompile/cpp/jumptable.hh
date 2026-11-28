@@ -339,6 +339,11 @@ public:
   ///
   /// \param decoder is the stream decoder
   virtual void decode(Decoder &decoder) {}
+
+  /// \brief Return \b true if the switch should have no \e default case
+  ///
+  /// By default the destination shared by the most addresses is treated as the \e default.
+  virtual bool suppressDefault(void) const { return false; }
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable
@@ -468,11 +473,25 @@ class JumpBasicOverride : public JumpBasic {
   Address normaddress;		///< Dynamic info for recovering normalized switch variable
   uint8 hash;			///< if (hash==0) there is no normalized switch (use trivial model)
   bool istrivial;		///< \b true if we use a trivial value model
+  bool istwoleaf;		///< \b true if labels are composites of two free leaves (see trialTwoLeaf)
+  Varnode *outerVn;		///< Two-leaf model: the leaf selecting the outer table (e.g. an object type)
+  Varnode *innerVn;		///< Two-leaf model: the leaf indexing the inner table (e.g. a state)
+  int4 innerBits;		///< Two-leaf model: label = (outer << innerBits) | inner
   int4 findStartOp(Varnode *vn);
   int4 trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance);
   void setupTrivial(void);
   Varnode *findLikelyNorm(void);
   void clearCopySpecific(void);
+  static bool sliceHasLoad(Varnode *vn,int4 depth,bool &isfree);
+  bool pointerHasRomBase(Funcdata *fd,Varnode *vn,AddrSpace *spc,int4 depth);
+  void collectFreeLeaves(Funcdata *fd,Varnode *vn,int4 depth,vector<Varnode *> &leaves,int4 &budget);
+  static int4 loadDepth(Varnode *from,Varnode *root,int4 depth);
+  bool findFreeLeaves(Funcdata *fd,Varnode *root);
+  bool evalTwoLeaf(Funcdata *fd,Varnode *vn,map<Varnode *,uintb> &memo,
+		   map<pair<Address,int4>,uintb> &romcache,const set<PcodeOp *> &innerLoads,
+		   Address &rowaddr,uintb &res,int4 depth) const;
+  static bool readTwoLeafRom(Funcdata *fd,const Address &addr,int4 sz,uintb &res);
+  bool trialTwoLeaf(Funcdata *fd,PcodeOp *indop,uint4 maxtablesize);
 public:
   JumpBasicOverride(JumpTable *jt);		///< Constructor
   void setAddresses(const vector<Address> &adtable);	///< Manually set the address table for \b this model
@@ -483,14 +502,15 @@ public:
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,const JumpModel *previous,uint4 maxtablesize);
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
-  // findUnnormalized inherited from JumpBasic
+  virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
-  // foldInNormalization inherited from JumpBasic
+  virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
 			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
+  virtual bool suppressDefault(void) const { return istwoleaf; }
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
 };
