@@ -1,0 +1,10 @@
+##VERSION: 2.0
+Module.manifest||||||END|
+data/languages/ST7.cspec||||||END|
+data/languages/ST7.opinion||||||END|
+data/languages/ST7.pspec||||||END|
+data/languages/ST7.sinc||||||END|
+data/languages/ST70.slaspec||||||END|
+data/languages/ST72.slaspec||||||END|
+data/languages/STM.ldefs||||||END|
+data/manuals/ST7.idx||||||END|
