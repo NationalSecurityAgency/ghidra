@@ -2449,13 +2449,24 @@ bool SplitDatatype::generateConstants(Varnode *vn,vector<Varnode *> &inVarnodes)
       sa = fullsize - (dataTypePieces[i].offset + dt->getSize());
     else
       sa = dataTypePieces[i].offset;
-    uintb val;
-    if (sa >= losize)
-      val = hi >> (sa-losize);
+    if (sa < 0 || sa + dt->getSize() > fullsize) {
+      inVarnodes.clear();
+      return false;
+    }
+    uintb val = 0;
+    if (sa >= losize) {
+      int4 byteShift = sa - losize;
+      if (byteShift < (int4)sizeof(uintb))
+	val = hi >> (byteShift * 8);
+    }
     else {
-      val = lo >> sa * 8;
-      if (sa + dt->getSize() > losize)
-	val |= hi << (losize - sa)*8;
+      if (sa < (int4)sizeof(uintb))
+	val = lo >> (sa * 8);
+      if (sa + dt->getSize() > losize) {
+	int4 hiShift = losize - sa;
+	if (hiShift > 0 && hiShift < (int4)sizeof(uintb))
+	  val |= hi << (hiShift * 8);
+      }
     }
     val &= calc_mask(dt->getSize());
     Varnode *outVn = data.newConstant(dt->getSize(), val);
