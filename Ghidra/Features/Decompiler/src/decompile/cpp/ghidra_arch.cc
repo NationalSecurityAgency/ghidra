@@ -796,9 +796,10 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
     size ^= ((c-0x20)<<6);
     isTrunc = (sin.get() != 0);
     buffer.reserve(size);
-    unique_ptr<uint1[]> dblbuf(new uint1[size * 2]);
-    sin.read((char *)dblbuf.get(),size*2);
-    if (sin.gcount() != (int4)(size * 2))
+    int4 nbytes = (int4)size * 2;
+    unique_ptr<uint1[]> dblbuf(new uint1[nbytes]);
+    sin.read((char *)dblbuf.get(),nbytes);
+    if (sin.gcount() != nbytes)
       throw JavaError("alignment","Could not read expected number of bytes");
     for (int4 i=0; i < size; i++) {
       buffer.push_back(((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A'));
