@@ -1087,6 +1087,8 @@ int4 RulePushMulti::applyOp(PcodeOp *op,Funcdata &data)
     if (res==0) return 0;
     PcodeOp *substitute = findSubstitute(buf1[0],buf2[0],bl,earliest);
     if (substitute == (PcodeOp *)0) return 0;
+    // The reused value gains the merge's readers: its consumed bits must cover theirs
+    substitute->getOut()->setConsume(substitute->getOut()->getConsume() | op->getOut()->getConsume());
     // Eliminate this op in favor of the shadowed merge
     data.totalReplace(op->getOut(),substitute->getOut());
     data.opDestroy(op);
@@ -1103,6 +1105,8 @@ int4 RulePushMulti::applyOp(PcodeOp *op,Funcdata &data)
   if (res == 1) {
     int4 slot1 = op1->getSlot(buf1[0]);
     PcodeOp *substitute = findSubstitute(buf1[0],buf2[0],bl,earliest);
+    if (substitute != (PcodeOp *)0)	// An existing value gains a reader whose needs are not known: assume all bits
+      substitute->getOut()->setConsume(calc_mask(substitute->getOut()->getSize()));
     if (substitute == (PcodeOp *)0) {
       substitute = data.newOp(2,op->getAddr());
       data.opSetOpcode(substitute,CPUI_MULTIEQUAL);
