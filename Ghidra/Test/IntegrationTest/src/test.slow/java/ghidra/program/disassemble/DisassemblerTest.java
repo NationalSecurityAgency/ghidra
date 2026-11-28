@@ -393,6 +393,42 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
+	 *     10: breq 14 --+
+	 *  +- 12: brds   20 |
+	 *  |  14: _or   <---+
+	 *  |  16: ret
+	 *  |
+	 *  +->20: ret
+	 *
+	 * Test branch from the same block into the delay slot of a branch that does not fall
+	 * through, which reaches the instructions after the delay slot through that branch alone
+	 *
+	 */
+	@Test
+	public void testDisassemblerBranchOverIntoDelaySlot() throws Exception {
+
+		programBuilder.addBytesBranchConditional(10, 14);
+		programBuilder.addBytesBranchWithDelaySlot(12, 20);
+		programBuilder.addBytesReturn(16);
+
+		programBuilder.addBytesReturn(20);
+
+		AddressSetView disAddrs = disassembler.disassemble(addr(10), null);
+		assertEquals(addrset(range(10, 17), range(20, 21)), disAddrs);
+
+		verifyInstructionPresence();
+
+		verifyNoBookmarks();
+
+		Instruction instr = listing.getInstructionAt(addr(12));
+		assertEquals(1, instr.getDelaySlotDepth());
+		instr = listing.getInstructionAt(addr(14));
+		assertTrue(instr.isInDelaySlot());
+		assertNotNull(listing.getInstructionAt(addr(16)));
+
+	}
+
+	/**
 	 *      4: bral 14 ----+   (start2)
 	 *                     |
 	 *     10: or          |   (start1)
