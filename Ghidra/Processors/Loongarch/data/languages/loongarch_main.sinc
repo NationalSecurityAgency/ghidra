@@ -440,8 +440,6 @@ FRK: frK  is frK { export frK; }
 @endif
 
 # Immediate operand sub-constructors
-addu16_imm: val  is simm10_16 [val = simm10_16 << 16;] { export *[const]:$(REGSIZE) val; }
-
 alsl_shift: sa2  is imm15_2 [sa2 = imm15_2 + 1;] { export *[const]:1 sa2; }
 
 ldst_addr: RJsrc(simm10_12)  is RJsrc & simm10_12 { local vaddr:$(REGSIZE) = RJsrc + simm10_12; export vaddr; }
