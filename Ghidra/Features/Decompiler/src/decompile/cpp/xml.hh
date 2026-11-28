@@ -19,6 +19,7 @@
 #define __XML_HH__
 
 #include "types.h"
+#include "error.hh"
 #include <fstream>
 #include <iomanip>
 #include <string>
@@ -294,9 +295,8 @@ public:
 ///
 /// This object holds the error message as passed to the SAX interface callback
 /// and is thrown as a formal exception.
-struct DecoderError {
-  string explain;		///< Explanatory string
-  DecoderError(const string &s) { explain = s; }	///< Constructor
+struct DecoderError : public LowlevelError {
+  DecoderError(const string &s) : LowlevelError(s) {}	///< Constructor
 };
 
 /// \brief Start-up the XML parser given a stream and a handler

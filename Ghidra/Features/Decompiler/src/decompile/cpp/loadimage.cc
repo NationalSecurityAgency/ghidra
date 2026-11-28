@@ -29,9 +29,9 @@ namespace ghidra {
 uint1 *LoadImage::load(int4 size,const Address &addr)
 
 {
-  uint1 *buf = new uint1[ size ];
-  loadFill(buf,size,addr);
-  return buf;
+  unique_ptr<uint1[]> buf(new uint1[ size ]);
+  loadFill(buf.get(),size,addr);
+  return buf.release();
 }
 
 RawLoadImage::RawLoadImage(const string &f) : LoadImage(f)
