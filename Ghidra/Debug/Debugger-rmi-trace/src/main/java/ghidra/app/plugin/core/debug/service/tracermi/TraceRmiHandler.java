@@ -447,9 +447,9 @@ public class TraceRmiHandler extends AbstractTraceRmiConnection {
 			return null;
 		}
 		int len = ByteBuffer.wrap(lenBuf).getInt();
-		if (len > MAX_MSG_LENGTH) {
-			throw new TraceRmiError(
-				"Cannot receive TraceRmi message with excessive message length");
+		if (len < 0 || len > MAX_MSG_LENGTH) {
+			throw new IOException(
+				"Cannot receive TraceRmi message with invalid message length: " + len);
 		}
 		byte[] datBuf = recvAll(in, len);
 		if (datBuf == null) {
