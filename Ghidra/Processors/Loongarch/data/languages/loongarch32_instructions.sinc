@@ -902,10 +902,8 @@
 #0x00080000	0xfffe0000	r0:5,r5:5,r10:5,u15:2	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_2_s0']
 :bytepick.w RD, RJ32src, RK32src, imm15_2  is op17_31=0x4 & RD & RJ32src & RK32src & imm15_2 {
 	local bitstop:1 = 8 * (4 - imm15_2);
-	local mask:4 = (1 <<  bitstop) - 1;
-	local tmp_hi:4 = RK32src & ~mask;
-	local tmp_lo:4 = (RJ32src & (mask << (32-bitstop)) >> (32-bitstop));
-	RD = sext(tmp_hi + tmp_lo);
+	local tmp:4 = (RK32src << (32 - bitstop)) | (RJ32src >> bitstop);
+	RD = sext(tmp);
 }
 
 define pcodeop crc.w.b.w;
