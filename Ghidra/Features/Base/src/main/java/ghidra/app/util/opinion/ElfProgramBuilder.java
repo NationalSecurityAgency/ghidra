@@ -1321,7 +1321,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				d.setComment(CommentType.EOL, comment);
 
 				Address sectionAddr = findLoadAddress(sections[i], 0);
-				if (sectionAddr != null) {
+				// The sh_addr of a section of a relocatable object is 0, not the address
+				// that the loader chose for it, so do not mark it up as a reference to it
+				if (sectionAddr != null && !elf.isRelocatable()) {
 					// add reference to sh_addr component
 					Data component = d.getComponent(3);
 					component.addOperandReference(0, sectionAddr, RefType.DATA,
