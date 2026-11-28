@@ -1567,33 +1567,6 @@ void BlockGraph::removeFromFlow(FlowBlock *bl)
   }
 }
 
-/// Remove the given FlowBlock from the flow of the graph. It must have
-/// 2 inputs, and 2 outputs.  The edges will be remapped so that
-///   - In(0) -> Out(0) and
-///   - In(1) -> Out(1)
-///
-/// Or if \b flipflow is true:
-///   - In(0) -> Out(1)
-///   - In(1) -> Out(0)
-/// \param bl is the given FlowBlock
-/// \param flipflow indicates how the edges are remapped
-void BlockGraph::removeFromFlowSplit(FlowBlock *bl,bool flipflow)
-
-{
-#ifdef BLOCKCONSISTENT_DEBUG
-  if (bl->parent != this)
-    throw LowlevelError("Bad remove from flow split");
-  if ((bl->sizeIn()!=2)&&(bl->sizeOut()!=2))
-    throw LowlevelError("Illegal remove from flow split");
-#endif
-  if (flipflow)
-    bl->replaceEdgesThru(0,1);	// Replace edge slot from 0 -> 1
-  else
-    bl->replaceEdgesThru(1,1);	// Replace edge slot from 1 -> 1
-  // Removing the first edge
-  bl->replaceEdgesThru(0,0);	// Replace remaining edge
-}
-
 /// The given FlowBlock must have exactly one output.  That output must have
 /// exactly one input.  The output FlowBlock is removed and any outgoing edges
 /// it has become outgoing edge of the given FlowBlock.  The output FlowBlock

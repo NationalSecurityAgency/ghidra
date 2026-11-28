@@ -1,0 +1,33 @@
+<decompilertest>
+<binaryimage arch="ARM:LE:32:v8:default">
+<!--
+-->
+<bytechunk space="ram" offset="0x01000000" readonly="true">
+000051e30120a003010080e20220a013
+020080e01eff2fe1000050e30120a003
+010041e2020040001eff2fe1
+</bytechunk>
+<symbol space="ram" offset="0x01000000" name="func1"/>
+<symbol space="ram" offset="0x01000018" name="func2"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line extern int4 func1(int4 a, int4 b);</com>
+  <com>parse line extern int4 func2(int4 c, int4 d);</com>
+  <com>lo fu func1</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu func2</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+
+<stringmatch name="Conditional Opposites #1" min="1" max="1">if \(b == 0\)</stringmatch>
+<stringmatch name="Conditional Opposites #2" min="1" max="1">else \{</stringmatch>
+<stringmatch name="Conditional Opposites #3" min="0" max="0">if \(b != 0\)</stringmatch>
+<stringmatch name="Conditional Opposites #4" min="1" max="1">a \+ 1 \+ iVar1</stringmatch>
+
+<stringmatch name="Conditional Equivalents #1" min="1" max="1">if \(c == 0\)</stringmatch>
+<stringmatch name="Conditional Equivalents #2" min="1" max="1">iVar1 = d \+ -1;</stringmatch>
+<stringmatch name="Conditional Equivalents #3" min="1" max="1">iVar1 = d \+ -2;</stringmatch>
+</decompilertest>

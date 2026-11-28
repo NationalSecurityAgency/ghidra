@@ -421,7 +421,6 @@ public:
   void moveOutEdge(FlowBlock *blold,int4 slot,FlowBlock *blnew);	///< Move indicated \e out edge to a new FlowBlock
   void removeBlock(FlowBlock *bl);				///< Remove a FlowBlock from \b this BlockGraph
   void removeFromFlow(FlowBlock *bl);				///< Remove given FlowBlock preserving flow in \b this
-  void removeFromFlowSplit(FlowBlock *bl,bool flipflow);	///< Remove FlowBlock splitting flow between input and output edges
   void spliceBlock(FlowBlock *bl);		///< Splice given FlowBlock together with its output
   void setStartBlock(FlowBlock *bl);		///< Set the entry point FlowBlock for \b this graph
   FlowBlock *getStartBlock(void) const;		///< Get the entry point FlowBlock
