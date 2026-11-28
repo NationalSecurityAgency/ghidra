@@ -112,6 +112,10 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		}
 	}
 
+	void functionChanged(Function function) {
+		updateObject(new VTFunctionRowObject(getInitializedFunctionInfo(function)));
+	}
+
 	void functionAdded(Function function) {
 		addObject(new VTFunctionRowObject(getInitializedFunctionInfo(function)));
 
