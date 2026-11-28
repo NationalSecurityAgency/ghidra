@@ -62,7 +62,7 @@ class DomainFileIndex implements DomainFolderChangeListener {
 			}
 			else {
 				GhidraFile oldDf = (GhidraFile) projectData.getFile(oldPath);
-				if (oldDf == null) {
+				if (oldDf == null || !id.equals(oldDf.getFileID())) {
 					fileIdToPathIndex.put(id, newPath);
 				}
 				else {
@@ -98,10 +98,21 @@ class DomainFileIndex implements DomainFolderChangeListener {
 	}
 
 	DomainFile getFileByID(String fileID) {
+		// Folder changes and file-index updates use this same filesystem monitor.
+		synchronized (projectData.getLocalFileSystem()) {
+			return getFileByIDLocked(fileID);
+		}
+	}
+
+	private DomainFile getFileByIDLocked(String fileID) {
 		TaskMonitor monitor = projectData.getProjectDisposalMonitor();
 		String filePath = fileIdToPathIndex.get(fileID);
 		if (filePath != null) {
-			return projectData.getFile(filePath);
+			DomainFile file = projectData.getFile(filePath);
+			if (file != null && fileID.equals(file.getFileID())) {
+				return file;
+			}
+			fileIdToPathIndex.remove(fileID);
 		}
 
 		boolean unsupportedOperation = false;
@@ -178,6 +189,24 @@ class DomainFileIndex implements DomainFolderChangeListener {
 			return projectData.getFile(filePath);
 		}
 		return null;
+	}
+
+	@Override
+	public void domainFolderRenamed(DomainFolder folder, String oldName) {
+		updateFolderPaths(folder.getParent(), oldName, folder.getPathname());
+	}
+
+	@Override
+	public void domainFolderMoved(DomainFolder folder, DomainFolder oldParent) {
+		updateFolderPaths(oldParent, folder.getName(), folder.getPathname());
+	}
+
+	private void updateFolderPaths(DomainFolder oldParent, String oldName, String newPath) {
+		String parentPath = oldParent.getPathname();
+		String oldPrefix = parentPath + (parentPath.endsWith("/") ? "" : "/") + oldName + "/";
+		String newPrefix = newPath + "/";
+		fileIdToPathIndex.replaceAll((id, path) -> path.startsWith(oldPrefix)
+				? newPrefix + path.substring(oldPrefix.length()) : path);
 	}
 
 	@Override
