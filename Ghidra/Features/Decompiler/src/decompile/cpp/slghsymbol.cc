@@ -2409,6 +2409,8 @@ void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub
       children.push_back(subnode);
       subnode->decode(decoder,this,sub);
     }
+    else
+      throw DecoderError("Unexpected element " + std::to_string(subel));
     subel = decoder.peekElement();
   }
   decoder.closeElement(el);
