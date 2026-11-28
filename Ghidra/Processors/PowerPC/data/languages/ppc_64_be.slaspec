@@ -9,3 +9,7 @@
 @include "ppc_common.sinc"
 @include "altivec.sinc"
 @include "g2.sinc"
+
+# PowerPC AS: undocumented tagged-memory extensions used by IBM i (POWER5+).
+# See powerpcas.sinc for sourcing/caveats.
+@include "powerpcas.sinc"
