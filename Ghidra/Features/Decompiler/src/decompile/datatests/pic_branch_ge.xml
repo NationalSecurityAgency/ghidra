@@ -1,0 +1,18 @@
+<decompilertest>
+<binaryimage arch="PIC-24F:LE:24:default">
+<bytechunk space="rom" offset="0">
+02002000730020000306510004003D00
+000020000004880061014100FAFF3700
+00000600
+</bytechunk>
+<symbol space="rom" offset="0" name="f"/>
+</binaryimage>
+<script>
+<com>lo fu f</com>
+<com>dec</com>
+<com>print C</com>
+<com>quit</com>
+</script>
+<stringmatch name="PIC greater-or-equal recognized #1" min="1" max="1">&lt; 7;</stringmatch>
+<stringmatch name="PiC greater-or-equal recognized #2" min="0" max="0">SBORROW</stringmatch>
+</decompilertest>
