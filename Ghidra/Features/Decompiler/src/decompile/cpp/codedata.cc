@@ -687,6 +687,8 @@ void CodeDataAnalysis::runModel(void)
   Address lastaddr;
   do {
     moresections = loadimage->getNextSection(secinfo);
+    // only LoadImageBfd overrides getNextSection; other loaders leave secinfo unfilled
+    if (secinfo.address.isInvalid()) break;
     Address endaddr = secinfo.address + secinfo.size;
     if (secinfo.size == 0) continue;
     if (lastaddr.isInvalid())
@@ -700,6 +702,11 @@ void CodeDataAnalysis::runModel(void)
     }
   } while(moresections);
   loadimage->closeSectionInfo();
+  // no loadable sections: lastaddr is still invalid, and the notcode sentinel below
+  // would be tainted by findNotCodeUnits and dereference a null AddrSpace in
+  // Address::operator+ inside processTaint
+  if (lastaddr.isInvalid())
+    return;
   CodeUnit &cu( codeunit[lastaddr] );
   cu.size = 100;
   cu.flags = CodeUnit::notcode;
